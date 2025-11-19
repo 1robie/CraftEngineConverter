@@ -460,39 +460,37 @@ public class NexoItemConverter extends ItemConverter {
         ConfigurationSection packSection = this.nexoItemSection.getConfigurationSection("Pack");
         if (packSection == null) return;
 
-        ConfigurationSection ceModelSection = this.craftEngineItemUtils.getModelSection();
         String parentModel = packSection.getString("parent_model");
 
         if (parentModel == null || parentModel.isEmpty()) {
-            convertModelWithoutParent(packSection, ceModelSection);
+            convertModelWithoutParent(packSection);
         } else {
-            convertModelWithParent(packSection, ceModelSection, parentModel);
+            convertModelWithParent(packSection, parentModel);
         }
     }
 
-    private void convertModelWithoutParent(ConfigurationSection packSection, ConfigurationSection ceModelSection) {
+    private void convertModelWithoutParent(ConfigurationSection packSection) {
         String modelPath = packSection.getString("model");
         if (!isValidString(modelPath)) {
             return;
         }
 
         modelPath = cleanPath(modelPath);
-        if (!isNotNull(modelPath)) {
+        if (isNull(modelPath)) {
             Logger.info("Failed to process model path for item '" + this.itemId + "'. Skipping texture conversion.", LogType.WARNING);
             return;
         }
 
         if (tryBuildShieldModel(packSection, modelPath)) return;
-        if (tryBuildPullingModel(packSection, ceModelSection)) return;
-        if (tryBuildFishingRodModel(packSection, ceModelSection, modelPath)) return;
+        if (tryBuildPullingModel(packSection)) return;
+        if (tryBuildFishingRodModel(packSection, modelPath)) return;
 
         String namespacedPath = namespaced(modelPath);
-        if (!isNotNull(namespacedPath)) {
+        if (isNull(namespacedPath)) {
             Logger.info("Failed to namespace model path for item '" + this.itemId + "'. Skipping texture conversion.", LogType.WARNING);
             return;
         }
-        ceModelSection.set("type", "minecraft:model");
-        ceModelSection.set("path", namespacedPath);
+        this.craftEngineItemUtils.getGeneralSection().createSection("model",InternalTemplateManager.parseTemplate(Template.MODEL_ITEM_DEFAULT, "%model_path%", namespacedPath));
     }
 
     private boolean tryBuildShieldModel(ConfigurationSection packSection, String modelPath) {
@@ -511,21 +509,21 @@ public class NexoItemConverter extends ItemConverter {
         return false;
     }
 
-    private boolean tryBuildPullingModel(ConfigurationSection packSection, ConfigurationSection ceModelSection) {
+    private boolean tryBuildPullingModel(ConfigurationSection packSection) {
         List<String> pullingModels = packSection.getStringList("pulling_models");
         if (pullingModels.isEmpty()) return false;
 
         if (this.craftEngineItemUtils.getMaterial() == Material.CROSSBOW) {
-            buildCrossbowModel(packSection, ceModelSection);
+            buildCrossbowModel(packSection);
             return true;
         } else if (this.craftEngineItemUtils.getMaterial() == Material.BOW) {
-            buildBowModel(packSection, ceModelSection);
+            buildBowModel(packSection);
             return true;
         }
         return false;
     }
 
-    private boolean tryBuildFishingRodModel(ConfigurationSection packSection, ConfigurationSection ceModelSection, String modelPath) {
+    private boolean tryBuildFishingRodModel(ConfigurationSection packSection, String modelPath) {
         String castModel = packSection.getString("cast_model");
         if (isValidString(castModel)) {
             castModel = cleanPath(castModel);
@@ -541,7 +539,7 @@ public class NexoItemConverter extends ItemConverter {
         return false;
     }
 
-    private void convertModelWithParent(ConfigurationSection packSection, ConfigurationSection ceModelSection, String parentModel) {
+    private void convertModelWithParent(ConfigurationSection packSection, String parentModel) {
         switch (parentModel) {
             case "item/generated" -> buildGeneratedModel(packSection, "minecraft:item/generated", Template.MODEL_ITEM_GENERATED);
             case "block/cube_all" -> buildGeneratedModel(packSection, "minecraft:block/cube_all", Template.MODEL_CUBE_ALL);
@@ -586,39 +584,21 @@ public class NexoItemConverter extends ItemConverter {
         }
     }
 
-    private void buildBowModel(ConfigurationSection packSection, ConfigurationSection modelSection) {
+    private void buildBowModel(ConfigurationSection packSection) {
         String baseModel = namespaced(packSection.getString("model"));
         List<String> pullingModels = packSection.getStringList("pulling_models");
         String pulling0 = namespaced(notEmptyOrNull(pullingModels, 0) ? pullingModels.get(0) : packSection.getString("pulling_0_model"));
         String pulling1 = namespaced(notEmptyOrNull(pullingModels, 1) ? pullingModels.get(1) : packSection.getString("pulling_1_model"));
         String pulling2 = namespaced(notEmptyOrNull(pullingModels, 2) ? pullingModels.get(2) : packSection.getString("pulling_2_model"));
 
-        if (baseModel == null || pulling0 == null) {
-            Logger.info("Missing bow model paths for item '" + this.itemId + "'.", LogType.WARNING);
-            return;
+        if (isNotNull(baseModel) && isNotNull(pulling0) && isNotNull(pulling1) && isNotNull(pulling2)) {
+            this.craftEngineItemUtils.getGeneralSection().createSection("model",InternalTemplateManager.parseTemplate(Template.MODEL_ITEM_BOW, "%default_model_path%",baseModel,"%pulling_0_model_path%",pulling0,"%pulling_1_model_path%",pulling1,"%pulling_2_model_path%",pulling2));
+        } else {
+            Logger.info("Failed to process bow model paths for item '" + this.itemId + "'. Skipping bow model conversion.", LogType.WARNING);
         }
-
-        modelSection.set("type", "minecraft:condition");
-        modelSection.set("property", "minecraft:using_item");
-        modelSection.set("on-false", simpleModelMap(baseModel, packSection.getString("texture"), "minecraft:item/bow"));
-
-        Map<String, Object> onTrue = new HashMap<>();
-        onTrue.put("type", "minecraft:range_dispatch");
-        onTrue.put("property", "minecraft:use_duration");
-        onTrue.put("scale", 0.05);
-
-        List<Map<String, Object>> entries = new ArrayList<>();
-        addPullingEntry(entries, pulling1, packSection.getString("pulling_1_texture"), "minecraft:item/bow_pulling_1", 0.65);
-        addPullingEntry(entries, pulling2, packSection.getString("pulling_2_texture"), "minecraft:item/bow_pulling_2", 0.9);
-
-        if (!entries.isEmpty()) {
-            onTrue.put("entries", entries);
-        }
-        onTrue.put("fallback", simpleModelMap(pulling0, packSection.getString("pulling_0_texture"), "minecraft:item/bow_pulling_0"));
-        modelSection.set("on-true", onTrue);
     }
 
-    private void buildCrossbowModel(ConfigurationSection packSection, ConfigurationSection modelSection) {
+    private void buildCrossbowModel(ConfigurationSection packSection) {
         String baseModel = namespaced(packSection.getString("model"));
         String arrowModel = namespaced(packSection.getString("charged_model"));
         String fireworkModel = namespaced(packSection.getString("firework_model"));
