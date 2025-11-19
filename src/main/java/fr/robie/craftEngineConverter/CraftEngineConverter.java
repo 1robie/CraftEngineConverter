@@ -23,10 +23,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 public final class CraftEngineConverter extends JavaPlugin {
+    private static CraftEngineConverter INSTANCE;
+
     private final FoliaCompatibilityManager foliaCompatibilityManager = new FoliaCompatibilityManager(this);
-    private final InternalTemplateManager templateManager = new InternalTemplateManager(this);
     private final CommandManager commandManager = new CommandManager(this);
     private final Gson gson = getGsonBuilder().create();
+    private final InternalTemplateManager templateManager = new InternalTemplateManager(this);
     private final List<Savable> savables = new ArrayList<>();
     private final Persist persist = new PersistImp(this);
     private MessageFormatter messageFormatter = new ClassicMeta();
@@ -37,6 +39,7 @@ public final class CraftEngineConverter extends JavaPlugin {
 
     @Override
     public void onEnable() {
+        INSTANCE = this;
 
         Logger.info("Enabling plugin ...");
         if (!Plugins.CRAFTENGINE.isPresent()){
@@ -109,5 +112,9 @@ public final class CraftEngineConverter extends JavaPlugin {
     private GsonBuilder getGsonBuilder() {
         return new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().serializeNulls()
                 .excludeFieldsWithModifiers(Modifier.TRANSIENT, Modifier.VOLATILE);
+    }
+
+    public static CraftEngineConverter getInstance() {
+        return INSTANCE;
     }
 }

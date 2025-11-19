@@ -1,6 +1,7 @@
 package fr.robie.craftEngineConverter.loader;
 
 import fr.robie.craftEngineConverter.CraftEngineConverter;
+import fr.robie.craftEngineConverter.core.utils.Template;
 import fr.robie.craftEngineConverter.core.utils.logger.Logger;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.jetbrains.annotations.NotNull;
@@ -15,7 +16,7 @@ import java.util.List;
 import java.util.Map;
 
 public class InternalTemplateManager {
-    private static final Map<Template,Map<String,Object>> templates = new HashMap<>();
+    private static final Map<Template,YamlConfiguration> templates = new HashMap<>();
     private final CraftEngineConverter craftEngineConverter;
 
     public InternalTemplateManager(CraftEngineConverter craftEngineConverter) {
@@ -31,7 +32,7 @@ public class InternalTemplateManager {
                     continue;
                 }
                 YamlConfiguration yamlConfiguration = YamlConfiguration.loadConfiguration(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
-                templates.put(template,yamlConfiguration.getValues(true));
+                templates.put(template,yamlConfiguration);
             }
         } catch (Exception ex) {
             return false;
@@ -40,7 +41,12 @@ public class InternalTemplateManager {
     }
 
     public static @Nullable Map<String,Object> getTemplate(Template template){
-        return templates.get(template);
+        YamlConfiguration yamlConfiguration = templates.get(template);
+        if (yamlConfiguration == null) return null;
+
+        String yamlString = yamlConfiguration.saveToString();
+        YamlConfiguration copy = YamlConfiguration.loadConfiguration(new java.io.StringReader(yamlString));
+        return copy.getValues(true);
     }
 
     public static @NotNull Map<String,Object> parseTemplate(Template template, Object ...args){

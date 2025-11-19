@@ -5,7 +5,6 @@ import fr.robie.craftEngineConverter.core.utils.*;
 import fr.robie.craftEngineConverter.core.utils.logger.LogType;
 import fr.robie.craftEngineConverter.core.utils.logger.Logger;
 import fr.robie.craftEngineConverter.loader.InternalTemplateManager;
-import fr.robie.craftEngineConverter.loader.Template;
 import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.enchantments.Enchantment;
@@ -553,6 +552,9 @@ public class NexoItemConverter extends ItemConverter {
             String finalTexturePath = namespaced(texturePath);
             if (isValidString(finalTexturePath)) {
                 Map<String, Object> parsedTemplate = InternalTemplateManager.parseTemplate(template, "%model_path%", finalTexturePath, "%texture_path%", finalTexturePath);
+                if (template.getType() == TemplateType.BLOCK) {
+                    setSavedModelTemplates(parsedTemplate);
+                }
                 parsedTemplate.put("type", "minecraft:model");
                 this.craftEngineItemUtils.getGeneralSection().createSection("model", parsedTemplate);
             } else {
@@ -567,6 +569,7 @@ public class NexoItemConverter extends ItemConverter {
     private void buildCubeTopModel(ConfigurationSection packSection) {
         String sideTexture = packSection.getString("textures.side");
         String topTexture = packSection.getString("textures.top");
+        Logger.info("sideTexture: " + sideTexture + ", topTexture: " + topTexture);
 
         if (isValidString(sideTexture) && isValidString(topTexture)) {
             String finalSideTexture = namespaced(sideTexture);
@@ -574,6 +577,7 @@ public class NexoItemConverter extends ItemConverter {
 
             if (isNotNull(sideTexture) && isNotNull(topTexture)) {
                 Map<String, Object> parseTemplate = InternalTemplateManager.parseTemplate(Template.MODEL_CUBE_TOP, "%model_path%", finalSideTexture, "%texture_side_path%", finalSideTexture, "%texture_top_path%", finalTopTexture);
+                setSavedModelTemplates(parseTemplate);
                 parseTemplate.put("type", "minecraft:model");
                 this.craftEngineItemUtils.getGeneralSection().createSection("model", parseTemplate);
             } else {
@@ -615,15 +619,6 @@ public class NexoItemConverter extends ItemConverter {
         }
     }
 
-    private void addPullingEntry(List<Map<String, Object>> entries, String model, String texture, String parent, double threshold) {
-        if (model != null) {
-            entries.add(Map.of(
-                    "model", simpleModelMap(model, texture, parent),
-                    "threshold", threshold
-            ));
-        }
-    }
-
     @Override
     public void convertOther(){
         ConfigurationSection mechanicsSection = this.nexoItemSection.getConfigurationSection("Mechanics");
@@ -636,13 +631,31 @@ public class NexoItemConverter extends ItemConverter {
                     convertFurnitureMechanic(nexoFurnitureSection);
                 }
                 case "custom_block" -> {
+                    Logger.info("Custom Block mechanic conversion for item '"+this.itemId+"' is not finished yet. Partial conversion may occur.", LogType.WARNING);
                     ConfigurationSection nexoCustomBlockSection = mechanicsSection.getConfigurationSection(mechanicsKey);
                     // TODO
+                    convertCustomBlockMechanic(nexoCustomBlockSection);
                 }
                 default -> {}
             }
         }
-    };
+    }
+
+    private void convertCustomBlockMechanic(ConfigurationSection nexoCustomBlockSection) {
+        ConfigurationSection ceBehaviorSection = this.craftEngineItemUtils.getBehaviorSection();
+        ceBehaviorSection.set("type", "block_item");
+        ConfigurationSection ceBlockSection = getOrCreateSection(ceBehaviorSection, "block");
+        ConfigurationSection ceStateSection = getOrCreateSection(ceBlockSection, "state");
+        ceStateSection.set("auto-state","solid");
+        Map<String, Object> savedModel = getSavedModelTemplates();
+        if (!savedModel.isEmpty()) {
+            ceStateSection.createSection("model", savedModel);
+        } else {
+            Logger.info("No saved model templates found for custom block item '" + this.itemId + "'. The block may not have the correct appearance.", LogType.WARNING);
+            return;
+        }
+
+    }
 
     private void convertFurnitureMechanic(ConfigurationSection nexoFurnitureMechanicsSection) {
         String nexoMEGModel = nexoFurnitureMechanicsSection.getString("modelengine_id");
@@ -1025,4 +1038,3 @@ public class NexoItemConverter extends ItemConverter {
         }
     }
 }
-

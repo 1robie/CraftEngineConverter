@@ -9,6 +9,7 @@ import java.util.Map;
 
 public abstract class ItemConverter {
     protected final String itemId;
+    private final Map<String,Object> savedModelTemplates = new HashMap<>();
     public final CraftEngineItemUtils craftEngineItemUtils;
 
     public ItemConverter(String itemId,ConfigurationSection craftEngineItemSection){
@@ -96,6 +97,17 @@ public abstract class ItemConverter {
     public void convertItemTexture(){};
     public void convertOther(){};
 
+    public void setSavedModelTemplates(Map<String,Object> savedModelTemplates){
+        this.savedModelTemplates.clear();
+        if (savedModelTemplates != null && !savedModelTemplates.isEmpty()) {
+            this.savedModelTemplates.putAll(savedModelTemplates);
+        }
+    }
+
+    public Map<String,Object> getSavedModelTemplates(){
+        return new HashMap<>(this.savedModelTemplates);
+    }
+
     protected String cleanPath(String path) {
         if (path == null || path.isEmpty()) return null;
         if (path.endsWith(".png")) {
@@ -147,30 +159,14 @@ public abstract class ItemConverter {
         }
     }
 
-    protected Map<String, Object> simpleModelMap(String path, String texture, String parentIfTexture) {
-        Map<String, Object> model = new HashMap<>();
-        model.put("type", "minecraft:model");
-        model.put("path", path);
-        if (texture != null && !texture.isEmpty()) {
-            String t = namespaced(texture);
-            if (t != null) {
-                Map<String, Object> generation = new HashMap<>();
-                generation.put("parent", parentIfTexture);
-                Map<String, String> texturesMap = new HashMap<>();
-                texturesMap.put("layer0", t);
-                generation.put("textures", texturesMap);
-                model.put("generation", generation);
-            }
-        }
-        return model;
-    }
-
     protected String getTexturePath(ConfigurationSection packSection) {
         List<String> textures = packSection.getStringList("textures");
         if (!textures.isEmpty()) {
             return textures.getFirst();
         }
-        return packSection.getString("textures");
+        String string = packSection.getString("textures");
+
+        return isValidString(string) ? string : packSection.getString("texture");
     }
 
     protected ConfigurationSection getOrCreateSection(ConfigurationSection parent, String key) {
