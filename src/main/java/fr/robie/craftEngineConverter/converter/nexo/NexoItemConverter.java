@@ -472,22 +472,22 @@ public class NexoItemConverter extends ItemConverter {
 
     private void convertModelWithoutParent(ConfigurationSection packSection, ConfigurationSection ceModelSection) {
         String modelPath = packSection.getString("model");
-        if (modelPath == null || modelPath.isEmpty()) {
+        if (!isValidString(modelPath)) {
             return;
         }
 
         modelPath = cleanPath(modelPath);
-        if (modelPath == null) {
+        if (!isNotNull(modelPath)) {
             Logger.info("Failed to process model path for item '" + this.itemId + "'. Skipping texture conversion.", LogType.WARNING);
             return;
         }
 
-        if (tryBuildShieldModel(packSection, ceModelSection, modelPath)) return;
+        if (tryBuildShieldModel(packSection, modelPath)) return;
         if (tryBuildPullingModel(packSection, ceModelSection)) return;
-        if (tryBuildCastModel(packSection, ceModelSection, modelPath)) return;
+        if (tryBuildFishingRodModel(packSection, ceModelSection, modelPath)) return;
 
         String namespacedPath = namespaced(modelPath);
-        if (namespacedPath == null) {
+        if (!isNotNull(namespacedPath)) {
             Logger.info("Failed to namespace model path for item '" + this.itemId + "'. Skipping texture conversion.", LogType.WARNING);
             return;
         }
@@ -495,19 +495,20 @@ public class NexoItemConverter extends ItemConverter {
         ceModelSection.set("path", namespacedPath);
     }
 
-    private boolean tryBuildShieldModel(ConfigurationSection packSection, ConfigurationSection ceModelSection, String modelPath) {
+    private boolean tryBuildShieldModel(ConfigurationSection packSection, String modelPath) {
         String shieldBlockingModel = packSection.getString("blocking_model");
-        if (!isValidString(shieldBlockingModel)) return false;
-
-        shieldBlockingModel = cleanPath(shieldBlockingModel);
-        if (shieldBlockingModel == null) return false;
-
-        String namespacedBlocking = namespaced(shieldBlockingModel);
-        String namespacedModel = namespaced(modelPath);
-        if (namespacedBlocking == null || namespacedModel == null) return false;
-
-        this.craftEngineItemUtils.getGeneralSection().createSection("model",InternalTemplateManager.parseTemplate(Template.MODEL_ITEM_SHIELD, "%blocking_model_path%",namespacedBlocking,"%default_model_path%",namespacedModel));
-        return true;
+        if (isValidString(shieldBlockingModel)) {
+            shieldBlockingModel = cleanPath(shieldBlockingModel);
+            if (isNotNull(shieldBlockingModel)) {
+                String namespacedBlocking = namespaced(shieldBlockingModel);
+                String namespacedModel = namespaced(modelPath);
+                if (isValidString(namespacedBlocking) && isValidString(namespacedModel)) {
+                    this.craftEngineItemUtils.getGeneralSection().createSection("model",InternalTemplateManager.parseTemplate(Template.MODEL_ITEM_SHIELD, "%blocking_model_path%",namespacedBlocking,"%default_model_path%",namespacedModel));
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     private boolean tryBuildPullingModel(ConfigurationSection packSection, ConfigurationSection ceModelSection) {
@@ -524,22 +525,20 @@ public class NexoItemConverter extends ItemConverter {
         return false;
     }
 
-    private boolean tryBuildCastModel(ConfigurationSection packSection, ConfigurationSection ceModelSection, String modelPath) {
+    private boolean tryBuildFishingRodModel(ConfigurationSection packSection, ConfigurationSection ceModelSection, String modelPath) {
         String castModel = packSection.getString("cast_model");
-        if (castModel == null || castModel.isEmpty()) return false;
-
-        castModel = cleanPath(castModel);
-        if (castModel == null) return false;
-
-        String namespacedCast = namespaced(castModel);
-        String namespacedModel = namespaced(modelPath);
-        if (namespacedCast == null || namespacedModel == null) return false;
-
-        ceModelSection.set("type", "minecraft:condition");
-        ceModelSection.set("property", "minecraft:fishing_rod/cast");
-        ceModelSection.set("on-true", Map.of("type", "minecraft:model", "path", namespacedCast));
-        ceModelSection.set("on-false", Map.of("type", "minecraft:model", "path", namespacedModel));
-        return true;
+        if (isValidString(castModel)) {
+            castModel = cleanPath(castModel);
+            if (isNotNull(castModel)) {
+                String namespacedCast = namespaced(castModel);
+                String namespacedModel = namespaced(modelPath);
+                if (isNotNull(namespacedCast) && isNotNull(namespacedModel)) {
+                    this.craftEngineItemUtils.getGeneralSection().createSection("model",InternalTemplateManager.parseTemplate(Template.MODEL_ITEM_FISHING_ROD, "%casting_model_path%", namespacedCast, "%default_model_path%", namespacedModel));
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     private void convertModelWithParent(ConfigurationSection packSection, ConfigurationSection ceModelSection, String parentModel) {
@@ -629,50 +628,11 @@ public class NexoItemConverter extends ItemConverter {
         String pulling1 = namespaced(notEmptyOrNull(pullingModels, 1) ? pullingModels.get(1) : packSection.getString("pulling_1_model"));
         String pulling2 = namespaced(notEmptyOrNull(pullingModels, 2) ? pullingModels.get(2) : packSection.getString("pulling_2_model"));
 
-        if (baseModel == null || pulling0 == null) {
-            Logger.info("Missing required crossbow model paths for item '" + this.itemId + "'. Skipping crossbow model conversion.", LogType.WARNING);
-            return;
+        if (isNotNull(baseModel) && isNotNull(pulling0) && isNotNull(pulling1) && isNotNull(pulling2)){
+            this.craftEngineItemUtils.getGeneralSection().createSection("model",InternalTemplateManager.parseTemplate(Template.MODEL_ITEM_CROSSBOW,"%charged_arrow_model_path%",arrowModel==null?pulling2:arrowModel,"%charged_firework_model_path%",fireworkModel==null?pulling2:fireworkModel,"%default_model_path%",baseModel,"%pulling_0_model_path%",pulling0,"%pulling_1_model_path%",pulling1,"%pulling_2_model_path%",pulling2));
+        } else {
+            Logger.info("Failed to process crossbow model paths for item '" + this.itemId + "'. Skipping crossbow model conversion.", LogType.WARNING);
         }
-
-        modelSection.set("type", "minecraft:condition");
-        modelSection.set("property", "minecraft:using_item");
-
-        Map<String, Object> onFalse = new HashMap<>();
-        onFalse.put("type", "minecraft:select");
-        onFalse.put("property", "minecraft:charge_type");
-
-        List<Map<String, Object>> cases = new ArrayList<>();
-        if (arrowModel != null) {
-            cases.add(Map.of(
-                    "when", "arrow",
-                    "model", simpleModelMap(arrowModel, packSection.getString("arrow_texture"), "minecraft:item/crossbow_arrow")
-            ));
-        }
-        if (fireworkModel != null) {
-            cases.add(Map.of(
-                    "when", "rocket",
-                    "model", simpleModelMap(fireworkModel, packSection.getString("firework_texture"), "minecraft:item/crossbow_firework")
-            ));
-        }
-        if (!cases.isEmpty()) {
-            onFalse.put("cases", cases);
-        }
-        onFalse.put("fallback", simpleModelMap(baseModel, packSection.getString("texture"), "minecraft:item/crossbow"));
-        modelSection.set("on-false", onFalse);
-
-        Map<String, Object> onTrue = new HashMap<>();
-        onTrue.put("type", "minecraft:range_dispatch");
-        onTrue.put("property", "minecraft:crossbow/pull");
-
-        List<Map<String, Object>> entries = new ArrayList<>();
-        addPullingEntry(entries, pulling1, packSection.getString("pulling_1_texture"), "minecraft:item/crossbow_pulling_1", 0.58);
-        addPullingEntry(entries, pulling2, packSection.getString("pulling_2_texture"), "minecraft:item/crossbow_pulling_2", 1.0);
-
-        if (!entries.isEmpty()) {
-            onTrue.put("entries", entries);
-        }
-        onTrue.put("fallback", simpleModelMap(pulling0, packSection.getString("pulling_0_texture"), "minecraft:item/crossbow_pulling_0"));
-        modelSection.set("on-true", onTrue);
     }
 
     private void addPullingEntry(List<Map<String, Object>> entries, String model, String texture, String parent, double threshold) {

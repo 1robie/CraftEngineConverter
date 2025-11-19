@@ -115,6 +115,10 @@ public abstract class ItemConverter {
         return obj != null;
     }
 
+    public boolean isNull(Object obj){
+        return obj == null;
+    }
+
     protected @Nullable String namespaced(String path) {
         path = cleanPath(path);
         if (path == null || path.isEmpty()) return null;
