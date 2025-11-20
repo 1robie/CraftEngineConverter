@@ -11,6 +11,7 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -36,6 +37,7 @@ public class NexoConverter extends YamlUtils implements Converter {
         }
         long startTime = System.currentTimeMillis();
         AtomicInteger loadedItems = new AtomicInteger(0);
+        Set<String> itemsLoaded = new HashSet<>();
         try {
             this.plugin.getFoliaCompatibilityManager().runAsync(()->{
                 processDirectory(inputBase, inputBase, outputBase, loadedItems);
@@ -44,6 +46,7 @@ public class NexoConverter extends YamlUtils implements Converter {
         } catch (Exception e) {
             Logger.info("Error during Nexo items conversion: " + e.getMessage());
         }
+        //TODO generate menu section for items in the set itemsLoaded
     }
 
     private void processDirectory(File baseDir, File currentDir, File outputBase, AtomicInteger loadedItems) {

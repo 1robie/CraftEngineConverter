@@ -25,9 +25,9 @@ public class NexoItemConverter extends ItemConverter {
     public void convertMaterial() {
         Material material;
         try {
-            material = Material.valueOf(this.nexoItemSection.getString("material", "PAPER").toUpperCase());
+            material = Material.valueOf(this.nexoItemSection.getString("material", Configuration.defaultMaterial.name()).toUpperCase());
         } catch (IllegalArgumentException e) {
-            material = Material.PAPER;
+            material = Configuration.defaultMaterial;
         }
         this.craftEngineItemUtils.setMaterial(material);
     }
@@ -52,6 +52,11 @@ public class NexoItemConverter extends ItemConverter {
         if (!lore.isEmpty()) {
             this.craftEngineItemUtils.getDataSection().set("lore", lore);
         }
+    }
+
+    @Override
+    public void convertExcludeFromInventory(){
+        this.excludeFromInventory = this.nexoItemSection.getBoolean("excludeFromInventory", false);
     }
 
     @Override
@@ -131,7 +136,7 @@ public class NexoItemConverter extends ItemConverter {
     public void convertCustomModelData() {
         int customModelData = this.nexoItemSection.getInt("Pack.custom_model_data", 0);
         if (customModelData != 0) {
-            this.craftEngineItemUtils.getDataSection().set("custom-model-data", customModelData);
+            this.craftEngineItemUtils.getGeneralSection().set("custom-model-data", customModelData);
         }
     }
 
@@ -368,7 +373,7 @@ public class NexoItemConverter extends ItemConverter {
                         .set("consume-replacement", "minecraft:" + value.toLowerCase());
                 case "nexo_item" -> this.craftEngineItemUtils.getSettingsSection()
                         .set("consume-replacement", value);
-                default -> Logger.info("Found unsupported use_remainder key '" + keyToCheck + "' with value '" + value + "', skipping conversion.", LogType.WARNING);
+                default -> Logger.debug("Found unsupported use_remainder key '" + keyToCheck + "' with value '" + value + "', skipping conversion.", LogType.WARNING);
             }
         }
     }
@@ -382,13 +387,13 @@ public class NexoItemConverter extends ItemConverter {
 
         String singleRepairItem = componentsSection.getString("anvil_repairable.repairable");
         if (singleRepairItem != null && !singleRepairItem.isEmpty()) {
-            Logger.info("Nexo doesn't support amount for anvil_repairable, defaulting to 1.", LogType.WARNING);
+            Logger.debug("Nexo doesn't support amount for anvil_repairable, defaulting to 1.", LogType.WARNING);
             ceRepairItems.add(Map.of("target", singleRepairItem, "amount", 1));
         }
 
         List<String> multipleRepairItems = componentsSection.getStringList("anvil_repairable.repairable");
         for (String item : multipleRepairItems) {
-            Logger.info("Nexo doesn't support amount for anvil_repairable, defaulting to 1.", LogType.WARNING);
+            Logger.debug("Nexo doesn't support amount for anvil_repairable, defaulting to 1.", LogType.WARNING);
             ceRepairItems.add(Map.of("target", item, "amount", 1));
         }
 
@@ -476,7 +481,7 @@ public class NexoItemConverter extends ItemConverter {
 
         modelPath = cleanPath(modelPath);
         if (isNull(modelPath)) {
-            Logger.info("Failed to process model path for item '" + this.itemId + "'. Skipping texture conversion.", LogType.WARNING);
+            Logger.debug("Failed to process model path for item '" + this.itemId + "'. Skipping texture conversion.", LogType.WARNING);
             return;
         }
 
@@ -486,7 +491,7 @@ public class NexoItemConverter extends ItemConverter {
 
         String namespacedPath = namespaced(modelPath);
         if (isNull(namespacedPath)) {
-            Logger.info("Failed to namespace model path for item '" + this.itemId + "'. Skipping texture conversion.", LogType.WARNING);
+            Logger.debug("Failed to namespace model path for item '" + this.itemId + "'. Skipping texture conversion.", LogType.WARNING);
             return;
         }
         this.craftEngineItemUtils.getGeneralSection().createSection("model",InternalTemplateManager.parseTemplate(Template.MODEL_ITEM_DEFAULT, "%model_path%", namespacedPath));
@@ -558,10 +563,10 @@ public class NexoItemConverter extends ItemConverter {
                 parsedTemplate.put("type", "minecraft:model");
                 this.craftEngineItemUtils.getGeneralSection().createSection("model", parsedTemplate);
             } else {
-                Logger.info("Final texture path is invalid for item '" + this.itemId + "'. Skipping texture conversion.", LogType.WARNING);
+                Logger.debug("Final texture path is invalid for item '" + this.itemId + "'. Skipping texture conversion.", LogType.WARNING);
             }
         } else {
-            Logger.info("No texture path found for item '" + this.itemId + "' despite parent_model being '" + parent + "'. Skipping texture conversion.", LogType.WARNING);
+            Logger.debug("No texture path found for item '" + this.itemId + "' despite parent_model being '" + parent + "'. Skipping texture conversion.", LogType.WARNING);
         }
 
     }
@@ -569,7 +574,7 @@ public class NexoItemConverter extends ItemConverter {
     private void buildCubeTopModel(ConfigurationSection packSection) {
         String sideTexture = packSection.getString("textures.side");
         String topTexture = packSection.getString("textures.top");
-        Logger.info("sideTexture: " + sideTexture + ", topTexture: " + topTexture);
+        Logger.debug("sideTexture: " + sideTexture + ", topTexture: " + topTexture);
 
         if (isValidString(sideTexture) && isValidString(topTexture)) {
             String finalSideTexture = namespaced(sideTexture);
@@ -581,10 +586,10 @@ public class NexoItemConverter extends ItemConverter {
                 parseTemplate.put("type", "minecraft:model");
                 this.craftEngineItemUtils.getGeneralSection().createSection("model", parseTemplate);
             } else {
-                Logger.info("Failed to process textures for item '" + this.itemId + "'. Skipping texture conversion.", LogType.WARNING);
+                Logger.debug("Failed to process textures for item '" + this.itemId + "'. Skipping texture conversion.", LogType.WARNING);
             }
         } else {
-            Logger.info("Missing side or top texture for item '" + this.itemId + "' despite parent_model being 'block/cube_top'. Skipping texture conversion.", LogType.WARNING);
+            Logger.debug("Missing side or top texture for item '" + this.itemId + "' despite parent_model being 'block/cube_top'. Skipping texture conversion.", LogType.WARNING);
         }
     }
 
@@ -598,7 +603,7 @@ public class NexoItemConverter extends ItemConverter {
         if (isNotNull(baseModel) && isNotNull(pulling0) && isNotNull(pulling1) && isNotNull(pulling2)) {
             this.craftEngineItemUtils.getGeneralSection().createSection("model",InternalTemplateManager.parseTemplate(Template.MODEL_ITEM_BOW, "%default_model_path%",baseModel,"%pulling_0_model_path%",pulling0,"%pulling_1_model_path%",pulling1,"%pulling_2_model_path%",pulling2));
         } else {
-            Logger.info("Failed to process bow model paths for item '" + this.itemId + "'. Skipping bow model conversion.", LogType.WARNING);
+            Logger.debug("Failed to process bow model paths for item '" + this.itemId + "'. Skipping bow model conversion.", LogType.WARNING);
         }
     }
 
@@ -615,7 +620,7 @@ public class NexoItemConverter extends ItemConverter {
         if (isNotNull(baseModel) && isNotNull(pulling0) && isNotNull(pulling1) && isNotNull(pulling2)){
             this.craftEngineItemUtils.getGeneralSection().createSection("model",InternalTemplateManager.parseTemplate(Template.MODEL_ITEM_CROSSBOW,"%charged_arrow_model_path%",arrowModel==null?pulling2:arrowModel,"%charged_firework_model_path%",fireworkModel==null?pulling2:fireworkModel,"%default_model_path%",baseModel,"%pulling_0_model_path%",pulling0,"%pulling_1_model_path%",pulling1,"%pulling_2_model_path%",pulling2));
         } else {
-            Logger.info("Failed to process crossbow model paths for item '" + this.itemId + "'. Skipping crossbow model conversion.", LogType.WARNING);
+            Logger.debug("Failed to process crossbow model paths for item '" + this.itemId + "'. Skipping crossbow model conversion.", LogType.WARNING);
         }
     }
 
@@ -631,7 +636,7 @@ public class NexoItemConverter extends ItemConverter {
                     convertFurnitureMechanic(nexoFurnitureSection);
                 }
                 case "custom_block" -> {
-                    Logger.info("Custom Block mechanic conversion for item '"+this.itemId+"' is not finished yet. Partial conversion may occur.", LogType.WARNING);
+                    Logger.debug("Custom Block mechanic conversion for item '"+this.itemId+"' is not finished yet. Partial conversion may occur.", LogType.WARNING);
                     ConfigurationSection nexoCustomBlockSection = mechanicsSection.getConfigurationSection(mechanicsKey);
                     // TODO
                     convertCustomBlockMechanic(nexoCustomBlockSection);
@@ -642,19 +647,50 @@ public class NexoItemConverter extends ItemConverter {
     }
 
     private void convertCustomBlockMechanic(ConfigurationSection nexoCustomBlockSection) {
+        Map<String, Object> savedModel = getSavedModelTemplates();
+        if (savedModel.isEmpty()) return;
         ConfigurationSection ceBehaviorSection = this.craftEngineItemUtils.getBehaviorSection();
         ceBehaviorSection.set("type", "block_item");
         ConfigurationSection ceBlockSection = getOrCreateSection(ceBehaviorSection, "block");
         ConfigurationSection ceStateSection = getOrCreateSection(ceBlockSection, "state");
         ceStateSection.set("auto-state","solid");
-        Map<String, Object> savedModel = getSavedModelTemplates();
-        if (!savedModel.isEmpty()) {
-            ceStateSection.createSection("model", savedModel);
-        } else {
-            Logger.info("No saved model templates found for custom block item '" + this.itemId + "'. The block may not have the correct appearance.", LogType.WARNING);
-            return;
+        ceStateSection.createSection("model", savedModel);
+        ConfigurationSection sounds = nexoCustomBlockSection.getConfigurationSection("block_sounds");
+        if (sounds != null) {
+            ConfigurationSection settings = getOrCreateSection(ceBlockSection, "settings");
+            for (String soundKey : new String[]{"place_sound","break_sound","hit_sound","step_sound","fall_sound"}) {
+                String soundValue = sounds.getString(soundKey);
+                if (isValidString(soundValue)) {
+                    ConfigurationSection ceSoundsSection = getOrCreateSection(settings, "sounds");
+                    String ceSoundKey = soundKey.replace("_sound", "");
+                    ceSoundsSection.set(ceSoundKey, soundValue);
+                }
+            }
         }
-
+        double hardness = nexoCustomBlockSection.getDouble("hardness",2.0);
+        if (hardness >= 0 && hardness != 2.0){
+            ConfigurationSection settings = this.craftEngineItemUtils.getSettingsSection();
+            settings.set("hardness", hardness);
+        }
+        boolean canBeBeaconBaseBlock = nexoCustomBlockSection.getBoolean("beacon_base_block",false);
+        if (canBeBeaconBaseBlock){
+            ConfigurationSection settings = this.craftEngineItemUtils.getSettingsSection();
+            List<String> blockTags = settings.getStringList("tags");
+            if (!blockTags.contains("minecraft:beacon_base_blocks")){
+                blockTags.add("minecraft:beacon_base_blocks");
+                settings.set("tags",blockTags);
+            }
+        }
+        boolean isFallingBlock = nexoCustomBlockSection.getBoolean("is_falling",false);
+        if (isFallingBlock){
+            ConfigurationSection ceBlockBehaviorSection = getOrCreateSection(ceBlockSection, "behavior");
+            ceBlockBehaviorSection.set("type","falling_block");
+        }
+        ConfigurationSection nexoSaplingSection = nexoCustomBlockSection.getConfigurationSection("sapling");
+        if (nexoSaplingSection != null){
+            Logger.debug("Sapling behavior conversion for custom block item '"+this.itemId+"' is not supported yet. Skipping sapling behavior.", LogType.WARNING);
+            // TODO
+        }
     }
 
     private void convertFurnitureMechanic(ConfigurationSection nexoFurnitureMechanicsSection) {
@@ -662,7 +698,7 @@ public class NexoItemConverter extends ItemConverter {
         String nexoBetterModel = nexoFurnitureMechanicsSection.getString("better-model");
         if ((nexoMEGModel != null && !nexoMEGModel.isEmpty()) || (nexoBetterModel != null && !nexoBetterModel.isEmpty())){
             // TODO
-            Logger.info("Conversion of furniture items using ModelEngine or BetterModel is not supported yet. Skipping furniture item '"+this.itemId+"'.", LogType.WARNING);
+            Logger.debug("Conversion of furniture items using ModelEngine or BetterModel is not supported yet. Skipping furniture item '"+this.itemId+"'.", LogType.WARNING);
             return;
         }
         ConfigurationSection ceBehaviorSection = this.craftEngineItemUtils.getBehaviorSection();
@@ -698,7 +734,7 @@ public class NexoItemConverter extends ItemConverter {
                 seatPosition.setValue(1, Float.parseFloat(split[1].trim()));
                 seatPosition.setValue(2, Float.parseFloat(split[2].trim()));
             } catch (Exception e){
-                Logger.info("Invalid seat format for furniture item '" + this.itemId + "', expected 3 comma-separated float values but got '"+seat+"'. Defaulting to (0,0,0).", LogType.WARNING);
+                Logger.debug("Invalid seat format for furniture item '" + this.itemId + "', expected 3 comma-separated float values but got '"+seat+"'. Defaulting to (0,0,0).", LogType.WARNING);
             }
         }
 
@@ -713,14 +749,14 @@ public class NexoItemConverter extends ItemConverter {
             try {
                 displayType = ItemDisplayType.valueOf(display_transform);
             } catch (IllegalArgumentException e){
-                Logger.info("Unknown display_transform '"+display_transform+"' for furniture item '"+this.itemId+"', defaulting to NONE.", LogType.WARNING);
+                Logger.debug("Unknown display_transform '"+display_transform+"' for furniture item '"+this.itemId+"', defaulting to NONE.", LogType.WARNING);
                 displayType = ItemDisplayType.NONE;
             }
             String tracking_rotation = nexoPropertiesSection.getString("tracking_rotation","FIXED");
             try {
                 transformType = Billboard.valueOf(tracking_rotation);
             } catch (IllegalArgumentException e){
-                Logger.info("Unknown tracking_rotation '"+tracking_rotation+"' for furniture item '"+this.itemId+"', defaulting to FIXED.", LogType.WARNING);
+                Logger.debug("Unknown tracking_rotation '"+tracking_rotation+"' for furniture item '"+this.itemId+"', defaulting to FIXED.", LogType.WARNING);
             }
             List<Float> translations = nexoPropertiesSection.getFloatList("translation");
             if (translations.size() >= 3){
@@ -729,7 +765,7 @@ public class NexoItemConverter extends ItemConverter {
                 displayTranslation.setValue(2, translations.get(2));
             } else {
                 if (!translations.isEmpty()) {
-                    Logger.info("Invalid translation size for furniture item '" + this.itemId + "', expected 3 values but got " + translations.size() + ". Defaulting to (0,0,0).", LogType.WARNING);
+                    Logger.debug("Invalid translation size for furniture item '" + this.itemId + "', expected 3 values but got " + translations.size() + ". Defaulting to (0,0,0).", LogType.WARNING);
                 }
             }
             String scales = nexoPropertiesSection.getString("scale");
@@ -740,14 +776,14 @@ public class NexoItemConverter extends ItemConverter {
                     scale.setValue(1, Float.parseFloat(split[1].trim()));
                     scale.setValue(2, Float.parseFloat(split[2].trim()));
                 } catch (Exception e){
-                    Logger.info("Invalid scale format for furniture item '" + this.itemId + "', expected 3 comma-separated float values but got '"+scales+"'. Defaulting to (1,1,1).", LogType.WARNING);
+                    Logger.debug("Invalid scale format for furniture item '" + this.itemId + "', expected 3 comma-separated float values but got '"+scales+"'. Defaulting to (1,1,1).", LogType.WARNING);
                 }
             }
         }
         ConfigurationSection dropSection = nexoFurnitureMechanicsSection.getConfigurationSection("drop");
         if (dropSection != null){
             //TODO
-
+            Logger.debug("Furniture item '"+this.itemId+"' has a drop configuration, but drop conversion is not supported yet. Skipping drop conversion.", LogType.WARNING);
         }
         ConfigurationSection limitedPlacingSection = nexoFurnitureMechanicsSection.getConfigurationSection("limited_placing");
         Set<FurniturePlacement> noLimitedPlacingKeys = new HashSet<>();
@@ -829,7 +865,7 @@ public class NexoItemConverter extends ItemConverter {
             if (barrier == null || barrier.isBlank()) continue;
             String[] parts = barrier.trim().split("\\s*,\\s*");
             if (parts.length != 3) {
-                Logger.info("Invalid barrier entry '"+barrier+"' for item '"+this.itemId+"', expected 3 comma-separated values.", LogType.WARNING);
+                Logger.debug("Invalid barrier entry '"+barrier+"' for item '"+this.itemId+"', expected 3 comma-separated values.", LogType.WARNING);
                 continue;
             }
 
@@ -862,7 +898,7 @@ public class NexoItemConverter extends ItemConverter {
         if (part.contains("..")) {
             String[] rangeSplit = part.split("\\.\\.");
             if (rangeSplit.length != 2) {
-                Logger.info("Invalid range '"+part+"' in barrier entry '"+original+"'.", LogType.WARNING);
+                Logger.debug("Invalid range '"+part+"' in barrier entry '"+original+"'.", LogType.WARNING);
                 return new int[0];
             }
             try {
@@ -876,14 +912,14 @@ public class NexoItemConverter extends ItemConverter {
                 }
                 return values;
             } catch (NumberFormatException e) {
-                Logger.info("Non-numeric range bounds '"+part+"' in barrier entry '"+original+"'.", LogType.WARNING);
+                Logger.debug("Non-numeric range bounds '"+part+"' in barrier entry '"+original+"'.", LogType.WARNING);
                 return new int[0];
             }
         } else {
             try {
                 return new int[]{Integer.parseInt(part)};
             } catch (NumberFormatException e) {
-                Logger.info("Non-numeric value '"+part+"' in barrier entry '"+original+"'.", LogType.WARNING);
+                Logger.debug("Non-numeric value '"+part+"' in barrier entry '"+original+"'.", LogType.WARNING);
                 return new int[0];
             }
         }
@@ -895,19 +931,19 @@ public class NexoItemConverter extends ItemConverter {
 
             String[] parts = interaction.trim().split("\\s+");
             if (parts.length != 2) {
-                Logger.info("Invalid interaction entry '"+interaction+"' for item '"+this.itemId+"', expected format: 'x,y,z width,height'.", LogType.WARNING);
+                Logger.debug("Invalid interaction entry '"+interaction+"' for item '"+this.itemId+"', expected format: 'x,y,z width,height'.", LogType.WARNING);
                 continue;
             }
 
             String[] coordParts = parts[0].split("\\s*,\\s*");
             if (coordParts.length != 3) {
-                Logger.info("Invalid coordinates in interaction '"+interaction+"' for item '"+this.itemId+"'.", LogType.WARNING);
+                Logger.debug("Invalid coordinates in interaction '"+interaction+"' for item '"+this.itemId+"'.", LogType.WARNING);
                 continue;
             }
 
             String[] sizeParts = parts[1].split("\\s*,\\s*");
             if (sizeParts.length != 2) {
-                Logger.info("Invalid size in interaction '"+interaction+"' for item '"+this.itemId+"'.", LogType.WARNING);
+                Logger.debug("Invalid size in interaction '"+interaction+"' for item '"+this.itemId+"'.", LogType.WARNING);
                 continue;
             }
 
@@ -925,7 +961,7 @@ public class NexoItemConverter extends ItemConverter {
                 hitbox.put("height", height);
                 hitboxes.add(hitbox);
             } catch (NumberFormatException e) {
-                Logger.info("Non-numeric values in interaction '"+interaction+"' for item '"+this.itemId+"'.", LogType.WARNING);
+                Logger.debug("Non-numeric values in interaction '"+interaction+"' for item '"+this.itemId+"'.", LogType.WARNING);
             }
         }
     }
@@ -937,13 +973,13 @@ public class NexoItemConverter extends ItemConverter {
             // Format: "x,y,z scale peek [direction] [visible]"
             String[] parts = shulker.trim().split("\\s+");
             if (parts.length < 3) {
-                Logger.info("Invalid shulker entry '"+shulker+"' for item '"+this.itemId+"', expected format: 'x,y,z scale peek [direction] [visible]'.", LogType.WARNING);
+                Logger.debug("Invalid shulker entry '"+shulker+"' for item '"+this.itemId+"', expected format: 'x,y,z scale peek [direction] [visible]'.", LogType.WARNING);
                 continue;
             }
 
             String[] coordParts = parts[0].split("\\s*,\\s*");
             if (coordParts.length != 3) {
-                Logger.info("Invalid coordinates in shulker '"+shulker+"' for item '"+this.itemId+"'.", LogType.WARNING);
+                Logger.debug("Invalid coordinates in shulker '"+shulker+"' for item '"+this.itemId+"'.", LogType.WARNING);
                 continue;
             }
 
@@ -965,7 +1001,7 @@ public class NexoItemConverter extends ItemConverter {
                     if (isValidDirection(direction)) {
                         hitbox.put("direction", direction);
                     } else {
-                        Logger.info("Invalid direction '"+parts[3]+"' in shulker '"+shulker+"' for item '"+this.itemId+"', defaulting to UP.", LogType.WARNING);
+                        Logger.debug("Invalid direction '"+parts[3]+"' in shulker '"+shulker+"' for item '"+this.itemId+"', defaulting to UP.", LogType.WARNING);
                         hitbox.put("direction", "UP");
                     }
                 } else {
@@ -975,7 +1011,7 @@ public class NexoItemConverter extends ItemConverter {
                 addSeatsIfNeeded(hitbox, seatPosition, seatsAdded);
                 hitboxes.add(hitbox);
             } catch (NumberFormatException e) {
-                Logger.info("Non-numeric values in shulker '"+shulker+"' for item '"+this.itemId+"'.", LogType.WARNING);
+                Logger.debug("Non-numeric values in shulker '"+shulker+"' for item '"+this.itemId+"'.", LogType.WARNING);
             }
         }
     }
@@ -987,13 +1023,13 @@ public class NexoItemConverter extends ItemConverter {
             // Format: "x,y,z scale [rotation] [visible]"
             String[] parts = ghast.trim().split("\\s+");
             if (parts.length < 2) {
-                Logger.info("Invalid ghast entry '"+ghast+"' for item '"+this.itemId+"', expected format: 'x,y,z scale [rotation] [visible]'.", LogType.WARNING);
+                Logger.debug("Invalid ghast entry '"+ghast+"' for item '"+this.itemId+"', expected format: 'x,y,z scale [rotation] [visible]'.", LogType.WARNING);
                 continue;
             }
 
             String[] coordParts = parts[0].split("\\s*,\\s*");
             if (coordParts.length != 3) {
-                Logger.info("Invalid coordinates in ghast '"+ghast+"' for item '"+this.itemId+"'.", LogType.WARNING);
+                Logger.debug("Invalid coordinates in ghast '"+ghast+"' for item '"+this.itemId+"'.", LogType.WARNING);
                 continue;
             }
 
@@ -1011,7 +1047,7 @@ public class NexoItemConverter extends ItemConverter {
                 addSeatsIfNeeded(hitbox, seatPosition, seatsAdded);
                 hitboxes.add(hitbox);
             } catch (NumberFormatException e) {
-                Logger.info("Non-numeric values in ghast '"+ghast+"' for item '"+this.itemId+"'.", LogType.WARNING);
+                Logger.debug("Non-numeric values in ghast '"+ghast+"' for item '"+this.itemId+"'.", LogType.WARNING);
             }
         }
     }

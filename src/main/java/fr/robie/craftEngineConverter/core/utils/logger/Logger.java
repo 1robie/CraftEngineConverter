@@ -1,5 +1,6 @@
 package fr.robie.craftEngineConverter.core.utils.logger;
 
+import fr.robie.craftEngineConverter.core.utils.Configuration;
 import org.bukkit.Bukkit;
 
 public class Logger {
@@ -24,6 +25,14 @@ public class Logger {
         getLogger().log(message, LogType.INFO);
     }
 
+    public static void debug(String message) {
+        getLogger().logDebug(message, LogType.WARNING);
+    }
+
+    public static void debug(String message, LogType type) {
+        getLogger().logDebug(message, type);
+    }
+
     public String getPrefix() {
         return prefix;
     }
@@ -46,6 +55,12 @@ public class Logger {
 
     public void log(String[] messages, LogType type) {
         for (String message : messages) {
+            log(message, type);
+        }
+    }
+
+    public void logDebug(String message, LogType type) {
+        if (Configuration.enableDebug){
             log(message, type);
         }
     }

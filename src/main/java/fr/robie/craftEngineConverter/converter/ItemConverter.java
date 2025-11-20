@@ -11,6 +11,7 @@ public abstract class ItemConverter {
     protected final String itemId;
     private final Map<String,Object> savedModelTemplates = new HashMap<>();
     public final CraftEngineItemUtils craftEngineItemUtils;
+    protected boolean excludeFromInventory = false;
 
     public ItemConverter(String itemId,ConfigurationSection craftEngineItemSection){
         this.itemId = itemId;
@@ -95,6 +96,7 @@ public abstract class ItemConverter {
     public void convertCanBreakComponent(){};
     public void convertOversizedInGui(){};
     public void convertItemTexture(){};
+    public void convertExcludeFromInventory(){}
     public void convertOther(){};
 
     public void setSavedModelTemplates(Map<String,Object> savedModelTemplates){
@@ -174,5 +176,9 @@ public abstract class ItemConverter {
             return parent.getConfigurationSection(key);
         }
         return parent.createSection(key);
+    }
+
+    public boolean isExcludeFromInventory() {
+        return this.excludeFromInventory;
     }
 }

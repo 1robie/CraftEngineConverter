@@ -1,0 +1,4 @@
+enable-debug: false
+
+# Default material for items
+default-material: "PAPER"

@@ -3,6 +3,7 @@ package fr.robie.craftEngineConverter;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import fr.robie.craftEngineConverter.converter.nexo.NexoConverter;
+import fr.robie.craftEngineConverter.core.utils.Configuration;
 import fr.robie.craftEngineConverter.core.utils.FoliaCompatibilityManager;
 import fr.robie.craftEngineConverter.core.utils.command.CommandManager;
 import fr.robie.craftEngineConverter.core.utils.format.ClassicMeta;
@@ -16,8 +17,10 @@ import fr.robie.craftEngineConverter.core.utils.save.PersistImp;
 import fr.robie.craftEngineConverter.core.utils.save.Savable;
 import fr.robie.craftEngineConverter.loader.InternalTemplateManager;
 import fr.robie.craftEngineConverter.loader.MessageLoader;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.io.File;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.List;
@@ -52,6 +55,7 @@ public final class CraftEngineConverter extends JavaPlugin {
             messageFormatter = new ComponentMeta();
         }
         this.addSave(new MessageLoader(this));
+        this.reloadConfig();
         if (!this.templateManager.loadTemplates()){
             Logger.info("A error occure during the loading of templates");
         }
@@ -112,6 +116,13 @@ public final class CraftEngineConverter extends JavaPlugin {
     private GsonBuilder getGsonBuilder() {
         return new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().serializeNulls()
                 .excludeFieldsWithModifiers(Modifier.TRANSIENT, Modifier.VOLATILE);
+    }
+
+    public void reloadConfig(){
+        this.saveDefaultConfig();
+        File configFile = new File(this.getDataFolder(), "config.yml");
+        YamlConfiguration config = YamlConfiguration.loadConfiguration(configFile);
+        Configuration.getInstance().load(config, configFile);
     }
 
     public static CraftEngineConverter getInstance() {
