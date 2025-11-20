@@ -11,7 +11,8 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.HashSet;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -37,7 +38,6 @@ public class NexoConverter extends YamlUtils implements Converter {
         }
         long startTime = System.currentTimeMillis();
         AtomicInteger loadedItems = new AtomicInteger(0);
-        Set<String> itemsLoaded = new HashSet<>();
         try {
             this.plugin.getFoliaCompatibilityManager().runAsync(()->{
                 processDirectory(inputBase, inputBase, outputBase, loadedItems);
@@ -46,7 +46,6 @@ public class NexoConverter extends YamlUtils implements Converter {
         } catch (Exception e) {
             Logger.info("Error during Nexo items conversion: " + e.getMessage());
         }
-        //TODO generate menu section for items in the set itemsLoaded
     }
 
     private void processDirectory(File baseDir, File currentDir, File outputBase, AtomicInteger loadedItems) {
@@ -68,16 +67,22 @@ public class NexoConverter extends YamlUtils implements Converter {
             YamlConfiguration convertedConfig = new YamlConfiguration();
             ConfigurationSection items = convertedConfig.createSection("items");
             Set<String> keys = config.getKeys(false);
+            List<String> itemsIds = new ArrayList<>();
+            String finalFileName = fileName.substring(0, fileName.length() - 4);
             for (String itemId : keys) {
                 ConfigurationSection section = config.getConfigurationSection(itemId);
                 if (section == null) {
                     continue;
                 }
-                String finalItemId = fileName.substring(0, fileName.length() - 4) + ":" + itemId;
+                String finalItemId = finalFileName + ":" + itemId;
                 NexoItemConverter nexoItemConverter = new NexoItemConverter(section, finalItemId, items.createSection(finalItemId));
                 nexoItemConverter.convertItem();
+                if (!nexoItemConverter.isExcludeFromInventory()) {
+                    itemsIds.add(finalItemId);
+                }
                 loadedItems.incrementAndGet();
             }
+            generateCategorie(itemsIds, convertedConfig, finalFileName);
 
             try {
                 Path relative = baseDir.toPath().relativize(itemFile.toPath());
@@ -94,5 +99,14 @@ public class NexoConverter extends YamlUtils implements Converter {
                 e.printStackTrace();
             }
         }
+    }
+
+    public void generateCategorie(List<String> itemsIds, YamlConfiguration config, String fileName) {
+        if (itemsIds.isEmpty()) return;
+        ConfigurationSection categoriesSection = config.createSection("categories");
+        ConfigurationSection categorySection = categoriesSection.createSection(itemsIds.getFirst());
+        categorySection.set("name", "Category "+fileName);
+        categorySection.set("icon", itemsIds.getFirst());
+        categorySection.set("list", itemsIds);
     }
 }
