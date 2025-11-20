@@ -2,6 +2,7 @@ package fr.robie.craftEngineConverter.converter.nexo;
 
 import fr.robie.craftEngineConverter.CraftEngineConverter;
 import fr.robie.craftEngineConverter.converter.Converter;
+import fr.robie.craftEngineConverter.core.utils.Configuration;
 import fr.robie.craftEngineConverter.core.utils.YamlUtils;
 import fr.robie.craftEngineConverter.core.utils.logger.LogType;
 import fr.robie.craftEngineConverter.core.utils.logger.Logger;
@@ -105,7 +106,7 @@ public class NexoConverter extends YamlUtils implements Converter {
         if (itemsIds.isEmpty()) return;
         ConfigurationSection categoriesSection = config.createSection("categories");
         ConfigurationSection categorySection = categoriesSection.createSection(itemsIds.getFirst());
-        categorySection.set("name", "Category "+fileName);
+        categorySection.set("name", (Configuration.disableDefaultItalic? "<!i>":"") + "Category "+fileName);
         categorySection.set("icon", itemsIds.getFirst());
         categorySection.set("list", itemsIds);
     }

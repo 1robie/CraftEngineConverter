@@ -2,3 +2,6 @@ enable-debug: false
 
 # Default material for items
 default-material: "PAPER"
+
+# Disable italic formatting in item lore by adding <!i> tag
+disable-default-italic: true

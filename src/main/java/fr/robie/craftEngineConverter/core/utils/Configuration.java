@@ -11,6 +11,7 @@ import java.util.function.Consumer;
 public class Configuration {
     public static boolean enableDebug = false;
     public static Material defaultMaterial = Material.PAPER;
+    public static boolean disableDefaultItalic = true;
 
     private static volatile Configuration instance;
     private boolean isUpdated = false;
@@ -97,6 +98,7 @@ public class Configuration {
                 Configuration.defaultMaterial = Material.PAPER;
             }
         }),
+        DISABLE_DEFAULT_ITALIC("disable-default-italic", true, v -> Configuration.disableDefaultItalic = (Boolean) v)
         ;
 
         private final String path;

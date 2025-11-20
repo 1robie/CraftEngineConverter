@@ -42,14 +42,23 @@ public class NexoItemConverter extends ItemConverter {
 
     @Override
     public void convertItemName() {
-        setIfNotNull(this.craftEngineItemUtils.getDataSection(), "item-name",
-                this.nexoItemSection.getString("itemname"));
+        String itemName = this.nexoItemSection.getString("itemname");
+        if (isValidString(itemName)){
+            this.craftEngineItemUtils.getDataSection().set("item-name", (Configuration.disableDefaultItalic?"<!i>":"")+itemName);
+        }
     }
 
     @Override
     public void convertLore() {
         List<String> lore = this.nexoItemSection.getStringList("lore");
         if (!lore.isEmpty()) {
+            if (Configuration.disableDefaultItalic){
+                List<String> convertedLore = new ArrayList<>();
+                for (String line : lore) {
+                    convertedLore.add("<!i>" + line);
+                }
+                lore = convertedLore;
+            }
             this.craftEngineItemUtils.getDataSection().set("lore", lore);
         }
     }
