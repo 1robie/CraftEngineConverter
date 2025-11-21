@@ -1,0 +1,14 @@
+type: minecraft:condition
+property: minecraft:broken
+on-false:
+  path: "%model_path%"
+  generation:
+    parent: minecraft:item/generated
+    textures:
+      layer0: "%texture_path%"
+on-true:
+  path: "%broken_model_path%"
+  generation:
+    parent: minecraft:item/generated
+    textures:
+      layer0: "%broken_texture_path%"

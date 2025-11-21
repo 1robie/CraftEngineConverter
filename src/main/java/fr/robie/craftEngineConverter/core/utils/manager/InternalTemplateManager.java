@@ -1,4 +1,4 @@
-package fr.robie.craftEngineConverter.loader;
+package fr.robie.craftEngineConverter.core.utils.manager;
 
 import fr.robie.craftEngineConverter.CraftEngineConverter;
 import fr.robie.craftEngineConverter.core.utils.Template;

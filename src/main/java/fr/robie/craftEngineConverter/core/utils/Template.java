@@ -9,6 +9,7 @@ public enum Template {
     MODEL_ITEM_CROSSBOW("templates/model/item_crossbow"),
     MODEL_ITEM_BOW("templates/model/item_bow"),
     MODEL_ITEM_DEFAULT("templates/model/item_default"),
+    MODEL_ITEM_ELYTRA("templates/model/item_elytra"),
 
     ;
     private final String path;

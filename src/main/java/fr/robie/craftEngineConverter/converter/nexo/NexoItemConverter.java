@@ -4,7 +4,7 @@ import fr.robie.craftEngineConverter.converter.ItemConverter;
 import fr.robie.craftEngineConverter.core.utils.*;
 import fr.robie.craftEngineConverter.core.utils.logger.LogType;
 import fr.robie.craftEngineConverter.core.utils.logger.Logger;
-import fr.robie.craftEngineConverter.loader.InternalTemplateManager;
+import fr.robie.craftEngineConverter.core.utils.manager.InternalTemplateManager;
 import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.enchantments.Enchantment;
@@ -485,6 +485,16 @@ public class NexoItemConverter extends ItemConverter {
     private void convertModelWithoutParent(ConfigurationSection packSection) {
         String modelPath = packSection.getString("model");
         if (!isValidString(modelPath)) {
+            if (this.craftEngineItemUtils.getMaterial() == Material.ELYTRA){
+                String elytraModel = cleanPath(packSection.getString("texture"));
+                if (isValidString(elytraModel)) {
+                    String namespacedElytra = namespaced(elytraModel);
+                    if (isValidString(namespacedElytra)){
+                        Map<String, Object> parseTemplate = InternalTemplateManager.parseTemplate(Template.MODEL_ITEM_ELYTRA, "%model_path%", namespacedElytra, "%texture_path%", namespacedElytra, "%broken_model_path%", namespacedElytra, "%broken_texture_path%", namespacedElytra);
+                        this.craftEngineItemUtils.getGeneralSection().createSection("model", parseTemplate);
+                    }
+                }
+            }
             return;
         }
 
