@@ -55,7 +55,6 @@ public class InternalTemplateManager {
             return new HashMap<>();
         }
 
-        // Créer un Map de remplacement
         Map<String, Object> replacements = new HashMap<>();
         for (int i = 0; i < args.length; i += 2) {
             replacements.put(String.valueOf(args[i]), args[i + 1]);
@@ -79,7 +78,7 @@ public class InternalTemplateManager {
 
             switch (value) {
                 case String string -> result.put(key, parseString(string, replacements));
-                case Map map1 -> result.put(key, parseValues((Map<String, Object>) value, replacements));
+                case Map ignored -> result.put(key, parseValues((Map<String, Object>) value, replacements));
                 case List list -> result.put(key, parseList(list, replacements));
                 case null, default -> result.put(key, value);
             }

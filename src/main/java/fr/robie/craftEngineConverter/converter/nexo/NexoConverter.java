@@ -3,9 +3,11 @@ package fr.robie.craftEngineConverter.converter.nexo;
 import fr.robie.craftEngineConverter.CraftEngineConverter;
 import fr.robie.craftEngineConverter.converter.Converter;
 import fr.robie.craftEngineConverter.core.utils.Configuration;
-import fr.robie.craftEngineConverter.core.utils.YamlUtils;
+import fr.robie.craftEngineConverter.core.utils.builder.TimerBuilder;
+import fr.robie.craftEngineConverter.core.utils.format.Message;
 import fr.robie.craftEngineConverter.core.utils.logger.LogType;
 import fr.robie.craftEngineConverter.core.utils.logger.Logger;
+import org.bukkit.Bukkit;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 
@@ -17,12 +19,11 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class NexoConverter extends YamlUtils implements Converter {
-    private final CraftEngineConverter plugin;
+public class NexoConverter extends Converter {
+    private final String NEXO_GLOBAL_PATH = "plugins/Nexo/";
 
     public NexoConverter(CraftEngineConverter plugin) {
         super(plugin);
-        this.plugin = plugin;
     }
 
     @Override
@@ -32,8 +33,8 @@ public class NexoConverter extends YamlUtils implements Converter {
 
     @Override
     public void convertItems(){
-        File inputBase = new File("plugins/Nexo/items");
-        File outputBase = new File(plugin.getDataFolder(), "converted/Nexo/CraftEngine/resources/craftengineconverter/configuration/items");
+        File inputBase = new File(NEXO_GLOBAL_PATH + "items");
+        File outputBase = new File(this.plugin.getDataFolder(), "converted/Nexo/CraftEngine/resources/craftengineconverter/configuration/items");
         if (!inputBase.exists() || !inputBase.isDirectory()) {
             return;
         }
@@ -42,7 +43,7 @@ public class NexoConverter extends YamlUtils implements Converter {
         try {
             this.plugin.getFoliaCompatibilityManager().runAsync(()->{
                 processDirectory(inputBase, inputBase, outputBase, loadedItems);
-                Logger.info("Converted " + loadedItems + " Nexo items. Time taken: " + (System.currentTimeMillis() - startTime) + " ms");
+                message(plugin, Bukkit.getConsoleSender(), Message.ITEM_CONVERTED, "time", TimerBuilder.formatTime(System.currentTimeMillis() - startTime, TimerBuilder.TimeUnit.SECOND));
             });
         } catch (Exception e) {
             Logger.info("Error during Nexo items conversion: " + e.getMessage());

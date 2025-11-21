@@ -2,6 +2,7 @@ package fr.robie.craftEngineConverter;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import fr.robie.craftEngineConverter.command.CraftEngineConverterCommand;
 import fr.robie.craftEngineConverter.converter.nexo.NexoConverter;
 import fr.robie.craftEngineConverter.core.utils.Configuration;
 import fr.robie.craftEngineConverter.core.utils.FoliaCompatibilityManager;
@@ -61,6 +62,8 @@ public final class CraftEngineConverter extends JavaPlugin {
         }
 
         this.loadFiles();
+
+        this.commandManager.registerCommand("craftengineconverter",new CraftEngineConverterCommand(this),"cengineconverter","cec");
 
         this.commandManager.validCommands();
         new NexoConverter(this).convertItems();

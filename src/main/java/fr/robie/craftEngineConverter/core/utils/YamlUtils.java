@@ -1,5 +1,6 @@
 package fr.robie.craftEngineConverter.core.utils;
 
+import fr.robie.craftEngineConverter.core.utils.format.MessageUtils;
 import fr.robie.craftEngineConverter.core.utils.logger.LogType;
 import fr.robie.craftEngineConverter.core.utils.logger.Logger;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -8,7 +9,7 @@ import org.bukkit.plugin.Plugin;
 
 import java.io.File;
 
-public abstract class YamlUtils {
+public abstract class YamlUtils extends MessageUtils {
     protected transient final Plugin plugin;
 
     /**

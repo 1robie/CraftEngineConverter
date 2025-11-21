@@ -30,7 +30,12 @@ public enum Message {
     COMMAND_SYNTAXE_HELP("§f%syntax% §7» §7%description%"),
     COMMAND_PLAYER_NOT_FOUND("<red>Player not found."),
 
-    PLACEHOLDER_NEVER("never");
+    COMMAND_RELOAD_SUCCESS("<green>Plugin configuration and messages reloaded in %time%."),
+
+    DESCRIPTION_COMMAND_RELOAD("Reloads the plugin configuration and messages."),
+
+    ITEM_CONVERTED("<green>Item converted successfully in %time%."),
+    ;
 
     private List<String> messages;
     private String message;

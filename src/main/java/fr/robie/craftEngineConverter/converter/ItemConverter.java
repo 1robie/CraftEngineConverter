@@ -25,6 +25,7 @@ public abstract class ItemConverter {
         convertDyedColor();
         convertUnbreakable();
         convertItemFlags();
+        convertExcludeFromInventory();
         convertAttributeModifiers();
         convertEnchantments();
         convertCustomModelData();

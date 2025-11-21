@@ -503,7 +503,9 @@ public class NexoItemConverter extends ItemConverter {
             Logger.debug("Failed to namespace model path for item '" + this.itemId + "'. Skipping texture conversion.", LogType.WARNING);
             return;
         }
-        this.craftEngineItemUtils.getGeneralSection().createSection("model",InternalTemplateManager.parseTemplate(Template.MODEL_ITEM_DEFAULT, "%model_path%", namespacedPath));
+        Map<String, Object> parsedTemplate = InternalTemplateManager.parseTemplate(Template.MODEL_ITEM_DEFAULT, "%model_path%", namespacedPath);
+        setSavedModelTemplates(parsedTemplate);
+        this.craftEngineItemUtils.getGeneralSection().createSection("model", parsedTemplate);
     }
 
     private boolean tryBuildShieldModel(ConfigurationSection packSection, String modelPath) {
@@ -583,7 +585,6 @@ public class NexoItemConverter extends ItemConverter {
     private void buildCubeTopModel(ConfigurationSection packSection) {
         String sideTexture = packSection.getString("textures.side");
         String topTexture = packSection.getString("textures.top");
-        Logger.debug("sideTexture: " + sideTexture + ", topTexture: " + topTexture);
 
         if (isValidString(sideTexture) && isValidString(topTexture)) {
             String finalSideTexture = namespaced(sideTexture);
@@ -645,9 +646,7 @@ public class NexoItemConverter extends ItemConverter {
                     convertFurnitureMechanic(nexoFurnitureSection);
                 }
                 case "custom_block" -> {
-                    Logger.debug("Custom Block mechanic conversion for item '"+this.itemId+"' is not finished yet. Partial conversion may occur.", LogType.WARNING);
                     ConfigurationSection nexoCustomBlockSection = mechanicsSection.getConfigurationSection(mechanicsKey);
-                    // TODO
                     convertCustomBlockMechanic(nexoCustomBlockSection);
                 }
                 default -> {}
@@ -660,9 +659,18 @@ public class NexoItemConverter extends ItemConverter {
         if (savedModel.isEmpty()) return;
         ConfigurationSection ceBehaviorSection = this.craftEngineItemUtils.getBehaviorSection();
         ceBehaviorSection.set("type", "block_item");
+        String nexoCustomBlockType = nexoCustomBlockSection.getString("type","NOTEBLOCK");
         ConfigurationSection ceBlockSection = getOrCreateSection(ceBehaviorSection, "block");
         ConfigurationSection ceStateSection = getOrCreateSection(ceBlockSection, "state");
-        ceStateSection.set("auto-state","solid");
+        String state;
+        if (nexoCustomBlockType.equals("CHORUSBLOCK")){
+            state = "leaves";
+        } else if (nexoCustomBlockType.equals("TRIPWIRE")){
+            state = "tripwire";
+        } else {
+            state = "solid";
+        }
+        ceStateSection.set("auto-state",state);
         ceStateSection.createSection("model", savedModel);
         ConfigurationSection sounds = nexoCustomBlockSection.getConfigurationSection("block_sounds");
         if (sounds != null) {
