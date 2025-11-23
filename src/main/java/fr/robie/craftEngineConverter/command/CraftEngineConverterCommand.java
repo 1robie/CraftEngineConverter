@@ -1,9 +1,9 @@
 package fr.robie.craftEngineConverter.command;
 
 import fr.robie.craftEngineConverter.CraftEngineConverter;
-import fr.robie.craftEngineConverter.core.utils.command.CommandType;
-import fr.robie.craftEngineConverter.core.utils.command.VCommand;
-import fr.robie.craftEngineConverter.core.utils.permission.Permission;
+import fr.robie.craftEngineConverter.utils.command.CommandType;
+import fr.robie.craftEngineConverter.utils.command.VCommand;
+import fr.robie.craftEngineConverter.utils.permission.Permission;
 
 public class CraftEngineConverterCommand extends VCommand {
     public CraftEngineConverterCommand(CraftEngineConverter craftEngineConverter) {

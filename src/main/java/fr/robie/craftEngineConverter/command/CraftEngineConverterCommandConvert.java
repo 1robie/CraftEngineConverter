@@ -2,12 +2,12 @@ package fr.robie.craftEngineConverter.command;
 
 import fr.robie.craftEngineConverter.CraftEngineConverter;
 import fr.robie.craftEngineConverter.converter.Converter;
-import fr.robie.craftEngineConverter.core.utils.ConverterOptions;
-import fr.robie.craftEngineConverter.core.utils.builder.TimerBuilder;
-import fr.robie.craftEngineConverter.core.utils.command.CommandType;
-import fr.robie.craftEngineConverter.core.utils.command.VCommand;
-import fr.robie.craftEngineConverter.core.utils.format.Message;
-import fr.robie.craftEngineConverter.core.utils.permission.Permission;
+import fr.robie.craftEngineConverter.utils.builder.TimerBuilder;
+import fr.robie.craftEngineConverter.utils.command.CommandType;
+import fr.robie.craftEngineConverter.utils.command.VCommand;
+import fr.robie.craftEngineConverter.utils.enums.ConverterOptions;
+import fr.robie.craftEngineConverter.utils.format.Message;
+import fr.robie.craftEngineConverter.utils.permission.Permission;
 
 import java.util.HashSet;
 import java.util.Optional;
@@ -60,6 +60,7 @@ public class CraftEngineConverterCommandConvert extends VCommand {
         switch (converterOption){
             case ALL -> converter.convertAll();
             case ITEMS -> converter.convertItems();
+            case PACKS -> converter.convertPack();
         }
     }
 }

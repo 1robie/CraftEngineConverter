@@ -2,15 +2,17 @@ package fr.robie.craftEngineConverter.converter.nexo;
 
 import fr.robie.craftEngineConverter.CraftEngineConverter;
 import fr.robie.craftEngineConverter.converter.Converter;
-import fr.robie.craftEngineConverter.core.utils.Configuration;
-import fr.robie.craftEngineConverter.core.utils.logger.LogType;
-import fr.robie.craftEngineConverter.core.utils.logger.Logger;
+import fr.robie.craftEngineConverter.utils.Configuration;
+import fr.robie.craftEngineConverter.utils.logger.LogType;
+import fr.robie.craftEngineConverter.utils.logger.Logger;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -90,6 +92,103 @@ public class NexoConverter extends Converter {
                 e.printStackTrace();
             }
         }
+    }
+
+    @Override
+    public void convertPack(){
+        try {
+            this.plugin.getFoliaCompatibilityManager().runAsync(() -> {
+                File inputPackFile = new File("plugins/" + converterName + "/pack");
+                File outputPackFile = new File(this.plugin.getDataFolder(), "converted/"+converterName+"/CraftEngine/resources/craftengineconverter/resourcepack");
+
+                if (!inputPackFile.exists() || !inputPackFile.isDirectory()) {
+                    Logger.info("Nexo pack directory not found at: " + inputPackFile.getAbsolutePath());
+                    return;
+                }
+
+                if (!outputPackFile.exists()) {
+                    outputPackFile.mkdirs();
+                } else {
+                    deleteDirectory(outputPackFile);
+                    outputPackFile.mkdirs();
+                }
+
+                File outputAssetsFolder = new File(outputPackFile, "assets");
+
+                // Copy main assets folder
+                copyAssetsFolder(new File(inputPackFile, "assets"), outputAssetsFolder, "main");
+
+                // Copy external packs assets
+                File nexoExternalPacksFolder = new File(inputPackFile, "external_packs");
+                if (nexoExternalPacksFolder.exists() && nexoExternalPacksFolder.isDirectory()) {
+                    File[] externalPacks = nexoExternalPacksFolder.listFiles();
+                    if (externalPacks != null) {
+                        for (File externalPack : externalPacks) {
+                            if (!externalPack.isDirectory()) continue;
+                            File externalPackAssetsFolder = new File(externalPack, "assets");
+                            copyAssetsFolder(externalPackAssetsFolder, outputAssetsFolder, externalPack.getName());
+                        }
+                    }
+                }
+
+                Logger.info("Pack conversion completed successfully");
+            });
+        } catch (Exception e) {
+            Logger.info("Error during Nexo pack conversion: " + e.getMessage(), LogType.ERROR);
+        }
+    }
+
+    private void copyAssetsFolder(File assetsFolder, File outputAssetsFolder, String packName) {
+        if (!assetsFolder.exists() || !assetsFolder.isDirectory()) {
+            Logger.debug("Assets folder not found for pack '" + packName + "' at: " + assetsFolder.getAbsolutePath());
+            return;
+        }
+
+        try {
+            copyDirectory(assetsFolder, outputAssetsFolder);
+        } catch (IOException e) {
+            Logger.info("Failed to copy assets from " + packName + " pack: " + e.getMessage(), LogType.ERROR);
+        }
+    }
+
+    private void copyDirectory(File source, File destination) throws IOException {
+        if (!destination.exists()) {
+            destination.mkdirs();
+        }
+
+        File[] files = source.listFiles();
+        if (files == null) return;
+
+        for (File file : files) {
+            File newFile = new File(destination, file.getName());
+            if (file.isDirectory()) {
+                copyDirectory(file, newFile);
+            } else {
+                copyFile(file, newFile);
+            }
+        }
+    }
+
+    private void copyFile(File source, File destination) throws IOException {
+        Files.copy(
+            source.toPath(),
+            destination.toPath(),
+            StandardCopyOption.REPLACE_EXISTING
+        );
+    }
+
+    private void deleteDirectory(File directory) {
+        File[] files = directory.listFiles();
+        if (files != null) {
+            for (File file : files) {
+                if (file.isDirectory()) {
+                    deleteDirectory(file);
+                } else {
+                    file.delete();
+                }
+            }
+        }
+        directory.delete();
     }
 
     public void generateCategorie(List<String> itemsIds, YamlConfiguration config, String fileName) {

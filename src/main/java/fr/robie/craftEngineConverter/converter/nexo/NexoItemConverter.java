@@ -1,10 +1,13 @@
 package fr.robie.craftEngineConverter.converter.nexo;
 
 import fr.robie.craftEngineConverter.converter.ItemConverter;
-import fr.robie.craftEngineConverter.core.utils.*;
-import fr.robie.craftEngineConverter.core.utils.logger.LogType;
-import fr.robie.craftEngineConverter.core.utils.logger.Logger;
-import fr.robie.craftEngineConverter.core.utils.manager.InternalTemplateManager;
+import fr.robie.craftEngineConverter.utils.Configuration;
+import fr.robie.craftEngineConverter.utils.FloatsUtils;
+import fr.robie.craftEngineConverter.utils.Position;
+import fr.robie.craftEngineConverter.utils.enums.*;
+import fr.robie.craftEngineConverter.utils.logger.LogType;
+import fr.robie.craftEngineConverter.utils.logger.Logger;
+import fr.robie.craftEngineConverter.utils.manager.InternalTemplateManager;
 import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.enchantments.Enchantment;
@@ -207,7 +210,111 @@ public class NexoItemConverter extends ItemConverter {
 
     @Override
     public void convertTool() {
-        copyComponentSection("tool", "minecraft:tool");
+//        my_item:
+//        Components:
+//        tool:
+//        damage_per_block:
+//        default_mining_speed:
+//        rules:
+//        - speed: 1.0
+//        correct_for_drops: true
+//        material: DIAMOND_BLOCK
+//          #materials:
+//          #  - DIAMOND_BLOCK
+//          #  - NETHERITE_BLOCK
+//        tag: minecraft:mineable/axe
+//          #tags:
+//          #  - minecraft:mineable/axe
+//          #  - minecraft:mineable/shovel
+        ConfigurationSection nexoToolSection = this.nexoItemSection.getConfigurationSection("Components.tool");
+        if (isNotNull(nexoToolSection)) {
+            double defaultMiningSpeed = nexoToolSection.getDouble("default_mining_speed", 1);
+            ConfigurationSection ceToolSection = this.craftEngineItemUtils.getComponentsSection().createSection("minecraft:tool");
+            if (defaultMiningSpeed != 1.0){
+                ceToolSection.set("default_mining_speed",defaultMiningSpeed);
+            }
+            int damagePerBlock = nexoToolSection.getInt("damage_per_block", 1);
+            if (damagePerBlock != 1){
+                ceToolSection.set("damage_per_block",damagePerBlock);
+            }
+            // can_destroy_blocks_in_creative not supported in Nexo
+            var rulesList = nexoToolSection.getMapList("rules");
+            if (!rulesList.isEmpty()) {
+                List<Map<String, Object>> nexoRulesList = (List<Map<String, Object>>) (Object) rulesList;
+                List<Map<String, Object>> ceRulesList = new ArrayList<>();
+                for (var nexoRule : nexoRulesList){
+                    Double speed = null;
+                    Object speedObj = nexoRule.get("speed");
+                    if (isNotNull(speedObj) && speedObj instanceof Double speedDouble) {
+                        speed = speedDouble;
+                    }
+                    Boolean correctForDrops = null;
+                    Object correctForDropsObj = nexoRule.get("correct_for_drops");
+                    if (isNotNull(correctForDropsObj) && correctForDropsObj instanceof Boolean correctForDropsBool) {
+                        correctForDrops = correctForDropsBool;
+                    }
+
+                    List<String> materialBlocks = new ArrayList<>();
+                    Object material = nexoRule.get("material");
+                    if (isNotNull(material) && material instanceof String materialStr && !materialStr.isEmpty()) {
+                        String normalized = materialStr.toLowerCase(Locale.ROOT);
+                        if (!normalized.contains(":")) {
+                            normalized = "minecraft:" + normalized;
+                        }
+                        materialBlocks.add(normalized);
+                    }
+                    Object materials = nexoRule.get("materials");
+                    if (isNotNull(materials) && materials instanceof @NotNull List<?> materialsList && !materialsList.isEmpty()) {
+                        for (String mat : (List<String>) materialsList) {
+                            String normalized = mat.toLowerCase(Locale.ROOT);
+                            if (!normalized.contains(":")) {
+                                normalized = "minecraft:" + normalized;
+                            }
+                            materialBlocks.add(normalized);
+                        }
+                    }
+
+                    if (!materialBlocks.isEmpty()) {
+                        Map<String, Object> ceRule = new HashMap<>();
+                        if (isNotNull(speed)) ceRule.put("speed", speed);
+                        if (isNotNull(correctForDrops)) ceRule.put("correct_for_drops", correctForDrops);
+                        ceRule.put("blocks", materialBlocks);
+                        ceRulesList.add(ceRule);
+                    }
+
+                    List<String> tagsList = new ArrayList<>();
+                    Object tag = nexoRule.get("tag");
+                    if (isNotNull(tag) && tag instanceof String tagStr && !tagStr.isEmpty()) {
+                        tagsList.add(tagStr);
+                    }
+                    Object tags = nexoRule.get("tags");
+                    if (isNotNull(tags) && tags instanceof @NotNull List<?> tagsListObj && !tagsListObj.isEmpty()) {
+                        tagsList.addAll((List<String>) tagsListObj);
+                    }
+
+                    for (String tagStr : tagsList) {
+                        String normalized = tagStr.toLowerCase(Locale.ROOT);
+                        if (!normalized.startsWith("#")) {
+                            normalized = "#" + normalized;
+                        }
+                        if (!normalized.contains(":")) {
+                            normalized = normalized.replace("#", "#minecraft:");
+                        }
+
+                        Map<String, Object> ceRule = new HashMap<>();
+                        if (isNotNull(speed)) ceRule.put("speed", speed);
+                        if (isNotNull(correctForDrops)) ceRule.put("correct_for_drops", correctForDrops);
+                        ceRule.put("blocks", normalized);
+                        ceRulesList.add(ceRule);
+                    }
+                }
+                if (!ceRulesList.isEmpty()) {
+                    ceToolSection.set("rules", ceRulesList);
+                } else {
+                    Logger.info("No valid blocks found for tool rules in item '" + this.itemId + "'. Skipping tool rules conversion.", LogType.WARNING);
+                }
+            }
+        }
     }
 
     @Override
@@ -313,12 +420,12 @@ public class NexoItemConverter extends ItemConverter {
         ConfigurationSection equipableSection = this.nexoItemSection.getConfigurationSection("Components.equippable");
         if (equipableSection == null) return;
 
-        ConfigurationSection ceEquipableSection = this.craftEngineItemUtils.getSettingsSection().createSection("equippable");
+        String assetId = equipableSection.getString("asset_id");
+        ConfigurationSection ceEquipableSection = isValidString(assetId) ? getOrCreateSection(this.craftEngineItemUtils.getSettingsSection(),"equippable") : getOrCreateSection(this.craftEngineItemUtils.getDataSection(),"equippable");
         String slot = equipableSection.getString("slot");
         if (isValidString(slot)) {
             ceEquipableSection.set("slot", slot.toLowerCase());
         }
-        String assetId = equipableSection.getString("asset_id");
         if (isValidString(assetId)) {
             if (this.craftEngineItemUtils.getMaterial() == Material.ELYTRA){
                 if (assetId.contains(":")) {
@@ -351,7 +458,7 @@ public class NexoItemConverter extends ItemConverter {
     @Override
     public void convertDamageResistance() {
         String damageResistance = this.nexoItemSection.getString("Components.damage_resistant");
-        if (damageResistance != null && !damageResistance.isEmpty()) {
+        if (isValidString(damageResistance)) {
             this.craftEngineItemUtils.getComponentsSection().set("minecraft:damage_resistant", damageResistance);
         }
         List<String> damageResistances = this.nexoItemSection.getStringList("Components.damage_resistant");
@@ -378,7 +485,7 @@ public class NexoItemConverter extends ItemConverter {
     @Override
     public void convertToolTipStyle() {
         String toolTipStyle = this.nexoItemSection.getString("Components.tooltip_style");
-        if (toolTipStyle != null && !toolTipStyle.isEmpty()) {
+        if (isValidString(toolTipStyle)) {
             this.craftEngineItemUtils.getComponentsSection().set("minecraft:tooltip_style", toolTipStyle);
         }
     }
@@ -421,7 +528,7 @@ public class NexoItemConverter extends ItemConverter {
         List<Map<String, Object>> ceRepairItems = new ArrayList<>();
 
         String singleRepairItem = componentsSection.getString("anvil_repairable.repairable");
-        if (singleRepairItem != null && !singleRepairItem.isEmpty()) {
+        if (isValidString(singleRepairItem)) {
             Logger.debug("Nexo doesn't support amount for anvil_repairable, defaulting to 1.", LogType.WARNING);
             ceRepairItems.add(Map.of("target", singleRepairItem, "amount", 1));
         }
@@ -455,7 +562,7 @@ public class NexoItemConverter extends ItemConverter {
     @Override
     public void convertBreakSound() {
         String breakSound = this.nexoItemSection.getString("Components.break_sound");
-        if (breakSound != null && !breakSound.isEmpty()) {
+        if (isValidString(breakSound)) {
             this.craftEngineItemUtils.getComponentsSection().set("minecraft:break_sound",
                     Map.of("sound_id", breakSound, "range", 16.0));
         }
@@ -475,6 +582,88 @@ public class NexoItemConverter extends ItemConverter {
     @Override
     public void convertBlocksAttackComponent() {
         // TODO finir
+//        my_item:
+//        Components:
+//        blocks_attacks:
+//        block_delay: 0.0
+//        disable_cooldown_scale: 1.0
+//        block_sound: namespace:key
+//        disable_sound: namespace:key
+//        bypassed_by: namespace:key
+//        item_damage:
+//        base: 1.0
+//        factor:1.0
+//        threshold: 0.0
+//        damage_reductions:
+//        - base: 1.0
+//        factor: 1.0
+//        horizontal_blocking: 90.0
+//        types: namespace:key
+//          #types:
+//          #  - namespace:key
+        ConfigurationSection nexoBlocksAttacksSection = this.nexoItemSection.getConfigurationSection("Components.blocks_attacks");
+        if (isNull(nexoBlocksAttacksSection)) return;
+        ConfigurationSection ceBlocksAttacksSection = getOrCreateSection(this.craftEngineItemUtils.getComponentsSection(), "minecraft:blocks_attacks");
+        double blockDelay = nexoBlocksAttacksSection.getDouble("block_delay", 0);
+        if (blockDelay != 0) {
+            ceBlocksAttacksSection.set("block_delay_seconds",blockDelay);
+        }
+        double disableCooldownScale = nexoBlocksAttacksSection.getDouble("disable_cooldown_scale", 1);
+        if (disableCooldownScale != 0) {
+            ceBlocksAttacksSection.set("disable_cooldown_scale",disableCooldownScale);
+        }
+        String blockSound = nexoBlocksAttacksSection.getString("block_sound");
+        if (isValidString(blockSound)) {
+            ceBlocksAttacksSection.set("block_sound",blockSound);
+        }
+        String disabledSound = nexoBlocksAttacksSection.getString("disabled_sound");
+        if (isValidString(disabledSound)) {
+            ceBlocksAttacksSection.set("disabled_sound",disabledSound);
+        }
+        String bypassedBy = nexoBlocksAttacksSection.getString("bypassed_by");
+        if (isValidString(bypassedBy)) {
+            ceBlocksAttacksSection.set("bypassed_by",bypassedBy);
+        }
+        ConfigurationSection ceItemDamageSection = ceBlocksAttacksSection.createSection("item_damage");
+        ceItemDamageSection.set("threshold",nexoBlocksAttacksSection.getDouble("item_damage.threshold",0));
+        ceItemDamageSection.set("base",nexoBlocksAttacksSection.getDouble("item_damage.base",0));
+        ceItemDamageSection.set("factor",nexoBlocksAttacksSection.getDouble("item_damage.factor",0));
+        var damageReductionsArray = nexoBlocksAttacksSection.getMapList("damage_reductions");
+        if (!damageReductionsArray.isEmpty()) {
+            List<Map<String,Object>> ceDamageReductionArray = new ArrayList<>();
+            for (var damageReductionMap : damageReductionsArray){
+                Map<String,Object> ceDamageReductionMap = new HashMap<>();
+                Object base = damageReductionMap.get("base");
+                if (isNotNull(base) && base instanceof Double baseDouble){
+                    ceDamageReductionMap.put("base",baseDouble);
+                }
+                Object factor = damageReductionMap.get("factor");
+                if (isNotNull(factor) && factor instanceof Double factorDouble){
+                    ceDamageReductionMap.put("factor",factorDouble);
+                }
+                Object horizontalBlockingAngle = damageReductionMap.get("horizontal_blocking");
+                if (isNotNull(horizontalBlockingAngle) && horizontalBlockingAngle instanceof Double horizontalBlockingAngleDouble){
+                    ceDamageReductionMap.put("horizontal_blocking_angle",horizontalBlockingAngleDouble);
+                } else {
+                    ceDamageReductionMap.put("horizontal_blocking_angle",90);
+                }
+                List<String> ceTypes = new ArrayList<>();
+                Object objects = damageReductionMap.get("types");
+                if (isNotNull(objects)) {
+                    if (objects instanceof List<?> nexoTypesString){
+                        ceTypes.addAll((List<String>) nexoTypesString);
+                    } else if (objects instanceof String nexoTypeString){
+                        ceTypes.add(nexoTypeString);
+                    }
+                }
+                if (!ceTypes.isEmpty()){
+                    ceDamageReductionMap.put("type",ceTypes);
+                    ceDamageReductionArray.add(ceDamageReductionMap);
+                }
+            }
+            ceItemDamageSection.set("damage_reductions",ceDamageReductionArray);
+        }
+
     }
 
     @Override
@@ -501,7 +690,7 @@ public class NexoItemConverter extends ItemConverter {
 
         String parentModel = packSection.getString("parent_model");
 
-        if (parentModel == null || parentModel.isEmpty()) {
+        if (!isValidString(parentModel)) {
             convertModelWithoutParent(packSection);
         } else {
             convertModelWithParent(packSection, parentModel);
@@ -760,7 +949,7 @@ public class NexoItemConverter extends ItemConverter {
             ceBlockBehaviorSection.set("type","falling_block");
         }
         ConfigurationSection nexoSaplingSection = nexoCustomBlockSection.getConfigurationSection("sapling");
-        if (nexoSaplingSection != null){
+        if (isNotNull(nexoSaplingSection)){
             Logger.debug("Sapling behavior conversion for custom block item '"+this.itemId+"' is not supported yet. Skipping sapling behavior.", LogType.WARNING);
             // TODO
         }
@@ -769,7 +958,7 @@ public class NexoItemConverter extends ItemConverter {
     private void convertFurnitureMechanic(ConfigurationSection nexoFurnitureMechanicsSection) {
         String nexoMEGModel = nexoFurnitureMechanicsSection.getString("modelengine_id");
         String nexoBetterModel = nexoFurnitureMechanicsSection.getString("better-model");
-        if ((nexoMEGModel != null && !nexoMEGModel.isEmpty()) || (nexoBetterModel != null && !nexoBetterModel.isEmpty())){
+        if (isValidString(nexoMEGModel) || isValidString(nexoBetterModel)){
             // TODO
             Logger.debug("Conversion of furniture items using ModelEngine or BetterModel is not supported yet. Skipping furniture item '"+this.itemId+"'.", LogType.WARNING);
             return;
@@ -779,7 +968,7 @@ public class NexoItemConverter extends ItemConverter {
         ConfigurationSection ceSettingsSection = getOrCreateSection(ceBehaviorSection, "settings");
         ceSettingsSection.set("item", this.itemId);
         ConfigurationSection nexoBlockSoundSection = nexoFurnitureMechanicsSection.getConfigurationSection("block_sounds");
-        if (nexoBlockSoundSection != null){
+        if (isNotNull(nexoBlockSoundSection)){
             ConfigurationSection ceBlockSoundSection = getOrCreateSection(ceSettingsSection, "sounds");
             setIfNotEmpty(ceBlockSoundSection, "place", nexoBlockSoundSection.getString("place_sound"));
             setIfNotEmpty(ceBlockSoundSection, "break", nexoBlockSoundSection.getString("break_sound"));
@@ -790,7 +979,7 @@ public class NexoItemConverter extends ItemConverter {
             furnitureRotation = FurnitureRotation.FOUR;
         }
         String restrictedRotation = nexoFurnitureMechanicsSection.getString("restricted_rotation");
-        if (restrictedRotation != null && !restrictedRotation.isEmpty()){
+        if (isValidString(restrictedRotation)){
             if (restrictedRotation.equals("VERY_STRICT")){
                 furnitureRotation = FurnitureRotation.FOUR;
             } else if (restrictedRotation.equals("STRICT")){
@@ -817,7 +1006,7 @@ public class NexoItemConverter extends ItemConverter {
 
         FloatsUtils displayTranslation = new FloatsUtils(3,new float[]{0f,0.5f,0f});;
         FloatsUtils scale = new FloatsUtils(3,new float[]{1f,1f,1f});
-        if (nexoPropertiesSection != null){
+        if (isNotNull(nexoPropertiesSection)){
             String display_transform = nexoPropertiesSection.getString("display_transform","NONE");
             try {
                 displayType = ItemDisplayType.valueOf(display_transform);
@@ -842,7 +1031,7 @@ public class NexoItemConverter extends ItemConverter {
                 }
             }
             String scales = nexoPropertiesSection.getString("scale");
-            if (scales != null){
+            if (isNotNull(scales)){
                 String[] split = scales.split(",", 3);
                 try {
                     scale.setValue(0, Float.parseFloat(split[0].trim()));
@@ -854,13 +1043,13 @@ public class NexoItemConverter extends ItemConverter {
             }
         }
         ConfigurationSection dropSection = nexoFurnitureMechanicsSection.getConfigurationSection("drop");
-        if (dropSection != null){
+        if (isNotNull(dropSection)){
             //TODO
             Logger.debug("Furniture item '"+this.itemId+"' has a drop configuration, but drop conversion is not supported yet. Skipping drop conversion.", LogType.WARNING);
         }
         ConfigurationSection limitedPlacingSection = nexoFurnitureMechanicsSection.getConfigurationSection("limited_placing");
         Set<FurniturePlacement> noLimitedPlacingKeys = new HashSet<>();
-        if (limitedPlacingSection != null){
+        if (isNotNull(limitedPlacingSection)){
             boolean limitedRoof = limitedPlacingSection.getBoolean("roof", false);
             boolean limitedFloor = limitedPlacingSection.getBoolean("floor", false);
             boolean limitedWall = limitedPlacingSection.getBoolean("wall", false);
@@ -889,7 +1078,7 @@ public class NexoItemConverter extends ItemConverter {
             elements.add(map);
             List<Map<String,Object>> hitboxes = new ArrayList<>();
             ConfigurationSection nexoHitboxesSection = nexoFurnitureMechanicsSection.getConfigurationSection("hitbox");
-            if (nexoHitboxesSection != null){
+            if (isNotNull(nexoHitboxesSection)){
                 // Parse barriers (simple shulker hitboxes)
                 List<String> barriersList = nexoHitboxesSection.getStringList("barriers");
                 List<Position> barrierPositions = expandBarrierPositions(barriersList);
@@ -935,7 +1124,7 @@ public class NexoItemConverter extends ItemConverter {
         Set<String> duplicateGuard = new HashSet<>();
 
         for (String barrier : barriersList) {
-            if (barrier == null || barrier.isBlank()) continue;
+            if (!isValidString(barrier)) continue;
             String[] parts = barrier.trim().split("\\s*,\\s*");
             if (parts.length != 3) {
                 Logger.debug("Invalid barrier entry '"+barrier+"' for item '"+this.itemId+"', expected 3 comma-separated values.", LogType.WARNING);
@@ -1000,7 +1189,7 @@ public class NexoItemConverter extends ItemConverter {
 
     private void parseInteractionsHitboxes(List<String> interactionsList, List<Map<String,Object>> hitboxes) {
         for (String interaction : interactionsList) {
-            if (interaction == null || interaction.isBlank()) continue;
+            if (!isValidString(interaction)) continue;
 
             String[] parts = interaction.trim().split("\\s+");
             if (parts.length != 2) {
@@ -1041,7 +1230,7 @@ public class NexoItemConverter extends ItemConverter {
 
     private void parseShulkersHitboxes(List<String> shulkersList, List<Map<String,Object>> hitboxes, FloatsUtils seatPosition, AtomicBoolean seatsAdded) {
         for (String shulker : shulkersList) {
-            if (shulker == null || shulker.isBlank()) continue;
+            if (!isValidString(shulker)) continue;
 
             // Format: "x,y,z scale peek [direction] [visible]"
             String[] parts = shulker.trim().split("\\s+");
@@ -1091,7 +1280,7 @@ public class NexoItemConverter extends ItemConverter {
 
     private void parseGhastsHitboxes(List<String> ghastsList, List<Map<String,Object>> hitboxes, FloatsUtils seatPosition, AtomicBoolean seatsAdded) {
         for (String ghast : ghastsList) {
-            if (ghast == null || ghast.isBlank()) continue;
+            if (!isValidString(ghast)) continue;
 
             // Format: "x,y,z scale [rotation] [visible]"
             String[] parts = ghast.trim().split("\\s+");
@@ -1138,12 +1327,5 @@ public class NexoItemConverter extends ItemConverter {
             case "UP", "DOWN", "NORTH", "SOUTH", "EAST", "WEST" -> true;
             default -> false;
         };
-    }
-
-    record Position(float x, float y, float z){
-        @Override
-        public @NotNull String toString(){
-            return x+","+y+","+z;
-        }
     }
 }

@@ -1,10 +1,10 @@
 package fr.robie.craftEngineConverter.loader;
 
-import fr.robie.craftEngineConverter.core.utils.YamlUtils;
-import fr.robie.craftEngineConverter.core.utils.format.Message;
-import fr.robie.craftEngineConverter.core.utils.format.MessageType;
-import fr.robie.craftEngineConverter.core.utils.save.Persist;
-import fr.robie.craftEngineConverter.core.utils.save.Savable;
+import fr.robie.craftEngineConverter.utils.YamlUtils;
+import fr.robie.craftEngineConverter.utils.format.Message;
+import fr.robie.craftEngineConverter.utils.format.MessageType;
+import fr.robie.craftEngineConverter.utils.save.Persist;
+import fr.robie.craftEngineConverter.utils.save.Savable;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.Plugin;
 

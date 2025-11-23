@@ -1,6 +1,7 @@
 package fr.robie.craftEngineConverter.converter;
 
 import org.bukkit.configuration.ConfigurationSection;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
@@ -122,14 +123,17 @@ public abstract class ItemConverter {
         return path;
     }
 
+    @Contract("null -> false")
     public boolean isValidString(String str){
-        return str != null && !str.isEmpty();
+        return str != null && !str.isBlank();
     }
 
+    @Contract("null -> false; !null -> true")
     public boolean isNotNull(Object obj){
         return obj != null;
     }
 
+    @Contract("null -> true")
     public boolean isNull(Object obj){
         return obj == null;
     }
