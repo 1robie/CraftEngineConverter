@@ -210,22 +210,6 @@ public class NexoItemConverter extends ItemConverter {
 
     @Override
     public void convertTool() {
-//        my_item:
-//        Components:
-//        tool:
-//        damage_per_block:
-//        default_mining_speed:
-//        rules:
-//        - speed: 1.0
-//        correct_for_drops: true
-//        material: DIAMOND_BLOCK
-//          #materials:
-//          #  - DIAMOND_BLOCK
-//          #  - NETHERITE_BLOCK
-//        tag: minecraft:mineable/axe
-//          #tags:
-//          #  - minecraft:mineable/axe
-//          #  - minecraft:mineable/shovel
         ConfigurationSection nexoToolSection = this.nexoItemSection.getConfigurationSection("Components.tool");
         if (isNotNull(nexoToolSection)) {
             double defaultMiningSpeed = nexoToolSection.getDouble("default_mining_speed", 1);
@@ -546,7 +530,56 @@ public class NexoItemConverter extends ItemConverter {
 
     @Override
     public void convertDeathProtection() {
-        // TODO finir
+        ConfigurationSection nexoDeathprotectionSection = nexoItemSection.getConfigurationSection("Components.death_protection");
+        if (isNull(nexoDeathprotectionSection)) return;
+        ConfigurationSection deathEffects = nexoDeathprotectionSection.getConfigurationSection("death_effects");
+        ConfigurationSection ceDeathprotectionSection = getOrCreateSection(this.craftEngineItemUtils.getComponentsSection(),"minecraft:death_protection");
+        if (isNull(deathEffects)){
+            ceDeathprotectionSection.set("death_effects", new ArrayList<>());
+            return;
+        }
+        List<Map<String,Object>> ceDeathEffects = new ArrayList<>();
+        ConfigurationSection nexoApplyEffectsSection = deathEffects.getConfigurationSection("APPLY_EFFECTS");
+        if (isNotNull(nexoApplyEffectsSection)) {
+            for (String key : nexoApplyEffectsSection.getKeys(false)) {
+                Map<String,Object> consumeEffect = new HashMap<>();
+                consumeEffect.put("type","apply_effects");
+                List<Map<String,Object>> effectList = new ArrayList<>();
+                effectList.add(getEffectMap(key, nexoApplyEffectsSection.getDouble(key+".amplifier",0),nexoApplyEffectsSection.getInt(key+".duration",1),nexoApplyEffectsSection.getBoolean(key+".ambient",false),
+                        nexoApplyEffectsSection.getBoolean(key+".show_particles",true),nexoApplyEffectsSection.getBoolean("key+.show_icon",true)));
+                consumeEffect.put("effects",effectList);
+                consumeEffect.put("probability",nexoItemSection.getDouble(key+".probability",1.0));
+                ceDeathEffects.add(consumeEffect);
+            }
+        }
+        List<String> nexoRemoveEffects = deathEffects.getStringList("REMOVE_EFFECTS");
+        if (!nexoRemoveEffects.isEmpty()) {
+            Map<String,Object> removeEffects = new HashMap<>();
+            removeEffects.put("type","remove_effects");
+            List<Map<String,Object>> effectList = new ArrayList<>();
+            for (String key : nexoRemoveEffects){
+                effectList.add(getEffectMap(key,0,1,false,true,true));
+            }
+            removeEffects.put("effects",effectList);
+            ceDeathEffects.add(removeEffects);
+        }
+        boolean clearAllEffects = deathEffects.isConfigurationSection("CLEAR_ALL_EFFECTS");
+        if (clearAllEffects){
+            ceDeathEffects.add(Map.of("type","remove_effects"));
+        }
+        ConfigurationSection teleportRandomlySection = deathEffects.getConfigurationSection("TELEPORT_RANDOMLY");
+        if (isNotNull(teleportRandomlySection)) {
+            double diameter = teleportRandomlySection.getDouble("diameter",16.0);
+            ceDeathEffects.add(Map.of("type","teleport_randomly","diameter",diameter));
+        }
+        ConfigurationSection playSoundSection = deathEffects.getConfigurationSection("PLAY_SOUND");
+        if (isNotNull(playSoundSection)) {
+            String sound = playSoundSection.getString("sound");
+            if (isValidString(sound)) {
+                ceDeathEffects.add(Map.of("type","play_sound","sound", sound));
+            }
+        }
+        ceDeathprotectionSection.set("death_effects", ceDeathEffects);
     }
 
     @Override

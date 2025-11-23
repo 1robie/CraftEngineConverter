@@ -1,5 +1,7 @@
 package fr.robie.craftEngineConverter.converter;
 
+import fr.robie.craftEngineConverter.utils.enums.Template;
+import fr.robie.craftEngineConverter.utils.manager.InternalTemplateManager;
 import org.bukkit.configuration.ConfigurationSection;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nullable;
@@ -185,5 +187,11 @@ public abstract class ItemConverter {
 
     public boolean isExcludeFromInventory() {
         return this.excludeFromInventory;
+    }
+
+    public Map<String,Object> getEffectMap(String effectName,double amplifier,int duration, boolean ambient, boolean show_particles, boolean show_icon){
+        return InternalTemplateManager.parseTemplate(Template.MINECRAFT_EFFECT,"%effect_id%",effectName,"%effect_amplifier%",amplifier,"%effect_duration%",
+                duration, "%effect_ambient%", ambient, "%effect_show_particles%", show_particles,
+                "%effect_show_icon%" ,show_icon);
     }
 }

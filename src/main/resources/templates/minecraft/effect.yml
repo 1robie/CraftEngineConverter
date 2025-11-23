@@ -1,0 +1,6 @@
+id: "%effect_id%"
+amplifier: "%effect_amplifier%"
+duration: "%effect_duration%"
+ambient: "%effect_ambient%"
+show_particles: "%effect_show_particles%"
+show_icon: "%effect_show_icon%"

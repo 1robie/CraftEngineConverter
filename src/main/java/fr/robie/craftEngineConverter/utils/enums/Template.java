@@ -11,6 +11,8 @@ public enum Template {
     MODEL_ITEM_DEFAULT("templates/model/item_default"),
     MODEL_ITEM_ELYTRA("templates/model/item_elytra"),
 
+    MINECRAFT_EFFECT("templates/minecraft/effect",TemplateType.OTHER)
+
     ;
     private final String path;
     private final TemplateType type;
