@@ -581,26 +581,6 @@ public class NexoItemConverter extends ItemConverter {
 
     @Override
     public void convertBlocksAttackComponent() {
-        // TODO finir
-//        my_item:
-//        Components:
-//        blocks_attacks:
-//        block_delay: 0.0
-//        disable_cooldown_scale: 1.0
-//        block_sound: namespace:key
-//        disable_sound: namespace:key
-//        bypassed_by: namespace:key
-//        item_damage:
-//        base: 1.0
-//        factor:1.0
-//        threshold: 0.0
-//        damage_reductions:
-//        - base: 1.0
-//        factor: 1.0
-//        horizontal_blocking: 90.0
-//        types: namespace:key
-//          #types:
-//          #  - namespace:key
         ConfigurationSection nexoBlocksAttacksSection = this.nexoItemSection.getConfigurationSection("Components.blocks_attacks");
         if (isNull(nexoBlocksAttacksSection)) return;
         ConfigurationSection ceBlocksAttacksSection = getOrCreateSection(this.craftEngineItemUtils.getComponentsSection(), "minecraft:blocks_attacks");
@@ -668,13 +648,71 @@ public class NexoItemConverter extends ItemConverter {
 
     @Override
     public void convertCanPlaceOnComponent() {
-        // TODO finir
+        convertBlockPredicateComponent("can_place_on");
     }
 
     @Override
     public void convertCanBreakComponent() {
-        // TODO finir
+        convertBlockPredicateComponent("can_break");
     }
+
+    private void convertBlockPredicateComponent(String componentName) {
+        ConfigurationSection nexoSection = this.nexoItemSection.getConfigurationSection("Components." + componentName);
+        if (isNull(nexoSection)) return;
+
+
+        List<Map<String,Object>> predicateItems = new ArrayList<>();
+        List<String> blockArray = new ArrayList<>();
+        List<String> tagsArray = new ArrayList<>();
+
+        String block = nexoSection.getString("block");
+        if (isValidString(block)) {
+            processBlockOrTag(block, blockArray, tagsArray);
+        }
+
+        List<String> blocks = nexoSection.getStringList("blocks");
+        for (String blockItem : blocks) {
+            if (!isValidString(blockItem)) continue;
+            processBlockOrTag(blockItem, blockArray, tagsArray);
+        }
+
+        if (!blockArray.isEmpty()) {
+            Map<String, Object> blocksMap = new HashMap<>();
+            blocksMap.put("blocks", blockArray);
+            predicateItems.add(blocksMap);
+        }
+
+        for (String tag : tagsArray) {
+            Map<String, Object> tagMap = new HashMap<>();
+            tagMap.put("blocks", tag);
+            predicateItems.add(tagMap);
+        }
+
+        if (!predicateItems.isEmpty()) {
+            this.craftEngineItemUtils.getComponentsSection().set("minecraft:" + componentName,predicateItems);
+        }
+    }
+
+    private void processBlockOrTag(String input, List<String> blockArray, List<String> tagsArray) {
+        try {
+            Material.valueOf(input.toUpperCase());
+            String normalized = input.toLowerCase(Locale.ROOT);
+            if (!normalized.contains(":")) {
+                normalized = "minecraft:" + normalized;
+            }
+            blockArray.add(normalized);
+        } catch (IllegalArgumentException e) {
+            String normalized = input.toLowerCase(Locale.ROOT);
+            if (!normalized.startsWith("#")) {
+                normalized = "#" + normalized;
+            }
+            if (!normalized.contains(":")) {
+                normalized = normalized.replace("#", "#minecraft:");
+            }
+            tagsArray.add(normalized);
+        }
+    }
+
 
     @Override
     public void convertOversizedInGui() {
