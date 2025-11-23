@@ -3,6 +3,7 @@ package fr.robie.craftEngineConverter;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import fr.robie.craftEngineConverter.command.CraftEngineConverterCommand;
+import fr.robie.craftEngineConverter.converter.Converter;
 import fr.robie.craftEngineConverter.converter.nexo.NexoConverter;
 import fr.robie.craftEngineConverter.core.utils.Configuration;
 import fr.robie.craftEngineConverter.core.utils.FoliaCompatibilityManager;
@@ -23,11 +24,12 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
 import java.lang.reflect.Modifier;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 public final class CraftEngineConverter extends JavaPlugin {
     private static CraftEngineConverter INSTANCE;
+
+    private final Map<String, Converter> converterMap = new HashMap<>();
 
     private final FoliaCompatibilityManager foliaCompatibilityManager = new FoliaCompatibilityManager(this);
     private final CommandManager commandManager = new CommandManager(this);
@@ -66,7 +68,17 @@ public final class CraftEngineConverter extends JavaPlugin {
         this.commandManager.registerCommand("craftengineconverter",new CraftEngineConverterCommand(this),"cengineconverter","cec");
 
         this.commandManager.validCommands();
-        new NexoConverter(this).convertItems();
+        registerConverter(new NexoConverter(this));
+
+        if (Configuration.autoConvertOnStartup) {
+            Logger.info("Auto-conversion is enabled, starting conversion...");
+            for (Converter converter : this.converterMap.values()) {
+                converter.convertAll();
+            }
+            Logger.info("Conversion complete!");
+        } else {
+            Logger.info("Auto-conversion is disabled. Use /cec convert to manually convert items.");
+        }
 
         Logger.info("Plugin enabled !");
     }
@@ -106,6 +118,22 @@ public final class CraftEngineConverter extends JavaPlugin {
                 save.load(this.persist);
             }
         });
+    }
+
+    public void registerConverter(Converter converter) {
+        this.converterMap.put(converter.getName().toLowerCase(), converter);
+    }
+
+    public Optional<Converter> getConverter(String name) {
+        return Optional.ofNullable(this.converterMap.get(name.toLowerCase()));
+    }
+
+    public Set<String> getConverterNames() {
+        return this.converterMap.keySet();
+    }
+
+    public Collection<Converter> getConverters() {
+        return Collections.unmodifiableCollection(this.converterMap.values());
     }
 
     public Gson getGson() {

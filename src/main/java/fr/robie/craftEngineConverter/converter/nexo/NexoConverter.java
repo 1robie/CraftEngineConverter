@@ -3,11 +3,8 @@ package fr.robie.craftEngineConverter.converter.nexo;
 import fr.robie.craftEngineConverter.CraftEngineConverter;
 import fr.robie.craftEngineConverter.converter.Converter;
 import fr.robie.craftEngineConverter.core.utils.Configuration;
-import fr.robie.craftEngineConverter.core.utils.builder.TimerBuilder;
-import fr.robie.craftEngineConverter.core.utils.format.Message;
 import fr.robie.craftEngineConverter.core.utils.logger.LogType;
 import fr.robie.craftEngineConverter.core.utils.logger.Logger;
-import org.bukkit.Bukkit;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 
@@ -20,30 +17,22 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class NexoConverter extends Converter {
-    private final String NEXO_GLOBAL_PATH = "plugins/Nexo/";
-
     public NexoConverter(CraftEngineConverter plugin) {
-        super(plugin);
-    }
-
-    @Override
-    public void convertAll() {
-
+        super(plugin,"Nexo");
     }
 
     @Override
     public void convertItems(){
-        File inputBase = new File(NEXO_GLOBAL_PATH + "items");
-        File outputBase = new File(this.plugin.getDataFolder(), "converted/Nexo/CraftEngine/resources/craftengineconverter/configuration/items");
+        File inputBase = new File("plugins/" + converterName + "/items");
+        File outputBase = new File(this.plugin.getDataFolder(), "converted/"+converterName+"/CraftEngine/resources/craftengineconverter/configuration/items");
         if (!inputBase.exists() || !inputBase.isDirectory()) {
+            Logger.info("Nexo items directory not found at: " + inputBase.getAbsolutePath());
             return;
         }
-        long startTime = System.currentTimeMillis();
         AtomicInteger loadedItems = new AtomicInteger(0);
         try {
             this.plugin.getFoliaCompatibilityManager().runAsync(()->{
                 processDirectory(inputBase, inputBase, outputBase, loadedItems);
-                message(plugin, Bukkit.getConsoleSender(), Message.ITEM_CONVERTED, "time", TimerBuilder.formatTime(System.currentTimeMillis() - startTime, TimerBuilder.TimeUnit.SECOND));
             });
         } catch (Exception e) {
             Logger.info("Error during Nexo items conversion: " + e.getMessage());

@@ -313,13 +313,39 @@ public class NexoItemConverter extends ItemConverter {
         ConfigurationSection equipableSection = this.nexoItemSection.getConfigurationSection("Components.equippable");
         if (equipableSection == null) return;
 
-        ConfigurationSection ceEquipableSection = this.craftEngineItemUtils.getSettingsSection().createSection("equipment");
-        ceEquipableSection.set("slot", equipableSection.getString("slot", "head").toLowerCase());
-        setIfNotEmpty(ceEquipableSection, "asset-id", equipableSection.getString("asset_id"));
+        ConfigurationSection ceEquipableSection = this.craftEngineItemUtils.getSettingsSection().createSection("equippable");
+        String slot = equipableSection.getString("slot");
+        if (isValidString(slot)) {
+            ceEquipableSection.set("slot", slot.toLowerCase());
+        }
+        String assetId = equipableSection.getString("asset_id");
+        if (isValidString(assetId)) {
+            if (this.craftEngineItemUtils.getMaterial() == Material.ELYTRA){
+                if (assetId.contains(":")) {
+                    assetId = assetId.split(":",2)[1];
+                }
+                for (String keyToCheck : new String[]{"_elytra"}){
+                    if (assetId.endsWith(keyToCheck)){
+                        assetId = assetId.substring(0,assetId.length()-keyToCheck.length());
+                    }
+                }
+            }
+            ceEquipableSection.set("asset-id", assetId);
+        }
         setIfNotEmpty(ceEquipableSection, "camera-overlay", equipableSection.getString("camera_overlay"));
-        ceEquipableSection.set("dispensable", equipableSection.getBoolean("dispensable", false));
-        ceEquipableSection.set("swappable", equipableSection.getBoolean("swappable", false));
-        ceEquipableSection.set("damage-on-hurt", equipableSection.getBoolean("damage_on_hurt", false));
+        boolean dispensable = equipableSection.getBoolean("dispensable", true);
+        if (!dispensable) {
+            ceEquipableSection.set("dispensable", false);
+        }
+
+        boolean swappable = equipableSection.getBoolean("swappable", true);
+        if (!swappable) {
+            ceEquipableSection.set("swappable", false);
+        }
+        boolean damageOnHurt = equipableSection.getBoolean("damage_on_hurt", false);
+        if (damageOnHurt) {
+            ceEquipableSection.set("damage-on-hurt", true);
+        }
     }
 
     @Override
@@ -492,6 +518,7 @@ public class NexoItemConverter extends ItemConverter {
                     if (isValidString(namespacedElytra)){
                         Map<String, Object> parseTemplate = InternalTemplateManager.parseTemplate(Template.MODEL_ITEM_ELYTRA, "%model_path%", namespacedElytra, "%texture_path%", namespacedElytra, "%broken_model_path%", namespacedElytra, "%broken_texture_path%", namespacedElytra);
                         this.craftEngineItemUtils.getGeneralSection().createSection("model", parseTemplate);
+                        getOrCreateSection(this.craftEngineItemUtils.getSettingsSection(),"equippable").set("wings",this.itemId.split(":")[1]);
                     }
                 }
             }
@@ -577,12 +604,20 @@ public class NexoItemConverter extends ItemConverter {
         if (isValidString(texturePath)) {
             String finalTexturePath = namespaced(texturePath);
             if (isValidString(finalTexturePath)) {
-                Map<String, Object> parsedTemplate = InternalTemplateManager.parseTemplate(template, "%model_path%", finalTexturePath, "%texture_path%", finalTexturePath);
+                String finalModelPath = finalTexturePath;
+                if (template.getType() == TemplateType.BLOCK) {
+                    finalModelPath = filterModelPath(finalTexturePath);
+                }
+                Map<String, Object> parsedTemplate = InternalTemplateManager.parseTemplate(template, "%model_path%", finalModelPath, "%texture_path%", finalTexturePath);
+                ConfigurationSection generalSection = this.craftEngineItemUtils.getGeneralSection();
                 if (template.getType() == TemplateType.BLOCK) {
                     setSavedModelTemplates(parsedTemplate);
+                    ConfigurationSection ceModelSection = generalSection.createSection("model");
+                    ceModelSection.set("path", finalModelPath);
+                } else {
+                    parsedTemplate.put("type", "minecraft:model");
+                    generalSection.createSection("model", parsedTemplate);
                 }
-                parsedTemplate.put("type", "minecraft:model");
-                this.craftEngineItemUtils.getGeneralSection().createSection("model", parsedTemplate);
             } else {
                 Logger.debug("Final texture path is invalid for item '" + this.itemId + "'. Skipping texture conversion.", LogType.WARNING);
             }
@@ -600,17 +635,28 @@ public class NexoItemConverter extends ItemConverter {
             String finalSideTexture = namespaced(sideTexture);
             String finalTopTexture = namespaced(topTexture);
 
-            if (isNotNull(sideTexture) && isNotNull(topTexture)) {
-                Map<String, Object> parseTemplate = InternalTemplateManager.parseTemplate(Template.MODEL_CUBE_TOP, "%model_path%", finalSideTexture, "%texture_side_path%", finalSideTexture, "%texture_top_path%", finalTopTexture);
+            if (isNotNull(finalSideTexture) && isNotNull(finalTopTexture)) {
+                String modelPath = finalSideTexture;
+                modelPath = filterModelPath(modelPath);
+                Map<String, Object> parseTemplate = InternalTemplateManager.parseTemplate(Template.MODEL_CUBE_TOP, "%model_path%", modelPath, "%texture_side_path%", finalSideTexture, "%texture_top_path%", finalTopTexture);
                 setSavedModelTemplates(parseTemplate);
-                parseTemplate.put("type", "minecraft:model");
-                this.craftEngineItemUtils.getGeneralSection().createSection("model", parseTemplate);
+                ConfigurationSection ceModelSection = this.craftEngineItemUtils.getGeneralSection().createSection("model");
+                ceModelSection.set("path", modelPath);
             } else {
                 Logger.debug("Failed to process textures for item '" + this.itemId + "'. Skipping texture conversion.", LogType.WARNING);
             }
         } else {
             Logger.debug("Missing side or top texture for item '" + this.itemId + "' despite parent_model being 'block/cube_top'. Skipping texture conversion.", LogType.WARNING);
         }
+    }
+
+    private static @NotNull String filterModelPath(String modelPath) {
+        for (String key : new String[]{"side","top"}){
+            if (modelPath.endsWith("_"+key)){
+                modelPath = modelPath.substring(0, modelPath.length() - ("_"+key).length());
+            }
+        }
+        return modelPath;
     }
 
     private void buildBowModel(ConfigurationSection packSection) {

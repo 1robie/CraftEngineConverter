@@ -5,7 +5,7 @@ import org.bukkit.inventory.ItemStack;
 import java.util.*;
 
 public enum Message {
-    PREFIX("<b><gradient:#da2eeb:#f37ef5>CorePlugin</gradient></b><#DE45FF> ┃<reset> "),
+    PREFIX("&#FFD166C&#FFC863r&#FEBF61a&#FEB65Ef&#FEAD5Bt&#FEA459E&#FD9B56n&#FD9253g&#FD8951i&#FC814En&#FC784Ce&#FC6F49C&#FB6646o&#FB5D44n&#FB5441v&#FB4B3Ee&#FA423Cr&#FA3939t ┃§r "),
 
     TIME_YEAR("%02d %year% %02d %month% %02d %day% %02d %hour% %02d %minute% %02d %second%"),
     TIME_MONTH("%02d %month% %02d %day% %02d %hour% %02d %minute% %02d %second%"),
@@ -23,19 +23,24 @@ public enum Message {
     FORMAT_MONTH("month"), FORMAT_MONTHS("months"),
     FORMAT_YEAR("year"), FORMAT_YEARS("years"),
 
-    COMMAND_SYNTAXE_ERROR("<red>You must execute the command like this§7: <green>%syntax%"),
-    COMMAND_NO_PERMISSION("<red>You do not have permission to run this command."),
-    COMMAND_NO_CONSOLE("<red>Only one player can execute this command."),
-    COMMAND_NO_ARG("<red>Impossible to find the command with its arguments."),
+    COMMAND_SYNTAXE_ERROR("§cYou must execute the command like this§7: §a%syntax%"),
+    COMMAND_NO_PERMISSION("§cYou do not have permission to run this command."),
+    COMMAND_NO_CONSOLE("§cOnly one player can execute this command."),
+    COMMAND_NO_ARG("§cImpossible to find the command with its arguments."),
     COMMAND_SYNTAXE_HELP("§f%syntax% §7» §7%description%"),
-    COMMAND_PLAYER_NOT_FOUND("<red>Player not found."),
+    COMMAND_PLAYER_NOT_FOUND("§cPlayer not found."),
+    COMMAND_CONVERTER_NOT_FOUND("§cConverter for plugin §c%plugin% §cnot found."),
+    COMMAND_CONVERTER_START("§aStarting conversion for §e%plugin%§a..."),
+    COMMAND_CONVERTER_START_ALL("§aStarting conversion for all supported plugins..."),
+    COMMAND_CONVERTER_COMPLETE("§aConversion completed for §e%plugin%§a! In §c%time%§a."),
+    COMMAND_CONVERTER_COMPLETE_ALL("§aConversion completed for all plugins! In §c%time%§a."),
 
-    COMMAND_RELOAD_SUCCESS("<green>Plugin configuration and messages reloaded in %time%."),
+    COMMAND_RELOAD_SUCCESS("§aPlugin configuration and messages reloaded in §c%time%§a."),
 
     DESCRIPTION_COMMAND_RELOAD("Reloads the plugin configuration and messages."),
+    DESCRIPTION_COMMAND_CONVERT("Converts items from another plugin to CraftEngine format."),
 
-    ITEM_CONVERTED("<green>Item converted successfully in %time%."),
-    ;
+    ITEM_CONVERTED("§aItem §e%item%§a converted successfully in §c%time%§a.");
 
     private List<String> messages;
     private String message;

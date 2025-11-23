@@ -3,6 +3,7 @@ package fr.robie.craftEngineConverter.core.utils.permission;
 public enum Permission {
     COMMAND_USE("Allows the user to use the main command of the plugin."),
     COMMAND_RELOAD("Allows the user to reload the plugin configuration."),
+    COMMAND_CONVERT("Allows the user to convert assets for CraftEngine")
 
     ;
     private final String description;

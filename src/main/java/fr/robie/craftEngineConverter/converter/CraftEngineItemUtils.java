@@ -34,11 +34,7 @@ public class CraftEngineItemUtils {
     }
 
     public ConfigurationSection getSettingsSection() {
-        return getOrCreateSection(getDataSection(), "settings");
-    }
-
-    public ConfigurationSection getModelSection() {
-        return getOrCreateSection(craftEngineItemSection, "model");
+        return getOrCreateSection(craftEngineItemSection, "settings");
     }
 
     public ConfigurationSection getGeneralSection() {

@@ -10,6 +10,7 @@ public class CraftEngineConverterCommand extends VCommand {
         super(craftEngineConverter);
         this.setPermission(Permission.COMMAND_USE);
         this.addSubCommand(new CraftEngineConverterCommandReload(craftEngineConverter));
+        this.addSubCommand(new CraftEngineConverterCommandConvert(craftEngineConverter));
     }
 
     @Override

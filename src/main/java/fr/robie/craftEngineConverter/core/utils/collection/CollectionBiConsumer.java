@@ -2,7 +2,7 @@ package fr.robie.craftEngineConverter.core.utils.collection;
 
 import org.bukkit.command.CommandSender;
 
-import java.util.List;
+import java.util.Collection;
 
 @FunctionalInterface
 public interface CollectionBiConsumer {
@@ -14,5 +14,5 @@ public interface CollectionBiConsumer {
      * @param args command arguments
      * @return list of string
      */
-    List<String> accept(CommandSender sender, String[] args);
+    Collection<String> accept(CommandSender sender, String[] args);
 }

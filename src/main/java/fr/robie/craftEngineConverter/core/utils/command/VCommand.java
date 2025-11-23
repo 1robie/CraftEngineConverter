@@ -523,7 +523,7 @@ public abstract class VCommand extends Arguments {
      * @param startWith
      * @return
      */
-    protected List<String> generateList(List<String> defaultList, String startWith) {
+    protected List<String> generateList(Collection<String> defaultList, String startWith) {
         return generateList(defaultList, startWith, Tab.CONTAINS);
     }
 
@@ -535,7 +535,7 @@ public abstract class VCommand extends Arguments {
      * @param tab
      * @return
      */
-    protected List<String> generateList(List<String> defaultList, String startWith, Tab tab) {
+    protected List<String> generateList(Collection<String> defaultList, String startWith, Tab tab) {
         List<String> newList = new ArrayList<>();
         for (String str : defaultList) {
             if (startWith.isEmpty()

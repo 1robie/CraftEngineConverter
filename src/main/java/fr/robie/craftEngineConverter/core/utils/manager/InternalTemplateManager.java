@@ -3,6 +3,7 @@ package fr.robie.craftEngineConverter.core.utils.manager;
 import fr.robie.craftEngineConverter.CraftEngineConverter;
 import fr.robie.craftEngineConverter.core.utils.Template;
 import fr.robie.craftEngineConverter.core.utils.logger.Logger;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,7 +47,36 @@ public class InternalTemplateManager {
 
         String yamlString = yamlConfiguration.saveToString();
         YamlConfiguration copy = YamlConfiguration.loadConfiguration(new java.io.StringReader(yamlString));
-        return copy.getValues(true);
+        return convertConfigurationSectionToMap(copy);
+    }
+
+    private static Map<String, Object> convertConfigurationSectionToMap(ConfigurationSection section) {
+        Map<String, Object> result = new HashMap<>();
+        for (String key : section.getKeys(false)) {
+            Object value = section.get(key);
+            if (value instanceof ConfigurationSection configurationSection) {
+                result.put(key, convertConfigurationSectionToMap(configurationSection));
+            } else if (value instanceof List<?> lst) {
+                result.put(key, convertList(lst));
+            } else {
+                result.put(key, value);
+            }
+        }
+        return result;
+    }
+
+    private static List<Object> convertList(List<?> list) {
+        List<Object> result = new ArrayList<>();
+        for (Object item : list) {
+            if (item instanceof ConfigurationSection configurationSection) {
+                result.add(convertConfigurationSectionToMap(configurationSection));
+            } else if (item instanceof List<?> lst) {
+                result.add(convertList(lst));
+            } else {
+                result.add(item);
+            }
+        }
+        return result;
     }
 
     public static @NotNull Map<String,Object> parseTemplate(Template template, Object ...args){
@@ -68,45 +98,38 @@ public class InternalTemplateManager {
         return parseValues(templateMap, replacements);
     }
 
-    @SuppressWarnings({"unchecked","rawtypes"})
+    @SuppressWarnings({"unchecked"})
+    private static Object parseObject(Object obj, Map<String, Object> replacements) {
+        return switch (obj) {
+            case String string -> parseString(string, replacements);
+            case Map<?, ?> map -> parseValues((Map<String, Object>) map, replacements);
+            case List<?> list -> parseList(list, replacements);
+            case null, default -> obj;
+        };
+    }
+
     private static Map<String, Object> parseValues(Map<String, Object> map, Map<String, Object> replacements) {
         Map<String, Object> result = new HashMap<>();
-
         for (Map.Entry<String, Object> entry : map.entrySet()) {
-            String key = parseString(entry.getKey(), replacements);
-            Object value = entry.getValue();
-
-            switch (value) {
-                case String string -> result.put(key, parseString(string, replacements));
-                case Map ignored -> result.put(key, parseValues((Map<String, Object>) value, replacements));
-                case List list -> result.put(key, parseList(list, replacements));
-                case null, default -> result.put(key, value);
-            }
+            result.put(parseString(entry.getKey(), replacements), parseObject(entry.getValue(), replacements));
         }
-
         return result;
     }
 
-    @SuppressWarnings({"unchecked", "rawtypes"})
     private static List<Object> parseList(List<?> list, Map<String, Object> replacements) {
         List<Object> result = new ArrayList<>();
-
         for (Object item : list) {
-            switch (item) {
-                case String string -> result.add(parseString(string, replacements));
-                case Map map -> result.add(parseValues((Map<String, Object>) map, replacements));
-                case List list1 -> result.add(parseList(list1, replacements));
-                case null, default -> result.add(item);
-            }
+            result.add(parseObject(item, replacements));
         }
-
         return result;
     }
 
     private static String parseString(String str, Map<String, Object> replacements) {
         String result = str;
         for (Map.Entry<String, Object> replacement : replacements.entrySet()) {
-            result = result.replace(replacement.getKey(), String.valueOf(replacement.getValue()));
+            if (replacement.getValue() != null) {
+                result = result.replace(replacement.getKey(), String.valueOf(replacement.getValue()));
+            }
         }
         return result;
     }

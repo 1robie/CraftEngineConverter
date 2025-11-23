@@ -1,5 +1,8 @@
 enable-debug: false
 
+# Auto-convert items on plugin enable
+auto-convert-on-startup: false
+
 # Default material for items
 default-material: "PAPER"
 

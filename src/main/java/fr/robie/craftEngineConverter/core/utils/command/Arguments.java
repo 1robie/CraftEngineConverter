@@ -239,4 +239,24 @@ public abstract class Arguments extends CraftEngineConverterUtils {
             return world;
         }
     }
+
+    protected <T extends Enum<T>> T argAsEnum(int index, Class<T> enumClass) {
+        try {
+            String s = argAsString(index);
+            if (s == null) return null;
+            return Enum.valueOf(enumClass, s.toUpperCase());
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    protected <T extends Enum<T>> T argAsEnum(int index, Class<T> enumClass, T defaultValue) {
+        try {
+            String s = argAsString(index);
+            if (s == null) return defaultValue;
+            return Enum.valueOf(enumClass, s.toUpperCase());
+        } catch (Exception e) {
+            return defaultValue;
+        }
+    }
 }
