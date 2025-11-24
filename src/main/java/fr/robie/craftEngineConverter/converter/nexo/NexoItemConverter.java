@@ -565,7 +565,7 @@ public class NexoItemConverter extends ItemConverter {
         }
         boolean clearAllEffects = deathEffects.isConfigurationSection("CLEAR_ALL_EFFECTS");
         if (clearAllEffects){
-            ceDeathEffects.add(Map.of("type","remove_effects"));
+            ceDeathEffects.add(Map.of("type","clear_all_effects"));
         }
         ConfigurationSection teleportRandomlySection = deathEffects.getConfigurationSection("TELEPORT_RANDOMLY");
         if (isNotNull(teleportRandomlySection)) {
