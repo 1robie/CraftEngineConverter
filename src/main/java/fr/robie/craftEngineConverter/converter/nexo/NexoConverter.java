@@ -27,9 +27,16 @@ public class NexoConverter extends Converter {
     public void convertItems(){
         File inputBase = new File("plugins/" + converterName + "/items");
         File outputBase = new File(this.plugin.getDataFolder(), "converted/"+converterName+"/CraftEngine/resources/craftengineconverter/configuration/items");
+
         if (!inputBase.exists() || !inputBase.isDirectory()) {
             Logger.info("Nexo items directory not found at: " + inputBase.getAbsolutePath());
             return;
+        }
+        if (!outputBase.exists()) {
+            outputBase.mkdirs();
+        } else {
+            deleteDirectory(outputBase);
+            outputBase.mkdirs();
         }
         AtomicInteger loadedItems = new AtomicInteger(0);
         try {
@@ -68,7 +75,7 @@ public class NexoConverter extends Converter {
                     continue;
                 }
                 String finalItemId = finalFileName + ":" + itemId;
-                NexoItemConverter nexoItemConverter = new NexoItemConverter(section, finalItemId, items.createSection(finalItemId));
+                NexoItemConverter nexoItemConverter = new NexoItemConverter(this,section, finalItemId, items.createSection(finalItemId));
                 nexoItemConverter.convertItem();
                 if (!nexoItemConverter.isExcludeFromInventory()) {
                     itemsIds.add(finalItemId);
@@ -145,13 +152,13 @@ public class NexoConverter extends Converter {
         }
 
         try {
-            copyDirectory(assetsFolder, outputAssetsFolder);
+            copyDirectory(assetsFolder, outputAssetsFolder, assetsFolder);
         } catch (IOException e) {
             Logger.info("Failed to copy assets from " + packName + " pack: " + e.getMessage(), LogType.ERROR);
         }
     }
 
-    private void copyDirectory(File source, File destination) throws IOException {
+    private void copyDirectory(File source, File destination, File assetsRoot) throws IOException {
         if (!destination.exists()) {
             destination.mkdirs();
         }
@@ -160,11 +167,65 @@ public class NexoConverter extends Converter {
         if (files == null) return;
 
         for (File file : files) {
-            File newFile = new File(destination, file.getName());
-            if (file.isDirectory()) {
-                copyDirectory(file, newFile);
+            Path relativePath = assetsRoot.toPath().relativize(file.toPath());
+            String relativePathStr = relativePath.toString().replace("\\", "/");
+
+            String[] parts = relativePathStr.split("/", 2);
+            String namespace = parts[0];
+            String pathInNamespace = parts.length > 1 ? parts[1] : "";
+
+            PackMapping resolvedMapping = resolvePackMapping(namespace, pathInNamespace);
+
+            File targetFile;
+            if (resolvedMapping != null) {
+                String mappedFullPath = resolvedMapping.namespaceTarget() + "/" + resolvedMapping.targetPath();
+
+                if (file.isFile()) {
+                    targetFile = new File(destination, mappedFullPath + "/" + file.getName());
+                } else {
+                    targetFile = new File(destination, mappedFullPath);
+                }
             } else {
-                copyFile(file, newFile);
+                targetFile = new File(destination, relativePathStr);
+            }
+
+            if (file.isDirectory()) {
+                if (!targetFile.exists()) {
+                    targetFile.mkdirs();
+                }
+
+                if (resolvedMapping != null) {
+                    copyDirectoryContents(file, targetFile);
+                } else {
+                    copyDirectory(file, destination, assetsRoot);
+                }
+            } else {
+                if (!targetFile.getParentFile().exists()) {
+                    targetFile.getParentFile().mkdirs();
+                }
+                copyFile(file, targetFile);
+            }
+        }
+    }
+
+    private void copyDirectoryContents(File source, File destination) throws IOException {
+        if (!destination.exists()) {
+            destination.mkdirs();
+        }
+
+        File[] files = source.listFiles();
+        if (files == null) return;
+
+        for (File file : files) {
+            File targetFile = new File(destination, file.getName());
+
+            if (file.isDirectory()) {
+                copyDirectoryContents(file, targetFile);
+            } else {
+                if (!targetFile.getParentFile().exists()) {
+                    targetFile.getParentFile().mkdirs();
+                }
+                copyFile(file, targetFile);
             }
         }
     }

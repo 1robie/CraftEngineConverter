@@ -1,5 +1,6 @@
 package fr.robie.craftEngineConverter.converter.nexo;
 
+import fr.robie.craftEngineConverter.converter.Converter;
 import fr.robie.craftEngineConverter.converter.ItemConverter;
 import fr.robie.craftEngineConverter.utils.Configuration;
 import fr.robie.craftEngineConverter.utils.FloatsUtils;
@@ -19,8 +20,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class NexoItemConverter extends ItemConverter {
     private final ConfigurationSection nexoItemSection;
 
-    public NexoItemConverter(ConfigurationSection nexoItemSection, String itemId, ConfigurationSection craftEngineItemSection) {
-        super(itemId, craftEngineItemSection);
+    public NexoItemConverter(Converter converter,ConfigurationSection nexoItemSection, String itemId, ConfigurationSection craftEngineItemSection) {
+        super(itemId, craftEngineItemSection,converter);
         this.nexoItemSection = nexoItemSection;
     }
 
@@ -779,6 +780,8 @@ public class NexoItemConverter extends ItemConverter {
                         Map<String, Object> parseTemplate = InternalTemplateManager.parseTemplate(Template.MODEL_ITEM_ELYTRA, "%model_path%", namespacedElytra, "%texture_path%", namespacedElytra, "%broken_model_path%", namespacedElytra, "%broken_texture_path%", namespacedElytra);
                         this.craftEngineItemUtils.getGeneralSection().createSection("model", parseTemplate);
                         getOrCreateSection(this.craftEngineItemUtils.getSettingsSection(),"equippable").set("wings",this.itemId.split(":")[1]);
+                        String[] split = namespacedElytra.split(":", 2);
+                        getConverter().addPackMapping(split[0],"textures/"+ split[1] + ".png", split[0], "textures/entity/equipment/wings/");
                     }
                 }
             }

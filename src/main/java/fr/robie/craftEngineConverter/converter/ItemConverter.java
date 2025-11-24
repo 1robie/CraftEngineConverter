@@ -12,12 +12,14 @@ import java.util.Map;
 
 public abstract class ItemConverter {
     protected final String itemId;
+    private final Converter converter;
     private final Map<String,Object> savedModelTemplates = new HashMap<>();
     public final CraftEngineItemUtils craftEngineItemUtils;
     protected boolean excludeFromInventory = false;
 
-    public ItemConverter(String itemId,ConfigurationSection craftEngineItemSection){
+    public ItemConverter(String itemId,ConfigurationSection craftEngineItemSection, Converter converter) {
         this.itemId = itemId;
+        this.converter = converter;
         this.craftEngineItemUtils = new CraftEngineItemUtils(craftEngineItemSection);
     }
 
@@ -187,6 +189,10 @@ public abstract class ItemConverter {
 
     public boolean isExcludeFromInventory() {
         return this.excludeFromInventory;
+    }
+
+    public Converter getConverter() {
+        return this.converter;
     }
 
     public Map<String,Object> getEffectMap(String effectName,double amplifier,int duration, boolean ambient, boolean show_particles, boolean show_icon){
