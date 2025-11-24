@@ -79,7 +79,6 @@ public final class CraftEngineConverter extends JavaPlugin {
         } else {
             Logger.info("Auto-conversion is disabled. Use /cec convert to manually convert items.");
         }
-
         Logger.info("Plugin enabled !");
     }
 

@@ -794,6 +794,7 @@ public class NexoItemConverter extends ItemConverter {
             return;
         }
 
+        if (tryBuildTridentModel(packSection, modelPath)) return;
         if (tryBuildShieldModel(packSection, modelPath)) return;
         if (tryBuildPullingModel(packSection)) return;
         if (tryBuildFishingRodModel(packSection, modelPath)) return;
@@ -806,6 +807,17 @@ public class NexoItemConverter extends ItemConverter {
         Map<String, Object> parsedTemplate = InternalTemplateManager.parseTemplate(Template.MODEL_ITEM_DEFAULT, "%model_path%", namespacedPath);
         setSavedModelTemplates(parsedTemplate);
         this.craftEngineItemUtils.getGeneralSection().createSection("model", parsedTemplate);
+    }
+
+    private boolean tryBuildTridentModel(ConfigurationSection packSection, String modelPath){
+        if (this.craftEngineItemUtils.getMaterial() != Material.TRIDENT) return false;
+        String namespacedModel = namespaced(modelPath);
+        if (isNull(namespacedModel)) return false;
+        String throwingModel = packSection.getString("throwing_model", namespacedModel+"_throwing");
+        String namespacedThrowingModel = namespaced(throwingModel);
+        this.craftEngineItemUtils.getGeneralSection().createSection("model",InternalTemplateManager.parseTemplate(Template.MODEL_TRIDENT, "%model_path%",namespacedModel,"%throwing_model_path%",namespacedThrowingModel));
+        this.craftEngineItemUtils.getSettingsSection().set("projectile",InternalTemplateManager.parseTemplate(Template.SETTINGS_PROJECTILE, "%item_id%", this.itemId));
+        return true;
     }
 
     private boolean tryBuildShieldModel(ConfigurationSection packSection, String modelPath) {
@@ -1118,8 +1130,56 @@ public class NexoItemConverter extends ItemConverter {
         }
         ConfigurationSection dropSection = nexoFurnitureMechanicsSection.getConfigurationSection("drop");
         if (isNotNull(dropSection)){
-            //TODO
-            Logger.debug("Furniture item '"+this.itemId+"' has a drop configuration, but drop conversion is not supported yet. Skipping drop conversion.", LogType.WARNING);
+            boolean silkTouch = dropSection.getBoolean("silk_touch", true); // If true, silk touch makes the block drop itself
+            boolean fortune = dropSection.getBoolean("fortune", false);     // If true, fortune modifies drop quantity
+            String minimalType = dropSection.getString("minimal_type");      // Minimal tool type required to drop
+            String bestTool = dropSection.getString("best_tool");            // Preferred tool type for drop
+
+
+            if (isValidString(minimalType) || isValidString(bestTool)) {
+                Logger.debug(
+                        "Found tool requirements for drop conversion for furniture item '" + this.itemId +
+                                "'. Tool-based drop requirements are not supported yet, skipping tool constraints conversion.",
+                        LogType.WARNING
+                );
+            }
+
+            ConfigurationSection ceFurnitureSection = getOrCreateSection(ceBehaviorSection, "furniture");
+
+            // Handle combinations in an explicit, readable way
+            if (silkTouch) {
+                // Silk touch present: priority to silk touch behavior
+
+                if (fortune) {
+                    // Silk touch + fortune:
+                    // Note: expected behavior: if silk touch condition is met, drop block/item itself;
+                    // otherwise apply fortune formula to the normal drop.
+                    // TODO: generate a loot table that checks for \`silk_touch\` condition first, then applies fortune functions when not present.
+                    var dropSectionMapList = dropSection.getMapList("loots");
+                    if (dropSectionMapList.isEmpty()){
+                        ceFurnitureSection.set("loot",InternalTemplateManager.parseTemplate(Template.LOOT_TABLE_SILK_TOUCH_ONLY, "%type%","furniture_item","%item%", this.itemId));
+                    } else {
+                        // TODO to finish
+                    }
+                } else {
+                    // Silk touch only: always drop the block/item itself
+                    // TODO: generate a simple loot table that returns the block/item when silk touch is present.
+                }
+            } else {
+                // No silk touch: normal drop rules apply
+                if (fortune) {
+                    // Fortune modifies drop amount for the normal drop
+                    // TODO: apply CE's fortune function or template to adjust drop quantities.
+                } else {
+                    // Default behavior: basic drop (use provided section or a basic loot template)
+                }
+            }
+
+            // Save the spec into the placement/loot section for later processing.
+            // Replace this storage with proper template/loot-table creation when implementing exporter.
+        } else {
+            ConfigurationSection ceFurnitureSection = getOrCreateSection(ceBehaviorSection, "furniture");
+            ceFurnitureSection.set("loot", InternalTemplateManager.parseTemplate(Template.LOOT_TABLE_BASIC_DROP, "%type%","furniture_item","%item%", this.itemId));
         }
         ConfigurationSection limitedPlacingSection = nexoFurnitureMechanicsSection.getConfigurationSection("limited_placing");
         Set<FurniturePlacement> noLimitedPlacingKeys = new HashSet<>();
@@ -1178,8 +1238,9 @@ public class NexoItemConverter extends ItemConverter {
                 List<String> interactionsList = nexoHitboxesSection.getStringList("interactions");
                 parseInteractionsHitboxes(interactionsList, hitboxes);
             }
-            ConfigurationSection ceFurnitureSection = ceBehaviorSection.createSection("furniture");
-            ConfigurationSection cePlacementSection = ceFurnitureSection.createSection("placement");
+            ConfigurationSection ceFurnitureSection = getOrCreateSection(ceBehaviorSection, "furniture");
+            ConfigurationSection cePlacementSection = getOrCreateSection(ceFurnitureSection, "placement");
+
             for (FurniturePlacement furniturePlacement : noLimitedPlacingKeys){
                 ConfigurationSection ceTypePlacementSection = cePlacementSection.createSection(furniturePlacement.name().toLowerCase());
                 ConfigurationSection ceRuleSection = ceTypePlacementSection.createSection("rules");

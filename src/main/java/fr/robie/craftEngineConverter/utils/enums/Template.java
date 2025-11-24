@@ -10,6 +10,12 @@ public enum Template {
     MODEL_ITEM_BOW("templates/model/item_bow"),
     MODEL_ITEM_DEFAULT("templates/model/item_default"),
     MODEL_ITEM_ELYTRA("templates/model/item_elytra"),
+    MODEL_TRIDENT("templates/model/item_trident"),
+
+    SETTINGS_PROJECTILE("templates/settings/projectile", TemplateType.SETTINGS),
+
+    LOOT_TABLE_BASIC_DROP("templates/loot_table/basic_drop", TemplateType.LOOT_TABLE),
+    LOOT_TABLE_SILK_TOUCH_ONLY("templates/loot_table/silk_touch_only_drop", TemplateType.LOOT_TABLE),
 
     MINECRAFT_EFFECT("templates/minecraft/effect",TemplateType.OTHER)
 
