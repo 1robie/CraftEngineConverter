@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 public abstract class Converter extends YamlUtils {
     protected final CraftEngineConverter plugin;
@@ -20,17 +21,34 @@ public abstract class Converter extends YamlUtils {
         this.converterName = converterName;
     }
 
-    public void convertAll(){
-        convertItems();
-        convertPack();
+    public CompletableFuture<Void> convertAll(){
+        return this.plugin.getFoliaCompatibilityManager().runAsyncComplatable(() -> {
+            convertItems(false);
+            convertPack(false);
+            convertEmojis(false);
+            convertImages(false);
+        });
     }
 
-    public void convertItems(){}
+    public abstract CompletableFuture<Void> convertItems(boolean async);
 
-    public void convertPack(){}
+    public abstract CompletableFuture<Void> convertPack(boolean async);
+
+    public abstract CompletableFuture<Void> convertEmojis(boolean async);
+
+    public abstract CompletableFuture<Void> convertImages(boolean async);
 
     public String getName() {
         return this.converterName;
+    }
+
+    protected CompletableFuture<Void> executeTask(boolean async, Runnable task) {
+        if (async) {
+            return this.plugin.getFoliaCompatibilityManager().runAsyncComplatable(task);
+        } else {
+            task.run();
+            return CompletableFuture.completedFuture(null);
+        }
     }
 
     public void addPackMapping(@NotNull String namespaceSource, @NotNull String originalPath, @NotNull String namespaceTarget, @NotNull String targetPath){

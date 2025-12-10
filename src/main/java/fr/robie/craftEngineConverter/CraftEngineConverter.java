@@ -8,6 +8,7 @@ import fr.robie.craftEngineConverter.converter.nexo.NexoConverter;
 import fr.robie.craftEngineConverter.loader.MessageLoader;
 import fr.robie.craftEngineConverter.utils.Configuration;
 import fr.robie.craftEngineConverter.utils.FoliaCompatibilityManager;
+import fr.robie.craftEngineConverter.utils.builder.TimerBuilder;
 import fr.robie.craftEngineConverter.utils.command.CommandManager;
 import fr.robie.craftEngineConverter.utils.format.ClassicMeta;
 import fr.robie.craftEngineConverter.utils.format.ComponentMeta;
@@ -25,6 +26,8 @@ import org.bukkit.plugin.java.JavaPlugin;
 import java.io.File;
 import java.lang.reflect.Modifier;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public final class CraftEngineConverter extends JavaPlugin {
     private static CraftEngineConverter INSTANCE;
@@ -72,10 +75,19 @@ public final class CraftEngineConverter extends JavaPlugin {
 
         if (Configuration.autoConvertOnStartup) {
             Logger.info("Auto-conversion is enabled, starting conversion...");
-            for (Converter converter : this.converterMap.values()) {
-                converter.convertAll();
+            long startTime = System.currentTimeMillis();
+            Collection<Converter> values = this.converterMap.values();
+            AtomicInteger counter = new AtomicInteger(values.size());
+            for (Converter converter : values) {
+                CompletableFuture<Void> voidCompletableFuture = converter.convertAll();
+                voidCompletableFuture.thenAccept(voidCompletableFuture1 -> {
+                    int remaining = counter.decrementAndGet();
+                    if (remaining == 0) {
+                        long endTime = System.currentTimeMillis();
+                        Logger.info("Auto-conversion complete in " + TimerBuilder.formatTime(endTime-startTime, TimerBuilder.TimeUnit.SECOND) + " !");
+                    }
+                });
             }
-            Logger.info("Conversion complete!");
         } else {
             Logger.info("Auto-conversion is disabled. Use /cec convert to manually convert items.");
         }

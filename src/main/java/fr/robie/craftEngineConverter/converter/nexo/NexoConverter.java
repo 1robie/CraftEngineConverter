@@ -8,15 +8,21 @@ import fr.robie.craftEngineConverter.utils.logger.Logger;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 public class NexoConverter extends Converter {
     public NexoConverter(CraftEngineConverter plugin) {
@@ -24,7 +30,11 @@ public class NexoConverter extends Converter {
     }
 
     @Override
-    public void convertItems(){
+    public CompletableFuture<Void> convertItems(boolean async){
+        return executeTask(async, this::convertItemsSync);
+    }
+
+    private void convertItemsSync() {
         File inputBase = new File("plugins/" + converterName + "/items");
         File outputBase = new File(this.plugin.getDataFolder(), "converted/"+converterName+"/CraftEngine/resources/craftengineconverter/configuration/items");
 
@@ -32,17 +42,14 @@ public class NexoConverter extends Converter {
             Logger.info("Nexo items directory not found at: " + inputBase.getAbsolutePath());
             return;
         }
-        if (!outputBase.exists()) {
-            outputBase.mkdirs();
-        } else {
+        if (outputBase.exists()){
             deleteDirectory(outputBase);
-            outputBase.mkdirs();
         }
+        outputBase.mkdirs();
+
         AtomicInteger loadedItems = new AtomicInteger(0);
         try {
-            this.plugin.getFoliaCompatibilityManager().runAsync(()->{
-                processDirectory(inputBase, inputBase, outputBase, loadedItems);
-            });
+            processDirectory(inputBase, inputBase, outputBase, loadedItems);
         } catch (Exception e) {
             Logger.info("Error during Nexo items conversion: " + e.getMessage());
         }
@@ -75,7 +82,7 @@ public class NexoConverter extends Converter {
                     continue;
                 }
                 String finalItemId = finalFileName + ":" + itemId;
-                NexoItemConverter nexoItemConverter = new NexoItemConverter(this,section, finalItemId, items.createSection(finalItemId));
+                NexoItemConverter nexoItemConverter = new NexoItemConverter(this,section, finalItemId, items.createSection(finalItemId), convertedConfig);
                 nexoItemConverter.convertItem();
                 if (!nexoItemConverter.isExcludeFromInventory()) {
                     itemsIds.add(finalItemId);
@@ -102,48 +109,223 @@ public class NexoConverter extends Converter {
     }
 
     @Override
-    public void convertPack(){
+    public CompletableFuture<Void> convertPack(boolean async){
+        return executeTask(async, this::convertPackSync);
+    }
+
+    private void convertPackSync() {
         try {
-            this.plugin.getFoliaCompatibilityManager().runAsync(() -> {
-                File inputPackFile = new File("plugins/" + converterName + "/pack");
-                File outputPackFile = new File(this.plugin.getDataFolder(), "converted/"+converterName+"/CraftEngine/resources/craftengineconverter/resourcepack");
+            File inputPackFile = new File("plugins/" + converterName + "/pack");
+            File outputPackFile = new File(this.plugin.getDataFolder(), "converted/"+converterName+"/CraftEngine/resources/craftengineconverter/resourcepack");
 
-                if (!inputPackFile.exists() || !inputPackFile.isDirectory()) {
-                    Logger.info("Nexo pack directory not found at: " + inputPackFile.getAbsolutePath());
-                    return;
-                }
+            if (!inputPackFile.exists() || !inputPackFile.isDirectory()) {
+                Logger.info("Nexo pack directory not found at: " + inputPackFile.getAbsolutePath());
+                return;
+            }
 
-                if (!outputPackFile.exists()) {
-                    outputPackFile.mkdirs();
-                } else {
-                    deleteDirectory(outputPackFile);
-                    outputPackFile.mkdirs();
-                }
+            if (!outputPackFile.exists()) {
+                outputPackFile.mkdirs();
+            } else {
+                deleteDirectory(outputPackFile);
+                outputPackFile.mkdirs();
+            }
 
-                File outputAssetsFolder = new File(outputPackFile, "assets");
+            File outputAssetsFolder = new File(outputPackFile, "assets");
 
-                // Copy main assets folder
-                copyAssetsFolder(new File(inputPackFile, "assets"), outputAssetsFolder, "main");
+            // Copy main assets folder
+            copyAssetsFolder(new File(inputPackFile, "assets"), outputAssetsFolder, "main");
 
-                // Copy external packs assets
-                File nexoExternalPacksFolder = new File(inputPackFile, "external_packs");
-                if (nexoExternalPacksFolder.exists() && nexoExternalPacksFolder.isDirectory()) {
-                    File[] externalPacks = nexoExternalPacksFolder.listFiles();
-                    if (externalPacks != null) {
-                        for (File externalPack : externalPacks) {
-                            if (!externalPack.isDirectory()) continue;
+            // Copy external packs assets
+            File nexoExternalPacksFolder = new File(inputPackFile, "external_packs");
+            if (nexoExternalPacksFolder.exists() && nexoExternalPacksFolder.isDirectory()) {
+                File[] externalPacks = nexoExternalPacksFolder.listFiles();
+                if (externalPacks != null) {
+                    for (File externalPack : externalPacks) {
+                        if (externalPack.isDirectory()) {
                             File externalPackAssetsFolder = new File(externalPack, "assets");
                             copyAssetsFolder(externalPackAssetsFolder, outputAssetsFolder, externalPack.getName());
+                        } else if (externalPack.isFile() && externalPack.getName().endsWith(".zip")) {
+                            extractAndCopyZipAssets(externalPack, outputAssetsFolder, externalPack.getName().replace(".zip", ""));
                         }
                     }
                 }
+            }
 
-                Logger.info("Pack conversion completed successfully");
-            });
+            Logger.info("Pack conversion completed successfully");
         } catch (Exception e) {
             Logger.info("Error during Nexo pack conversion: " + e.getMessage(), LogType.ERROR);
         }
     }
+
+    @Override
+    public CompletableFuture<Void> convertEmojis(boolean async){
+        return executeTask(async, this::convertEmojisSync);
+    }
+
+    private void convertEmojisSync() {
+        File inputEmojisFolder = new File("plugins/"+converterName+"/glyphs");
+        File outputEmojisFolder = new File(this.plugin.getDataFolder(), "converted/"+converterName+"/CraftEngine/resources/craftengineconverter/configuration/emojis");
+        if (!inputEmojisFolder.exists() || !inputEmojisFolder.isDirectory()) {
+            Logger.debug("Nexo emojis directory not found at: " + inputEmojisFolder.getAbsolutePath());
+            return;
+        }
+        if (!outputEmojisFolder.exists()) {
+            outputEmojisFolder.mkdirs();
+        } else {
+            deleteDirectory(outputEmojisFolder);
+            outputEmojisFolder.mkdirs();
+        }
+        processEmojisDirectory(inputEmojisFolder, outputEmojisFolder);
+    }
+
+    private void processEmojisDirectory(File inputDir, File outputDir) {
+        File[] listFiles = inputDir.listFiles();
+        if (listFiles == null) return;
+
+        for (File file : listFiles) {
+            if (file.isDirectory()) {
+                File newOutputDir = new File(outputDir, file.getName());
+                newOutputDir.mkdirs();
+                processEmojisDirectory(file, newOutputDir);
+            } else if (file.getName().endsWith(".yml")) {
+                convertEmojiFile(file, outputDir);
+            }
+        }
+    }
+
+    private void convertEmojiFile(File emojiFile, File outputDir) {
+        YamlConfiguration config = getConfig(emojiFile);
+        Set<String> keys = config.getKeys(false);
+        YamlConfiguration convertedConfig = new YamlConfiguration();
+        ConfigurationSection convertedEmojiSection = convertedConfig.createSection("emoji");
+
+        for (String key : keys){
+            ConfigurationSection emojiSection = config.getConfigurationSection(key);
+            if (emojiSection == null) continue;
+            String finalKey = "default:" + key;
+            String permission = emojiSection.getString("permission");
+            List<String> placeholders = emojiSection.getStringList("placeholders");
+            if (placeholders.isEmpty()) continue;
+            ConfigurationSection ceEmojiSection = convertedEmojiSection.createSection(finalKey);
+            if (permission != null){
+                ceEmojiSection.set("permission", permission);
+            }
+            if (!placeholders.isEmpty()){
+                ceEmojiSection.set("keywords", placeholders);
+            }
+            int index = emojiSection.getInt("index",-1);
+            int rows = emojiSection.getInt("rows",-1);
+            int columns = emojiSection.getInt("columns",-1);
+            if (index != -1 && rows != -1 && columns != -1){
+                ceEmojiSection.set("image",finalKey+":"+rows+":"+columns);
+            } else {
+                ceEmojiSection.set("image",finalKey+":0:0");
+            }
+        }
+        if (convertedEmojiSection.getKeys(false).isEmpty()) {
+            return;
+        }
+        try {
+            File output = new File(outputDir, emojiFile.getName());
+            convertedConfig.save(output);
+        } catch (IOException e) {
+            Logger.info("Failed to save converted emoji file: " + emojiFile.getName(), LogType.ERROR);
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public CompletableFuture<Void> convertImages(boolean async){
+        return executeTask(async, this::convertImagesSync);
+    }
+
+    private void convertImagesSync() {
+        File inputBase = new File("plugins/" + converterName + "/glyphs");
+        File outputBase = new File(this.plugin.getDataFolder(), "converted/"+converterName+"/CraftEngine/resources/craftengineconverter/configuration/images");
+
+        if (!inputBase.exists() || !inputBase.isDirectory()) {
+            Logger.debug("Nexo glyph directory not found at: " + inputBase.getAbsolutePath());
+            return;
+        }
+        if (!outputBase.exists()) {
+            outputBase.mkdirs();
+        } else {
+            deleteDirectory(outputBase);
+            outputBase.mkdirs();
+        }
+
+        try {
+            processImagesDirectory(inputBase, inputBase, outputBase);
+        } catch (Exception e) {
+            Logger.info("Error during Nexo images conversion: " + e.getMessage(), LogType.ERROR);
+        }
+    }
+
+    private void processImagesDirectory(File baseDir, File currentDir, File outputBase) {
+        File[] files = currentDir.listFiles();
+        if (files == null) return;
+
+        for (File imageFile : files) {
+            if (imageFile.isDirectory()) {
+                processImagesDirectory(baseDir, imageFile, outputBase);
+                continue;
+            }
+
+            String fileName = imageFile.getName();
+            if (!fileName.endsWith(".yml")) {
+                continue;
+            }
+
+            YamlConfiguration config = getConfig(imageFile);
+            YamlConfiguration convertedConfig = new YamlConfiguration();
+            ConfigurationSection imagesSection = convertedConfig.createSection("images");
+            Set<String> keys = config.getKeys(false);
+
+            for (String key : keys){
+                ConfigurationSection imageSection = config.getConfigurationSection(key);
+                if (imageSection == null) continue;
+
+                ConfigurationSection section = imagesSection.createSection("default:" + key);
+                String texture = imageSection.getString("texture");
+                if (isValidString(texture)){
+                    section.set("file", namespaced(texture));
+                }
+                int ascent = imageSection.getInt("ascent", 0);
+                if (ascent != 0){
+                    section.set("ascent", ascent);
+                }
+                int height = imageSection.getInt("height", 0);
+                if (height != 0){
+                    section.set("height", height);
+                }
+                String font = imageSection.getString("font");
+                if (isValidString(font)){
+                    section.set("font", font);
+                }
+                int rows = imageSection.getInt("rows",0);
+                int cols = imageSection.getInt("columns",0);
+                if (rows > 0 && cols > 0){
+                    section.set("grid-size", rows+","+cols);
+                }
+            }
+
+            try {
+                Path relative = baseDir.toPath().relativize(imageFile.toPath());
+                File output = new File(outputBase, relative.toString());
+                if (!output.getParentFile().exists()) {
+                    output.getParentFile().mkdirs();
+                }
+                convertedConfig.save(output);
+            } catch (IOException e) {
+                Logger.info("Failed to save converted image file: " + fileName, LogType.ERROR);
+                e.printStackTrace();
+            } catch (IllegalArgumentException e) {
+                Logger.info("Failed to compute relative path for: " + imageFile.getPath(), LogType.ERROR);
+                e.printStackTrace();
+            }
+        }
+    }
+
 
     private void copyAssetsFolder(File assetsFolder, File outputAssetsFolder, String packName) {
         if (!assetsFolder.exists() || !assetsFolder.isDirectory()) {
@@ -236,6 +418,60 @@ public class NexoConverter extends Converter {
             destination.toPath(),
             StandardCopyOption.REPLACE_EXISTING
         );
+    }
+
+    private void extractAndCopyZipAssets(File zipFile, File outputAssetsFolder, String packName) {
+        File tempDir = new File(this.plugin.getDataFolder(), "temp/zip_extract_" + System.currentTimeMillis());
+        tempDir.mkdirs();
+
+        try {
+            extractZip(zipFile.toPath(), tempDir.toPath());
+
+            File extractedAssetsFolder = new File(tempDir, "assets");
+            if (extractedAssetsFolder.exists() && extractedAssetsFolder.isDirectory()) {
+                Logger.debug("Found assets folder in ZIP: " + zipFile.getName());
+                copyAssetsFolder(extractedAssetsFolder, outputAssetsFolder, packName);
+            } else {
+                Logger.debug("No assets folder found in ZIP: " + zipFile.getName());
+            }
+
+            deleteDirectory(tempDir);
+        } catch (IOException e) {
+            Logger.info("Failed to extract or copy assets from ZIP '" + zipFile.getName() + "': " + e.getMessage(), LogType.ERROR);
+            e.printStackTrace();
+            if (tempDir.exists()) {
+                deleteDirectory(tempDir);
+            }
+        }
+    }
+
+    private void extractZip(Path zipPath, Path targetDir) throws IOException {
+        Files.createDirectories(targetDir);
+        try (ZipInputStream zis = new ZipInputStream(new BufferedInputStream(Files.newInputStream(zipPath)))) {
+            ZipEntry entry;
+            while ((entry = zis.getNextEntry()) != null) {
+                if (entry.isDirectory()) {
+                    Files.createDirectories(targetDir.resolve(entry.getName()));
+                    zis.closeEntry();
+                    continue;
+                }
+
+                Path resolved = targetDir.resolve(entry.getName()).normalize();
+                if (!resolved.startsWith(targetDir.normalize())) {
+                    throw new IOException("Bad zip entry: " + entry.getName());
+                }
+
+                Files.createDirectories(resolved.getParent());
+                try (OutputStream out = Files.newOutputStream(resolved, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)) {
+                    byte[] buffer = new byte[8192];
+                    int len;
+                    while ((len = zis.read(buffer)) > 0) {
+                        out.write(buffer, 0, len);
+                    }
+                }
+                zis.closeEntry();
+            }
+        }
     }
 
     private void deleteDirectory(File directory) {

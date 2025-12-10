@@ -1,13 +1,14 @@
 package fr.robie.craftEngineConverter.utils.format;
 
 import fr.robie.craftEngineConverter.CraftEngineConverter;
+import fr.robie.craftEngineConverter.utils.ObjectUtils;
 import fr.robie.craftEngineConverter.utils.enums.DefaultFontInfo;
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.entity.Player;
 
-public abstract class MessageUtils {
+public abstract class MessageUtils extends ObjectUtils {
     private final static int CENTER_PX = 154;
 
     protected void messageWO(CraftEngineConverter plugin, CommandSender sender, Message message, Object... args) {

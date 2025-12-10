@@ -5,12 +5,14 @@ import fr.robie.craftEngineConverter.converter.ItemConverter;
 import fr.robie.craftEngineConverter.utils.Configuration;
 import fr.robie.craftEngineConverter.utils.FloatsUtils;
 import fr.robie.craftEngineConverter.utils.Position;
+import fr.robie.craftEngineConverter.utils.Tuple;
 import fr.robie.craftEngineConverter.utils.enums.*;
 import fr.robie.craftEngineConverter.utils.logger.LogType;
 import fr.robie.craftEngineConverter.utils.logger.Logger;
 import fr.robie.craftEngineConverter.utils.manager.InternalTemplateManager;
 import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.enchantments.Enchantment;
 import org.jetbrains.annotations.NotNull;
 
@@ -20,8 +22,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class NexoItemConverter extends ItemConverter {
     private final ConfigurationSection nexoItemSection;
 
-    public NexoItemConverter(Converter converter,ConfigurationSection nexoItemSection, String itemId, ConfigurationSection craftEngineItemSection) {
-        super(itemId, craftEngineItemSection,converter);
+    public NexoItemConverter(Converter converter, ConfigurationSection nexoItemSection, String itemId, ConfigurationSection craftEngineItemSection, YamlConfiguration convertedConfig) {
+        super(itemId, craftEngineItemSection,converter,convertedConfig);
         this.nexoItemSection = nexoItemSection;
     }
 
@@ -423,6 +425,7 @@ public class NexoItemConverter extends ItemConverter {
                 }
             }
             ceEquipableSection.set("asset-id", assetId);
+            this.setAssetId(assetId);
         }
         setIfNotEmpty(ceEquipableSection, "camera-overlay", equipableSection.getString("camera_overlay"));
         boolean dispensable = equipableSection.getBoolean("dispensable", true);
@@ -773,16 +776,70 @@ public class NexoItemConverter extends ItemConverter {
         String modelPath = packSection.getString("model");
         if (!isValidString(modelPath)) {
             if (this.craftEngineItemUtils.getMaterial() == Material.ELYTRA){
-                String elytraModel = cleanPath(packSection.getString("texture"));
-                if (isValidString(elytraModel)) {
-                    String namespacedElytra = namespaced(elytraModel);
-                    if (isValidString(namespacedElytra)){
-                        Map<String, Object> parseTemplate = InternalTemplateManager.parseTemplate(Template.MODEL_ITEM_ELYTRA, "%model_path%", namespacedElytra, "%texture_path%", namespacedElytra, "%broken_model_path%", namespacedElytra, "%broken_texture_path%", namespacedElytra);
-                        this.craftEngineItemUtils.getGeneralSection().createSection("model", parseTemplate);
-                        getOrCreateSection(this.craftEngineItemUtils.getSettingsSection(),"equippable").set("wings",this.itemId.split(":")[1]);
-                        String[] split = namespacedElytra.split(":", 2);
-                        getConverter().addPackMapping(split[0],"textures/"+ split[1] + ".png", split[0], "textures/entity/equipment/wings/");
+                buildElytraModel(packSection);
+            }
+            if (packSection.isConfigurationSection("CustomArmor")){
+                ConfigurationSection customArmorSection = packSection.getConfigurationSection("CustomArmor");
+                ConfigurationSection fileEquipementsSection = getEquipmentsSection();
+                boolean validString = isValidString(this.assetId);
+                String assetId = null;
+                if (validString){
+                    assetId = this.assetId;
+                } else {
+                    String texturePath = packSection.getString("texture");
+                    if (isValidString(texturePath)){
+                        String namespacedTexturePath = namespaced(texturePath);
+                        if (isValidString(namespacedTexturePath)){
+                            String[] split = this.itemId.split(":", 2);
+                            String secondPart = removeEndWith(split[1],List.of("_wolf_armor","_llama_armor","_horse_armor","_nautilus_armor"),null);
+                            if (isValidString(secondPart)){
+                                assetId = namespacedTexturePath.split(":", 2)[0]+":"+secondPart;
+                            }
+                        }
                     }
+                }
+                if (isNotNull(customArmorSection) && isNotNull(assetId)){
+                    ConfigurationSection assetIdSection = getOrCreateSection(fileEquipementsSection, assetId);
+                    assetIdSection.set("type","component");
+                    Set<String> keys = customArmorSection.getKeys(false);
+                    Set<Tuple<String>> layerTypes = new HashSet<>();
+                    for  (String key : keys) {
+                        if (key.equals("harness")) continue;
+                        layerTypes.add(new Tuple<>(key,switch (key) {
+                            case "wolf_armor" -> "wolf-body";
+                            case "llama_armor" -> "llama-body";
+                            case "horse_armor" -> "horse-body";
+                            case "nautilus_armor" -> "nautilus-body";
+                            default -> key;
+                        }));
+                    }
+                    if (!layerTypes.isEmpty()){
+                        for  (Tuple<String> layerTypeTuple : layerTypes) {
+                            String mobTexture = customArmorSection.getString(layerTypeTuple.getFirst());
+                            String namespaced = namespaced(mobTexture);
+                            if (isValidString(namespaced)) {
+                                String[] split = namespaced.split(":", 2);
+                                String path = "";
+                                int lastIndexOf = split[1].lastIndexOf("/");
+                                if (lastIndexOf != -1) {
+                                    path = split[1].substring(0, lastIndexOf)+"/";
+                                }
+                                getConverter().addPackMapping(split[0], "textures/" + split[1] + ".png", split[0], "textures/entity/equipment/" + layerTypeTuple.getSecond().replace("-","_") + "/"+path);
+                                assetIdSection.set(layerTypeTuple.getSecond(), namespaced);
+                                getOrCreateSection(this.craftEngineItemUtils.getSettingsSection(),"equipment").set("asset-id",assetId);
+                                // add slot: TODO: je sais plus
+                            }
+                        }
+                        String texturePath = packSection.getString("texture");
+                        if (isValidString(texturePath)){
+                            String namespacedTexturePath = namespaced(texturePath);
+                            if (isValidString(namespacedTexturePath)){
+                                Map<String, Object> parsedTemplate = InternalTemplateManager.parseTemplate(Template.MODEL_ITEM_GENERATED, "%model_path%", namespacedTexturePath, "%texture_path%", namespacedTexturePath);
+                                this.craftEngineItemUtils.getGeneralSection().createSection("model", parsedTemplate);
+                            }
+                        }
+                    }
+
                 }
             }
             return;
@@ -807,6 +864,27 @@ public class NexoItemConverter extends ItemConverter {
         Map<String, Object> parsedTemplate = InternalTemplateManager.parseTemplate(Template.MODEL_ITEM_DEFAULT, "%model_path%", namespacedPath);
         setSavedModelTemplates(parsedTemplate);
         this.craftEngineItemUtils.getGeneralSection().createSection("model", parsedTemplate);
+    }
+
+    private void buildElytraModel(ConfigurationSection packSection) {
+        String elytraModel = cleanPath(packSection.getString("texture"));
+        if (isValidString(elytraModel)) {
+            String namespacedElytra = namespaced(elytraModel);
+            if (isValidString(namespacedElytra)){
+                Map<String, Object> parseTemplate = InternalTemplateManager.parseTemplate(Template.MODEL_ITEM_ELYTRA, "%model_path%", namespacedElytra, "%texture_path%", namespacedElytra, "%broken_model_path%", namespacedElytra, "%broken_texture_path%", namespacedElytra);
+                this.craftEngineItemUtils.getGeneralSection().createSection("model", parseTemplate);
+                String[] split = namespacedElytra.split(":", 2);
+                String itemIdPartTwo = this.itemId.split(":")[1];
+                getOrCreateSection(this.craftEngineItemUtils.getSettingsSection(),"equippable").set("wings", split[0]+":"+itemIdPartTwo);
+                String string = split[1];
+                int lastIndexOf = string.lastIndexOf("/");
+                if (lastIndexOf != -1) {
+                    string = string.substring(0, lastIndexOf)+"/"+itemIdPartTwo;
+                }
+                String originalPath = "textures/" + string + ".png";
+                getConverter().addPackMapping(split[0], originalPath, split[0], "textures/entity/equipment/wings/");
+            }
+        }
     }
 
     private boolean tryBuildTridentModel(ConfigurationSection packSection, String modelPath){
@@ -1130,53 +1208,10 @@ public class NexoItemConverter extends ItemConverter {
         }
         ConfigurationSection dropSection = nexoFurnitureMechanicsSection.getConfigurationSection("drop");
         if (isNotNull(dropSection)){
-            boolean silkTouch = dropSection.getBoolean("silk_touch", true); // If true, silk touch makes the block drop itself
-            boolean fortune = dropSection.getBoolean("fortune", false);     // If true, fortune modifies drop quantity
-            String minimalType = dropSection.getString("minimal_type");      // Minimal tool type required to drop
-            String bestTool = dropSection.getString("best_tool");            // Preferred tool type for drop
-
-
-            if (isValidString(minimalType) || isValidString(bestTool)) {
-                Logger.debug(
-                        "Found tool requirements for drop conversion for furniture item '" + this.itemId +
-                                "'. Tool-based drop requirements are not supported yet, skipping tool constraints conversion.",
-                        LogType.WARNING
-                );
-            }
-
+            // TODO: Support for nexo drop
+            Logger.debug("Custom drop conversion for furniture item '"+this.itemId+"' is not supported yet. Using default drop.", LogType.WARNING);
             ConfigurationSection ceFurnitureSection = getOrCreateSection(ceBehaviorSection, "furniture");
-
-            // Handle combinations in an explicit, readable way
-            if (silkTouch) {
-                // Silk touch present: priority to silk touch behavior
-
-                if (fortune) {
-                    // Silk touch + fortune:
-                    // Note: expected behavior: if silk touch condition is met, drop block/item itself;
-                    // otherwise apply fortune formula to the normal drop.
-                    // TODO: generate a loot table that checks for \`silk_touch\` condition first, then applies fortune functions when not present.
-                    var dropSectionMapList = dropSection.getMapList("loots");
-                    if (dropSectionMapList.isEmpty()){
-                        ceFurnitureSection.set("loot",InternalTemplateManager.parseTemplate(Template.LOOT_TABLE_SILK_TOUCH_ONLY, "%type%","furniture_item","%item%", this.itemId));
-                    } else {
-                        // TODO to finish
-                    }
-                } else {
-                    // Silk touch only: always drop the block/item itself
-                    // TODO: generate a simple loot table that returns the block/item when silk touch is present.
-                }
-            } else {
-                // No silk touch: normal drop rules apply
-                if (fortune) {
-                    // Fortune modifies drop amount for the normal drop
-                    // TODO: apply CE's fortune function or template to adjust drop quantities.
-                } else {
-                    // Default behavior: basic drop (use provided section or a basic loot template)
-                }
-            }
-
-            // Save the spec into the placement/loot section for later processing.
-            // Replace this storage with proper template/loot-table creation when implementing exporter.
+            ceFurnitureSection.set("loot", InternalTemplateManager.parseTemplate(Template.LOOT_TABLE_BASIC_DROP, "%type%","furniture_item","%item%", this.itemId));
         } else {
             ConfigurationSection ceFurnitureSection = getOrCreateSection(ceBehaviorSection, "furniture");
             ceFurnitureSection.set("loot", InternalTemplateManager.parseTemplate(Template.LOOT_TABLE_BASIC_DROP, "%type%","furniture_item","%item%", this.itemId));

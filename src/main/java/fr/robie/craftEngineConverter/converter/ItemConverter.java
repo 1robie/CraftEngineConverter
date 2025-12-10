@@ -1,26 +1,30 @@
 package fr.robie.craftEngineConverter.converter;
 
+import fr.robie.craftEngineConverter.utils.ObjectUtils;
 import fr.robie.craftEngineConverter.utils.enums.Template;
 import fr.robie.craftEngineConverter.utils.manager.InternalTemplateManager;
 import org.bukkit.configuration.ConfigurationSection;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.Nullable;
+import org.bukkit.configuration.file.YamlConfiguration;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public abstract class ItemConverter {
-    protected final String itemId;
+public abstract class ItemConverter extends ObjectUtils {
+    protected final @NotNull String itemId;
     private final Converter converter;
     private final Map<String,Object> savedModelTemplates = new HashMap<>();
     public final CraftEngineItemUtils craftEngineItemUtils;
     protected boolean excludeFromInventory = false;
+    protected YamlConfiguration fileConfig;
+    protected String assetId;
 
-    public ItemConverter(String itemId,ConfigurationSection craftEngineItemSection, Converter converter) {
+    public ItemConverter(@NotNull String itemId, ConfigurationSection craftEngineItemSection, Converter converter, YamlConfiguration fileConfig) {
         this.itemId = itemId;
         this.converter = converter;
         this.craftEngineItemUtils = new CraftEngineItemUtils(craftEngineItemSection);
+        this.fileConfig = fileConfig;
     }
 
     public void convertItem(){
@@ -116,38 +120,6 @@ public abstract class ItemConverter {
         return new HashMap<>(this.savedModelTemplates);
     }
 
-    protected String cleanPath(String path) {
-        if (path == null || path.isEmpty()) return null;
-        if (path.endsWith(".png")) {
-            path = path.substring(0, path.length() - 4);
-        }
-        if (path.endsWith(".json")) {
-            path = path.substring(0, path.length() - 5);
-        }
-        return path;
-    }
-
-    @Contract("null -> false")
-    public boolean isValidString(String str){
-        return str != null && !str.isBlank();
-    }
-
-    @Contract("null -> false; !null -> true")
-    public boolean isNotNull(Object obj){
-        return obj != null;
-    }
-
-    @Contract("null -> true")
-    public boolean isNull(Object obj){
-        return obj == null;
-    }
-
-    protected @Nullable String namespaced(String path) {
-        path = cleanPath(path);
-        if (path == null || path.isEmpty()) return null;
-        return path.contains(":") ? path : "minecraft:" + path;
-    }
-
     protected boolean notEmptyOrNull(List<String> list, int index) {
         return list != null && list.size() > index && list.get(index) != null && !list.get(index).isEmpty();
     }
@@ -170,6 +142,10 @@ public abstract class ItemConverter {
         }
     }
 
+    public void setAssetId(String assetId){
+        this.assetId = assetId;
+    }
+
     protected String getTexturePath(ConfigurationSection packSection) {
         List<String> textures = packSection.getStringList("textures");
         if (!textures.isEmpty()) {
@@ -178,6 +154,14 @@ public abstract class ItemConverter {
         String string = packSection.getString("textures");
 
         return isValidString(string) ? string : packSection.getString("texture");
+    }
+
+    protected ConfigurationSection getEquipmentsSection(){
+        ConfigurationSection equipementsSection = this.fileConfig.getConfigurationSection("equipments");
+        if (equipementsSection == null) {
+            return this.fileConfig.createSection("equipments");
+        }
+        return equipementsSection;
     }
 
     protected ConfigurationSection getOrCreateSection(ConfigurationSection parent, String key) {

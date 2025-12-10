@@ -64,6 +64,10 @@ public class FoliaCompatibilityManager {
         foliaLib.getScheduler().runAsync(wrappedTask -> task.run());
     }
 
+    public CompletableFuture<Void> runAsyncComplatable(Runnable task) {
+        return foliaLib.getScheduler().runAsync(wrappedTask -> task.run());
+    }
+
     /**
      * Run a task after a delay.
      *
