@@ -8,3 +8,8 @@ default-material: "PAPER"
 
 # Disable italic formatting in item lore by adding <!i> tag
 disable-default-italic: true
+
+blacklisted-paths:
+  - "shaders/*" # Blacklist all files in shaders folder
+  # - "shaders/rendertype_text.fsh" # Example of how to blacklist a specific file
+  # - "minecraft:textures/shaders/" # Example of how to blacklist the entire shaders namespace
