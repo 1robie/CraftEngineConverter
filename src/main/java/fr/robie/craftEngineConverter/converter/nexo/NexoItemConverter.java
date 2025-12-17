@@ -802,32 +802,41 @@ public class NexoItemConverter extends ItemConverter {
                     ConfigurationSection assetIdSection = getOrCreateSection(fileEquipementsSection, assetId);
                     assetIdSection.set("type","component");
                     Set<String> keys = customArmorSection.getKeys(false);
-                    Set<Tuple<String>> layerTypes = new HashSet<>();
+                    Map<String, Set<Tuple<String>>> equipmentLayers = new HashMap<>();
                     for  (String key : keys) {
                         if (key.equals("harness")) continue;
-                        layerTypes.add(new Tuple<>(key,switch (key) {
+                        String val = switch (key) {
                             case "wolf_armor" -> "wolf-body";
                             case "llama_armor" -> "llama-body";
                             case "horse_armor" -> "horse-body";
                             case "nautilus_armor" -> "nautilus-body";
+                            case "layer1" -> "humanoid";
+                            case "layer2" -> "humanoid-leggings";
                             default -> key;
-                        }));
+                        };
+                        equipmentLayers.computeIfAbsent(val, k -> new HashSet<>()).add(new Tuple<>(key, val));
                     }
-                    if (!layerTypes.isEmpty()){
-                        for  (Tuple<String> layerTypeTuple : layerTypes) {
-                            String mobTexture = customArmorSection.getString(layerTypeTuple.getFirst());
-                            String namespaced = namespaced(mobTexture);
-                            if (isValidString(namespaced)) {
-                                String[] split = namespaced.split(":", 2);
-                                String path = "";
-                                int lastIndexOf = split[1].lastIndexOf("/");
-                                if (lastIndexOf != -1) {
-                                    path = split[1].substring(0, lastIndexOf)+"/";
+                    if (!equipmentLayers.isEmpty()){
+                        for  (var layerTypeTuple : equipmentLayers.entrySet()) {
+                            String layeType = layerTypeTuple.getKey();
+                            Set<String> namespacedTextures = new HashSet<>();
+                            for (var layerType : layerTypeTuple.getValue()) {
+                                String mobTexture = customArmorSection.getString(layerType.getFirst());
+                                String namespaced = namespaced(mobTexture);
+                                if (isValidString(namespaced)) {
+                                    String[] split = namespaced.split(":", 2);
+                                    String path = "";
+                                    int lastIndexOf = split[1].lastIndexOf("/");
+                                    if (lastIndexOf != -1) {
+                                        path = split[1].substring(0, lastIndexOf)+"/";
+                                    }
+                                    getConverter().addPackMapping(split[0], "textures/" + split[1] + ".png", split[0], "textures/entity/equipment/" + layerType.getSecond().replace("-","_") + "/"+path);
+                                    namespacedTextures.add(namespaced);
+                                    getOrCreateSection(this.craftEngineItemUtils.getSettingsSection(),"equipment").set("asset-id",assetId);
                                 }
-                                getConverter().addPackMapping(split[0], "textures/" + split[1] + ".png", split[0], "textures/entity/equipment/" + layerTypeTuple.getSecond().replace("-","_") + "/"+path);
-                                assetIdSection.set(layerTypeTuple.getSecond(), namespaced);
-                                getOrCreateSection(this.craftEngineItemUtils.getSettingsSection(),"equipment").set("asset-id",assetId);
-                                // add slot: TODO: je sais plus
+                            }
+                            if (!namespacedTextures.isEmpty()){
+                                addEquipmentTextures(assetIdSection, layeType, namespacedTextures);
                             }
                         }
                         String texturePath = packSection.getString("texture");
@@ -838,8 +847,61 @@ public class NexoItemConverter extends ItemConverter {
                                 this.craftEngineItemUtils.getGeneralSection().createSection("model", parsedTemplate);
                             }
                         }
+                        return;
                     }
+                }
+            }
+            if (this.itemId.endsWith("_helmet") || this.itemId.endsWith("_chestplate") || this.itemId.endsWith("_leggings") || this.itemId.endsWith("_boots")) {
+                String texturePath = packSection.getString("texture");
+                String modelTexturePath = packSection.getString("model");
+                if (isValidString(texturePath) && modelTexturePath == null && !packSection.isConfigurationSection("CustomArmor")){
+                    String namespacedTexturePath = namespaced(texturePath);
+                    if (isValidString(namespacedTexturePath)){
+                        ConfigurationSection fileEquipementsSection = getEquipmentsSection();
+                        String assetId = null;
+                        if (isValidString(this.assetId)){
+                            assetId = this.assetId;
+                        } else {
+                            String[] split = this.itemId.split(":", 2);
+                            String secondPart = removeEndWith(split[1], List.of("_helmet","_chestplate","_leggings","_boots"), null);
+                            if (isValidString(secondPart)){
+                                assetId = namespacedTexturePath.split(":", 2)[0]+":"+secondPart;
+                            }
+                        }
 
+                        if (isValidString(assetId)){
+                            ConfigurationSection assetIdSection = getOrCreateSection(fileEquipementsSection, assetId);
+                            assetIdSection.set("type","component");
+
+                            String armorName = assetId.split(":", 2)[1];
+
+                            String[] split = namespacedTexturePath.split(":",2);
+
+                            // Humanoid layer 1
+                            String armorLayer1Texture = split[0]+":"+armorName+"_armor_layer_1";
+                            String originalPath = "textures/" + namespacedTexturePath.split(":", 2)[1] + ".png";
+                            int lastSlashIndex = originalPath.lastIndexOf("/");
+                            if (lastSlashIndex != -1) {
+                                originalPath = originalPath.substring(0, lastSlashIndex)+"/"+armorName+"_armor_layer_1.png";
+                            }
+                            getConverter().addPackMapping(split[0], originalPath, split[0], "textures/entity/equipment/humanoid/");
+                            addEquipmentTextures(assetIdSection, "humanoid", Set.of(armorLayer1Texture));
+
+                            // Humanoid-leggings layer 2
+                            String armorLayer2Texture = split[0]+":"+armorName+"_armor_layer_2";
+                            String originalPathLayer2 = "textures/" + namespacedTexturePath.split(":", 2)[1] + ".png";
+                            int lastSlashIndexLayer2 = originalPathLayer2.lastIndexOf("/");
+                            if (lastSlashIndexLayer2 != -1) {
+                                originalPathLayer2 = originalPathLayer2.substring(0, lastSlashIndexLayer2)+"/"+armorName+"_armor_layer_2.png";
+                            }
+                            getConverter().addPackMapping(split[0], originalPathLayer2, split[0], "textures/entity/equipment/humanoid_leggings/");
+                            addEquipmentTextures(assetIdSection, "humanoid-leggings", Set.of(armorLayer2Texture));
+
+                            getOrCreateSection(this.craftEngineItemUtils.getSettingsSection(),"equipment").set("asset-id",assetId);
+                            Map<String, Object> parsedTemplate = InternalTemplateManager.parseTemplate(Template.MODEL_ITEM_GENERATED, "%model_path%", namespacedTexturePath, "%texture_path%", namespacedTexturePath);
+                            this.craftEngineItemUtils.getGeneralSection().createSection("model", parsedTemplate);
+                        }
+                    }
                 }
             }
             return;
@@ -1010,6 +1072,28 @@ public class NexoItemConverter extends ItemConverter {
             }
         }
         return modelPath;
+    }
+
+    @SuppressWarnings("unchecked")
+    private void addEquipmentTextures(ConfigurationSection assetIdSection, String layerKey, Set<String> texturesToAdd) {
+        Object existingObject = assetIdSection.get(layerKey);
+        Set<Map<String,Object>> textureList = new HashSet<>();
+        if (isNotNull(existingObject)) {
+            if (existingObject instanceof List<?>) {
+                List<Map<String, Object>> mapList = (List<Map<String, Object>>) (Object) assetIdSection.getMapList(layerKey);
+                textureList.addAll(mapList);
+            } else {
+                textureList.add(Map.of("texture", existingObject.toString()));
+            }
+        }
+        for (String texture : texturesToAdd){
+            textureList.add(Map.of("texture", texture));
+        }
+        if (textureList.size() == 1){
+            assetIdSection.set(layerKey, textureList.iterator().next().get("texture").toString());
+        } else {
+            assetIdSection.set(layerKey, new ArrayList<>(textureList));
+        }
     }
 
     private void buildBowModel(ConfigurationSection packSection) {
