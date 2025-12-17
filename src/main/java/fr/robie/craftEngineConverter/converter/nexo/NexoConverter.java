@@ -3,6 +3,7 @@ package fr.robie.craftEngineConverter.converter.nexo;
 import fr.robie.craftEngineConverter.CraftEngineConverter;
 import fr.robie.craftEngineConverter.converter.Converter;
 import fr.robie.craftEngineConverter.utils.Configuration;
+import fr.robie.craftEngineConverter.utils.SnakeUtils;
 import fr.robie.craftEngineConverter.utils.logger.LogType;
 import fr.robie.craftEngineConverter.utils.logger.Logger;
 import org.bukkit.configuration.ConfigurationSection;
@@ -18,6 +19,7 @@ import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -132,10 +134,8 @@ public class NexoConverter extends Converter {
 
             File outputAssetsFolder = new File(outputPackFile, "assets");
 
-            // Copy main assets folder
             copyAssetsFolder(new File(inputPackFile, "assets"), outputAssetsFolder, "main");
 
-            // Copy external packs assets
             File nexoExternalPacksFolder = new File(inputPackFile, "external_packs");
             if (nexoExternalPacksFolder.exists() && nexoExternalPacksFolder.isDirectory()) {
                 File[] externalPacks = nexoExternalPacksFolder.listFiles();
@@ -238,6 +238,52 @@ public class NexoConverter extends Converter {
     public CompletableFuture<Void> convertImages(boolean async){
         return executeTask(async, this::convertImagesSync);
     }
+
+    @Override
+    public CompletableFuture<Void> convertLanguages(boolean async) {
+        return executeTask(async, this::convertLanguagesSync);
+    }
+
+    private void convertLanguagesSync() {
+        File languagesFile = new File("plugins/" + converterName + "/languages.yml");
+        File outputFile = new File(this.plugin.getDataFolder(), "converted/"+converterName+"/CraftEngine/resources/craftengineconverter/configuration/languages/languages.yml");
+
+        if (!languagesFile.exists() || !languagesFile.isFile()) {
+            Logger.debug("Nexo languages file not found at: " + languagesFile.getAbsolutePath());
+            return;
+        }
+
+        try {
+            SnakeUtils nexoLanguages = SnakeUtils.load(languagesFile);
+            if (nexoLanguages == null || nexoLanguages.isEmpty()) {
+                Logger.debug("Languages file is empty: " + languagesFile.getAbsolutePath());
+                return;
+            }
+
+            File tempOutputFile = File.createTempFile("craftengine_languages", ".yml");
+            tempOutputFile.deleteOnExit();
+
+            try (SnakeUtils craftEngineLanguages = SnakeUtils.createEmpty(tempOutputFile)){
+                for (String langKey : nexoLanguages.getKeys()) {
+                    Map<String, Object> nexoLangData = nexoLanguages.getMapValue(langKey);
+                    if (nexoLangData == null || nexoLangData.isEmpty()) continue;
+
+                    String craftEngineLangKey = langKey.equals("global") ? "en" : langKey;
+
+                    craftEngineLanguages.addData("translations." + craftEngineLangKey, nexoLangData);
+                }
+
+                craftEngineLanguages.save(outputFile);
+            } catch (Exception e) {
+                Logger.info("Failed to convert languages file: " + languagesFile.getName(), LogType.ERROR);
+                e.printStackTrace();
+            }
+        } catch (IOException e) {
+            Logger.info("Failed to convert languages file: " + languagesFile.getName(), LogType.ERROR);
+            e.printStackTrace();
+        }
+    }
+
 
     private void convertImagesSync() {
         File inputBase = new File("plugins/" + converterName + "/glyphs");

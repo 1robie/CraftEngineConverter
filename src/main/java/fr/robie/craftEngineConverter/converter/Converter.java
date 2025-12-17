@@ -27,6 +27,7 @@ public abstract class Converter extends YamlUtils {
             convertPack(false);
             convertEmojis(false);
             convertImages(false);
+            convertLanguages(false);
         });
     }
 
@@ -37,6 +38,8 @@ public abstract class Converter extends YamlUtils {
     public abstract CompletableFuture<Void> convertEmojis(boolean async);
 
     public abstract CompletableFuture<Void> convertImages(boolean async);
+
+    public abstract CompletableFuture<Void> convertLanguages(boolean async);
 
     public String getName() {
         return this.converterName;

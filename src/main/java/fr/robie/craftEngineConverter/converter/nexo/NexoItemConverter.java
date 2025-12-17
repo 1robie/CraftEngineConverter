@@ -825,12 +825,27 @@ public class NexoItemConverter extends ItemConverter {
                                 String namespaced = namespaced(mobTexture);
                                 if (isValidString(namespaced)) {
                                     String[] split = namespaced.split(":", 2);
-                                    String path = "";
-                                    int lastIndexOf = split[1].lastIndexOf("/");
-                                    if (lastIndexOf != -1) {
-                                        path = split[1].substring(0, lastIndexOf)+"/";
+
+                                    String targetPath;
+                                    String equipmentFolder = layerType.getSecond().replace("-","_");
+                                    if (layerType.getFirst().equals("layer1") || layerType.getFirst().equals("layer2")) {
+                                        targetPath = "textures/entity/equipment/" + equipmentFolder + "/";
+                                        int lastIndexOf = split[1].lastIndexOf("/");
+                                        String secondPart = split[1];
+                                        if (lastIndexOf != -1){
+                                            secondPart = split[1].substring(lastIndexOf+1);
+                                        }
+                                        namespaced = split[0]+":"+secondPart;
+                                    } else {
+                                        String path = "";
+                                        int lastIndexOf = split[1].lastIndexOf("/");
+                                        if (lastIndexOf != -1) {
+                                            path = split[1].substring(0, lastIndexOf)+"/";
+                                        }
+                                        targetPath = "textures/entity/equipment/" + equipmentFolder + "/" + path;
                                     }
-                                    getConverter().addPackMapping(split[0], "textures/" + split[1] + ".png", split[0], "textures/entity/equipment/" + layerType.getSecond().replace("-","_") + "/"+path);
+
+                                    getConverter().addPackMapping(split[0], "textures/" + split[1] + ".png", split[0], targetPath);
                                     namespacedTextures.add(namespaced);
                                     getOrCreateSection(this.craftEngineItemUtils.getSettingsSection(),"equipment").set("asset-id",assetId);
                                 }
