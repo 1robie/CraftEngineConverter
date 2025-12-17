@@ -288,7 +288,7 @@ public class CommandManager extends CraftEngineConverterUtils implements Command
                 Logger.info("Unable to add the command " + vCommand.getSyntax());
             }
         } catch (Exception exception) {
-            exception.printStackTrace();
+            Logger.showException("Error while registering command " + vCommand.getSyntax(), exception);
         }
     }
 }

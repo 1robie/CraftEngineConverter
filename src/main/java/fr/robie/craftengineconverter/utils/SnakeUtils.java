@@ -1,5 +1,6 @@
 package fr.robie.craftengineconverter.utils;
 
+import fr.robie.craftengineconverter.utils.logger.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.yaml.snakeyaml.DumperOptions;
@@ -108,13 +109,7 @@ public class SnakeUtils implements AutoCloseable {
             return;
         }
 
-        // Échapper le délimiteur pour le regex (important pour le point ".")
-        String[] keys = key.split(java.util.regex.Pattern.quote(delimiter));
-
-//        // Filtrer les clés vides (cas où il y a des délimiteurs consécutifs)
-//        keys = java.util.Arrays.stream(keys)
-//            .filter(k -> k != null && !k.isEmpty())
-//            .toArray(String[]::new);
+        String[] keys = key.split(Pattern.quote(delimiter));
 
         if (keys.length == 0){
             return;
@@ -359,10 +354,8 @@ public class SnakeUtils implements AutoCloseable {
         }
 
         try {
-            // Créer un fichier temporaire pour initialiser le SnakeUtils
             File tempFile = File.createTempFile("snakeutils_section_" + key.replace(".", "_"), ".yml");
 
-            // Sauvegarder les données de la section dans le fichier temporaire
             DumperOptions options = new DumperOptions();
             options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
             Yaml yaml = new Yaml(options);
@@ -371,15 +364,13 @@ public class SnakeUtils implements AutoCloseable {
                 yaml.dump(sectionData, writer);
             }
 
-            // Créer le SnakeUtils à partir du fichier temporaire
             SnakeUtils sectionUtils = new SnakeUtils(tempFile);
 
-            // Supprimer le fichier temporaire (optionnel, sera supprimé au redémarrage)
             tempFile.deleteOnExit();
 
             return sectionUtils;
         } catch (IOException e){
-            e.printStackTrace();
+            Logger.showException("Failed to create section SnakeUtils for key: " + key, e);
             return null;
         }
     }
@@ -408,10 +399,8 @@ public class SnakeUtils implements AutoCloseable {
             return section;
         }
 
-        // Créer la section si elle n'existe pas
         addData(key, new java.util.LinkedHashMap<String, Object>());
 
-        // Retourner le SnakeUtils nouvellement créé
         section = getSection(key);
         if (section == null){
             throw new RuntimeException("Failed to create section: " + key);
@@ -594,13 +583,7 @@ public class SnakeUtils implements AutoCloseable {
             return false;
         }
 
-        // Échapper le délimiteur pour le regex (important pour le point ".")
-        String[] keys = key.split(java.util.regex.Pattern.quote(delimiter));
-
-        // Filtrer les clés vides
-        keys = java.util.Arrays.stream(keys)
-            .filter(k -> k != null && !k.isEmpty())
-            .toArray(String[]::new);
+        String[] keys = key.split(Pattern.quote(delimiter));
 
         if (keys.length == 0){
             return false;
@@ -717,10 +700,8 @@ public class SnakeUtils implements AutoCloseable {
             Object value = entry.getValue();
 
             if (value instanceof Map && target.get(key) instanceof Map){
-                // Fusion récursive des Maps imbriquées
                 mergeMap((Map<String, Object>) target.get(key), (Map<String, Object>) value);
             } else {
-                // Écrasement de la valeur
                 target.put(key, value);
             }
         }
@@ -814,7 +795,7 @@ public class SnakeUtils implements AutoCloseable {
         try {
             return new SnakeUtils(file);
         } catch (IOException e){
-            e.printStackTrace();
+            Logger.showException("Failed to load YAML file: " + file, e);
             return null;
         }
     }
@@ -908,7 +889,7 @@ public class SnakeUtils implements AutoCloseable {
             }
             return true;
         } catch (IOException e){
-            e.printStackTrace();
+            Logger.showException("Failed to save YAML file: " + file, e);
             return false;
         }
     }
@@ -938,7 +919,7 @@ public class SnakeUtils implements AutoCloseable {
             Yaml yaml = new Yaml();
             return yaml.load(fis);
         } catch (IOException e){
-            e.printStackTrace();
+            Logger.showException("Failed to load YAML file: " + file, e);
             return null;
         }
     }

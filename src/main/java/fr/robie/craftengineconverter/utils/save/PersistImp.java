@@ -114,10 +114,7 @@ public class PersistImp implements Persist {
             return b;
 
         } catch (Exception e) {
-
-            Logger.info("cannot save file " + file.getAbsolutePath(), LogType.ERROR);
-            e.printStackTrace();
-
+            Logger.showException("Error while saving file " + file.getAbsolutePath(), e);
             return false;
         }
     }

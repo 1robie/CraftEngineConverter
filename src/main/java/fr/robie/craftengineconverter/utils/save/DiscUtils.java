@@ -1,4 +1,6 @@
 package fr.robie.craftengineconverter.utils.save;
+import fr.robie.craftengineconverter.utils.logger.Logger;
+
 import java.io.*;
 import java.net.URL;
 import java.nio.channels.Channels;
@@ -74,7 +76,7 @@ public class DiscUtils {
             fos.getChannel().transferFrom(rbc, 0, 1 << 24);
             return true;
         } catch (Exception e) {
-            e.printStackTrace();
+            Logger.showException("Error downloading file from URL: " + urlstring, e);
             return false;
         }
     }

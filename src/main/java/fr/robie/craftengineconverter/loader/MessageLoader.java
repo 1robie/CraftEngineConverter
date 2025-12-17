@@ -3,6 +3,7 @@ package fr.robie.craftengineconverter.loader;
 import fr.robie.craftengineconverter.utils.YamlUtils;
 import fr.robie.craftengineconverter.utils.format.Message;
 import fr.robie.craftengineconverter.utils.format.MessageType;
+import fr.robie.craftengineconverter.utils.logger.Logger;
 import fr.robie.craftengineconverter.utils.save.Persist;
 import fr.robie.craftengineconverter.utils.save.Savable;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -35,7 +36,8 @@ public class MessageLoader extends YamlUtils implements Savable {
             try {
                 file.createNewFile();
             } catch (IOException exception) {
-                exception.printStackTrace();
+                Logger.showException("Error while creating messages.yml file", exception);
+                return;
             }
         }
 
@@ -79,7 +81,7 @@ public class MessageLoader extends YamlUtils implements Savable {
         try {
             configuration.save(file);
         } catch (IOException exception) {
-            exception.printStackTrace();
+            Logger.showException("Error while saving messages.yml file", exception);
         }
 
         loadMessages(configuration);

@@ -3,6 +3,9 @@ package fr.robie.craftengineconverter.utils.logger;
 import fr.robie.craftengineconverter.utils.Configuration;
 import org.bukkit.Bukkit;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
+
 public class Logger {
 
     private final String prefix;
@@ -31,6 +34,10 @@ public class Logger {
 
     public static void debug(String message, LogType type) {
         getLogger().logDebug(message, type);
+    }
+
+    public static void showException(String errorName,Throwable throwable) {
+        getLogger().logException(errorName, throwable);
     }
 
     public String getPrefix() {
@@ -63,6 +70,20 @@ public class Logger {
         if (Configuration.enableDebug){
             log(message, type);
         }
+    }
+
+    public void logException(String errorName, Throwable throwable){
+        if (!Configuration.enableDebug) return;
+        this.log("An exception occurred while " + errorName + ":", LogType.ERROR);
+        this.log("Exception error message: " + throwable.getMessage(), LogType.ERROR);
+        this.log("Please check the stack trace below for more details. If you don't understand the issue report it to the developer.",LogType.ERROR);
+        this.log("------------------- Stack Trace ------------------",LogType.ERROR);
+        StringWriter sw = new StringWriter();
+        try (PrintWriter pw = new PrintWriter(sw)) {
+            throwable.printStackTrace(pw);
+        }
+        this.log(sw.toString(), LogType.ERROR);
+        this.log("--------------------------------------------------",LogType.ERROR);
     }
 
     public String getColoredMessage(String message) {
