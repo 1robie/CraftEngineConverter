@@ -373,7 +373,6 @@ public class NexoConverter extends Converter {
                 }
 
                 craftEngineSounds.save(outputSoundFile);
-                Logger.debug("Successfully converted sounds to: " + outputSoundFile.getAbsolutePath());
             } catch (Exception e) {
                 Logger.showException("Failed to process sounds file: " + inputSoundFile.getName(), e);
             } finally {
@@ -430,7 +429,7 @@ public class NexoConverter extends Converter {
 
             try (SnakeUtils craftEngineLanguages = SnakeUtils.createEmpty(tempOutputFile)){
                 for (String langKey : nexoLanguages.getKeys()) {
-                    Map<String, Object> nexoLangData = nexoLanguages.getMapValue(langKey);
+                    Map<String, Object> nexoLangData = nexoLanguages.getMap(langKey);
                     if (nexoLangData == null || nexoLangData.isEmpty()) continue;
 
                     String craftEngineLangKey = langKey.equals("global") ? "en" : langKey;

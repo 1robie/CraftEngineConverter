@@ -10,10 +10,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Pattern;
 
 /**
@@ -35,7 +32,7 @@ import java.util.regex.Pattern;
  * <pre>
  * try (SnakeUtils yaml = new SnakeUtils(new File("config.yml"), true)) {
  *     yaml.addData("server.port", 8080);
- *     String host = yaml.getStringValue("server.host", "localhost");
+ *     String host = yaml.getString("server.host", "localhost");
  *     SnakeUtils dbSection = yaml.getOrCreateSection("database");
  *     // Auto-saved on close
  * }
@@ -199,8 +196,8 @@ public class SnakeUtils implements AutoCloseable {
      * @param key The key path with dot notation
      * @return The integer value, or 0 if absent/invalid
      */
-    public int getIntValue(@NotNull String key){
-        return getIntValue(key, 0);
+    public int getInt(@NotNull String key){
+        return getInt(key, 0);
     }
 
     /**
@@ -211,7 +208,7 @@ public class SnakeUtils implements AutoCloseable {
      * @param defaultValue The value to return if the key doesn't exist or cannot be parsed
      * @return The integer value, or defaultValue if absent/invalid
      */
-    public int getIntValue(@NotNull String key, int defaultValue){
+    public int getInt(@NotNull String key, int defaultValue){
         Object value = getValue(key);
         if (value == null) return defaultValue;
 
@@ -233,8 +230,8 @@ public class SnakeUtils implements AutoCloseable {
      * @param key The key path with dot notation
      * @return The double value, or 0.0 if absent/invalid
      */
-    public double getDoubleValue(@NotNull String key){
-        return getDoubleValue(key, 0.0);
+    public double getDouble(@NotNull String key){
+        return getDouble(key, 0.0);
     }
 
     /**
@@ -245,7 +242,7 @@ public class SnakeUtils implements AutoCloseable {
      * @param defaultValue The value to return if the key doesn't exist or cannot be parsed
      * @return The double value, or defaultValue if absent/invalid
      */
-    public double getDoubleValue(@NotNull String key, double defaultValue){
+    public double getDouble(@NotNull String key, double defaultValue){
         Object value = getValue(key);
         if (value == null) return defaultValue;
 
@@ -268,8 +265,8 @@ public class SnakeUtils implements AutoCloseable {
      * @return The String value, or null if absent
      */
     @Nullable
-    public String getStringValue(@NotNull String key){
-        return getStringValue(key, null);
+    public String getString(@NotNull String key){
+        return getString(key, null);
     }
 
     /**
@@ -281,7 +278,7 @@ public class SnakeUtils implements AutoCloseable {
      * @return The String value, or defaultValue if absent
      */
     @Nullable
-    public String getStringValue(@NotNull String key, @Nullable String defaultValue){
+    public String getString(@NotNull String key, @Nullable String defaultValue){
         Object value = getValue(key);
         return (value != null) ? value.toString() : defaultValue;
     }
@@ -293,8 +290,8 @@ public class SnakeUtils implements AutoCloseable {
      * @param key The key path with dot notation
      * @return The boolean value, or false if absent/invalid
      */
-    public boolean getBooleanValue(@NotNull String key){
-        return getBooleanValue(key, false);
+    public boolean getBoolean(@NotNull String key){
+        return getBoolean(key, false);
     }
 
     /**
@@ -305,7 +302,7 @@ public class SnakeUtils implements AutoCloseable {
      * @param defaultValue The value to return if the key doesn't exist
      * @return The boolean value, or defaultValue if absent
      */
-    public boolean getBooleanValue(@NotNull String key, boolean defaultValue){
+    public boolean getBoolean(@NotNull String key, boolean defaultValue){
         Object value = getValue(key);
         if (value == null) return defaultValue;
 
@@ -325,7 +322,7 @@ public class SnakeUtils implements AutoCloseable {
      */
     @SuppressWarnings("unchecked")
     @Nullable
-    public Map<String, Object> getMapValue(@NotNull String key){
+    public Map<String, Object> getMap(@NotNull String key){
         Object value = getValue(key);
         return (value instanceof Map) ? (Map<String, Object>) value : null;
     }
@@ -385,7 +382,7 @@ public class SnakeUtils implements AutoCloseable {
      * SnakeUtils config = new SnakeUtils(new File("config.yml"));
      * SnakeUtils dbSection = config.getSection("database");
      * if (dbSection != null) {
-     *     String host = dbSection.getStringValue("host");
+     *     String host = dbSection.getString("host");
      * }
      * </pre>
      *
@@ -394,7 +391,7 @@ public class SnakeUtils implements AutoCloseable {
      */
     @Nullable
     public SnakeUtils getSection(@NotNull String key){
-        Map<String, Object> sectionData = getMapValue(key);
+        Map<String, Object> sectionData = getMap(key);
         if (sectionData == null){
             return null;
         }
@@ -492,7 +489,7 @@ public class SnakeUtils implements AutoCloseable {
      *
      * Example:
      * <pre>
-     * List&lt;Object&gt; items = yaml.getListValue("server.allowed-ips");
+     * List&lt;Object&gt; items = yaml.getList("server.allowed-ips");
      * if (items != null) {
      *     for (Object item : items) {
      *         System.out.println(item);
@@ -505,7 +502,7 @@ public class SnakeUtils implements AutoCloseable {
      */
     @SuppressWarnings("unchecked")
     @Nullable
-    public List<Object> getListValue(@NotNull String key){
+    public List<Object> getList(@NotNull String key){
         Object value = getValue(key);
         return (value instanceof List) ? (List<Object>) value : null;
     }
@@ -575,8 +572,8 @@ public class SnakeUtils implements AutoCloseable {
      * @return Set of root-level keys (never null, but may be empty)
      */
     @NotNull
-    public java.util.Set<String> getKeys(){
-        return (this.data != null) ? this.data.keySet() : java.util.Collections.emptySet();
+    public Set<String> getKeys(){
+        return (this.data != null) ? this.data.keySet() : Collections.emptySet();
     }
 
     /**
@@ -587,7 +584,7 @@ public class SnakeUtils implements AutoCloseable {
      * <pre>
      * Set&lt;String&gt; dbKeys = yaml.getKeys("database");
      * for (String key : dbKeys) {
-     *     System.out.println(key + ": " + yaml.getStringValue("database." + key));
+     *     System.out.println(key + ": " + yaml.getString("database." + key));
      * }
      * </pre>
      *
@@ -595,9 +592,9 @@ public class SnakeUtils implements AutoCloseable {
      * @return Set of keys in the section (never null, but may be empty if section doesn't exist)
      */
     @NotNull
-    public java.util.Set<String> getKeys(@NotNull String key){
-        Map<String, Object> section = getMapValue(key);
-        return (section != null) ? section.keySet() : java.util.Collections.emptySet();
+    public Set<String> getKeys(@NotNull String key){
+        Map<String, Object> section = getMap(key);
+        return (section != null) ? section.keySet() : Collections.emptySet();
     }
 
     /**
