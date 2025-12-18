@@ -17,10 +17,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.zip.ZipEntry;
@@ -238,6 +235,178 @@ public class NexoConverter extends Converter {
     @Override
     public CompletableFuture<Void> convertLanguages(boolean async) {
         return executeTask(async, this::convertLanguagesSync);
+    }
+
+    @Override
+    public CompletableFuture<Void> convertSounds(boolean async) {
+        return executeTask(async, this::convertSoundsSync);
+    }
+
+    private void convertSoundsSync() {
+        File inputSoundFile = new File("plugins/" + converterName + "/sounds.yml");
+        File outputSoundFile = new File(this.plugin.getDataFolder(), "converted/" + converterName + "/CraftEngine/resources/craftengineconverter/configuration/sounds/sounds.yml");
+
+        if (!inputSoundFile.exists() || !inputSoundFile.isFile()) {
+            Logger.debug("Nexo sounds file not found at: " + inputSoundFile.getAbsolutePath());
+            return;
+        }
+
+        if (!outputSoundFile.getParentFile().exists()) {
+            if (!outputSoundFile.getParentFile().mkdirs()) {
+                Logger.info("Failed to create sounds output directory", LogType.ERROR);
+                return;
+            }
+        }
+
+        try {
+            SnakeUtils nexoSounds = SnakeUtils.load(inputSoundFile);
+            if (nexoSounds == null || nexoSounds.isEmpty()) {
+                Logger.debug("Sounds file is empty: " + inputSoundFile.getAbsolutePath());
+                return;
+            }
+
+            File tempOutputFile = File.createTempFile("craftengine_sounds", ".yml");
+            tempOutputFile.deleteOnExit();
+
+            try (SnakeUtils craftEngineSounds = SnakeUtils.createEmpty(tempOutputFile)) {
+                SnakeUtils soundsSection = craftEngineSounds.getOrCreateSection("sounds");
+
+                List<Map<String, Object>> nexoSoundsList = nexoSounds.getListMap("sounds");
+                if (nexoSoundsList.isEmpty()) {
+                    Logger.debug("No sounds found in file");
+                    return;
+                }
+
+                for (Map<String, Object> soundEntry : nexoSoundsList) {
+                    Object idObj = soundEntry.get("id");
+                    if (idObj == null) continue;
+
+                    String soundId = idObj.toString();
+                    if (soundId.isEmpty()) continue;
+
+                    SnakeUtils soundSection = soundsSection.getOrCreateSection(soundId);
+
+                    boolean replace = parseBoolean(soundEntry.get("replace"));
+                    if (replace) {
+                        soundSection.addData("replace", true);
+                    }
+
+                    List<Map<String, Object>> convertedSounds = new ArrayList<>();
+
+                    Object singleSound = soundEntry.get("sound");
+                    if (singleSound != null && isValidString(singleSound.toString())) {
+                        Map<String, Object> soundMap = createSoundMap(
+                            singleSound.toString(),
+                            soundEntry
+                        );
+                        convertedSounds.add(soundMap);
+                    }
+
+                    Object soundsListObj = soundEntry.get("sounds");
+                    if (soundsListObj instanceof List) {
+                        @SuppressWarnings("unchecked")
+                        List<Object> soundsList = (List<Object>) soundsListObj;
+                        for (Object soundObj : soundsList) {
+                            if (soundObj instanceof Map) {
+                                @SuppressWarnings("unchecked")
+                                Map<String, Object> soundMap = (Map<String, Object>) soundObj;
+                                Object nameObj = soundMap.get("name");
+                                if (nameObj == null) continue;
+
+                                Map<String, Object> convertedSound = createSoundMap(
+                                    nameObj.toString(),
+                                    soundMap
+                                );
+                                convertedSounds.add(convertedSound);
+                            } else if (soundObj instanceof String) {
+                                Map<String, Object> soundMap = createSoundMap(
+                                    soundObj.toString(),
+                                    soundEntry
+                                );
+                                convertedSounds.add(soundMap);
+                            }
+                        }
+                    }
+
+                    Object jukeboxPlayable = soundEntry.get("jukebox_playable");
+                    if (jukeboxPlayable instanceof Map<?,?> jukeboxMap){
+                        @SuppressWarnings("unchecked")
+                        Map<String, Object> finalJukeboxMap = (Map<String, Object>) jukeboxMap;
+                        SnakeUtils jukeboxSongsSection = craftEngineSounds.getOrCreateSection("jukebox-songs");
+                        SnakeUtils jukeboxSongSection = jukeboxSongsSection.getOrCreateSection(soundId);
+
+                        jukeboxSongSection.addData("sound", soundId);
+
+                        Object durationObj = finalJukeboxMap.get("duration");
+                        if (durationObj != null) {
+                            String durationStr = durationObj.toString();
+                            if (durationStr.endsWith("s")) {
+                                try {
+                                    double length = Double.parseDouble(durationStr.substring(0, durationStr.length() - 1));
+                                    jukeboxSongSection.addData("length", length);
+                                } catch (NumberFormatException e) {
+                                    Logger.debug("Invalid duration format: " + durationStr);
+                                }
+                            }
+                        }
+
+                        Object descriptionObj = finalJukeboxMap.get("description");
+                        if (descriptionObj != null) {
+                            jukeboxSongSection.addData("description", descriptionObj.toString());
+                        }
+
+                        int comparatorOutput = parseInt(finalJukeboxMap.get("comparator_output"), 15);
+                        if (comparatorOutput != 15) {
+                            jukeboxSongSection.addData("comparator-output", comparatorOutput);
+                        }
+
+                        Object rangeObj = finalJukeboxMap.get("range");
+                        if (rangeObj != null) {
+                            int range = parseInt(rangeObj, 32);
+                            jukeboxSongSection.addData("range", range);
+                        }
+                    }
+
+                    if (!convertedSounds.isEmpty()) {
+                        soundSection.addData("sounds", convertedSounds);
+                    }
+                }
+
+                craftEngineSounds.save(outputSoundFile);
+                Logger.debug("Successfully converted sounds to: " + outputSoundFile.getAbsolutePath());
+            } catch (Exception e) {
+                Logger.showException("Failed to process sounds file: " + inputSoundFile.getName(), e);
+            } finally {
+                nexoSounds.close();
+            }
+        } catch (Exception e) {
+            Logger.showException("Failed to convert sounds file: " + inputSoundFile.getName(), e);
+        }
+    }
+
+    private Map<String, Object> createSoundMap(String soundName, Map<String, Object> properties) {
+        Map<String, Object> soundMap = new LinkedHashMap<>();
+        soundMap.put("name", soundName);
+
+        boolean stream = parseBoolean(properties.get("stream"));
+        if (stream) soundMap.put("stream", true);
+
+        boolean preload = parseBoolean(properties.get("preload"));
+        if (preload) soundMap.put("preload", true);
+
+        double volume = parseDouble(properties.get("volume"),1f);
+        if (volume != 1.0) soundMap.put("volume", volume);
+
+        double pitch = parseDouble(properties.get("pitch"),1f);
+        if (pitch != 1.0) soundMap.put("pitch", pitch);
+
+        int weight = parseInt(properties.get("weight"),1);
+        if (weight != 1) soundMap.put("weight", weight);
+
+        int attenuationDistance = parseInt(properties.get("attenuation_distance"),16);
+        if (attenuationDistance != 16) soundMap.put("attenuation_distance", attenuationDistance);
+
+        return soundMap;
     }
 
     private void convertLanguagesSync() {

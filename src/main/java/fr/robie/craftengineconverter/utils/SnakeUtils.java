@@ -10,6 +10,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -327,6 +328,51 @@ public class SnakeUtils implements AutoCloseable {
     public Map<String, Object> getMapValue(@NotNull String key){
         Object value = getValue(key);
         return (value instanceof Map) ? (Map<String, Object>) value : null;
+    }
+
+    /**
+     * Retrieves a List of Maps from the specified key path.
+     * This is useful for accessing lists of complex objects stored as maps.
+     *
+     * Example YAML:
+     * <pre>
+     * players:
+     *   - name: John
+     *     score: 100
+     *   - name: Jane
+     *     score: 200
+     * </pre>
+     *
+     * Usage:
+     * <pre>
+     * List&lt;Map&lt;String, Object&gt;&gt; players = config.getListMap("players");
+     * if (players != null) {
+     *     for (Map&lt;String, Object&gt; player : players) {
+     *         String name = (String) player.get("name");
+     *         Integer score = (Integer) player.get("score");
+     *     }
+     * }
+     * </pre>
+     *
+     * @param key The key path with dot notation
+     * @return The List of Maps, or null if absent, not a List, or contains non-Map elements
+     */
+    @SuppressWarnings("unchecked")
+    @NotNull
+    public List<Map<String, Object>> getListMap(@NotNull String key){
+        Object value = getValue(key);
+        if (!(value instanceof List<?> list)) return new ArrayList<>();
+
+        List<Map<String, Object>> result = new ArrayList<>();
+
+        for (Object item : list) {
+            if (!(item instanceof Map)) {
+                return new ArrayList<>();
+            }
+            result.add((Map<String, Object>) item);
+        }
+
+        return result;
     }
 
     /**
@@ -816,6 +862,22 @@ public class SnakeUtils implements AutoCloseable {
     @Nullable
     public static SnakeUtils load(@NotNull String filePath){
         return load(new File(filePath));
+    }
+
+    @NotNull
+    public static SnakeUtils createEmpty(){
+        try {
+            File tempFile = File.createTempFile("snakeutils_empty_", ".yml");
+            try (FileWriter writer = new FileWriter(tempFile)){
+                writer.write("{}");
+            }
+            SnakeUtils utils = new SnakeUtils(tempFile);
+            utils.clear();
+            tempFile.deleteOnExit();
+            return utils;
+        } catch (IOException e){
+            throw new RuntimeException("Failed to create empty SnakeUtils", e);
+        }
     }
 
     /**

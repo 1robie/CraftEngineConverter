@@ -41,6 +41,8 @@ public abstract class Converter extends YamlUtils {
 
     public abstract CompletableFuture<Void> convertLanguages(boolean async);
 
+    public abstract CompletableFuture<Void> convertSounds(boolean async);
+
     public String getName() {
         return this.converterName;
     }

@@ -2,6 +2,7 @@ package fr.robie.craftengineconverter.utils.builder;
 
 
 import fr.robie.craftengineconverter.utils.format.Message;
+import org.jetbrains.annotations.Contract;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -39,6 +40,7 @@ public class TimerBuilder {
     /**
      * Format time with all units up to the specified maximum unit
      */
+    @Contract(pure = true)
     public static String formatTime(long milliseconds, TimeUnit maxUnit) {
         long totalSeconds = milliseconds / 1000L;
 
@@ -67,6 +69,7 @@ public class TimerBuilder {
     /**
      * Automatically choose the best time unit based on duration
      */
+    @Contract(pure = true)
     public static String formatTimeAuto(long seconds) {
         if (seconds < 60) {
             return formatTime(seconds * 1000L, TimeUnit.SECOND);
@@ -88,22 +91,27 @@ public class TimerBuilder {
     /**
      * Legacy methods for backward compatibility
      */
+    @Contract(pure = true)
     public static String getFormatLongDays(long temps) {
         return formatTime(temps, TimeUnit.DAY);
     }
 
+    @Contract(pure = true)
     public static String getFormatLongHours(long temps) {
         return formatTime(temps, TimeUnit.HOUR);
     }
 
+    @Contract(pure = true)
     public static String getFormatLongMinutes(long temps) {
         return formatTime(temps, TimeUnit.MINUTE);
     }
 
+    @Contract(pure = true)
     public static String getFormatLongSecondes(long temps) {
         return formatTime(temps, TimeUnit.SECOND);
     }
 
+    @Contract(pure = true)
     public static String getStringTime(long second) {
         return formatTimeAuto(second);
     }
@@ -130,6 +138,7 @@ public class TimerBuilder {
     /**
      * Remove zero values from the formatted string
      */
+    @Contract(pure = true)
     public static String format(String message) {
         for (TimeUnit unit : TimeUnit.values()) {
             message = message.replace(" 00 " + unit.singularFormat.msg(), "");
@@ -228,16 +237,19 @@ public class TimerBuilder {
             this.milliseconds = milliseconds;
         }
 
+        @Contract("_->this")
         public Builder maxUnit(TimeUnit maxUnit) {
             this.maxUnit = maxUnit;
             return this;
         }
 
+        @Contract("->this")
         public Builder autoSelectUnit() {
             this.autoSelect = true;
             return this;
         }
 
+        @Contract("->this")
         public Builder showZeroValues() {
             this.hideZeroValues = false;
             return this;
