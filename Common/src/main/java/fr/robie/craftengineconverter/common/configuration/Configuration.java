@@ -17,6 +17,12 @@ public class Configuration {
     public static boolean disableDefaultItalic = true;
     public static List<String> blacklistedPaths = new ArrayList<>();
 
+    // Formating options
+    public static boolean bossBarFormating = true;
+    public static boolean actionBarFormating = true;
+    public static boolean pluginMessageFormating = true;
+    public static boolean titleFormatting = true;
+
     private static volatile Configuration instance;
     private boolean isUpdated = false;
 
@@ -164,26 +170,30 @@ public class Configuration {
     }
 
     public enum ConfigPath {
-        ENABLE_DEBUG("enable-debug", false, v -> Configuration.enableDebug = (Boolean) v),
-        AUTO_CONVERT_ON_STARTUP("auto-convert-on-startup", false, v -> Configuration.autoConvertOnStartup = (Boolean) v),
+        ENABLE_DEBUG("enable-debug", false, v -> enableDebug = (Boolean) v),
+        AUTO_CONVERT_ON_STARTUP("auto-convert-on-startup", false, v -> autoConvertOnStartup = (Boolean) v),
         DEFAULT_MATERIAL("default-material", "PAPER", v -> {
             try {
                 String string = (String) v;
-                Configuration.defaultMaterial = Material.valueOf(string.toUpperCase());
+                defaultMaterial = Material.valueOf(string.toUpperCase());
             } catch (Exception e) {
                 Logger.debug("Invalid default material in configuration, using PAPER as default.", LogType.WARNING);
-                Configuration.defaultMaterial = Material.PAPER;
+                defaultMaterial = Material.PAPER;
             }
         }),
-        DISABLE_DEFAULT_ITALIC("disable-default-italic", true, v -> Configuration.disableDefaultItalic = (Boolean) v),
+        DISABLE_DEFAULT_ITALIC("disable-default-italic", true, v -> disableDefaultItalic = (Boolean) v),
         BLACKLISTED_PATHS("blacklisted-paths", new ArrayList<>(), v -> {
-            Configuration.blacklistedPaths.clear();
+            blacklistedPaths.clear();
             if (v instanceof List<?>) {
                 @SuppressWarnings("unchecked")
                 List<String> paths = (List<String>) v;
-                Configuration.blacklistedPaths.addAll(paths);
+                blacklistedPaths.addAll(paths);
             }
-        })
+        }),
+        BOSS_BAR_FORMATTING("formatting.boss-bar", true, v -> bossBarFormating = (Boolean) v),
+        ACTION_BAR_FORMATTING("formatting.action-bar", true, v -> actionBarFormating = (Boolean) v),
+        PLUGIN_MESSAGE_FORMATTING("formatting.plugin-message", true, v -> pluginMessageFormating = (Boolean) v),
+        TITLE_FORMATTING("formatting.title", true, v -> titleFormatting = (Boolean) v)
         ;
 
         private final String path;

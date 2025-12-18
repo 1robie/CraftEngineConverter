@@ -1,9 +1,6 @@
 package fr.robie.craftengineconverter.hooks.packetevent;
 
-import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerActionBar;
-import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerSetTitleSubtitle;
-import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerSetTitleText;
-import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerSystemChatMessage;
+import com.github.retrooper.packetevents.wrapper.play.server.*;
 import fr.robie.craftengineconverter.common.format.ComponentMeta;
 import fr.robie.craftengineconverter.common.packet.PacketContent;
 import fr.robie.craftengineconverter.common.packet.PacketProcessor;
@@ -79,6 +76,24 @@ public class PacketEventsProcessor {
         @Override
         public @NotNull PacketContent<WrapperPlayServerActionBar> unpack(WrapperPlayServerActionBar container) {
             Component internal = container.getActionBarText();
+            return new PacketContent<>(container, this, ComponentMeta.getPlainText(internal));
+        }
+    };
+
+    public static final PacketProcessor<WrapperPlayServerBossBar> BOSS_BAR = new PacketProcessor<>() {
+        @Override
+        public String name() {
+            return "BOSS_BAR";
+        }
+
+        @Override
+        public void edit(WrapperPlayServerBossBar container, Component component) {
+            container.setTitle(component);
+        }
+
+        @Override
+        public @NotNull PacketContent<WrapperPlayServerBossBar> unpack(WrapperPlayServerBossBar container) {
+            Component internal = container.getTitle();
             return new PacketContent<>(container, this, ComponentMeta.getPlainText(internal));
         }
     };

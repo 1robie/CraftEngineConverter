@@ -5,11 +5,9 @@ import com.github.retrooper.packetevents.event.PacketListenerPriority;
 import com.github.retrooper.packetevents.event.PacketSendEvent;
 import com.github.retrooper.packetevents.protocol.packettype.PacketType;
 import com.github.retrooper.packetevents.protocol.packettype.PacketTypeCommon;
-import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerActionBar;
-import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerSetTitleSubtitle;
-import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerSetTitleText;
-import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerSystemChatMessage;
+import com.github.retrooper.packetevents.wrapper.play.server.*;
 import fr.robie.craftengineconverter.common.CraftEngineConverterPlugin;
+import fr.robie.craftengineconverter.common.configuration.Configuration;
 import fr.robie.craftengineconverter.common.format.ComponentMeta;
 import fr.robie.craftengineconverter.common.logger.Logger;
 import fr.robie.craftengineconverter.common.packet.PacketContent;
@@ -32,10 +30,19 @@ public class PacketEventsListener extends PacketListenerAbstract {
         super(PacketListenerPriority.LOW);
         this.plugin = plugin;
 
-        this.packetTypeProcessors.put(PacketType.Play.Server.SYSTEM_CHAT_MESSAGE, PacketEventsProcessor.SYSTEM_CHAT_MESSAGE);
-        this.packetTypeProcessors.put(PacketType.Play.Server.SET_TITLE_TEXT, PacketEventsProcessor.SET_TITLE_TEXT);
-        this.packetTypeProcessors.put(PacketType.Play.Server.SET_TITLE_SUBTITLE, PacketEventsProcessor.SET_TITLE_SUBTITLE);
-        this.packetTypeProcessors.put(PacketType.Play.Server.ACTION_BAR, PacketEventsProcessor.ACTION_BAR);
+        if (Configuration.pluginMessageFormating){
+            this.packetTypeProcessors.put(PacketType.Play.Server.SYSTEM_CHAT_MESSAGE, PacketEventsProcessor.SYSTEM_CHAT_MESSAGE);
+        }
+        if (Configuration.titleFormatting){
+            this.packetTypeProcessors.put(PacketType.Play.Server.SET_TITLE_TEXT, PacketEventsProcessor.SET_TITLE_TEXT);
+            this.packetTypeProcessors.put(PacketType.Play.Server.SET_TITLE_SUBTITLE, PacketEventsProcessor.SET_TITLE_SUBTITLE);
+        }
+        if (Configuration.actionBarFormating){
+            this.packetTypeProcessors.put(PacketType.Play.Server.ACTION_BAR, PacketEventsProcessor.ACTION_BAR);
+        }
+        if (Configuration.bossBarFormating){
+            this.packetTypeProcessors.put(PacketType.Play.Server.BOSS_BAR, PacketEventsProcessor.BOSS_BAR);
+        }
 
         this.componentMeta = this.plugin.getMessageFormatter() instanceof ComponentMeta meta ? meta : new ComponentMeta();
         this.tagResolverUtils = this.plugin.getTagResolver();
@@ -63,6 +70,7 @@ public class PacketEventsListener extends PacketListenerAbstract {
             case SET_TITLE_TEXT -> new WrapperPlayServerSetTitleText(event);
             case SET_TITLE_SUBTITLE -> new WrapperPlayServerSetTitleSubtitle(event);
             case ACTION_BAR -> new WrapperPlayServerActionBar(event);
+            case BOSS_BAR -> new WrapperPlayServerBossBar(event);
             default -> null;
         };
 
