@@ -1,0 +1,32 @@
+type: minecraft:condition
+property: minecraft:using_item
+on-false:
+  type: minecraft:select
+  property: minecraft:charge_type
+  cases:
+    - when: arrow
+      model:
+        type: minecraft:model
+        path: "%charged_arrow_model_path%"
+    - when: rocket
+      model:
+        type: minecraft:model
+        path: "%charged_firework_model_path%"
+  fallback:
+    type: minecraft:model
+    path: "%default_model_path%"
+on-true:
+  type: minecraft:range_dispatch
+  property: minecraft:crossbow/pull
+  entries:
+    - model:
+        type: minecraft:model
+        path: "%pulling_1_model_path%"
+      threshold: 0.58
+    - model:
+        type: minecraft:model
+        path: "%pulling_2_model_path%"
+      threshold: 1.0
+  fallback:
+    type: minecraft:model
+    path: "%pulling_0_model_path%"

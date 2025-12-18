@@ -1,0 +1,5 @@
+path: "%model_path%"
+generation:
+  parent: minecraft:block/cube_all
+  textures:
+    all: "%texture_path%"

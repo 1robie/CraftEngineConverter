@@ -1,6 +1,6 @@
 package fr.robie.craftengineconverter.utils;
 
-import fr.robie.craftengineconverter.utils.logger.Logger;
+import fr.robie.craftengineconverter.common.logger.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.yaml.snakeyaml.DumperOptions;

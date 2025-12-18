@@ -1,0 +1,6 @@
+path: "%model_path%"
+generation:
+  parent: minecraft:block/cube_top
+  textures:
+    side: "%texture_side_path%"
+    top: "%texture_top_path%"

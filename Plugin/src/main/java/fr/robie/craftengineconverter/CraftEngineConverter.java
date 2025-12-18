@@ -2,18 +2,23 @@ package fr.robie.craftengineconverter;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import fr.robie.craftengineconverter.api.packet.PacketLoader;
 import fr.robie.craftengineconverter.command.CraftEngineConverterCommand;
+import fr.robie.craftengineconverter.common.CraftEngineConverterPlugin;
+import fr.robie.craftengineconverter.common.FoliaCompatibilityManager;
+import fr.robie.craftengineconverter.common.configuration.Configuration;
+import fr.robie.craftengineconverter.common.format.ClassicMeta;
+import fr.robie.craftengineconverter.common.format.ComponentMeta;
+import fr.robie.craftengineconverter.common.format.MessageFormatter;
+import fr.robie.craftengineconverter.common.logger.Logger;
+import fr.robie.craftengineconverter.common.tag.TagResolverUtils;
 import fr.robie.craftengineconverter.converter.Converter;
 import fr.robie.craftengineconverter.converter.nexo.NexoConverter;
+import fr.robie.craftengineconverter.hooks.packetevent.PacketEventHook;
 import fr.robie.craftengineconverter.loader.MessageLoader;
-import fr.robie.craftengineconverter.utils.Configuration;
-import fr.robie.craftengineconverter.utils.FoliaCompatibilityManager;
+import fr.robie.craftengineconverter.utils.TagResolver;
 import fr.robie.craftengineconverter.utils.builder.TimerBuilder;
 import fr.robie.craftengineconverter.utils.command.CommandManager;
-import fr.robie.craftengineconverter.utils.format.ClassicMeta;
-import fr.robie.craftengineconverter.utils.format.ComponentMeta;
-import fr.robie.craftengineconverter.utils.format.MessageFormatter;
-import fr.robie.craftengineconverter.utils.logger.Logger;
 import fr.robie.craftengineconverter.utils.manager.InternalTemplateManager;
 import fr.robie.craftengineconverter.utils.plugins.Plugins;
 import fr.robie.craftengineconverter.utils.save.NoReloadable;
@@ -29,7 +34,7 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public final class CraftEngineConverter extends JavaPlugin {
+public final class CraftEngineConverter extends JavaPlugin implements CraftEngineConverterPlugin {
     private static CraftEngineConverter INSTANCE;
 
     private final Map<String, Converter> converterMap = new HashMap<>();
@@ -40,10 +45,22 @@ public final class CraftEngineConverter extends JavaPlugin {
     private final InternalTemplateManager templateManager = new InternalTemplateManager(this);
     private final List<Savable> savables = new ArrayList<>();
     private final Persist persist = new PersistImp(this);
+    private final TagResolverUtils tagResolver = new TagResolver(this);
     private MessageFormatter messageFormatter = new ClassicMeta();
+    private PacketLoader packetLoader;
 
     public CraftEngineConverter() {
         new Logger(this.getDescription().getFullName());
+    }
+
+    @Override
+    public void onLoad() {
+        if (Plugins.PACKET_EVENTS.isPresent()){
+            this.packetLoader = new PacketEventHook(this, this);
+        }
+        if (this.packetLoader != null){
+            this.packetLoader.onLoad();
+        }
     }
 
     @Override
@@ -73,6 +90,12 @@ public final class CraftEngineConverter extends JavaPlugin {
         this.commandManager.validCommands();
         registerConverter(new NexoConverter(this));
 
+        this.tagResolver.initTagProcessors();
+
+        if (this.packetLoader != null){
+            this.packetLoader.onEnable();
+        }
+
         if (Configuration.autoConvertOnStartup) {
             Logger.info("Auto-conversion is enabled, starting conversion...");
             long startTime = System.currentTimeMillis();
@@ -100,6 +123,10 @@ public final class CraftEngineConverter extends JavaPlugin {
 
         this.saveFiles();
 
+        if (this.packetLoader != null){
+            this.packetLoader.onDisable();
+        }
+
         Logger.info("Plugin disabled !");
     }
 
@@ -107,10 +134,17 @@ public final class CraftEngineConverter extends JavaPlugin {
         return this.commandManager;
     }
 
+    @Override
     public MessageFormatter getMessageFormatter() {
         return this.messageFormatter;
     }
 
+    @Override
+    public TagResolverUtils getTagResolver() {
+        return this.tagResolver;
+    }
+
+    @Override
     public FoliaCompatibilityManager getFoliaCompatibilityManager() {
         return foliaCompatibilityManager;
     }

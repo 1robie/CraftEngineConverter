@@ -5,5 +5,6 @@ description: A plugin to convert configurations to CraftEngine format
 version: 1.0.0
 api-version: 1.21
 softdepend:
-  - PacketEvents
+  - CraftEngine
+  - packetevents
 folia-supported: true

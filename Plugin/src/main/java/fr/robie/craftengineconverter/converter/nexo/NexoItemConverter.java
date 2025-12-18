@@ -1,14 +1,14 @@
 package fr.robie.craftengineconverter.converter.nexo;
 
+import fr.robie.craftengineconverter.common.configuration.Configuration;
+import fr.robie.craftengineconverter.common.logger.LogType;
+import fr.robie.craftengineconverter.common.logger.Logger;
 import fr.robie.craftengineconverter.converter.Converter;
 import fr.robie.craftengineconverter.converter.ItemConverter;
-import fr.robie.craftengineconverter.utils.Configuration;
 import fr.robie.craftengineconverter.utils.FloatsUtils;
 import fr.robie.craftengineconverter.utils.Position;
 import fr.robie.craftengineconverter.utils.Tuple;
 import fr.robie.craftengineconverter.utils.enums.*;
-import fr.robie.craftengineconverter.utils.logger.LogType;
-import fr.robie.craftengineconverter.utils.logger.Logger;
 import fr.robie.craftengineconverter.utils.manager.InternalTemplateManager;
 import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;

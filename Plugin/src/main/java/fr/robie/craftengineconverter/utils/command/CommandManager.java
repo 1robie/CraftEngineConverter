@@ -1,10 +1,10 @@
 package fr.robie.craftengineconverter.utils.command;
 
 import fr.robie.craftengineconverter.CraftEngineConverter;
+import fr.robie.craftengineconverter.common.logger.LogType;
+import fr.robie.craftengineconverter.common.logger.Logger;
 import fr.robie.craftengineconverter.utils.CraftEngineConverterUtils;
 import fr.robie.craftengineconverter.utils.format.Message;
-import fr.robie.craftengineconverter.utils.logger.LogType;
-import fr.robie.craftengineconverter.utils.logger.Logger;
 import org.bukkit.Bukkit;
 import org.bukkit.command.*;
 import org.bukkit.entity.Player;
@@ -249,7 +249,7 @@ public class CommandManager extends CraftEngineConverterUtils implements Command
                     }
                 }
             }
-            return tabCompleter.size() == 0 ? null : tabCompleter;
+            return tabCompleter.isEmpty() ? null : tabCompleter;
 
         } else if (type.equals(CommandType.SUCCESS)) {
             return command.toTab(this.plugin, sender, args);
@@ -264,7 +264,7 @@ public class CommandManager extends CraftEngineConverterUtils implements Command
 
     /**
      * Register spigot command without plugin.yml This method will allow to
-     * register a command in the spigot without using the plugin.yml This saves
+     * onLoad a command in the spigot without using the plugin.yml This saves
      * time and understanding, the plugin.yml file is clearer
      *
      * @param string   - Main command

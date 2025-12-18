@@ -1,7 +1,7 @@
-package fr.robie.craftengineconverter.utils;
+package fr.robie.craftengineconverter.common.configuration;
 
-import fr.robie.craftengineconverter.utils.logger.LogType;
-import fr.robie.craftengineconverter.utils.logger.Logger;
+import fr.robie.craftengineconverter.common.logger.LogType;
+import fr.robie.craftengineconverter.common.logger.Logger;
 import org.bukkit.Material;
 import org.bukkit.configuration.file.YamlConfiguration;
 

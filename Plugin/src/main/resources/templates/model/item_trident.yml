@@ -1,0 +1,19 @@
+type: minecraft:select
+property: minecraft:display_context
+cases:
+  - when:
+      - gui
+      - ground
+      - fixed
+    model:
+      type: minecraft:model
+      path: "%model_path%"
+fallback:
+  type: minecraft:condition
+  property: minecraft:using_item
+  on-true:
+    type: minecraft:model
+    path: "%throwing_model_path%"
+  on-false:
+    type: minecraft:model
+    path: "%model_path%"

@@ -1,4 +1,4 @@
-package fr.robie.craftengineconverter.utils.format;
+package fr.robie.craftengineconverter.common.format;
 
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;

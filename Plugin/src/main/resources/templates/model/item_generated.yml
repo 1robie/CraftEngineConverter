@@ -1,0 +1,5 @@
+path: "%model_path%"
+generation:
+  parent: minecraft:item/generated
+  textures:
+    layer0: "%texture_path%"

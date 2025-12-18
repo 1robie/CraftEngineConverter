@@ -20,6 +20,21 @@
             <groupId>fr.robie.craftengineconverter</groupId>
             <artifactId>API</artifactId>
         </dependency>
+
+        <dependency>
+            <groupId>net.momirealms</groupId>
+            <artifactId>craft-engine-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>net.momirealms</groupId>
+            <artifactId>craft-engine-bukkit</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.tcoded</groupId>
+            <artifactId>FoliaLib</artifactId>
+            <version>0.5.1</version>
+        </dependency>
     </dependencies>
 
 </project>

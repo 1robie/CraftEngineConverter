@@ -1,6 +1,6 @@
-package fr.robie.craftengineconverter.utils.logger;
+package fr.robie.craftengineconverter.common.logger;
 
-import fr.robie.craftengineconverter.utils.Configuration;
+import fr.robie.craftengineconverter.common.configuration.Configuration;
 import org.bukkit.Bukkit;
 
 import java.io.PrintWriter;

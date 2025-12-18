@@ -1,9 +1,9 @@
 package fr.robie.craftengineconverter.loader;
 
+import fr.robie.craftengineconverter.common.logger.Logger;
 import fr.robie.craftengineconverter.utils.YamlUtils;
 import fr.robie.craftengineconverter.utils.format.Message;
 import fr.robie.craftengineconverter.utils.format.MessageType;
-import fr.robie.craftengineconverter.utils.logger.Logger;
 import fr.robie.craftengineconverter.utils.save.Persist;
 import fr.robie.craftengineconverter.utils.save.Savable;
 import org.bukkit.configuration.file.YamlConfiguration;

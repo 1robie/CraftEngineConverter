@@ -1,8 +1,8 @@
 package fr.robie.craftengineconverter.utils;
 
+import fr.robie.craftengineconverter.common.logger.LogType;
+import fr.robie.craftengineconverter.common.logger.Logger;
 import fr.robie.craftengineconverter.utils.format.MessageUtils;
-import fr.robie.craftengineconverter.utils.logger.LogType;
-import fr.robie.craftengineconverter.utils.logger.Logger;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.Plugin;

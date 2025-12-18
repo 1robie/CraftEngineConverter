@@ -8,7 +8,9 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public enum Plugins {
     NEXO("Nexo"),
-    CRAFTENGINE("CraftEngine"),;
+    CRAFTENGINE("CraftEngine"),
+    PACKET_EVENTS("packetevents"),
+    ;
     private static final Map<Plugins, Boolean> presenceCache = new ConcurrentHashMap<>();
 
     private final String pluginName;

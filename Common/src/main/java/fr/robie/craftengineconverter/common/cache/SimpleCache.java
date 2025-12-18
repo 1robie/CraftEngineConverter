@@ -1,4 +1,4 @@
-package fr.robie.craftengineconverter.utils.cache;
+package fr.robie.craftengineconverter.common.cache;
 
 import java.util.HashMap;
 import java.util.Map;

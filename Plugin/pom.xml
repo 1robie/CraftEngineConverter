@@ -12,7 +12,7 @@
     <artifactId>Plugin</artifactId>
 
     <build>
-        <finalName>CorePlugin-${project.version}</finalName>
+        <finalName>CraftEngineConverter-${project.version}</finalName>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -29,7 +29,7 @@
                             <outputFile>${project.build.directory}/${project.build.finalName}.jar</outputFile>
                             <artifactSet>
                                 <includes>
-                                    <include>fr.robie.core:*</include>
+                                    <include>fr.robie.craftengineconverter:*</include>
                                     <include>com.tcoded:FoliaLib</include>
                                 </includes>
                             </artifactSet>
@@ -58,9 +58,12 @@
         </dependency>
 
         <dependency>
-            <groupId>com.tcoded</groupId>
-            <artifactId>FoliaLib</artifactId>
-            <version>0.5.1</version>
+            <groupId>net.momirealms</groupId>
+            <artifactId>craft-engine-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>net.momirealms</groupId>
+            <artifactId>craft-engine-bukkit</artifactId>
         </dependency>
 
         <!-- Test dependencies -->

@@ -1,8 +1,8 @@
 package fr.robie.craftengineconverter.utils.save;
 
 import fr.robie.craftengineconverter.CraftEngineConverter;
-import fr.robie.craftengineconverter.utils.logger.LogType;
-import fr.robie.craftengineconverter.utils.logger.Logger;
+import fr.robie.craftengineconverter.common.logger.LogType;
+import fr.robie.craftengineconverter.common.logger.Logger;
 
 import java.io.File;
 import java.lang.reflect.Type;

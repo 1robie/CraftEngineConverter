@@ -1,8 +1,8 @@
 package fr.robie.craftengineconverter.utils.manager;
 
 import fr.robie.craftengineconverter.CraftEngineConverter;
+import fr.robie.craftengineconverter.common.logger.Logger;
 import fr.robie.craftengineconverter.utils.enums.Template;
-import fr.robie.craftengineconverter.utils.logger.Logger;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.jetbrains.annotations.NotNull;

@@ -1,6 +1,6 @@
-package fr.robie.craftengineconverter.utils.format;
+package fr.robie.craftengineconverter.common.format;
 
-import fr.robie.craftengineconverter.utils.cache.SimpleCache;
+import fr.robie.craftengineconverter.common.cache.SimpleCache;
 import net.kyori.adventure.audience.Audience;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextDecoration;
@@ -164,5 +164,9 @@ public class ComponentMeta implements MessageFormatter{
 
     public Component getComponent(String message) {
         return this.cache.get(message, () -> this.MINI_MESSAGE.deserialize(colorMiniMessage(message)).decoration(TextDecoration.ITALIC, false));
+    }
+
+    public static String getPlainText(Component component) {
+        return MiniMessage.miniMessage().serialize(component);
     }
 }

@@ -1,5 +1,5 @@
 package fr.robie.craftengineconverter.utils.save;
-import fr.robie.craftengineconverter.utils.logger.Logger;
+import fr.robie.craftengineconverter.common.logger.Logger;
 
 import java.io.*;
 import java.net.URL;

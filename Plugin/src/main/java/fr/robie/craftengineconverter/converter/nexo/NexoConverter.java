@@ -1,11 +1,13 @@
 package fr.robie.craftengineconverter.converter.nexo;
 
 import fr.robie.craftengineconverter.CraftEngineConverter;
+import fr.robie.craftengineconverter.common.CraftEngineImageUtils;
+import fr.robie.craftengineconverter.common.ImageConversion;
+import fr.robie.craftengineconverter.common.configuration.Configuration;
+import fr.robie.craftengineconverter.common.logger.LogType;
+import fr.robie.craftengineconverter.common.logger.Logger;
 import fr.robie.craftengineconverter.converter.Converter;
-import fr.robie.craftengineconverter.utils.Configuration;
 import fr.robie.craftengineconverter.utils.SnakeUtils;
-import fr.robie.craftengineconverter.utils.logger.LogType;
-import fr.robie.craftengineconverter.utils.logger.Logger;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 
@@ -208,13 +210,14 @@ public class NexoConverter extends Converter {
                 ceEmojiSection.set("keywords", placeholders);
             }
             int index = emojiSection.getInt("index",-1);
-            int rows = emojiSection.getInt("rows",-1);
-            int columns = emojiSection.getInt("columns",-1);
-            if (index != -1 && rows != -1 && columns != -1){
+            int rows = emojiSection.getInt("rows",0);
+            int columns = emojiSection.getInt("columns",0);
+            if (index != -1 && rows != 0 && columns != 0){
                 ceEmojiSection.set("image",finalKey+":"+rows+":"+columns);
             } else {
                 ceEmojiSection.set("image",finalKey+":0:0");
             }
+            CraftEngineImageUtils.register(key, new ImageConversion(finalKey, rows,columns));
         }
         if (convertedEmojiSection.getKeys(false).isEmpty()) {
             return;
@@ -493,7 +496,8 @@ public class NexoConverter extends Converter {
                 ConfigurationSection imageSection = config.getConfigurationSection(key);
                 if (imageSection == null) continue;
 
-                ConfigurationSection section = imagesSection.createSection("default:" + key);
+                String finalKey = "default:" + key;
+                ConfigurationSection section = imagesSection.createSection(finalKey);
                 String texture = imageSection.getString("texture");
                 if (isValidString(texture)){
                     section.set("file", namespaced(texture));
@@ -515,6 +519,7 @@ public class NexoConverter extends Converter {
                 if (rows > 0 && cols > 0){
                     section.set("grid-size", rows+","+cols);
                 }
+                CraftEngineImageUtils.register(key, new ImageConversion(finalKey, rows, cols));
             }
 
             try {

@@ -1,4 +1,4 @@
-package fr.robie.craftengineconverter.utils.logger;
+package fr.robie.craftengineconverter.common.logger;
 
 public enum LogType {
     ERROR("§c"),
