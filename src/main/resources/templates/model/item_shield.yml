@@ -1,8 +1,0 @@
-type: minecraft:condition
-property: minecraft:using_item
-on-true:
-  type: minecraft:model
-  path: "%blocking_model_path%"
-on-false:
-  type: minecraft:model
-  path: "%default_model_path%"

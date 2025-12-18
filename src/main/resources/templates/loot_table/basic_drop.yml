@@ -1,7 +1,0 @@
-pools:
-  - rolls: 1
-    conditions:
-      - type: survives_explosion
-    entries:
-      - type: "%type%"
-        item: "%item%"

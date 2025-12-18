@@ -4,17 +4,61 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>fr.robie</groupId>
+    <groupId>fr.robie.craftengineconverter</groupId>
     <artifactId>CraftEngineConverter</artifactId>
     <version>1.0</version>
-    <packaging>jar</packaging>
+    <packaging>pom</packaging>
 
     <name>CraftEngineConverter</name>
+    <modules>
+        <module>API</module>
+        <module>Common</module>
+        <module>Hooks</module>
+        <module>Plugin</module>
+    </modules>
 
     <properties>
-        <java.version>21</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
+        <maven.compiler.release>21</maven.compiler.release>
     </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>fr.robie.craftengineconverter</groupId>
+                <artifactId>API</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>fr.robie.craftengineconverter</groupId>
+                <artifactId>Common</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>fr.robie.craftengineconverter</groupId>
+                <artifactId>BOM</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <!-- Paper -->
+            <dependency>
+                <groupId>io.papermc.paper</groupId>
+                <artifactId>paper-api</artifactId>
+                <version>1.21.10-R0.1-SNAPSHOT</version>
+                <scope>provided</scope>
+            </dependency>
+
+            <!-- PacketEvents -->
+            <dependency>
+                <groupId>com.github.retrooper</groupId>
+                <artifactId>packetevents-spigot</artifactId>
+                <version>2.10.0</version>
+                <scope>provided</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
     <build>
         <defaultGoal>clean package</defaultGoal>
@@ -72,34 +116,11 @@
             <id>tcoded-releases</id>
             <url>https://repo.tcoded.com/releases</url>
         </repository>
+
+        <!-- PacketEvents -->
+        <repository>
+            <id>codemc-releases</id>
+            <url>https://repo.codemc.io/repository/maven-releases/</url>
+        </repository>
     </repositories>
-
-    <dependencies>
-        <dependency>
-            <groupId>io.papermc.paper</groupId>
-            <artifactId>paper-api</artifactId>
-            <version>1.21.10-R0.1-SNAPSHOT</version>
-            <scope>provided</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>com.tcoded</groupId>
-            <artifactId>FoliaLib</artifactId>
-            <version>0.5.1</version>
-        </dependency>
-
-        <!-- Test dependencies -->
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter</artifactId>
-            <version>5.10.1</version>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.yaml</groupId>
-            <artifactId>snakeyaml</artifactId>
-            <version>2.4</version>
-        </dependency>
-    </dependencies>
 </project>

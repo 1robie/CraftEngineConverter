@@ -1,8 +1,0 @@
-type: minecraft:condition
-property: minecraft:fishing_rod/cast
-on-true:
-  type: minecraft:model
-  path: "%casting_model_path%"
-on-false:
-  type: minecraft:model
-  path: "%default_model_path%"

@@ -1,8 +1,0 @@
-name: CraftEngineConverter
-version: '1.0'
-main: fr.robie.craftengineconverter.CraftEngineConverter
-api-version: '1.21'
-authors: [1robie]
-softdepend:
-  - CraftEngine
-  - Nexo
