@@ -45,7 +45,6 @@ public class NexoItemConverter extends ItemConverter {
         }
     }
 
-
     @Override
     public void convertItemName() {
         String itemName = this.nexoItemSection.getString("itemname");
@@ -313,6 +312,7 @@ public class NexoItemConverter extends ItemConverter {
     public void convertJukeboxPlayable() {
         String song = this.nexoItemSection.getString("Components.jukebox_playable.song_key");
         if (song != null && !song.isEmpty()) {
+
             this.craftEngineItemUtils.getComponentsSection().set("minecraft:jukebox_playable",
                     Map.of("song", song));
         }
@@ -1221,11 +1221,6 @@ public class NexoItemConverter extends ItemConverter {
     private void convertFurnitureMechanic(ConfigurationSection nexoFurnitureMechanicsSection) {
         String nexoMEGModel = nexoFurnitureMechanicsSection.getString("modelengine_id");
         String nexoBetterModel = nexoFurnitureMechanicsSection.getString("better-model");
-        if (isValidString(nexoMEGModel) || isValidString(nexoBetterModel)){
-            // TODO
-            Logger.debug("Conversion of furniture items using ModelEngine or BetterModel is not supported yet. Skipping furniture item '"+this.itemId+"'.", LogType.WARNING);
-            return;
-        }
         ConfigurationSection ceBehaviorSection = this.craftEngineItemUtils.getBehaviorSection();
         ceBehaviorSection.set("type", "furniture_item");
         ConfigurationSection ceSettingsSection = getOrCreateSection(ceBehaviorSection, "settings");
@@ -1336,6 +1331,19 @@ public class NexoItemConverter extends ItemConverter {
             noLimitedPlacingKeys.add(FurniturePlacement.CEILING);
         }
         if (!noLimitedPlacingKeys.isEmpty()){
+            if (isValidString(nexoBetterModel) || isValidString(nexoMEGModel)){
+                for (FurniturePlacement placement : noLimitedPlacingKeys){
+                    ConfigurationSection ceFurnitureSection = getOrCreateSection(ceBehaviorSection, "furniture");
+                    ConfigurationSection cePlacementSection = getOrCreateSection(ceFurnitureSection, "placement");
+                    ConfigurationSection ceTypePlacementSection = cePlacementSection.createSection(placement.name().toLowerCase());
+                    if (isValidString(nexoBetterModel)){
+                        ceTypePlacementSection.set("better-model", nexoBetterModel);
+                    } else if (isValidString(nexoMEGModel)){
+                        ceTypePlacementSection.set("model-engine", nexoMEGModel);
+                    }
+                }
+                return;
+            }
             List<Map<String,Object>> elements = new ArrayList<>();
             Map<String,Object> map = new HashMap<>();
             map.put("item", this.itemId);
