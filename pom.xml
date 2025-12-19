@@ -61,7 +61,7 @@
             <dependency>
                 <groupId>net.momirealms</groupId>
                 <artifactId>craft-engine-core</artifactId>
-                <version>0.0.65</version>
+                <version>0.0.66</version>
                 <scope>provided</scope>
             </dependency>
             <dependency>
