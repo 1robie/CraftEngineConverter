@@ -44,7 +44,7 @@ public class GlyphTagProcessor implements TagProcessor {
      * </ul>
      * </p>
      */
-    private static final Pattern GLYPH_PATTERN = Pattern.compile("\\\\?<glyph:([^>]+)>");
+    private static final Pattern GLYPH_PATTERN = Pattern.compile("\\\\?<(?:glyph|g):([^>]+)>");
 
     /**
      * {@inheritDoc}
