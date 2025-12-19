@@ -28,6 +28,7 @@ public abstract class Converter extends YamlUtils {
             convertEmojis(false);
             convertImages(false);
             convertLanguages(false);
+            convertSounds(false);
         });
     }
 

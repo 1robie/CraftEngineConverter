@@ -73,6 +73,10 @@ public class CraftEngineConverterCommandConvert extends VCommand {
             case ALL -> converter.convertAll();
             case ITEMS -> converter.convertItems(true);
             case PACKS -> converter.convertPack(true);
+            case EMOJIS -> converter.convertEmojis(true);
+            case IMAGES -> converter.convertImages(true);
+            case LANGUAGES -> converter.convertLanguages(true);
+            case SOUNDS -> converter.convertSounds(true);
         };
     }
 }
