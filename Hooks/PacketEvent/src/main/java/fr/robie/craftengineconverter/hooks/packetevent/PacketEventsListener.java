@@ -12,7 +12,7 @@ import fr.robie.craftengineconverter.common.format.ComponentMeta;
 import fr.robie.craftengineconverter.common.logger.Logger;
 import fr.robie.craftengineconverter.common.packet.PacketContent;
 import fr.robie.craftengineconverter.common.packet.PacketProcessor;
-import fr.robie.craftengineconverter.common.tag.TagResolverUtils;
+import fr.robie.craftengineconverter.common.tag.ITagResolver;
 import net.kyori.adventure.text.Component;
 import org.jetbrains.annotations.NotNull;
 
@@ -23,24 +23,24 @@ import java.util.Optional;
 public class PacketEventsListener extends PacketListenerAbstract {
     private final CraftEngineConverterPlugin plugin;
     private final ComponentMeta componentMeta;
-    private final TagResolverUtils tagResolverUtils;
+    private final ITagResolver tagResolverUtils;
     private final Map<PacketType.Play.Server, PacketProcessor<?>> packetTypeProcessors = new HashMap<>();
 
     public PacketEventsListener(CraftEngineConverterPlugin plugin) {
         super(PacketListenerPriority.LOW);
         this.plugin = plugin;
 
-        if (Configuration.pluginMessageFormating){
+        if (Configuration.pluginMessageFormatting){
             this.packetTypeProcessors.put(PacketType.Play.Server.SYSTEM_CHAT_MESSAGE, PacketEventsProcessor.SYSTEM_CHAT_MESSAGE);
         }
         if (Configuration.titleFormatting){
             this.packetTypeProcessors.put(PacketType.Play.Server.SET_TITLE_TEXT, PacketEventsProcessor.SET_TITLE_TEXT);
             this.packetTypeProcessors.put(PacketType.Play.Server.SET_TITLE_SUBTITLE, PacketEventsProcessor.SET_TITLE_SUBTITLE);
         }
-        if (Configuration.actionBarFormating){
+        if (Configuration.actionBarFormatting){
             this.packetTypeProcessors.put(PacketType.Play.Server.ACTION_BAR, PacketEventsProcessor.ACTION_BAR);
         }
-        if (Configuration.bossBarFormating){
+        if (Configuration.bossBarFormatting){
             this.packetTypeProcessors.put(PacketType.Play.Server.BOSS_BAR, PacketEventsProcessor.BOSS_BAR);
         }
 

@@ -1,12 +1,13 @@
 package fr.robie.craftengineconverter.common;
 
 import fr.robie.craftengineconverter.common.format.MessageFormatter;
-import fr.robie.craftengineconverter.common.tag.TagResolverUtils;
+import fr.robie.craftengineconverter.common.tag.ITagResolver;
+import org.bukkit.plugin.java.JavaPlugin;
 
-public interface CraftEngineConverterPlugin {
-    MessageFormatter getMessageFormatter();
+public abstract class CraftEngineConverterPlugin extends JavaPlugin {
+    public abstract MessageFormatter getMessageFormatter();
 
-    TagResolverUtils getTagResolver();
+    public abstract ITagResolver getTagResolver();
 
-    FoliaCompatibilityManager getFoliaCompatibilityManager();
+    public abstract FoliaCompatibilityManager getFoliaCompatibilityManager();
 }

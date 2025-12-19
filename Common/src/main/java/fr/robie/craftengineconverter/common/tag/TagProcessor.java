@@ -1,5 +1,7 @@
 package fr.robie.craftengineconverter.common.tag;
 
+import org.bukkit.entity.Player;
+
 import java.util.Optional;
 import java.util.regex.Pattern;
 
@@ -30,7 +32,7 @@ public interface TagProcessor {
      * Gets the regex pattern used to match tags in input text.
      * <p>
      * The pattern should be compiled and cached for performance. It will be used
-     * by both {@link #hasTag(String)} and {@link #process(String)} methods.
+     * by both {@link #hasTag(String)} and {@link #process(String,Player)} methods.
      * </p>
      *
      * @return The compiled regex pattern for matching this processor's tags
@@ -52,12 +54,12 @@ public interface TagProcessor {
      * @return An {@link Optional} containing the processed string if any tags were found and processed,
      *         or {@link Optional#empty()} if no processing was needed
      */
-    Optional<String> process(String input);
+    Optional<String> process(String input, Player player);
 
     /**
      * Checks if the input string contains any tags that this processor can handle.
      * <p>
-     * This is a lightweight check that can be used to determine if {@link #process(String)}
+     * This is a lightweight check that can be used to determine if {@link #process(String, Player)}
      * needs to be called, potentially improving performance by avoiding unnecessary processing.
      * </p>
      *

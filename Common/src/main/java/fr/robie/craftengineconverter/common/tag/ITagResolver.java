@@ -11,7 +11,7 @@ import java.util.Optional;
  * supporting player-specific context for dynamic content.
  * </p>
  */
-public interface TagResolverUtils {
+public interface ITagResolver {
 
     /**
      * Initializes all tag processors that will be used for tag resolution.

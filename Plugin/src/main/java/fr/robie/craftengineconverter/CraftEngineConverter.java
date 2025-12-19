@@ -10,8 +10,9 @@ import fr.robie.craftengineconverter.common.configuration.Configuration;
 import fr.robie.craftengineconverter.common.format.ClassicMeta;
 import fr.robie.craftengineconverter.common.format.ComponentMeta;
 import fr.robie.craftengineconverter.common.format.MessageFormatter;
+import fr.robie.craftengineconverter.common.logger.LogType;
 import fr.robie.craftengineconverter.common.logger.Logger;
-import fr.robie.craftengineconverter.common.tag.TagResolverUtils;
+import fr.robie.craftengineconverter.common.tag.ITagResolver;
 import fr.robie.craftengineconverter.converter.Converter;
 import fr.robie.craftengineconverter.converter.nexo.NexoConverter;
 import fr.robie.craftengineconverter.hooks.packetevent.PacketEventHook;
@@ -26,7 +27,6 @@ import fr.robie.craftengineconverter.utils.save.Persist;
 import fr.robie.craftengineconverter.utils.save.PersistImp;
 import fr.robie.craftengineconverter.utils.save.Savable;
 import org.bukkit.configuration.file.YamlConfiguration;
-import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
 import java.lang.reflect.Modifier;
@@ -34,7 +34,7 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public final class CraftEngineConverter extends JavaPlugin implements CraftEngineConverterPlugin {
+public final class CraftEngineConverter extends CraftEngineConverterPlugin {
     private static CraftEngineConverter INSTANCE;
 
     private final Map<String, Converter> converterMap = new HashMap<>();
@@ -45,7 +45,7 @@ public final class CraftEngineConverter extends JavaPlugin implements CraftEngin
     private final InternalTemplateManager templateManager = new InternalTemplateManager(this);
     private final List<Savable> savables = new ArrayList<>();
     private final Persist persist = new PersistImp(this);
-    private final TagResolverUtils tagResolver = new TagResolver(this);
+    private final ITagResolver tagResolver = new TagResolver();
     private MessageFormatter messageFormatter = new ClassicMeta();
     private PacketLoader packetLoader;
 
@@ -55,8 +55,12 @@ public final class CraftEngineConverter extends JavaPlugin implements CraftEngin
 
     @Override
     public void onLoad() {
+        this.reloadConfig();
         if (Plugins.PACKET_EVENTS.isPresent()){
-            this.packetLoader = new PacketEventHook(this, this);
+            Logger.info("[Hook] PacketEvents", LogType.SUCCESS);
+            if (Configuration.packetEventsFormatting) {
+                this.packetLoader = new PacketEventHook(this);
+            }
         }
         if (this.packetLoader != null){
             this.packetLoader.onLoad();
@@ -78,7 +82,6 @@ public final class CraftEngineConverter extends JavaPlugin implements CraftEngin
             messageFormatter = new ComponentMeta();
         }
         this.addSave(new MessageLoader(this));
-        this.reloadConfig();
         if (!this.templateManager.loadTemplates()){
             Logger.info("A error occure during the loading of templates");
         }
@@ -140,7 +143,7 @@ public final class CraftEngineConverter extends JavaPlugin implements CraftEngin
     }
 
     @Override
-    public TagResolverUtils getTagResolver() {
+    public ITagResolver getTagResolver() {
         return this.tagResolver;
     }
 

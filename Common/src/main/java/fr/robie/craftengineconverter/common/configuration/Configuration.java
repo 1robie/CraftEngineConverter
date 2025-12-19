@@ -17,11 +17,16 @@ public class Configuration {
     public static boolean disableDefaultItalic = true;
     public static List<String> blacklistedPaths = new ArrayList<>();
 
-    // Formating options
-    public static boolean bossBarFormating = true;
-    public static boolean actionBarFormating = true;
-    public static boolean pluginMessageFormating = true;
+    // Formatting options
+    public static boolean packetEventsFormatting = true;
+
+    public static boolean bossBarFormatting = true;
+    public static boolean actionBarFormatting = true;
+    public static boolean pluginMessageFormatting = true;
     public static boolean titleFormatting = true;
+
+    // Tags options
+    public static boolean glyphTagEnabled = true;
 
     private static volatile Configuration instance;
     private boolean isUpdated = false;
@@ -190,10 +195,12 @@ public class Configuration {
                 blacklistedPaths.addAll(paths);
             }
         }),
-        BOSS_BAR_FORMATTING("formatting.boss-bar", true, v -> bossBarFormating = (Boolean) v),
-        ACTION_BAR_FORMATTING("formatting.action-bar", true, v -> actionBarFormating = (Boolean) v),
-        PLUGIN_MESSAGE_FORMATTING("formatting.plugin-message", true, v -> pluginMessageFormating = (Boolean) v),
-        TITLE_FORMATTING("formatting.title", true, v -> titleFormatting = (Boolean) v)
+        PACKET_EVENTS_FORMATTING("formatting.packet-events", true, v -> packetEventsFormatting = (Boolean) v),
+        BOSS_BAR_FORMATTING("formatting.boss-bar", true, v -> bossBarFormatting = (Boolean) v),
+        ACTION_BAR_FORMATTING("formatting.action-bar", true, v -> actionBarFormatting = (Boolean) v),
+        PLUGIN_MESSAGE_FORMATTING("formatting.plugin-message", true, v -> pluginMessageFormatting = (Boolean) v),
+        TITLE_FORMATTING("formatting.title", true, v -> titleFormatting = (Boolean) v),
+        GLYPH_TAG_ENABLED("tags.glyph.enabled", true, v -> glyphTagEnabled = (Boolean) v)
         ;
 
         private final String path;

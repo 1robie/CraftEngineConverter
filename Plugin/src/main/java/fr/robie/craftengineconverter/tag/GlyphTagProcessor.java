@@ -2,6 +2,7 @@ package fr.robie.craftengineconverter.tag;
 
 import fr.robie.craftengineconverter.common.CraftEngineImageUtils;
 import fr.robie.craftengineconverter.common.tag.TagProcessor;
+import org.bukkit.entity.Player;
 
 import java.util.Optional;
 import java.util.regex.Matcher;
@@ -108,7 +109,7 @@ public class GlyphTagProcessor implements TagProcessor {
      *         or {@link Optional#empty()} if no glyph tags were found
      */
     @Override
-    public Optional<String> process(String input) {
+    public Optional<String> process(String input, Player player) {
         Matcher matcher = GLYPH_PATTERN.matcher(input);
 
         if (!matcher.find()) {

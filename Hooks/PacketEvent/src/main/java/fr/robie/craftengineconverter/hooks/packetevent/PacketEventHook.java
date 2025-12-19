@@ -4,14 +4,11 @@ import com.github.retrooper.packetevents.PacketEvents;
 import fr.robie.craftengineconverter.api.packet.PacketLoader;
 import fr.robie.craftengineconverter.common.CraftEngineConverterPlugin;
 import io.github.retrooper.packetevents.factory.spigot.SpigotPacketEventsBuilder;
-import org.bukkit.plugin.Plugin;
 
 public class PacketEventHook implements PacketLoader {
-    private final Plugin plugin;
-    private final CraftEngineConverterPlugin pluginInstance;
+    private final CraftEngineConverterPlugin plugin;
 
-    public PacketEventHook(Plugin plugin, CraftEngineConverterPlugin pluginInstance) {
-        this.pluginInstance = pluginInstance;
+    public PacketEventHook(CraftEngineConverterPlugin plugin) {
         this.plugin = plugin;
     }
 
@@ -19,8 +16,8 @@ public class PacketEventHook implements PacketLoader {
     public void onLoad(){
         PacketEvents.setAPI(SpigotPacketEventsBuilder.build(this.plugin));
         PacketEvents.getAPI().load();
-        if (pluginInstance.getFoliaCompatibilityManager().isPaper()) {
-            PacketEvents.getAPI().getEventManager().registerListener(new PacketEventsListener(this.pluginInstance));
+        if (this.plugin.getFoliaCompatibilityManager().isPaper()) {
+            PacketEvents.getAPI().getEventManager().registerListener(new PacketEventsListener(this.plugin));
         }
     }
 
