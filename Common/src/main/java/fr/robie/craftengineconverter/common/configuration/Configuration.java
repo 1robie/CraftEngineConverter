@@ -27,6 +27,7 @@ public class Configuration {
 
     // Tags options
     public static boolean glyphTagEnabled = true;
+    public static boolean placeholderAPITagEnabled = true;
 
     private static volatile Configuration instance;
     private boolean isUpdated = false;
@@ -200,7 +201,8 @@ public class Configuration {
         ACTION_BAR_FORMATTING("formatting.action-bar", true, v -> actionBarFormatting = (Boolean) v),
         PLUGIN_MESSAGE_FORMATTING("formatting.plugin-message", true, v -> pluginMessageFormatting = (Boolean) v),
         TITLE_FORMATTING("formatting.title", true, v -> titleFormatting = (Boolean) v),
-        GLYPH_TAG_ENABLED("tags.glyph.enabled", true, v -> glyphTagEnabled = (Boolean) v)
+        GLYPH_TAG_ENABLED("tags.glyph.enabled", true, v -> glyphTagEnabled = (Boolean) v),
+        PLACEHOLDER_API_TAG_ENABLED("tags.placeholder-api.enabled", true, v -> placeholderAPITagEnabled = (Boolean) v)
         ;
 
         private final String path;

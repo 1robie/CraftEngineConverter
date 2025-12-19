@@ -1,6 +1,5 @@
 package fr.robie.craftengineconverter.hooks.placeholderapi.tag;
 
-import fr.robie.craftengineconverter.common.logger.Logger;
 import fr.robie.craftengineconverter.common.tag.TagProcessor;
 import me.clip.placeholderapi.PlaceholderAPI;
 import org.bukkit.entity.Player;
@@ -32,17 +31,15 @@ public class PlaceholderAPITag implements TagProcessor {
         StringBuilder result = new StringBuilder();
 
         while (matcher.find()) {
-            String fullMatch = matcher.group(0);
-
-            if (fullMatch.startsWith("\\")) {
-                Logger.info("PlaceholderAPI tag escaped: " + fullMatch);
-                matcher.appendReplacement(result, Matcher.quoteReplacement(fullMatch.substring(1)));
-                continue;
-            }
-
             String placeholder = matcher.group(1);
-            String parsed = PlaceholderAPI.setPlaceholders(player, "%" + placeholder + "%");
-            matcher.appendReplacement(result, Matcher.quoteReplacement(parsed));
+
+            String[] placeholders = placeholder.split(":");
+
+            StringBuilder joinedPlaceholder = new StringBuilder();
+            for (String placeholderPart : placeholders) {
+                joinedPlaceholder.append(PlaceholderAPI.setPlaceholders(player, "%" + placeholderPart + "%"));
+            }
+            matcher.appendReplacement(result, Matcher.quoteReplacement(joinedPlaceholder.toString()));
         }
 
         matcher.appendTail(result);

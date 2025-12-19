@@ -22,5 +22,7 @@ formatting:
   title: true
 
 tag:
-  glyph:
+  glyph: # <glyph:old_name>
+    enabled: true
+  placeholder-api: # <placeholderapi:placeholder> or <papi:placeholder>
     enabled: true
