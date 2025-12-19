@@ -6,7 +6,7 @@
     <parent>
         <groupId>fr.robie.craftengineconverter</groupId>
         <artifactId>Hooks</artifactId>
-        <version>1.0</version>
+        <version>1.0.0</version>
     </parent>
 
     <artifactId>PlaceholderAPI</artifactId>
