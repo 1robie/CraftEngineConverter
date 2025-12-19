@@ -1214,7 +1214,11 @@ public class NexoItemConverter extends ItemConverter {
         ConfigurationSection nexoSaplingSection = nexoCustomBlockSection.getConfigurationSection("sapling");
         if (isNotNull(nexoSaplingSection)){
             Logger.debug("Sapling behavior conversion for custom block item '"+this.itemId+"' is not supported yet. Skipping sapling behavior.", LogType.WARNING);
-            // TODO
+            // TODO implement sapling behavior conversion
+            boolean growsNaturally = nexoSaplingSection.getBoolean("grows_naturally",true);
+            if (!growsNaturally){
+                Logger.info("CraftEngine only supports naturally growing saplings. The sapling for custom block item '"+this.itemId+"' will grow naturally.", LogType.INFO);
+            }
         }
     }
 
@@ -1272,7 +1276,7 @@ public class NexoItemConverter extends ItemConverter {
                 Logger.debug("Unknown display_transform '"+display_transform+"' for furniture item '"+this.itemId+"', defaulting to NONE.", LogType.WARNING);
                 displayType = ItemDisplayType.NONE;
             }
-            String tracking_rotation = nexoPropertiesSection.getString("tracking_rotation","FIXED");
+            String tracking_rotation = nexoPropertiesSection.getString("tracking_rotation",Billboard.FIXED.name());
             try {
                 transformType = Billboard.valueOf(tracking_rotation);
             } catch (IllegalArgumentException e){
