@@ -5,27 +5,16 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>fr.robie.craftengineconverter</groupId>
-        <artifactId>CraftEngineConverter</artifactId>
+        <artifactId>Hooks</artifactId>
         <version>1.0</version>
     </parent>
 
-    <artifactId>Hooks</artifactId>
-    <packaging>pom</packaging>
-
-    <modules>
-        <module>BOM</module>
-        <module>PacketEvent</module>
-        <module>PlaceholderAPI</module>
-    </modules>
+    <artifactId>PlaceholderAPI</artifactId>
 
     <dependencies>
         <dependency>
-            <groupId>io.papermc.paper</groupId>
-            <artifactId>paper-api</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>fr.robie.craftengineconverter</groupId>
-            <artifactId>Common</artifactId>
+            <groupId>me.clip</groupId>
+            <artifactId>placeholderapi</artifactId>
         </dependency>
     </dependencies>
 </project>

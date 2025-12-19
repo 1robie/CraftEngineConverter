@@ -11,10 +11,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class InternalTemplateManager {
     private static final Map<Template,YamlConfiguration> templates = new HashMap<>();
@@ -29,7 +26,7 @@ public class InternalTemplateManager {
             for (Template template : Template.values()) {
                 InputStream inputStream = this.craftEngineConverter.getResource(template.getPath() + ".yml");
                 if (inputStream == null) {
-                    Logger.info("Template " + template.getPath() + " not found!");
+                    Logger.info("Template " + template.getPath() + " not found! Please report this issue.");
                     continue;
                 }
                 YamlConfiguration yamlConfiguration = YamlConfiguration.loadConfiguration(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
@@ -51,7 +48,7 @@ public class InternalTemplateManager {
     }
 
     private static Map<String, Object> convertConfigurationSectionToMap(ConfigurationSection section) {
-        Map<String, Object> result = new HashMap<>();
+        Map<String, Object> result = new LinkedHashMap<>();
         for (String key : section.getKeys(false)) {
             Object value = section.get(key);
             if (value instanceof ConfigurationSection configurationSection) {
@@ -82,17 +79,17 @@ public class InternalTemplateManager {
     public static @NotNull Map<String,Object> parseTemplate(Template template, Object ...args){
         if (args.length % 2 != 0){
             Logger.info("Invalid args number");
-            return new HashMap<>();
+            return new LinkedHashMap<>();
         }
 
-        Map<String, Object> replacements = new HashMap<>();
+        Map<String, Object> replacements = new LinkedHashMap<>();
         for (int i = 0; i < args.length; i += 2) {
             replacements.put(String.valueOf(args[i]), args[i + 1]);
         }
 
         Map<String, Object> templateMap = getTemplate(template);
         if (templateMap == null){
-            return new HashMap<>();
+            return new LinkedHashMap<>();
         }
 
         return parseValues(templateMap, replacements);
@@ -109,7 +106,7 @@ public class InternalTemplateManager {
     }
 
     private static Map<String, Object> parseValues(Map<String, Object> map, Map<String, Object> replacements) {
-        Map<String, Object> result = new HashMap<>();
+        Map<String, Object> result = new LinkedHashMap<>();
         for (Map.Entry<String, Object> entry : map.entrySet()) {
             result.put(parseString(entry.getKey(), replacements), parseObject(entry.getValue(), replacements));
         }

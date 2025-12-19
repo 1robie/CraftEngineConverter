@@ -7,4 +7,5 @@ api-version: 1.21
 softdepend:
   - CraftEngine
   - packetevents
+  - PlaceholderAPI
 folia-supported: true

@@ -126,17 +126,13 @@ public class GlyphTagProcessor implements TagProcessor {
             String glyphId = matcher.group(1);
             String fullMatch = matcher.group(0);
 
-            // Append text before the match
             result.append(input, lastEnd, matcher.start());
 
-            // Try to convert the glyph ID
             Optional<String> converted = CraftEngineImageUtils.convert(glyphId);
 
             if (converted.isPresent()) {
-                // Successfully converted - append the font tag
                 result.append(converted.get());
             } else {
-                // No conversion found - keep original but remove backslash if present
                 result.append(fullMatch.startsWith("\\") ? fullMatch.substring(1) : fullMatch);
             }
 

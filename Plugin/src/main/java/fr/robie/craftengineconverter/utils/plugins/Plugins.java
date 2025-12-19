@@ -10,6 +10,7 @@ public enum Plugins {
     NEXO("Nexo"),
     CRAFTENGINE("CraftEngine"),
     PACKET_EVENTS("packetevents"),
+    PLACEHOLDER_API("PlaceholderAPI")
     ;
     private static final Map<Plugins, Boolean> presenceCache = new ConcurrentHashMap<>();
 

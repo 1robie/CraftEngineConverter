@@ -21,7 +21,7 @@
 
         <dependency>
             <groupId>fr.robie.craftengineconverter</groupId>
-            <artifactId>ProtocolLib</artifactId>
+            <artifactId>PlaceholderAPI</artifactId>
             <version>${project.version}</version>
             <scope>compile</scope>
         </dependency>

@@ -13,3 +13,14 @@ blacklisted-paths:
   - "shaders/*" # Blacklist all files in shaders folder
   # - "shaders/rendertype_text.fsh" # Example of how to blacklist a specific file
   # - "minecraft:textures/shaders/" # Example of how to blacklist the entire shaders namespace
+
+formatting:
+  packet-events: true
+  boss-bar: true
+  action-bar: true
+  plugin-message: true
+  title: true
+
+tag:
+  glyph:
+    enabled: true
