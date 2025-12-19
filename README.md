@@ -37,7 +37,7 @@ A powerful Minecraft plugin that converts configurations, items, and resources f
 - [x] **Languages**: Multi-language translation file conversion
 - [x] **Sounds**: Custom sound definitions and jukebox songs
 - [x] **Resource Packs**: Automatic texture and asset migration
-- [x] **Equipment**: Armor layers and custom equipment textures
+- [x] **Equipment**: Armor layers and custom equipment textures (Component only, Trims soonner)
 
 ### Advanced Features
 - **Path Blacklisting**: Exclude specific files or folders from conversion
