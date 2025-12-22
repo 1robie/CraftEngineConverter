@@ -25,6 +25,7 @@ public abstract class ItemConverter extends ObjectUtils {
         this.converter = converter;
         this.craftEngineItemUtils = new CraftEngineItemUtils(craftEngineItemSection);
         this.fileConfig = fileConfig;
+        this.fileConfig.options().pathSeparator('\n');
     }
 
     public void convertItem(){

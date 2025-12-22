@@ -78,7 +78,8 @@ public class InternalTemplateManager {
 
     public static @NotNull Map<String,Object> parseTemplate(Template template, Object ...args){
         if (args.length % 2 != 0){
-            Logger.info("Invalid args number");
+            Logger.debug("Invalid args number for template "+template.name()+", must be even." +
+                    " Received "+args.length+" arguments.");
             return new LinkedHashMap<>();
         }
 
@@ -98,7 +99,7 @@ public class InternalTemplateManager {
     @SuppressWarnings({"unchecked"})
     private static Object parseObject(Object obj, Map<String, Object> replacements) {
         return switch (obj) {
-            case String string -> parseString(string, replacements);
+            case String string -> parseStringValue(string, replacements);
             case Map<?, ?> map -> parseValues((Map<String, Object>) map, replacements);
             case List<?> list -> parseList(list, replacements);
             case null, default -> obj;
@@ -108,7 +109,9 @@ public class InternalTemplateManager {
     private static Map<String, Object> parseValues(Map<String, Object> map, Map<String, Object> replacements) {
         Map<String, Object> result = new LinkedHashMap<>();
         for (Map.Entry<String, Object> entry : map.entrySet()) {
-            result.put(parseString(entry.getKey(), replacements), parseObject(entry.getValue(), replacements));
+            Object parsedKey = parseStringValue(entry.getKey(), replacements);
+            result.put(parsedKey instanceof String string ? string : String.valueOf(parsedKey),
+                      parseObject(entry.getValue(), replacements));
         }
         return result;
     }
@@ -121,7 +124,12 @@ public class InternalTemplateManager {
         return result;
     }
 
-    private static String parseString(String str, Map<String, Object> replacements) {
+    private static Object parseStringValue(String str, Map<String, Object> replacements) {
+        Object directReplacement = replacements.get(str);
+        if (directReplacement != null) {
+            return directReplacement;
+        }
+
         String result = str;
         for (Map.Entry<String, Object> replacement : replacements.entrySet()) {
             if (replacement.getValue() != null) {

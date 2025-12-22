@@ -1,5 +1,6 @@
 package fr.robie.craftengineconverter.common.configuration;
 
+import fr.robie.craftengineconverter.common.enums.ArmorConverter;
 import fr.robie.craftengineconverter.common.logger.LogType;
 import fr.robie.craftengineconverter.common.logger.Logger;
 import org.bukkit.Material;
@@ -15,6 +16,7 @@ public class Configuration {
     public static boolean autoConvertOnStartup = false;
     public static Material defaultMaterial = Material.PAPER;
     public static boolean disableDefaultItalic = true;
+    public static ArmorConverter armorConverterType = ArmorConverter.COMPONENT;
     public static List<String> blacklistedPaths = new ArrayList<>();
 
     // Formatting options
@@ -188,6 +190,15 @@ public class Configuration {
             }
         }),
         DISABLE_DEFAULT_ITALIC("disable-default-italic", true, v -> disableDefaultItalic = (Boolean) v),
+        ARMOR_CONVERTER_TYPE("armor-converter-type", "COMPONENT", v -> {
+            try {
+                String string = (String) v;
+                armorConverterType = ArmorConverter.valueOf(string.toUpperCase());
+            } catch (Exception e) {
+                Logger.debug("Invalid armor converter type in configuration, using COMPONENT as default.", LogType.WARNING);
+                armorConverterType = ArmorConverter.COMPONENT;
+            }
+        }),
         BLACKLISTED_PATHS("blacklisted-paths", new ArrayList<>(), v -> {
             blacklistedPaths.clear();
             if (v instanceof List<?>) {
