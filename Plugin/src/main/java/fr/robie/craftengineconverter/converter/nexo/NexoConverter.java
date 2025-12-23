@@ -710,21 +710,69 @@ public class NexoConverter extends Converter {
         }
     }
 
+    /**
+     * Validates and sanitizes a zip entry name to prevent directory traversal attacks.
+     * Checks for encoded URLs, UNC paths, absolute paths, and parent directory references.
+     *
+     * Examples of rejected entries:
+     * - "../../../etc/passwd" (parent directory traversal)
+     * - "/etc/passwd" (absolute Unix path)
+     * - "C:\Windows\System32" (Windows absolute path)
+     * - "\\server\share\file" (UNC network path)
+     * - "..%2F..%2Fetc%2Fpasswd" (URL-encoded traversal)
+     *
+     * Examples of accepted entries:
+     * - "documents/report.pdf"
+     * - "images/photo.jpg"
+     * - "folder/subfolder/file.txt"
+     *
+     * @param entryName The raw entry name from the zip file
+     * @return The validated entry name
+     * @throws IOException if the entry name is invalid or contains suspicious elements
+     */
     private String validateZipEntryName(String entryName) throws IOException {
+        // Reject null or empty names
         if (entryName == null || entryName.isEmpty()) {
             throw new IOException("Invalid zip entry: empty name");
         }
 
-        if (entryName.startsWith("/") || entryName.startsWith("\\")) {
+        // Decode URL encoding to catch obfuscated attacks like "..%2F..%2Fetc%2Fpasswd"
+        String decoded;
+        try {
+            decoded = java.net.URLDecoder.decode(entryName, java.nio.charset.StandardCharsets.UTF_8);
+        } catch (IllegalArgumentException e) {
+            decoded = entryName; // Keep original if decoding fails
+        }
+
+        // Block UNC paths: \\server\share\file
+        if (entryName.startsWith("\\\\") || decoded.startsWith("\\\\")) {
+            throw new IOException("Invalid zip entry: UNC path detected - " + entryName);
+        }
+
+        // Block network paths: //server/share/file
+        if (entryName.startsWith("//") || decoded.startsWith("//")) {
+            throw new IOException("Invalid zip entry: network path detected - " + entryName);
+        }
+
+        // Block absolute paths: /etc/passwd or \Windows\System32
+        if (entryName.startsWith("/") || entryName.startsWith("\\") ||
+                decoded.startsWith("/") || decoded.startsWith("\\")) {
             throw new IOException("Invalid zip entry: absolute path - " + entryName);
         }
 
-        if (entryName.length() >= 2 && entryName.charAt(1) == ':') {
+        // Block Windows drive letters: C:\file or D:/document
+        if ((entryName.length() >= 2 && entryName.charAt(1) == ':') ||
+                (decoded.length() >= 2 && decoded.charAt(1) == ':')) {
             throw new IOException("Invalid zip entry: drive letter - " + entryName);
         }
 
+        // Normalize path separators for consistent checking
         String normalized = entryName.replace("\\", "/");
-        if (normalized.contains("../") || normalized.contains("/..") || normalized.equals("..")) {
+        String decodedNormalized = decoded.replace("\\", "/");
+
+        // Block parent directory references: ../../../etc/passwd
+        if (normalized.contains("../") || normalized.contains("/..") || normalized.equals("..") ||
+                decodedNormalized.contains("../") || decodedNormalized.contains("/..") || decodedNormalized.equals("..")) {
             throw new IOException("Invalid zip entry: parent reference - " + entryName);
         }
 
