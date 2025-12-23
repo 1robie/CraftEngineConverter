@@ -1,0 +1,7 @@
+rolls: 1
+entries:
+  - type: "%type%"
+    item: "%item%"
+    conditions:
+      - type: enchantment
+        predicate: minecraft:fortune>=1

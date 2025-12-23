@@ -18,8 +18,8 @@ public class ObjectUtils {
         return path;
     }
 
-    @Contract("null -> false")
-    public boolean isValidString(String str){
+    @Contract("!null -> true; null -> false")
+    public boolean isValidString(@Nullable String str){
         return str != null && !str.isBlank();
     }
 

@@ -10,6 +10,9 @@ import fr.robie.craftengineconverter.utils.FloatsUtils;
 import fr.robie.craftengineconverter.utils.Position;
 import fr.robie.craftengineconverter.utils.Tuple;
 import fr.robie.craftengineconverter.utils.enums.*;
+import fr.robie.craftengineconverter.utils.loots.CraftEngineItemLoot;
+import fr.robie.craftengineconverter.utils.loots.ItemLoot;
+import fr.robie.craftengineconverter.utils.loots.MinecraftItemLoot;
 import fr.robie.craftengineconverter.utils.manager.InternalTemplateManager;
 import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
@@ -1393,9 +1396,67 @@ public class NexoItemConverter extends ItemConverter {
         ConfigurationSection dropSection = nexoFurnitureMechanicsSection.getConfigurationSection("drop");
         if (isNotNull(dropSection)){
             // TODO: Support for nexo drop
-            Logger.debug("Custom drop conversion for furniture item '"+this.itemId+"' is not supported yet. Using default drop.", LogType.WARNING);
-            ConfigurationSection ceFurnitureSection = getOrCreateSection(ceBehaviorSection, "furniture");
-            ceFurnitureSection.set("loot", InternalTemplateManager.parseTemplate(Template.LOOT_TABLE_BASIC_DROP, "%type%","furniture_item","%item%", this.itemId));
+            boolean dropSelfWithSilktouch = dropSection.getBoolean("silktouch",false);
+            boolean fortuneAffectsDrop = dropSection.getBoolean("fortune",false);
+            String minimal_type = dropSection.getString("minimal_type",null);
+            String best_tool = dropSection.getString("best_tool",null);
+            List<Map<?, ?>> loots = dropSection.getMapList("loots");
+            List<ItemLoot> itemLoots = new ArrayList<>();
+            for (Map<?, ?> lootMap : loots){
+                ItemLoot itemLoot = null;
+                int minAmount = 1;
+                int maxAmount = 1;
+                Object amount = lootMap.get("amount");
+                if (amount instanceof Integer intAmount){
+                    minAmount = intAmount;
+                    maxAmount = intAmount;
+                } else if (amount instanceof String amountString){
+                    String[] split = amountString.split("..",2);
+                    try {
+                        minAmount = Integer.parseInt(split[0].trim());
+                        if (split.length == 2){
+                            maxAmount = Integer.parseInt(split[1].trim());
+                        } else {
+                            maxAmount = minAmount;
+                        }
+                    } catch (NumberFormatException e){
+                        Logger.debug("Invalid amount format '"+amountString+"' for furniture item '"+this.itemId+"'. Defaulting to 1.", LogType.WARNING);
+                    }
+                }
+                float probability = 1.0f;
+                Object probObj = lootMap.get("probability");
+                if (probObj instanceof Number num){
+                    probability = num.floatValue();;
+                } else if (probObj instanceof String probString){
+                    try {
+                        probability = Float.parseFloat(probString);
+                    } catch (NumberFormatException e){
+                        Logger.debug("Invalid probability format '"+probString+"' for furniture item '"+this.itemId+"'. Defaulting to 1.0.", LogType.WARNING);
+                    }
+                }
+                if (lootMap.get("nexo_item") instanceof String nexoItemString){
+                    itemLoot = new CraftEngineItemLoot(nexoItemString, minAmount, maxAmount, probability);
+                } else if (lootMap.get("minecraft_type") instanceof String minecraftTypeString){
+                    itemLoot = new MinecraftItemLoot(minecraftTypeString, minAmount, maxAmount, probability);
+                }
+                if (isNotNull(itemLoot))
+                    itemLoots.add(itemLoot);
+            }
+            if (isValidString(minimal_type) || isValidString(best_tool)){
+                Logger.debug("Custom drop conditions (minimal_type, best_tool) for furniture item '"+this.itemId+"' are not supported yet. Skipping custom drop conditions.", LogType.WARNING);
+            }
+            if (dropSelfWithSilktouch && !fortuneAffectsDrop){
+                ConfigurationSection ceFurnitureSection = getOrCreateSection(ceBehaviorSection, "furniture");
+                ceFurnitureSection.set("loot", InternalTemplateManager.parseTemplate(Template.LOOT_TABLE_SILK_TOUCH_ONLY, "%type%", "item", "%item%", this.itemId));
+            } else if (!dropSelfWithSilktouch && fortuneAffectsDrop){
+                if (itemLoots.isEmpty()){
+                    Logger.info("Furniture item '"+this.itemId+"' has fortune-based drop enabled but no loots defined. Please define loots to use fortune-based drops.");
+                } else {
+                    //TODO: Wait for Ce support to implement this
+                }
+            } else if (dropSelfWithSilktouch){ // fortuneAffectsDrop == True
+                //TODO: Wait for Ce support to implement this
+            }
         } else {
             ConfigurationSection ceFurnitureSection = getOrCreateSection(ceBehaviorSection, "furniture");
             ceFurnitureSection.set("loot", InternalTemplateManager.parseTemplate(Template.LOOT_TABLE_BASIC_DROP, "%type%","furniture_item","%item%", this.itemId));

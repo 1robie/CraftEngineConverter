@@ -16,6 +16,7 @@ public enum Template {
 
     LOOT_TABLE_BASIC_DROP("templates/loot_table/basic_drop", TemplateType.LOOT_TABLE),
     LOOT_TABLE_SILK_TOUCH_ONLY("templates/loot_table/silk_touch_only_drop", TemplateType.LOOT_TABLE),
+    LOOT_TABLE_FORTUNE_ONLY("templates/loot_table/fortune_only_drop", TemplateType.LOOT_TABLE),
 
     MINECRAFT_EFFECT("templates/minecraft/effect",TemplateType.OTHER)
 
