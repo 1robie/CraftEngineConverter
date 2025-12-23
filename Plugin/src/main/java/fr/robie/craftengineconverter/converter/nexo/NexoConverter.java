@@ -670,31 +670,65 @@ public class NexoConverter extends Converter {
 
     private void extractZip(Path zipPath, Path targetDir) throws IOException {
         Files.createDirectories(targetDir);
+        Path canonicalTarget = targetDir.toRealPath();
+
         try (ZipInputStream zis = new ZipInputStream(new BufferedInputStream(Files.newInputStream(zipPath)))) {
             ZipEntry entry;
             while ((entry = zis.getNextEntry()) != null) {
+                String entryName = validateZipEntryName(entry.getName());
+                Path destinationPath = targetDir.resolve(entryName).normalize();
+
+                Path pathToCheck = destinationPath.getParent() != null
+                        ? destinationPath.getParent()
+                        : destinationPath;
+
+                if (Files.exists(pathToCheck)) {
+                    if (!pathToCheck.toRealPath().startsWith(canonicalTarget)) {
+                        throw new IOException("Entry outside target: " + entry.getName());
+                    }
+                }
+
                 if (entry.isDirectory()) {
-                    Files.createDirectories(targetDir.resolve(entry.getName()));
+                    Files.createDirectories(destinationPath);
                     zis.closeEntry();
                     continue;
                 }
 
-                Path resolved = targetDir.resolve(entry.getName()).normalize();
-                if (!resolved.startsWith(targetDir.normalize())) {
-                    throw new IOException("Bad zip entry: " + entry.getName());
-                }
+                Files.createDirectories(destinationPath.getParent());
 
-                Files.createDirectories(resolved.getParent());
-                try (OutputStream out = Files.newOutputStream(resolved, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)) {
+                try (OutputStream out = Files.newOutputStream(destinationPath,
+                        StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)) {
                     byte[] buffer = new byte[8192];
                     int len;
                     while ((len = zis.read(buffer)) > 0) {
                         out.write(buffer, 0, len);
                     }
                 }
+
                 zis.closeEntry();
             }
         }
+    }
+
+    private String validateZipEntryName(String entryName) throws IOException {
+        if (entryName == null || entryName.isEmpty()) {
+            throw new IOException("Invalid zip entry: empty name");
+        }
+
+        if (entryName.startsWith("/") || entryName.startsWith("\\")) {
+            throw new IOException("Invalid zip entry: absolute path - " + entryName);
+        }
+
+        if (entryName.length() >= 2 && entryName.charAt(1) == ':') {
+            throw new IOException("Invalid zip entry: drive letter - " + entryName);
+        }
+
+        String normalized = entryName.replace("\\", "/");
+        if (normalized.contains("../") || normalized.contains("/..") || normalized.equals("..")) {
+            throw new IOException("Invalid zip entry: parent reference - " + entryName);
+        }
+
+        return entryName;
     }
 
     private void deleteDirectory(File directory) {
