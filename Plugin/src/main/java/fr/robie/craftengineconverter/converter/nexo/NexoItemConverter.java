@@ -1309,6 +1309,39 @@ public class NexoItemConverter extends ItemConverter {
                 Logger.info("CraftEngine only supports naturally growing saplings. The sapling for custom block item '"+this.itemId+"' will grow naturally.", LogType.INFO);
             }
         }
+        ConfigurationSection nexoDropSection = nexoCustomBlockSection.getConfigurationSection("drop");
+        if (isNotNull(nexoDropSection)){
+            boolean dropSelfWithSilktouch = nexoDropSection.getBoolean("silktouch",false);
+            boolean fortuneAffectsDrop = nexoDropSection.getBoolean("fortune",false);
+            String minimalType = nexoDropSection.getString("minimal_type",null);
+            String bestTool = nexoDropSection.getString("best_tool",null);
+            if (isValidString(minimalType)){
+                NexoMinimalType nexoMinimalType = null;
+                try {
+                    nexoMinimalType = NexoMinimalType.valueOf(minimalType.toUpperCase());
+                } catch (IllegalArgumentException e){
+                    Logger.debug("Unknown minimal_type '"+minimalType+"' for custom block item '"+this.itemId+"'. Skipping minimal_type conversion.", LogType.WARNING);
+                }
+                if (isNotNull(nexoMinimalType)){
+                    ConfigurationSection ceBlockSettings = getOrCreateSection(ceBlockSection, "settings");
+                    ceBlockSettings.set("require-correct-tools",true);
+                    ceBlockSettings.set("correct-tools", nexoMinimalType.getCorrectTools());
+                }
+            }
+            if (isValidString(bestTool)){
+                NexoBestTool nexoBestTool = null;
+                try {
+                    nexoBestTool = NexoBestTool.valueOf(bestTool.toUpperCase());
+                } catch (IllegalArgumentException e){
+                    Logger.debug("Unknown best_tool '"+bestTool+"' for custom block item '"+this.itemId+"'. Skipping best_tool conversion.", LogType.WARNING);
+                }
+                if (isNotNull(nexoBestTool)){
+                    ConfigurationSection ceBlockSettings = getOrCreateSection(ceBlockSection, "settings");
+                    ceBlockSettings.set("tags", ceBlockSettings.getStringList("tags").add(nexoBestTool.getBestTool()));
+                }
+            }
+            //TODO: implement drop conversion according to silktouch and fortune
+        }
     }
 
     private void convertFurnitureMechanic(ConfigurationSection nexoFurnitureMechanicsSection) {
