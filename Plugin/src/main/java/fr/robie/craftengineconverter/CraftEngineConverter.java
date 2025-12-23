@@ -77,7 +77,11 @@ public final class CraftEngineConverter extends CraftEngineConverterPlugin {
             getServer().getPluginManager().disablePlugin(this);
             return;
         }
-        this.getDataFolder().mkdirs();
+        if (!this.getDataFolder().exists() && !this.getDataFolder().mkdirs()){
+            Logger.info("Unable to create plugin folder ! Disabling CraftEngineConverter ...",LogType.ERROR);
+            getServer().getPluginManager().disablePlugin(this);
+            return;
+        }
         if (this.foliaCompatibilityManager.isPaper()){
             messageFormatter = new ComponentMeta();
         }

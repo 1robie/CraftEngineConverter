@@ -1,5 +1,6 @@
 package fr.robie.craftengineconverter.utils;
 
+import fr.robie.craftengineconverter.common.logger.LogType;
 import fr.robie.craftengineconverter.common.logger.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -666,8 +667,8 @@ public class SnakeUtils implements AutoCloseable {
      */
     public void save(@NotNull File file) throws IOException {
         File parentDir = file.getParentFile();
-        if (parentDir != null && !parentDir.exists()){
-            parentDir.mkdirs();
+        if (parentDir != null && !parentDir.exists() && !parentDir.mkdirs()){
+            throw new IOException("Failed to create parent directories for file: " + file);
         }
 
         DumperOptions options = new DumperOptions();
@@ -935,8 +936,9 @@ public class SnakeUtils implements AutoCloseable {
     public static boolean saveToFile(@NotNull Map<String, Object> data, @NotNull File file){
         try {
             File parentDir = file.getParentFile();
-            if (parentDir != null && !parentDir.exists()){
-                parentDir.mkdirs();
+            if (parentDir != null && !parentDir.exists() && !parentDir.mkdirs()){
+                Logger.debug("Failed to create parent directories for file: " + file, LogType.ERROR);
+                return false;
             }
 
             DumperOptions options = new DumperOptions();

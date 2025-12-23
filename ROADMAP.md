@@ -32,7 +32,7 @@
 - [x] URL decoding validation (`..%2F..%2F`)
 - [x] Block UNC paths (`\\server\share`)
 - [x] Add comprehensive security tests
-- [ ] Fix all `mkdirs()`/`delete()` ignored warnings
+- [x] Fix all `mkdirs()`/`delete()` ignored warnings
 - [ ] Add `try-with-resources` for SnakeUtils
 - [ ] Remove unnecessary semicolons
 - [ ] Refactor duplicate code in armor conversion

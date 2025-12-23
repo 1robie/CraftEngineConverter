@@ -47,7 +47,10 @@ public class NexoConverter extends Converter {
         if (outputBase.exists()){
             deleteDirectory(outputBase);
         }
-        outputBase.mkdirs();
+        if (!outputBase.mkdirs()){
+            Logger.debug("Failed to create Nexo items output directory", LogType.ERROR);
+            return;
+        }
 
         AtomicInteger loadedItems = new AtomicInteger(0);
         try {
@@ -97,7 +100,9 @@ public class NexoConverter extends Converter {
                 Path relative = baseDir.toPath().relativize(itemFile.toPath());
                 File output = new File(outputBase, relative.toString());
                 if (!output.getParentFile().exists()) {
-                    output.getParentFile().mkdirs();
+                    if (!output.getParentFile().mkdirs()){
+                        Logger.debug("Failed to create output directory for converted item file: " + output.getParentFile().getAbsolutePath(), LogType.ERROR);
+                    }
                 }
                 convertedConfig.save(output);
             } catch (IOException e) {
@@ -123,11 +128,12 @@ public class NexoConverter extends Converter {
                 return;
             }
 
-            if (!outputPackFile.exists()) {
-                outputPackFile.mkdirs();
-            } else {
+            if (outputPackFile.exists()) {
                 deleteDirectory(outputPackFile);
-                outputPackFile.mkdirs();
+            }
+            if (!outputPackFile.mkdirs()) {
+                Logger.debug("Failed to create Nexo pack output directory", LogType.ERROR);
+                return;
             }
 
             File outputAssetsFolder = new File(outputPackFile, "assets");
@@ -147,7 +153,7 @@ public class NexoConverter extends Converter {
                         }
                     }
                 }
-            };
+            }
         } catch (Exception e) {
             Logger.showException("Error during Nexo pack conversion", e);
 
@@ -166,11 +172,12 @@ public class NexoConverter extends Converter {
             Logger.debug("Nexo emojis directory not found at: " + inputEmojisFolder.getAbsolutePath());
             return;
         }
-        if (!outputEmojisFolder.exists()) {
-            outputEmojisFolder.mkdirs();
-        } else {
+        if (outputEmojisFolder.exists()){
             deleteDirectory(outputEmojisFolder);
-            outputEmojisFolder.mkdirs();
+        }
+        if (!outputEmojisFolder.mkdirs()){
+            Logger.debug("Failed to create Nexo emojis output directory", LogType.ERROR);
+            return;
         }
         processEmojisDirectory(inputEmojisFolder, outputEmojisFolder);
     }
@@ -182,7 +189,11 @@ public class NexoConverter extends Converter {
         for (File file : listFiles) {
             if (file.isDirectory()) {
                 File newOutputDir = new File(outputDir, file.getName());
-                newOutputDir.mkdirs();
+                if (!newOutputDir.exists()) {
+                    if (!newOutputDir.mkdirs()){
+                        Logger.debug("Failed to create output directory for emojis: " + newOutputDir.getAbsolutePath(), LogType.ERROR);
+                    }
+                }
                 processEmojisDirectory(file, newOutputDir);
             } else if (file.getName().endsWith(".yml")) {
                 convertEmojiFile(file, outputDir);
@@ -459,11 +470,12 @@ public class NexoConverter extends Converter {
             Logger.debug("Nexo glyph directory not found at: " + inputBase.getAbsolutePath());
             return;
         }
-        if (!outputBase.exists()) {
-            outputBase.mkdirs();
-        } else {
+        if (outputBase.exists()){
             deleteDirectory(outputBase);
-            outputBase.mkdirs();
+        }
+        if (!outputBase.mkdirs()){
+            Logger.debug("Failed to create Nexo images output directory", LogType.ERROR);
+            return;
         }
 
         try {
@@ -527,7 +539,9 @@ public class NexoConverter extends Converter {
                 Path relative = baseDir.toPath().relativize(imageFile.toPath());
                 File output = new File(outputBase, relative.toString());
                 if (!output.getParentFile().exists()) {
-                    output.getParentFile().mkdirs();
+                    if (!output.getParentFile().mkdirs()){
+                        Logger.debug("Failed to create output directory for converted image file: " + output.getParentFile().getAbsolutePath(), LogType.ERROR);
+                    }
                 }
                 convertedConfig.save(output);
             } catch (IOException e) {
@@ -553,8 +567,9 @@ public class NexoConverter extends Converter {
     }
 
     private void copyDirectory(File source, File destination, File assetsRoot) throws IOException {
-        if (!destination.exists()) {
-            destination.mkdirs();
+        if (!destination.exists() && !destination.mkdirs()) {
+            Logger.debug("Failed to create destination directory: " + destination.getAbsolutePath(), LogType.ERROR);
+            return;
         }
 
         File[] files = source.listFiles();
@@ -596,8 +611,8 @@ public class NexoConverter extends Converter {
             }
 
             if (file.isDirectory()) {
-                if (!targetFile.exists()) {
-                    targetFile.mkdirs();
+                if (!targetFile.exists() && !targetFile.mkdirs()) {
+                    Logger.debug("Failed to create target directory: " + targetFile.getAbsolutePath(), LogType.ERROR);
                 }
 
                 if (resolvedMapping != null) {
@@ -606,8 +621,8 @@ public class NexoConverter extends Converter {
                     copyDirectory(file, destination, assetsRoot);
                 }
             } else {
-                if (!targetFile.getParentFile().exists()) {
-                    targetFile.getParentFile().mkdirs();
+                if (!targetFile.getParentFile().exists() && !targetFile.getParentFile().mkdirs()) {
+                    Logger.debug("Failed to create parent directory for file: " + targetFile.getAbsolutePath(), LogType.ERROR);
                 }
                 copyFile(file, targetFile);
             }
@@ -615,8 +630,9 @@ public class NexoConverter extends Converter {
     }
 
     private void copyDirectoryContents(File source, File destination) throws IOException {
-        if (!destination.exists()) {
-            destination.mkdirs();
+        if (!destination.exists() && !destination.mkdirs()) {
+            Logger.debug("Failed to create destination directory: " + destination.getAbsolutePath(), LogType.ERROR);
+            return;
         }
 
         File[] files = source.listFiles();
@@ -628,8 +644,8 @@ public class NexoConverter extends Converter {
             if (file.isDirectory()) {
                 copyDirectoryContents(file, targetFile);
             } else {
-                if (!targetFile.getParentFile().exists()) {
-                    targetFile.getParentFile().mkdirs();
+                if (!targetFile.getParentFile().exists() && !targetFile.getParentFile().mkdirs()) {
+                    Logger.debug("Failed to create parent directory for file: " + targetFile.getAbsolutePath(), LogType.ERROR);
                 }
                 copyFile(file, targetFile);
             }
@@ -646,7 +662,10 @@ public class NexoConverter extends Converter {
 
     private void extractAndCopyZipAssets(File zipFile, File outputAssetsFolder, String packName) {
         File tempDir = new File(this.plugin.getDataFolder(), "temp/zip_extract_" + System.currentTimeMillis());
-        tempDir.mkdirs();
+        if (!tempDir.exists() && !tempDir.mkdirs()) {
+            Logger.debug("Failed to create temporary directory for ZIP extraction: " + tempDir.getAbsolutePath(), LogType.ERROR);
+            return;
+        }
 
         try {
             extractZip(zipFile.toPath(), tempDir.toPath());
@@ -710,14 +729,14 @@ public class NexoConverter extends Converter {
     /**
      * Validates and sanitizes a zip entry name to prevent directory traversal attacks.
      * Checks for encoded URLs, UNC paths, absolute paths, and parent directory references.
-     *
+     * <p>
      * Examples of rejected entries:
      * - "../../../etc/passwd" (parent directory traversal)
      * - "/etc/passwd" (absolute Unix path)
      * - "C:\Windows\System32" (Windows absolute path)
      * - "\\server\share\file" (UNC network path)
      * - "..%2F..%2Fetc%2Fpasswd" (URL-encoded traversal)
-     *
+     * <p>
      * Examples of accepted entries:
      * - "documents/report.pdf"
      * - "images/photo.jpg"
@@ -782,12 +801,14 @@ public class NexoConverter extends Converter {
             for (File file : files) {
                 if (file.isDirectory()) {
                     deleteDirectory(file);
-                } else {
-                    file.delete();
+                } else if (!file.delete()){
+                    Logger.debug("Failed to delete file: " + file.getAbsolutePath(), LogType.ERROR);
                 }
             }
         }
-        directory.delete();
+        if (!directory.delete()){
+            Logger.debug("Failed to delete directory: " + directory.getAbsolutePath(), LogType.ERROR);
+        }
     }
 
     public void generateCategorie(List<String> itemsIds, YamlConfiguration config, String fileName) {

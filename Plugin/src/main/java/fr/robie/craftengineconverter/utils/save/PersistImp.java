@@ -76,8 +76,9 @@ public class PersistImp implements Persist {
              */
 
             File backup = new File(file.getPath() + "_bad");
-            if (backup.exists())
-                backup.delete();
+            if (backup.exists() && !backup.delete()) {
+                Logger.info("Failed to delete old backup file: " + backup, LogType.ERROR);
+            }
             Logger.info("Backing up copy of bad file to: " + backup, LogType.WARNING);
 
             file.renameTo(backup);
