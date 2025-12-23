@@ -33,7 +33,7 @@
 - [x] Block UNC paths (`\\server\share`)
 - [x] Add comprehensive security tests
 - [x] Fix all `mkdirs()`/`delete()` ignored warnings
-- [ ] Add `try-with-resources` for SnakeUtils
+- [x] Add `try-with-resources` for SnakeUtils
 - [ ] Remove unnecessary semicolons
 - [ ] Refactor duplicate code in armor conversion
 
