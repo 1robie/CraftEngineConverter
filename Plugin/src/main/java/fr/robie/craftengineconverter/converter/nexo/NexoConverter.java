@@ -676,16 +676,10 @@ public class NexoConverter extends Converter {
             ZipEntry entry;
             while ((entry = zis.getNextEntry()) != null) {
                 String entryName = validateZipEntryName(entry.getName());
-                Path destinationPath = targetDir.resolve(entryName).normalize();
+                Path destinationPath = canonicalTarget.resolve(entryName).normalize();
 
-                Path pathToCheck = destinationPath.getParent() != null
-                        ? destinationPath.getParent()
-                        : destinationPath;
-
-                if (Files.exists(pathToCheck)) {
-                    if (!pathToCheck.toRealPath().startsWith(canonicalTarget)) {
-                        throw new IOException("Entry outside target: " + entry.getName());
-                    }
+                if (!destinationPath.toRealPath().startsWith(canonicalTarget)) {
+                    throw new IOException("Entry outside target: " + entry.getName());
                 }
 
                 if (entry.isDirectory()) {
