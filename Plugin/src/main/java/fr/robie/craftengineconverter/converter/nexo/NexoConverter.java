@@ -432,9 +432,8 @@ public class NexoConverter extends Converter {
             return;
         }
 
-        try {
-            SnakeUtils nexoLanguages = SnakeUtils.load(languagesFile);
-            if (nexoLanguages == null || nexoLanguages.isEmpty()) {
+        try (SnakeUtils nexoLanguages = new SnakeUtils(languagesFile)) {
+            if (nexoLanguages.isEmpty()) {
                 Logger.debug("Languages file is empty: " + languagesFile.getAbsolutePath());
                 return;
             }
@@ -456,7 +455,7 @@ public class NexoConverter extends Converter {
             } catch (Exception e) {
                 Logger.showException("Failed to convert languages file: " + languagesFile.getName(), e);
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
             Logger.showException("Failed to load languages file: " + languagesFile.getName(), e);
         }
     }
