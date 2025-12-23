@@ -10,6 +10,7 @@ import fr.robie.craftengineconverter.converter.Converter;
 import fr.robie.craftengineconverter.utils.SnakeUtils;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -670,27 +671,29 @@ public class NexoConverter extends Converter {
 
     private void extractZip(Path zipPath, Path targetDir) throws IOException {
         Files.createDirectories(targetDir);
-        Path canonicalTarget = targetDir.toRealPath();
+        File canonicalTargetDir = targetDir.toFile().getCanonicalFile();
 
         try (ZipInputStream zis = new ZipInputStream(new BufferedInputStream(Files.newInputStream(zipPath)))) {
             ZipEntry entry;
             while ((entry = zis.getNextEntry()) != null) {
                 String entryName = validateZipEntryName(entry.getName());
-                Path destinationPath = canonicalTarget.resolve(entryName).normalize();
+                File destinationFile = new File(canonicalTargetDir, entryName);
 
-                if (!destinationPath.toRealPath().startsWith(canonicalTarget)) {
+                File canonicalDestination = destinationFile.getCanonicalFile();
+
+                if (!canonicalDestination.toPath().startsWith(canonicalTargetDir.toPath())) {
                     throw new IOException("Entry outside target: " + entry.getName());
                 }
 
                 if (entry.isDirectory()) {
-                    Files.createDirectories(destinationPath);
+                    Files.createDirectories(canonicalDestination.toPath());
                     zis.closeEntry();
                     continue;
                 }
 
-                Files.createDirectories(destinationPath.getParent());
+                Files.createDirectories(canonicalDestination.getParentFile().toPath());
 
-                try (OutputStream out = Files.newOutputStream(destinationPath,
+                try (OutputStream out = Files.newOutputStream(canonicalDestination.toPath(),
                         StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)) {
                     byte[] buffer = new byte[8192];
                     int len;
@@ -724,7 +727,7 @@ public class NexoConverter extends Converter {
      * @return The validated entry name
      * @throws IOException if the entry name is invalid or contains suspicious elements
      */
-    private String validateZipEntryName(String entryName) throws IOException {
+    private String validateZipEntryName(@Nullable String entryName) throws IOException {
         // Reject null or empty names
         if (entryName == null || entryName.isEmpty()) {
             throw new IOException("Invalid zip entry: empty name");
