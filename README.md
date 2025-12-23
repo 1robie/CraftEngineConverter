@@ -64,7 +64,7 @@ A powerful Minecraft plugin that converts configurations, items, and resources f
 - **Java Version**: 21 or higher
 
 ### Plugin Dependencies
-- **CraftEngine** (required) - The target format plugin
+- **CraftEngine** (required)
 - **PacketEvents** (optional) - For advanced packet formatting
 - **PlaceholderAPI** (optional) - For placeholder support in messages
 

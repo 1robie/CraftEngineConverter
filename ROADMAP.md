@@ -1,7 +1,8 @@
-# 📋 TODO - CraftEngineConverter
+# 🗺️ ROADMAP - CraftEngineConverter
 
 > **Last Updated:** December 23, 2025
 > **Project Status:** 🟢 Active Development
+> **This file serves as the main project roadmap and development tracker.**
 
 ---
 
@@ -17,12 +18,11 @@
 - [ ] Items, blocks converter
 - [ ] Resource pack migration
 - [ ] Documentation & examples
-- 
+ 
 ### Version 1.2.0 (Oraxen Support)
 - [ ] Items, blocks, furniture converter
 - [ ] Resource pack migration
 - [ ] Documentation & examples
-
 
 ---
 

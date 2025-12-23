@@ -653,7 +653,7 @@ public class NexoConverter extends Converter {
 
             File extractedAssetsFolder = new File(tempDir, "assets");
             if (extractedAssetsFolder.exists() && extractedAssetsFolder.isDirectory()) {
-                Logger.debug("Found assets folder in ZIP: " + zipFile.getName());
+                Logger.debug("Found assets folder in ZIP: " + zipFile.getName(),LogType.SUCCESS);
                 copyAssetsFolder(extractedAssetsFolder, outputAssetsFolder, packName);
             } else {
                 Logger.debug("No assets folder found in ZIP: " + zipFile.getName());
