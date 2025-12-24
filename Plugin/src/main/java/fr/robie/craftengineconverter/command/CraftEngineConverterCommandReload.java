@@ -21,7 +21,7 @@ public class CraftEngineConverterCommandReload extends VCommand {
         plugin.reloadConfig();
         plugin.reloadFiles();
         long endTime = System.currentTimeMillis();
-        message(plugin,sender, Message.COMMAND_RELOAD_SUCCESS,"time",TimerBuilder.formatTime(endTime-startTime, TimerBuilder.TimeUnit.SECOND));
+        message(plugin,sender, Message.COMMAND_RELOAD_SUCCESS,"time",TimerBuilder.formatTimeAuto(endTime-startTime));
         return CommandType.SUCCESS;
     }
 }

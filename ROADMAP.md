@@ -10,6 +10,7 @@
 
 ### Version 1.0.0 ()
 - [ ] Complete Nexo conversion (items, glyphs, emojis, images, languages, sounds, equipment, furniture, custom blocks, mechanics)
+- [ ] Replace Nexo block/ furniture with their CraftEngine equivalents
 - [ ] Full security audit passed
 - [ ] 80%+ test coverage
 - [ ] Documentation complete
@@ -98,6 +99,7 @@
 
 ## ✅ Recently Completed
 
+- Dry-run mode for converters just need to add `-dryrun` argument to the command line
 - Configuration for progress bar display for converters
 - Progress bars for long operations
 - Fixed NoSuchFileException in ZIP extraction

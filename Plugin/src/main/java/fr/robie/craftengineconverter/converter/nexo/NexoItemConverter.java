@@ -317,8 +317,7 @@ public class NexoItemConverter extends ItemConverter {
         String song = this.nexoItemSection.getString("Components.jukebox_playable.song_key");
         if (song != null && !song.isEmpty()) {
 
-            this.craftEngineItemUtils.getComponentsSection().set("minecraft:jukebox_playable",
-                    Map.of("song", song));
+            this.craftEngineItemUtils.getComponentsSection().set("minecraft:jukebox_playable",song);
         }
     }
 

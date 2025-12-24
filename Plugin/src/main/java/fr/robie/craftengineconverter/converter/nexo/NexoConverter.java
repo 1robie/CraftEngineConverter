@@ -76,7 +76,7 @@ public class NexoConverter extends Converter {
             progressBarBuilder.showBar(false);
         }
 
-        BukkitProgressBar progress = progressBarBuilder.prefix("Converting items")
+        BukkitProgressBar progress = progressBarBuilder.prefix("Converting Nexo items")
                 .suffix("items")
                 .options(ConverterOptions.ITEMS)
                 .updateInterval(5000)
@@ -210,7 +210,7 @@ public class NexoConverter extends Converter {
         }
 
         BukkitProgressBar progress = progressBarBuilder
-                .prefix("Converting emojis")
+                .prefix("Converting Nexo emojis")
                 .suffix("emojis")
                 .options(ConverterOptions.EMOJIS)
                 .updateInterval(5000)
@@ -346,8 +346,7 @@ public class NexoConverter extends Converter {
             }
 
             List<Map<String, Object>> nexoSoundsList = nexoSounds.getListMap("sounds");
-            if (nexoSoundsList.isEmpty()) {
-                Logger.debug("No sounds found in file");
+            if (nexoSoundsList.isEmpty()) { // No sounds to convert
                 nexoSounds.close();
                 return;
             }
@@ -361,7 +360,7 @@ public class NexoConverter extends Converter {
             }
 
             BukkitProgressBar progress = progressBarBuilder
-                    .prefix("Converting sounds")
+                    .prefix("Converting Nexo sounds")
                     .suffix("sounds")
                     .options(ConverterOptions.SOUNDS)
                     .updateInterval(5000)
@@ -570,7 +569,7 @@ public class NexoConverter extends Converter {
             }
 
             BukkitProgressBar progress = progressBarBuilder
-                    .prefix("Converting languages")
+                    .prefix("Converting Nexo languages")
                     .suffix("translations")
                     .options(ConverterOptions.LANGUAGES)
                     .updateInterval(5000)
@@ -668,7 +667,7 @@ public class NexoConverter extends Converter {
         }
 
         BukkitProgressBar progress = progressBarBuilder
-                .prefix("Converting images")
+                .prefix("Converting Nexo images")
                 .suffix("images")
                 .options(ConverterOptions.IMAGES)
                 .updateInterval(5000)
@@ -819,7 +818,7 @@ public class NexoConverter extends Converter {
                 progressBarBuilder.showBar(false);
             }
             BukkitProgressBar progress = progressBarBuilder
-                    .prefix("Converting resource pack")
+                    .prefix("Converting Nexo resource pack")
                     .suffix("files")
                     .options(ConverterOptions.PACKS)
                     .updateInterval(5000)
