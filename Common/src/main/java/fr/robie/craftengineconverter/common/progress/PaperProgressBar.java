@@ -24,9 +24,10 @@ public class PaperProgressBar extends BukkitProgressBar {
             if (isNotNull(builder.progressColor)) {
                 switch (builder.progressColor) {
                     case GREEN -> color = BossBar.Color.GREEN;
-                    case RED -> color = BossBar.Color.RED;
-                    case YELLOW -> color = BossBar.Color.YELLOW;
-                    case DARK_PURPLE, LIGHT_PURPLE -> color = BossBar.Color.PURPLE;
+                    case RED,DARK_RED -> color = BossBar.Color.RED;
+                    case GOLD,YELLOW -> color = BossBar.Color.YELLOW;
+                    case DARK_PURPLE -> color = BossBar.Color.PURPLE;
+                    case LIGHT_PURPLE -> color = BossBar.Color.PINK;
                     case WHITE -> color = BossBar.Color.WHITE;
                     default -> {}
                 }

@@ -262,63 +262,73 @@ public class BukkitProgressBar extends ObjectUtils {
             this.total = total;
         }
 
+        @Contract(value = "_ -> this", mutates = "this")
         public Builder current(int current) {
             this.current = current;
             return this;
         }
 
+        @Contract(value = "_ -> this", mutates = "this")
         public Builder progressChar(char progressChar) {
             this.progressChar = progressChar;
             return this;
         }
 
+        @Contract(value = "_ -> this", mutates = "this")
         public Builder emptyChar(char emptyChar) {
             this.emptyChar = emptyChar;
             return this;
         }
 
+        @Contract(value = "_ -> this", mutates = "this")
         public Builder barWidth(int barWidth) {
             this.barWidth = barWidth;
             return this;
         }
 
+        @Contract(value = "_ -> this", mutates = "this")
         public Builder showPercentage(boolean show) {
             this.showPercentage = show;
             return this;
         }
 
+        @Contract(value = "_ -> this", mutates = "this")
         public Builder showCount(boolean show) {
             this.showCount = show;
             return this;
         }
 
+        @Contract(value = "_ -> this", mutates = "this")
         public Builder showBar(boolean show) {
             this.showBar = show;
             return this;
         }
 
+        @Contract(value = "_ -> this", mutates = "this")
         public Builder prefix(String prefix) {
             this.prefix = prefix;
             return this;
         }
 
+        @Contract(value = "_ -> this", mutates = "this")
         public Builder suffix(String suffix) {
             this.suffix = suffix;
             return this;
         }
 
+        @Contract(value = "_ -> this", mutates = "this")
         public Builder progressColor(ProgressColor color) {
             this.progressColor = color;
             return this;
         }
 
-        @Contract("_ -> this")
+        @Contract(value = "_ -> this", mutates = "this")
         public Builder emptyColor(ProgressColor color) {
             this.emptyColorCode = color;
             return this;
         }
 
-        @Contract("_ -> this")
+        @Contract(value = "_ -> this", mutates = "this")
         public Builder percentColor(ProgressColor color) {
             this.percentColor = color;
             return this;
@@ -328,7 +338,7 @@ public class BukkitProgressBar extends ObjectUtils {
          * Sets the update interval in milliseconds.
          * @param intervalMs interval in milliseconds
          */
-        @Contract("_ -> this")
+        @Contract(value = "_ -> this", mutates = "this")
         public Builder updateInterval(long intervalMs) {
             this.updateIntervalTicks = intervalMs;
             return this;
@@ -338,16 +348,19 @@ public class BukkitProgressBar extends ObjectUtils {
          * Sets whether the progress bar should automatically stop when complete.
          * @param autoStop true to auto-stop (default), false to keep running
          */
+        @Contract(value = "_ -> this", mutates = "this")
         public Builder autoStop(boolean autoStop) {
             this.autoStop = autoStop;
             return this;
         }
 
+        @Contract(value = "_ -> this", mutates = "this")
         public Builder player(@Nullable Player player) {
             this.player = player;
             return this;
         }
 
+        @Contract(value = "_ -> this", mutates = "this")
         public Builder options(ProgressBarUtils options){
             this.progressChar = options.getProgressChar();
             this.emptyChar = options.getEmptyChar();
