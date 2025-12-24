@@ -3,6 +3,7 @@ package fr.robie.craftengineconverter.common.progress;
 import com.tcoded.folialib.wrapper.task.WrappedTask;
 import fr.robie.craftengineconverter.common.CraftEngineConverterPlugin;
 import fr.robie.craftengineconverter.common.ObjectUtils;
+import fr.robie.craftengineconverter.common.builder.TimerBuilder;
 import fr.robie.craftengineconverter.common.logger.LogType;
 import fr.robie.craftengineconverter.common.logger.Logger;
 import org.bukkit.entity.Player;
@@ -17,6 +18,7 @@ public class BukkitProgressBar extends ObjectUtils {
 
     private final int total;
     private int current;
+    private long startTimeMillis = 0;
     private final char progressChar;
     private final char emptyChar;
     private final int barWidth;
@@ -27,6 +29,7 @@ public class BukkitProgressBar extends ObjectUtils {
     private final boolean showPercentage;
     private final boolean showCount;
     private final boolean showBar;
+    private final boolean showTime;
     private final String prefix;
     private final String suffix;
     private final long updateIntervalTicks;
@@ -49,6 +52,7 @@ public class BukkitProgressBar extends ObjectUtils {
         this.showPercentage = builder.showPercentage;
         this.showCount = builder.showCount;
         this.showBar = builder.showBar;
+        this.showTime = builder.showTime;
         this.prefix = builder.prefix;
         this.suffix = builder.suffix;
         this.updateIntervalTicks = builder.updateIntervalTicks;
@@ -67,6 +71,7 @@ public class BukkitProgressBar extends ObjectUtils {
         }
         this.task = this.plugin.getFoliaCompatibilityManager()
                 .runTimerAsyncWrapped(this::printProgress, 0L, updateIntervalTicks, TimeUnit.MILLISECONDS);
+        this.startTimeMillis = System.currentTimeMillis();
     }
 
     /**
@@ -151,6 +156,10 @@ public class BukkitProgressBar extends ObjectUtils {
 
         if (suffix != null && !suffix.isEmpty()) {
             sb.append(" ").append(suffix);
+        }
+
+        if (showTime){
+            sb.append(" | ").append(TimerBuilder.formatTimeAuto(System.currentTimeMillis() - startTimeMillis)).append(" elapsed");
         }
 
         if (isComplete()) {
@@ -249,6 +258,7 @@ public class BukkitProgressBar extends ObjectUtils {
         protected boolean showPercentage = true;
         protected boolean showCount = true;
         protected boolean showBar = true;
+        protected boolean showTime = true;
         protected String prefix = "";
         protected String suffix = "";
         protected ProgressColor progressColor = ProgressColor.GREEN;
@@ -301,6 +311,12 @@ public class BukkitProgressBar extends ObjectUtils {
         @Contract(value = "_ -> this", mutates = "this")
         public Builder showBar(boolean show) {
             this.showBar = show;
+            return this;
+        }
+
+        @Contract(value = "_ -> this", mutates = "this")
+        public Builder showTime(boolean show) {
+            this.showTime = show;
             return this;
         }
 

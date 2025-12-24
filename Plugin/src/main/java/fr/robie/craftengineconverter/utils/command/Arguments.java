@@ -7,9 +7,14 @@ import org.bukkit.OfflinePlayer;
 import org.bukkit.World;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public abstract class Arguments extends CraftEngineConverterUtils {
     protected String[] args;
+    protected Map<String,String> flags = new HashMap<>();
     protected int parentCount = 0;
 
     /**
@@ -258,5 +263,13 @@ public abstract class Arguments extends CraftEngineConverterUtils {
         } catch (Exception e) {
             return defaultValue;
         }
+    }
+
+    protected boolean containFlag(@NotNull String flag) {
+        return this.flags.containsKey(flag);
+    }
+
+    protected String getFlagValue(@NotNull String flag) {
+        return this.flags.get(flag);
     }
 }

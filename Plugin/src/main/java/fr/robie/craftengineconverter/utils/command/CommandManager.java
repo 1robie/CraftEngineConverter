@@ -1,10 +1,10 @@
 package fr.robie.craftengineconverter.utils.command;
 
 import fr.robie.craftengineconverter.CraftEngineConverter;
+import fr.robie.craftengineconverter.common.format.Message;
 import fr.robie.craftengineconverter.common.logger.LogType;
 import fr.robie.craftengineconverter.common.logger.Logger;
 import fr.robie.craftengineconverter.utils.CraftEngineConverterUtils;
-import fr.robie.craftengineconverter.utils.format.Message;
 import org.bukkit.Bukkit;
 import org.bukkit.command.*;
 import org.bukkit.entity.Player;

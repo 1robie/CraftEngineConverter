@@ -1,10 +1,10 @@
 package fr.robie.craftengineconverter.command;
 
 import fr.robie.craftengineconverter.CraftEngineConverter;
-import fr.robie.craftengineconverter.utils.builder.TimerBuilder;
+import fr.robie.craftengineconverter.common.builder.TimerBuilder;
+import fr.robie.craftengineconverter.common.format.Message;
 import fr.robie.craftengineconverter.utils.command.CommandType;
 import fr.robie.craftengineconverter.utils.command.VCommand;
-import fr.robie.craftengineconverter.utils.format.Message;
 import fr.robie.craftengineconverter.utils.permission.Permission;
 
 public class CraftEngineConverterCommandReload extends VCommand {

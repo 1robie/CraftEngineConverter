@@ -1,15 +1,19 @@
 package fr.robie.craftengineconverter.utils.command;
 
 import fr.robie.craftengineconverter.CraftEngineConverter;
+import fr.robie.craftengineconverter.common.format.Message;
 import fr.robie.craftengineconverter.utils.collection.CollectionBiConsumer;
-import fr.robie.craftengineconverter.utils.format.Message;
 import fr.robie.craftengineconverter.utils.permission.Permission;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public abstract class VCommand extends Arguments {
+    record FlagValue(String flag, boolean hasValue){}
     protected final CraftEngineConverter plugin;
 
     /**
@@ -31,6 +35,7 @@ public abstract class VCommand extends Arguments {
 
     private final List<String> requireArgs = new ArrayList<>();
     private final List<String> optionalArgs = new ArrayList<>();
+    private final List<FlagValue> flagsArgs = new ArrayList<>();
     /**
      * If this variable is false the command will not be able to use this
      * command
@@ -51,7 +56,7 @@ public abstract class VCommand extends Arguments {
      * This is the person who executes the command
      */
     protected CommandSender sender;
-    protected Player player;
+    protected @Nullable Player player; // Null if console
 
     private String syntax;
     private String description;
@@ -286,6 +291,10 @@ public abstract class VCommand extends Arguments {
         this.ignoreArgs = true;
     }
 
+    protected void addFlag(@NotNull String flag) {
+        this.flagsArgs.add(new FlagValue(flag, false));
+    }
+
     /**
      * Mettre la description de la commande
      *
@@ -302,7 +311,7 @@ public abstract class VCommand extends Arguments {
      * @return first command
      */
     public String getFirst() {
-        return this.subCommands.get(0);
+        return this.subCommands.getFirst();
     }
 
     //
@@ -369,10 +378,11 @@ public abstract class VCommand extends Arguments {
         if (update) {
             appendRequiredArguments(syntaxBuilder);
             appendOptionalArguments(syntaxBuilder);
+            appendFlags(syntaxBuilder);
             syntax = syntaxBuilder.toString().trim();
         }
 
-        String tmpString = subCommands.get(0) + syntax;
+        String tmpString = subCommands.getFirst() + syntax;
         return parent == null ? "/" + tmpString : parent.generateDefaultSyntax(" " + tmpString);
     }
 
@@ -381,9 +391,12 @@ public abstract class VCommand extends Arguments {
     }
 
     private void appendOptionalArguments(StringBuilder syntaxBuilder) {
-        optionalArgs.forEach(arg -> syntaxBuilder.append(" [<").append(arg).append(">"));
+        optionalArgs.forEach(arg -> syntaxBuilder.append(" [<").append(arg).append(">]"));
     }
 
+    private void appendFlags(StringBuilder syntaxBuilder) {
+        flagsArgs.forEach(flag -> syntaxBuilder.append(" [").append(flag.flag).append("]"));
+    }
 
     /**
      * Allows to know the number of parents in a recursive way
@@ -405,17 +418,18 @@ public abstract class VCommand extends Arguments {
      */
     public CommandType prePerform(CraftEngineConverter plugin, CommandSender commandSender, String[] args) {
 
-        // We update the number of arguments according to the number of parents
         this.parentCount = this.parentCount(0);
+
+        String[] cleanedArgs = parseFlags(args);
+
         this.argsMaxLength = this.requireArgs.size() + this.optionalArgs.size() + this.parentCount;
         this.argsMinLength = this.requireArgs.size() + this.parentCount;
 
-        // We generate the basic syntax if it is impossible to find it
         if (this.syntax == null) {
             this.syntax = generateDefaultSyntax("");
         }
 
-        this.args = args;
+        this.args = cleanedArgs;
 
         String defaultString = super.argAsString(0);
 
@@ -426,13 +440,16 @@ public abstract class VCommand extends Arguments {
             }
         }
 
-        if ((this.argsMinLength != 0 && args.length < this.argsMinLength) || this.argsMaxLength != 0 && args.length > this.argsMaxLength && !this.extendedArgs) {
+        if ((this.argsMinLength != 0 && cleanedArgs.length < this.argsMinLength) ||
+                this.argsMaxLength != 0 && cleanedArgs.length > this.argsMaxLength && !this.extendedArgs) {
             return CommandType.SYNTAX_ERROR;
         }
 
         this.sender = commandSender;
-        if (this.sender instanceof Player) {
-            this.player = (Player) commandSender;
+        if (this.sender instanceof Player playerInstance) {
+            this.player = playerInstance;
+        } else {
+            this.player = null;
         }
 
         try {
@@ -440,6 +457,47 @@ public abstract class VCommand extends Arguments {
         } catch (Exception e) {
             return CommandType.SYNTAX_ERROR;
         }
+    }
+
+    private String[] parseFlags(String[] args) {
+        this.flags.clear();
+        List<String> cleanedArgs = new ArrayList<>();
+
+        for (int i = 0; i < args.length; i++) {
+            String arg = args[i];
+
+            boolean isFlag = false;
+            for (FlagValue flag : this.flagsArgs) {
+                String flagKey = flag.flag;
+                if (arg.equals(flagKey)) {
+                    isFlag = true;
+
+                    if (flag.hasValue && i + 1 < args.length && !args[i + 1].startsWith("--")) {
+                        this.flags.put(flagKey, args[i + 1]);
+                        i++;
+                    } else {
+                        this.flags.put(flagKey, "true");
+                    }
+                    break;
+                } else if (arg.startsWith(flagKey + "=")) {
+                    isFlag = true;
+                    String value;
+                    if (flag.hasValue) {
+                        value = arg.substring((flag + "=").length());
+                    } else {
+                        value = "true";
+                    }
+                    this.flags.put(flagKey, value);
+                    break;
+                }
+            }
+
+            if (!isFlag) {
+                cleanedArgs.add(arg);
+            }
+        }
+
+        return cleanedArgs.toArray(new String[0]);
     }
 
     /**
@@ -458,11 +516,6 @@ public abstract class VCommand extends Arguments {
         return false;
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see java.lang.Object#toString()
-     */
     @Override
     public String toString() {
         return "VCommand [permission=" + permission + ", subCommands=" + subCommands + ", consoleCanUse="
@@ -472,28 +525,113 @@ public abstract class VCommand extends Arguments {
     /**
      * Generate tab completion
      *
-     * @param plugin
-     * @param sender
-     * @param args
-     * @return
+     * @param plugin plugin
+     * @param sender sender
+     * @param args arguments
+     * @return list of completions or null
      */
     public List<String> toTab(CraftEngineConverter plugin, CommandSender sender, String[] args) {
 
         this.parentCount = this.parentCount(0);
 
-        int currentInex = (args.length - this.parentCount) - 1;
-        Optional<CollectionBiConsumer> optional = this.getCompletionAt(currentInex);
-        if (optional.isPresent()) {
+        TabParseResult parseResult = parseArgsForTab(args);
 
-            CollectionBiConsumer collectionRunnable = optional.get();
-            String startWith = args[args.length - 1];
-            return this.generateList(collectionRunnable.accept(sender, args), startWith);
+        int currentIndex = (parseResult.cleanedArgs.size() - this.parentCount) - 1;
+        String lastArg = args[args.length - 1];
 
-        }
+        Optional<CollectionBiConsumer> optional = this.getCompletionAt(currentIndex);
+        List<String> completions = optional.map(consumer ->
+                this.generateList(consumer.accept(sender, args), lastArg)
+        ).orElse(null);
 
-        return null;
+        List<String> availableFlags = getAvailableFlags(parseResult.usedFlags, lastArg);
+
+        return combineCompletions(completions, availableFlags, currentIndex);
     }
 
+    private TabParseResult parseArgsForTab(String[] args) {
+        Set<String> usedFlags = new HashSet<>();
+        List<String> cleanedArgs = new ArrayList<>();
+
+        Set<String> flagSet = this.flagsArgs.stream()
+                .map(f -> f.flag)
+                .collect(Collectors.toSet());
+
+        for (int i = 0; i < args.length; i++) {
+            String arg = args[i];
+
+            if (flagSet.contains(arg)) {
+                usedFlags.add(arg);
+
+                FlagValue flagValue = findFlag(arg);
+                if (flagValue != null && flagValue.hasValue &&
+                        i + 1 < args.length && !args[i + 1].startsWith("--")) {
+                    i++;
+                }
+            } else if (arg.contains("=")) {
+                String flagPart = arg.substring(0, arg.indexOf('='));
+                if (flagSet.contains(flagPart)) {
+                    usedFlags.add(flagPart);
+                } else {
+                    cleanedArgs.add(arg);
+                }
+            } else {
+                cleanedArgs.add(arg);
+            }
+        }
+
+        return new TabParseResult(usedFlags, cleanedArgs);
+    }
+
+    private FlagValue findFlag(String flag) {
+        return this.flagsArgs.stream()
+                .filter(f -> f.flag.equals(flag))
+                .findFirst()
+                .orElse(null);
+    }
+
+    private List<String> getAvailableFlags(Set<String> usedFlags, String filter) {
+        if (this.flagsArgs.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        String lowerFilter = filter.toLowerCase();
+
+        return this.flagsArgs.stream()
+                .map(f -> f.flag)
+                .filter(flag -> !usedFlags.contains(flag))
+                .filter(flag -> filter.isEmpty() || flag.toLowerCase().startsWith(lowerFilter))
+                .collect(Collectors.toList());
+    }
+
+    private List<String> combineCompletions(List<String> completions, List<String> flags, int currentIndex) {
+        boolean canShowFlags = currentIndex >= this.requireArgs.size() && !flags.isEmpty();
+
+        if (!canShowFlags) {
+            return completions;
+        }
+
+        if (completions == null || completions.isEmpty()) {
+            return flags;
+        }
+
+        List<String> combined = new ArrayList<>(flags);
+        combined.addAll(completions);
+        return combined;
+    }
+
+    /**
+     * Classe interne pour stocker les résultats du parsing
+     */
+    private static class TabParseResult {
+        final Set<String> usedFlags;
+        final List<String> cleanedArgs;
+
+        TabParseResult(Set<String> usedFlags, List<String> cleanedArgs) {
+            this.usedFlags = usedFlags;
+            this.cleanedArgs = cleanedArgs;
+        }
+    }
     /**
      * Generate list for tab completer
      *

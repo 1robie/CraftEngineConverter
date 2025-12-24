@@ -1,12 +1,14 @@
 package fr.robie.craftengineconverter.converter;
 
 import fr.robie.craftengineconverter.CraftEngineConverter;
+import fr.robie.craftengineconverter.common.configuration.ConverterSettings;
 import fr.robie.craftengineconverter.common.logger.LogType;
 import fr.robie.craftengineconverter.common.logger.Logger;
 import fr.robie.craftengineconverter.utils.ConfigFile;
 import fr.robie.craftengineconverter.utils.YamlUtils;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -16,12 +18,14 @@ import java.util.concurrent.CompletableFuture;
 public abstract class Converter extends YamlUtils {
     protected final CraftEngineConverter plugin;
     protected final String converterName;
+    protected final ConverterSettings settings;
     private final Map<String, List<PackMapping>> packMappings = new HashMap<>();
 
     public Converter(CraftEngineConverter plugin, String converterName) {
         super(plugin);
         this.plugin = plugin;
         this.converterName = converterName;
+        this.settings = new BasicConverterSettings();
     }
 
     public CompletableFuture<Void> convertAll(Optional<Player> player) {
@@ -49,6 +53,11 @@ public abstract class Converter extends YamlUtils {
 
     public String getName() {
         return this.converterName;
+    }
+
+    @Contract("-> this")
+    public ConverterSettings getSettings() {
+        return this.settings;
     }
 
     protected CompletableFuture<Void> executeTask(boolean async, Runnable task) {

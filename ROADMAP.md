@@ -66,7 +66,7 @@
 - [ ] Custom tag creation API
 - [ ] Tag validation and sanitization
 - [ ] Partial conversion (select items)
-- [ ] Dry-run mode (preview)
+- [x] Dry-run mode
 - [ ] Backup/rollback system
 - [ ] Conversion profiles (save/load)
 - [ ] Better console output (colors, formatting)

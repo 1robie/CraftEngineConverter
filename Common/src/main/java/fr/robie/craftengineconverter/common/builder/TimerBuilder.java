@@ -1,7 +1,6 @@
-package fr.robie.craftengineconverter.utils.builder;
+package fr.robie.craftengineconverter.common.builder;
 
-
-import fr.robie.craftengineconverter.utils.format.Message;
+import fr.robie.craftengineconverter.common.format.Message;
 import org.jetbrains.annotations.Contract;
 
 import java.util.ArrayList;
@@ -10,28 +9,36 @@ import java.util.List;
 public class TimerBuilder {
 
     public enum TimeUnit {
-        YEAR(31536000L, Message.TIME_YEAR, Message.FORMAT_YEAR, Message.FORMAT_YEARS),
-        MONTH(2592000L, Message.TIME_MONTH, Message.FORMAT_MONTH, Message.FORMAT_MONTHS),
-        WEEK(604800L, Message.TIME_WEEK, Message.FORMAT_WEEK, Message.FORMAT_WEEKS),
-        DAY(86400L, Message.TIME_DAY, Message.FORMAT_DAY, Message.FORMAT_DAYS),
-        HOUR(3600L, Message.TIME_HOUR, Message.FORMAT_HOUR, Message.FORMAT_HOURS),
-        MINUTE(60L, Message.TIME_MINUTE, Message.FORMAT_MINUTE, Message.FORMAT_MINUTES),
-        SECOND(1L, Message.TIME_SECOND, Message.FORMAT_SECOND, Message.FORMAT_SECONDS);
+        YEAR(31536000000L, Message.TIME_YEAR, Message.FORMAT_YEAR, Message.FORMAT_YEARS),
+        MONTH(2592000000L, Message.TIME_MONTH, Message.FORMAT_MONTH, Message.FORMAT_MONTHS),
+        WEEK(604800000L, Message.TIME_WEEK, Message.FORMAT_WEEK, Message.FORMAT_WEEKS),
+        DAY(86400000L, Message.TIME_DAY, Message.FORMAT_DAY, Message.FORMAT_DAYS),
+        HOUR(3600000L, Message.TIME_HOUR, Message.FORMAT_HOUR, Message.FORMAT_HOURS),
+        MINUTE(60000L, Message.TIME_MINUTE, Message.FORMAT_MINUTE, Message.FORMAT_MINUTES),
+        SECOND(1000L, Message.TIME_SECOND, Message.FORMAT_SECOND, Message.FORMAT_SECONDS),
+        MILLISECOND(1L, Message.TIME_MILLISECOND, Message.FORMAT_MILLISECOND, Message.FORMAT_MILLISECONDS);
 
-        private final long seconds;
+        private final long milliseconds;
         private final Message timeMessage;
         private final Message singularFormat;
         private final Message pluralFormat;
 
-        TimeUnit(long seconds, Message timeMessage, Message singularFormat, Message pluralFormat) {
-            this.seconds = seconds;
+        TimeUnit(long milliseconds, Message timeMessage, Message singularFormat, Message pluralFormat) {
+            this.milliseconds = milliseconds;
             this.timeMessage = timeMessage;
             this.singularFormat = singularFormat;
             this.pluralFormat = pluralFormat;
         }
 
-        public long getSeconds() { return seconds; }
+        public long getMilliseconds() { return milliseconds; }
+
+        @Deprecated
+        public long getSeconds() {
+            return milliseconds / 1000L;
+        }
+
         public Message getTimeMessage() { return timeMessage; }
+
         public String getFormat(long value) {
             return (value <= 1 ? singularFormat : pluralFormat).msg();
         }
@@ -42,17 +49,15 @@ public class TimerBuilder {
      */
     @Contract(pure = true)
     public static String formatTime(long milliseconds, TimeUnit maxUnit) {
-        long totalSeconds = milliseconds / 1000L;
-
         List<TimeUnit> unitsToInclude = getUnitsFromMaxUnit(maxUnit);
 
         List<Long> values = new ArrayList<>();
-        long remaining = totalSeconds;
+        long remaining = milliseconds;
 
         for (TimeUnit unit : unitsToInclude) {
-            long value = remaining / unit.getSeconds();
+            long value = remaining / unit.getMilliseconds();
             values.add(value);
-            remaining %= unit.getSeconds();
+            remaining %= unit.getMilliseconds();
         }
 
         String message = maxUnit.getTimeMessage().msg();
@@ -70,27 +75,28 @@ public class TimerBuilder {
      * Automatically choose the best time unit based on duration
      */
     @Contract(pure = true)
-    public static String formatTimeAuto(long seconds) {
-        if (seconds < 60) {
-            return formatTime(seconds * 1000L, TimeUnit.SECOND);
+    public static String formatTimeAuto(long milliseconds) {
+        long seconds = milliseconds / 1000L;
+
+        if (milliseconds < 1000) {
+            return formatTime(milliseconds, TimeUnit.MILLISECOND);
+        } else if (seconds < 60) {
+            return formatTime(milliseconds, TimeUnit.SECOND);
         } else if (seconds < 3600) {
-            return formatTime(seconds * 1000L, TimeUnit.MINUTE);
+            return formatTime(milliseconds, TimeUnit.MINUTE);
         } else if (seconds < 86400) {
-            return formatTime(seconds * 1000L, TimeUnit.HOUR);
-        } else if (seconds < 604800) { // Less than a week
-            return formatTime(seconds * 1000L, TimeUnit.DAY);
-        } else if (seconds < 2592000) { // Less than a month
-            return formatTime(seconds * 1000L, TimeUnit.WEEK);
-        } else if (seconds < 31536000) { // Less than a year
-            return formatTime(seconds * 1000L, TimeUnit.MONTH);
+            return formatTime(milliseconds, TimeUnit.HOUR);
+        } else if (seconds < 604800) {
+            return formatTime(milliseconds, TimeUnit.DAY);
+        } else if (seconds < 2592000) {
+            return formatTime(milliseconds, TimeUnit.WEEK);
+        } else if (seconds < 31536000) {
+            return formatTime(milliseconds, TimeUnit.MONTH);
         } else {
-            return formatTime(seconds * 1000L, TimeUnit.YEAR);
+            return formatTime(milliseconds, TimeUnit.YEAR);
         }
     }
 
-    /**
-     * Legacy methods for backward compatibility
-     */
     @Contract(pure = true)
     public static String getFormatLongDays(long temps) {
         return formatTime(temps, TimeUnit.DAY);
@@ -113,11 +119,11 @@ public class TimerBuilder {
 
     @Contract(pure = true)
     public static String getStringTime(long second) {
-        return formatTimeAuto(second);
+        return formatTimeAuto(second * 1000L);
     }
 
     /**
-     * Get list of units from maxUnit down to seconds
+     * Get list of units from maxUnit down to smallest unit
      */
     private static List<TimeUnit> getUnitsFromMaxUnit(TimeUnit maxUnit) {
         List<TimeUnit> result = new ArrayList<>();
@@ -162,7 +168,7 @@ public class TimerBuilder {
 
         if (isNumeric(timeString)) {
             long value = Long.parseLong(timeString);
-            return value * defaultUnit.getSeconds() * 1000L;
+            return value * defaultUnit.getMilliseconds();
         }
 
         long totalMilliseconds = 0L;
@@ -178,7 +184,7 @@ public class TimerBuilder {
 
                 TimeUnit timeUnit = parseUnit(unit);
                 if (timeUnit != null) {
-                    totalMilliseconds += value * timeUnit.getSeconds() * 1000L;
+                    totalMilliseconds += value * timeUnit.getMilliseconds();
                 }
             } catch (NumberFormatException ignored) {
             }
@@ -196,6 +202,7 @@ public class TimerBuilder {
             case "h", "hour", "hours", "heure", "heures" -> TimeUnit.HOUR;
             case "m", "min", "minute", "minutes" -> TimeUnit.MINUTE;
             case "s", "sec", "second", "seconds", "seconde", "secondes" -> TimeUnit.SECOND;
+            case "ms", "milli", "millis", "millisecond", "milliseconds", "milliseconde", "millisecondes" -> TimeUnit.MILLISECOND;
             default -> null;
         };
     }
@@ -257,7 +264,7 @@ public class TimerBuilder {
 
         public String build() {
             if (autoSelect) {
-                return formatTimeAuto(milliseconds / 1000L);
+                return formatTimeAuto(milliseconds);
             } else {
                 String result = formatTime(milliseconds, maxUnit);
                 return hideZeroValues ? format(result) : result;

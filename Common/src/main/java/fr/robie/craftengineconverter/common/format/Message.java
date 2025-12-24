@@ -1,4 +1,4 @@
-package fr.robie.craftengineconverter.utils.format;
+package fr.robie.craftengineconverter.common.format;
 
 import org.bukkit.inventory.ItemStack;
 
@@ -7,14 +7,16 @@ import java.util.*;
 public enum Message {
     PREFIX("&#FFD166C&#FFC863r&#FEBF61a&#FEB65Ef&#FEAD5Bt&#FEA459E&#FD9B56n&#FD9253g&#FD8951i&#FC814En&#FC784Ce&#FC6F49C&#FB6646o&#FB5D44n&#FB5441v&#FB4B3Ee&#FA423Cr&#FA3939t ┃§r "),
 
-    TIME_YEAR("%02d %year% %02d %month% %02d %day% %02d %hour% %02d %minute% %02d %second%"),
-    TIME_MONTH("%02d %month% %02d %day% %02d %hour% %02d %minute% %02d %second%"),
-    TIME_WEEK("%02d %week% %02d %day% %02d %hour% %02d %minute% %02d %second%"),
-    TIME_DAY("%02d %day% %02d %hour% %02d %minute% %02d %second%"),
-    TIME_HOUR("%02d %hour% %02d %minute% %02d %second%"),
-    TIME_MINUTE("%02d %minute% %02d %second%"),
-    TIME_SECOND("%02d %second%"),
+    TIME_YEAR("%02d %year% %02d %month% %02d %day% %02d %hour% %02d %minute% %02d %second% %02d %millisecond%"),
+    TIME_MONTH("%02d %month% %02d %day% %02d %hour% %02d %minute% %02d %second% %02d %millisecond%"),
+    TIME_WEEK("%02d %week% %02d %day% %02d %hour% %02d %minute% %02d %second% %02d %millisecond%"),
+    TIME_DAY("%02d %day% %02d %hour% %02d %minute% %02d %second% %02d %millisecond%"),
+    TIME_HOUR("%02d %hour% %02d %minute% %02d %second% %02d %millisecond%"),
+    TIME_MINUTE("%02d %minute% %02d %second% %02d %millisecond%"),
+    TIME_SECOND("%02d %second% %02d %millisecond%"),
+    TIME_MILLISECOND("%02d %millisecond%"),
 
+    FORMAT_MILLISECOND("millisecond"), FORMAT_MILLISECONDS("milliseconds"),
     FORMAT_SECOND("second"), FORMAT_SECONDS("seconds"),
     FORMAT_MINUTE("minute"), FORMAT_MINUTES("minutes"),
     FORMAT_HOUR("hour"), FORMAT_HOURS("hours"),
@@ -40,7 +42,8 @@ public enum Message {
     DESCRIPTION_COMMAND_RELOAD("Reloads the plugin configuration and messages."),
     DESCRIPTION_COMMAND_CONVERT("Converts items from another plugin to CraftEngine format."),
 
-    ITEM_CONVERTED("§aItem §e%item%§a converted successfully in §c%time%§a.");
+    ITEM_CONVERTED("§aItem §e%item%§a converted successfully in §c%time%§a."),
+    COMMAND_CONVERTER_DRYRUN_ENABLED("§eDry run §aenabled. No changes will be applied.");
 
     private List<String> messages;
     private String message;
