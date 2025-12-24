@@ -167,6 +167,9 @@ public class ComponentMeta implements MessageFormatter{
     }
 
     public static String getPlainText(Component component) {
+        if (component == null) {
+            return "";
+        }
         return MiniMessage.miniMessage().serialize(component);
     }
 }

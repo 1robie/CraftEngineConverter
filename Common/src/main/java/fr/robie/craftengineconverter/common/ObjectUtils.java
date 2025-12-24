@@ -1,4 +1,4 @@
-package fr.robie.craftengineconverter.utils;
+package fr.robie.craftengineconverter.common;
 
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;

@@ -1,13 +1,16 @@
 package fr.robie.craftengineconverter.converter;
 
 import fr.robie.craftengineconverter.CraftEngineConverter;
+import fr.robie.craftengineconverter.common.logger.LogType;
+import fr.robie.craftengineconverter.common.logger.Logger;
+import fr.robie.craftengineconverter.utils.ConfigFile;
 import fr.robie.craftengineconverter.utils.YamlUtils;
+import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.io.File;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
 public abstract class Converter extends YamlUtils {
@@ -21,28 +24,28 @@ public abstract class Converter extends YamlUtils {
         this.converterName = converterName;
     }
 
-    public CompletableFuture<Void> convertAll(){
+    public CompletableFuture<Void> convertAll(Optional<Player> player) {
         return this.plugin.getFoliaCompatibilityManager().runAsyncComplatable(() -> {
-            convertItems(false);
-            convertPack(false);
-            convertEmojis(false);
-            convertImages(false);
-            convertLanguages(false);
-            convertSounds(false);
+            convertItems(false, player);
+            convertEmojis(false, player);
+            convertImages(false, player);
+            convertLanguages(false, player);
+            convertSounds(false, player);
+            convertPack(false, player);
         });
     }
 
-    public abstract CompletableFuture<Void> convertItems(boolean async);
+    public abstract CompletableFuture<Void> convertItems(boolean async, Optional<Player> player);
 
-    public abstract CompletableFuture<Void> convertPack(boolean async);
+    public abstract CompletableFuture<Void> convertEmojis(boolean async, Optional<Player> player);
 
-    public abstract CompletableFuture<Void> convertEmojis(boolean async);
+    public abstract CompletableFuture<Void> convertImages(boolean async, Optional<Player> player);
 
-    public abstract CompletableFuture<Void> convertImages(boolean async);
+    public abstract CompletableFuture<Void> convertLanguages(boolean async, Optional<Player> player);
 
-    public abstract CompletableFuture<Void> convertLanguages(boolean async);
+    public abstract CompletableFuture<Void> convertSounds(boolean async, Optional<Player> player);
 
-    public abstract CompletableFuture<Void> convertSounds(boolean async);
+    public abstract CompletableFuture<Void> convertPack(boolean async, Optional<Player> player);
 
     public String getName() {
         return this.converterName;
@@ -85,6 +88,30 @@ public abstract class Converter extends YamlUtils {
         }
 
         return null;
+    }
+
+    protected void populateQueue(File baseDir, File currentDir, Queue<ConfigFile> toConvert) {
+        File[] files = currentDir.listFiles();
+        if (files == null) return;
+
+        for (File itemFile : files) {
+            if (itemFile.isDirectory()) {
+                populateQueue(baseDir, itemFile, toConvert);
+                continue;
+            }
+
+            String fileName = itemFile.getName();
+            if (!fileName.endsWith(".yml")) {
+                continue;
+            }
+
+            try {
+                YamlConfiguration config = getConfig(itemFile);
+                toConvert.add(new ConfigFile(itemFile, baseDir, config));
+            } catch (Exception e) {
+                Logger.debug("Failed to load config file: " + fileName, LogType.ERROR);
+            }
+        }
     }
 
     public record PackMapping(String namespaceSource, String originalPath, String namespaceTarget, String targetPath){

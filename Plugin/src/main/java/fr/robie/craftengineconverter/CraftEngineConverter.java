@@ -109,7 +109,7 @@ public final class CraftEngineConverter extends CraftEngineConverterPlugin {
             Collection<Converter> values = this.converterMap.values();
             AtomicInteger counter = new AtomicInteger(values.size());
             for (Converter converter : values) {
-                CompletableFuture<Void> voidCompletableFuture = converter.convertAll();
+                CompletableFuture<Void> voidCompletableFuture = converter.convertAll(Optional.empty());
                 voidCompletableFuture.thenAccept(voidCompletableFuture1 -> {
                     int remaining = counter.decrementAndGet();
                     if (remaining == 0) {

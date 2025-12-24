@@ -1,7 +1,7 @@
 package fr.robie.craftengineconverter.utils.format;
 
 import fr.robie.craftengineconverter.CraftEngineConverter;
-import fr.robie.craftengineconverter.utils.ObjectUtils;
+import fr.robie.craftengineconverter.common.ObjectUtils;
 import fr.robie.craftengineconverter.utils.enums.DefaultFontInfo;
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;

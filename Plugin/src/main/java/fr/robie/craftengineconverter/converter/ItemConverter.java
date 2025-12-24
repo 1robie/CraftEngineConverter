@@ -1,6 +1,6 @@
 package fr.robie.craftengineconverter.converter;
 
-import fr.robie.craftengineconverter.utils.ObjectUtils;
+import fr.robie.craftengineconverter.common.ObjectUtils;
 import fr.robie.craftengineconverter.utils.enums.Template;
 import fr.robie.craftengineconverter.utils.manager.InternalTemplateManager;
 import org.bukkit.configuration.ConfigurationSection;

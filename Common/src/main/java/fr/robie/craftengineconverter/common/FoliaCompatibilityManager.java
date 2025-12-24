@@ -143,6 +143,10 @@ public class FoliaCompatibilityManager {
         foliaLib.getScheduler().runTimerAsync(wrappedTask -> task.run(), initialDelay, period);
     }
 
+    public WrappedTask runTimerAsyncWrapped(Runnable task, long initialDelay, long period, TimeUnit unit) {
+        return foliaLib.getScheduler().runTimerAsync(task, initialDelay, period, unit);
+    }
+
     /**
      * Run a task repeatedly at fixed intervals asynchronously with TimeUnit.
      *

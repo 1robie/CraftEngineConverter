@@ -8,6 +8,7 @@ import fr.robie.craftengineconverter.utils.command.VCommand;
 import fr.robie.craftengineconverter.utils.enums.ConverterOptions;
 import fr.robie.craftengineconverter.utils.format.Message;
 import fr.robie.craftengineconverter.utils.permission.Permission;
+import org.bukkit.entity.Player;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -42,7 +43,7 @@ public class CraftEngineConverterCommandConvert extends VCommand {
             Collection<Converter> converters = plugin.getConverters();
             AtomicInteger counter = new AtomicInteger(converters.size());
             for (Converter converter : converters){
-                CompletableFuture<Void> voidCompletableFuture = processConverter(converter, converterOption);
+                CompletableFuture<Void> voidCompletableFuture = processConverter(converter, converterOption, Optional.ofNullable(this.player));
                 voidCompletableFuture.thenRun(() -> {
                     int remaining = counter.decrementAndGet();
                     if (remaining == 0) {
@@ -56,7 +57,7 @@ public class CraftEngineConverterCommandConvert extends VCommand {
             if (optionalConverter.isPresent()){
                 long startTime = System.currentTimeMillis();
                 message(plugin,sender, Message.COMMAND_CONVERTER_START, "plugin", targetPlugin);
-                CompletableFuture<Void> voidCompletableFuture = processConverter(optionalConverter.get(), converterOption);
+                CompletableFuture<Void> voidCompletableFuture = processConverter(optionalConverter.get(), converterOption, Optional.ofNullable(this.player));
                 voidCompletableFuture.thenRun(() -> {
                     long endTime = System.currentTimeMillis();
                     message(plugin,sender, Message.COMMAND_CONVERTER_COMPLETE, "plugin", targetPlugin, "time", TimerBuilder.formatTime(endTime-startTime, TimerBuilder.TimeUnit.SECOND));
@@ -68,15 +69,15 @@ public class CraftEngineConverterCommandConvert extends VCommand {
         return CommandType.SUCCESS;
     }
 
-    private CompletableFuture<Void> processConverter(Converter converter, ConverterOptions converterOption) {
+    private CompletableFuture<Void> processConverter(Converter converter, ConverterOptions converterOption, Optional<Player> player) {
         return switch (converterOption){
-            case ALL -> converter.convertAll();
-            case ITEMS -> converter.convertItems(true);
-            case PACKS -> converter.convertPack(true);
-            case EMOJIS -> converter.convertEmojis(true);
-            case IMAGES -> converter.convertImages(true);
-            case LANGUAGES -> converter.convertLanguages(true);
-            case SOUNDS -> converter.convertSounds(true);
+            case ALL -> converter.convertAll(player);
+            case ITEMS -> converter.convertItems(true, player);
+            case PACKS -> converter.convertPack(true, player);
+            case EMOJIS -> converter.convertEmojis(true, player);
+            case IMAGES -> converter.convertImages(true, player);
+            case LANGUAGES -> converter.convertLanguages(true, player);
+            case SOUNDS -> converter.convertSounds(true, player);
         };
     }
 }

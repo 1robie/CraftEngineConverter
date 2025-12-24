@@ -34,8 +34,7 @@
 - [x] Add comprehensive security tests
 - [x] Fix all `mkdirs()`/`delete()` ignored warnings
 - [x] Add `try-with-resources` for SnakeUtils
-- [ ] Remove unnecessary semicolons
-- [ ] Refactor duplicate code in armor conversion
+- [x] Refactor duplicate code in armor conversion
 
 ---
 
