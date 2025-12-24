@@ -65,7 +65,7 @@ public class BukkitProgressBar extends ObjectUtils {
             Logger.info("BukkitProgressBar is already started!", LogType.WARNING);
             return;
         }
-        this.task = plugin.getFoliaCompatibilityManager()
+        this.task = this.plugin.getFoliaCompatibilityManager()
                 .runTimerAsyncWrapped(this::printProgress, 0L, updateIntervalTicks, TimeUnit.MILLISECONDS);
     }
 
@@ -76,7 +76,7 @@ public class BukkitProgressBar extends ObjectUtils {
         if (isNotNull(this.task)) {
             this.task.cancel();
             this.task = null;
-            if (current < total) {
+            if (this.current < this.total) {
                 Logger.info("Progress tracking stopped at " + String.format("%.1f%%", getPercentage()));
             }
         }
@@ -88,11 +88,11 @@ public class BukkitProgressBar extends ObjectUtils {
      */
     public void printProgress() {
         long currentTime = System.currentTimeMillis();
-        if (currentTime - lastUpdateTime < MIN_LOG_INTERVAL_MS && !isComplete()) {
+        if (currentTime - this.lastUpdateTime < this.MIN_LOG_INTERVAL_MS && !isComplete()) {
             return;
         }
         displayProgress();
-        lastUpdateTime = currentTime;
+        this.lastUpdateTime = currentTime;
     }
 
     /**
@@ -101,11 +101,16 @@ public class BukkitProgressBar extends ObjectUtils {
      */
     public void printProgressForced() {
         displayProgress();
-        lastUpdateTime = System.currentTimeMillis();
+        this.lastUpdateTime = System.currentTimeMillis();
     }
 
     public void displayProgress(){
-        Logger.info(getProgress());
+        String progressMessage = getProgress();
+        if (isNotNull(this.player)){
+            this.plugin.getMessageFormatter().sendMessage(this.player, progressMessage);
+        } else {
+            Logger.info(progressMessage);
+        }
     }
 
     /**

@@ -41,7 +41,7 @@ public class PaperProgressBar extends BukkitProgressBar {
     public void start() {
         super.start();
         if (isNotNull(this.player) && isNotNull(this.bossBar) && player.isOnline()) {
-            player.showBossBar(bossBar);
+            player.showBossBar(this.bossBar);
         }
     }
 
@@ -49,7 +49,7 @@ public class PaperProgressBar extends BukkitProgressBar {
     public void stop() {
         super.stop();
         if (isNotNull(this.player) && isNotNull(this.bossBar) && player.isOnline()) {
-            player.hideBossBar(bossBar);
+            player.hideBossBar(this.bossBar);
         }
     }
 
@@ -57,11 +57,11 @@ public class PaperProgressBar extends BukkitProgressBar {
     public void displayProgress() {
         if (isNotNull(this.bossBar) && isNotNull(this.player) && player.isOnline()) {
             float progress = Math.min(1f, Math.max(0f, (float) getCurrent() / getTotal()));
-            if (bossBar.progress() == progress){
+            if (this.bossBar.progress() == progress){
                 return;
             }
-            bossBar.progress(progress);
-            bossBar.name(this.componentMeta.getComponent(getProgress()));
+            this.bossBar.progress(progress);
+            this.bossBar.name(this.componentMeta.getComponent(getProgress()));
         } else {
             super.displayProgress();
         }

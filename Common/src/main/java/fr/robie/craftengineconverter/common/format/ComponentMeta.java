@@ -104,7 +104,7 @@ public class ComponentMeta implements MessageFormatter{
 
 
     @Override
-    public void sendMessage(CommandSender sender, String message) {
+    public void sendMessage(@NotNull CommandSender sender, String message) {
         sender.sendMessage(getComponent(message));
     }
 
@@ -112,7 +112,7 @@ public class ComponentMeta implements MessageFormatter{
         audience.sendMessage(getComponent(message));
     }
     @Override
-    public void sendTitle(Player player, String title, String subtitle, int fadeIn, int stay, int fadeOut) {
+    public void sendTitle(@NotNull Player player, String title, String subtitle, int fadeIn, int stay, int fadeOut) {
         Component titleComponent = null;
         Component subtitleComponent = null;
 
@@ -140,7 +140,7 @@ public class ComponentMeta implements MessageFormatter{
     }
 
     @Override
-    public void sendAction(Player player, String message) {
+    public void sendAction(@NotNull Player player, String message) {
         player.sendActionBar(getComponent(message));
     }
 

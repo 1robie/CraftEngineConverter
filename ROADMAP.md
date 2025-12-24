@@ -70,7 +70,7 @@
 - [ ] Backup/rollback system
 - [ ] Conversion profiles (save/load)
 - [ ] Better console output (colors, formatting)
-- [ ] Progress bars for long operations
+- [x] Progress bars for long operations
 - [ ] Optimize async conversion (thread pools)
 - [ ] Progress tracking for large conversions
 - [ ] Cache frequently accessed configs

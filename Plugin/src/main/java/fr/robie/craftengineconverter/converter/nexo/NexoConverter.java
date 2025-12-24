@@ -7,7 +7,6 @@ import fr.robie.craftengineconverter.common.configuration.Configuration;
 import fr.robie.craftengineconverter.common.logger.LogType;
 import fr.robie.craftengineconverter.common.logger.Logger;
 import fr.robie.craftengineconverter.common.progress.BukkitProgressBar;
-import fr.robie.craftengineconverter.common.progress.PaperProgressBar;
 import fr.robie.craftengineconverter.converter.Converter;
 import fr.robie.craftengineconverter.utils.ConfigFile;
 import fr.robie.craftengineconverter.utils.SnakeUtils;
@@ -69,7 +68,7 @@ public class NexoConverter extends Converter {
             totalItems += countItemsInConfig(configFile.config());
         }
         BukkitProgressBar.Builder progressBarBuilder;
-        progressBarBuilder = new PaperProgressBar.Builder(totalItems);
+        progressBarBuilder = new BukkitProgressBar.Builder(totalItems);
 
         if (player.isPresent()){
             progressBarBuilder.player(player.get());
@@ -90,7 +89,6 @@ public class NexoConverter extends Converter {
         try {
             processConfigs(toConvert, outputBase, progress);
             toConvert.clear();
-            Logger.info("Conversion completed successfully! " + totalItems + " items converted.",LogType.SUCCESS);
         } catch (Exception e) {
             Logger.showException("Error during Nexo items conversion", e);
         } finally {
@@ -207,9 +205,7 @@ public class NexoConverter extends Converter {
             totalEmojis += countItemsInConfig(configFile.config());
         }
 
-        Logger.info("Found " + totalEmojis + " emojis in " + toConvert.size() + " files to convert.");
-
-        BukkitProgressBar.Builder progressBarBuilder = new PaperProgressBar.Builder(totalEmojis);
+        BukkitProgressBar.Builder progressBarBuilder = new BukkitProgressBar.Builder(totalEmojis);
         if (player.isPresent()){
             progressBarBuilder.player(player.get());
             progressBarBuilder.showBar(false);
@@ -230,7 +226,6 @@ public class NexoConverter extends Converter {
         try {
             processEmojisConfigs(toConvert, outputEmojisFolder, progress);
             toConvert.clear();
-            Logger.info("Conversion completed successfully! " + totalEmojis + " emojis converted.", LogType.SUCCESS);
         } catch (Exception e) {
             Logger.showException("Error during Nexo emojis conversion", e);
         } finally {
@@ -363,9 +358,8 @@ public class NexoConverter extends Converter {
             }
 
             int totalSounds = nexoSoundsList.size();
-            Logger.info("Found " + totalSounds + " sounds to convert.");
 
-            BukkitProgressBar.Builder progressBarBuilder = new PaperProgressBar.Builder(totalSounds);
+            BukkitProgressBar.Builder progressBarBuilder = new BukkitProgressBar.Builder(totalSounds);
             if (player.isPresent()){
                 progressBarBuilder.player(player.get());
                 progressBarBuilder.showBar(false);
@@ -402,7 +396,6 @@ public class NexoConverter extends Converter {
                     }
 
                     craftEngineSounds.save(outputSoundFile);
-                    Logger.info("Conversion completed successfully! " + totalSounds + " sounds converted.", LogType.SUCCESS);
                 }
             } catch (Exception e) {
                 Logger.showException("Failed to process sounds file: " + inputSoundFile.getName(), e);
@@ -578,9 +571,7 @@ public class NexoConverter extends Converter {
                 return;
             }
 
-            Logger.info("Found " + totalTranslations + " translations in " + languageKeys.size() + " languages to convert.");
-
-            BukkitProgressBar.Builder progressBarBuilder = new PaperProgressBar.Builder(totalTranslations);
+            BukkitProgressBar.Builder progressBarBuilder = new BukkitProgressBar.Builder(totalTranslations);
             if (player.isPresent()){
                 progressBarBuilder.player(player.get());
                 progressBarBuilder.showBar(false);
@@ -614,9 +605,7 @@ public class NexoConverter extends Converter {
                             }
                         }
                     }
-
                     craftEngineLanguages.save(outputFile);
-                    Logger.info("Conversion completed successfully! " + totalTranslations + " translations converted.", LogType.SUCCESS);
                 }
             } catch (Exception e) {
                 Logger.showException("Failed to convert languages file: " + languagesFile.getName(), e);
@@ -682,9 +671,7 @@ public class NexoConverter extends Converter {
             totalImages += countItemsInConfig(configFile.config());
         }
 
-        Logger.info("Found " + totalImages + " images in " + toConvert.size() + " files to convert.");
-
-        BukkitProgressBar.Builder progressBarBuilder = new PaperProgressBar.Builder(totalImages);
+        BukkitProgressBar.Builder progressBarBuilder = new BukkitProgressBar.Builder(totalImages);
         if (player.isPresent()){
             progressBarBuilder.player(player.get());
             progressBarBuilder.showBar(false);
@@ -705,7 +692,6 @@ public class NexoConverter extends Converter {
         try {
             processImagesConfigs(toConvert, outputBase, progress);
             toConvert.clear();
-            Logger.info("Conversion completed successfully! " + totalImages + " images converted.", LogType.SUCCESS);
         } catch (Exception e) {
             Logger.showException("Error during Nexo images conversion", e);
         } finally {
@@ -820,9 +806,10 @@ public class NexoConverter extends Converter {
                 return;
             }
 
-            File outputAssetsFolder = new File(outputPackFile, "assets");
+            int totalFiles = 0;
 
-            copyAssetsFolder(new File(inputPackFile, "assets"), outputAssetsFolder, "main");
+            File mainAssetsFolder = new File(inputPackFile, "assets");
+            totalFiles += countFilesInDirectory(mainAssetsFolder);
 
             File nexoExternalPacksFolder = new File(inputPackFile, "external_packs");
             if (nexoExternalPacksFolder.exists() && nexoExternalPacksFolder.isDirectory()) {
@@ -831,33 +818,112 @@ public class NexoConverter extends Converter {
                     for (File externalPack : externalPacks) {
                         if (externalPack.isDirectory()) {
                             File externalPackAssetsFolder = new File(externalPack, "assets");
-                            copyAssetsFolder(externalPackAssetsFolder, outputAssetsFolder, externalPack.getName());
+                            totalFiles += countFilesInDirectory(externalPackAssetsFolder);
                         } else if (externalPack.isFile() && externalPack.getName().endsWith(".zip")) {
-                            extractAndCopyZipAssets(externalPack, outputAssetsFolder, externalPack.getName().replace(".zip", ""));
+                            totalFiles += countFilesInZip(externalPack);
                         }
                     }
                 }
             }
+
+            BukkitProgressBar.Builder progressBarBuilder = new BukkitProgressBar.Builder(totalFiles);
+            if (player.isPresent()){
+                progressBarBuilder.player(player.get());
+                progressBarBuilder.showBar(false);
+            }
+            BukkitProgressBar progress = progressBarBuilder
+                    .prefix("Converting resource pack")
+                    .suffix("files")
+                    .progressColor(BukkitProgressBar.ProgressColor.RED)
+                    .emptyColor(BukkitProgressBar.ProgressColor.DARK_GRAY)
+                    .percentColor(BukkitProgressBar.ProgressColor.YELLOW)
+                    .barWidth(50)
+                    .updateInterval(5000)
+                    .build(plugin);
+            progress.start();
+
+            try {
+                File outputAssetsFolder = new File(outputPackFile, "assets");
+
+                copyAssetsFolder(new File(inputPackFile, "assets"), outputAssetsFolder, "main", progress);
+
+                if (nexoExternalPacksFolder.exists() && nexoExternalPacksFolder.isDirectory()) {
+                    File[] externalPacks = nexoExternalPacksFolder.listFiles();
+                    if (externalPacks != null) {
+                        for (File externalPack : externalPacks) {
+                            if (externalPack.isDirectory()) {
+                                File externalPackAssetsFolder = new File(externalPack, "assets");
+                                copyAssetsFolder(externalPackAssetsFolder, outputAssetsFolder, externalPack.getName(), progress);
+                            } else if (externalPack.isFile() && externalPack.getName().endsWith(".zip")) {
+                                extractAndCopyZipAssets(externalPack, outputAssetsFolder, externalPack.getName().replace(".zip", ""), progress);
+                            }
+                        }
+                    }
+                }
+            } finally {
+                progress.stop();
+            }
         } catch (Exception e) {
             Logger.showException("Error during Nexo pack conversion", e);
-
         }
     }
 
-    private void copyAssetsFolder(File assetsFolder, File outputAssetsFolder, String packName) {
+    private int countFilesInDirectory(File directory) {
+        if (!directory.exists() || !directory.isDirectory()) {
+            return 0;
+        }
+
+        int count = 0;
+        File[] files = directory.listFiles();
+        if (files == null) return 0;
+
+        for (File file : files) {
+            if (file.isDirectory()) {
+                count += countFilesInDirectory(file);
+            } else if (file.isFile()) {
+                count++;
+            }
+        }
+
+        return count;
+    }
+
+    private int countFilesInZip(File zipFile) {
+        int count = 0;
+
+        try (ZipInputStream zis = new ZipInputStream(new BufferedInputStream(Files.newInputStream(zipFile.toPath())))) {
+            ZipEntry entry;
+            while ((entry = zis.getNextEntry()) != null) {
+                try {
+                    validateZipEntryName(entry.getName());
+                    if (!entry.isDirectory()) {
+                        count++;
+                    }
+                } catch (IOException ignored) {
+                }
+                zis.closeEntry();
+            }
+        } catch (IOException e) {
+            Logger.debug("Failed to count files in ZIP: " + zipFile.getName() + " - " + e.getMessage(), LogType.ERROR);
+        }
+
+        return count;
+    }
+
+    private void copyAssetsFolder(File assetsFolder, File outputAssetsFolder, String packName, BukkitProgressBar progress) {
         if (!assetsFolder.exists() || !assetsFolder.isDirectory()) {
             Logger.debug("Assets folder not found for pack '" + packName + "' at: " + assetsFolder.getAbsolutePath());
             return;
         }
 
         try {
-            copyDirectory(assetsFolder, outputAssetsFolder, assetsFolder);
+            copyDirectory(assetsFolder, outputAssetsFolder, assetsFolder, progress);
         } catch (IOException e) {
             Logger.info("Failed to copy assets from " + packName + " pack: " + e.getMessage(), LogType.ERROR);
         }
     }
 
-    private void copyDirectory(File source, File destination, File assetsRoot) throws IOException {
+    private void copyDirectory(File source, File destination, File assetsRoot, BukkitProgressBar progress) throws IOException {
         if (!destination.exists() && !destination.mkdirs()) {
             Logger.debug("Failed to create destination directory: " + destination.getAbsolutePath(), LogType.ERROR);
             return;
@@ -875,13 +941,18 @@ public class NexoConverter extends Converter {
             String pathInNamespace = parts.length > 1 ? parts[1] : "";
 
             String fullPath = namespace + ":" + pathInNamespace;
+
             if (Configuration.isPathBlacklisted(fullPath)) {
+                if (file.isFile()) {
+                    progress.increment();
+                }
                 continue;
             }
 
             if (file.isFile()) {
                 String fullPathWithFile = namespace + ":" + pathInNamespace + "/" + file.getName();
                 if (Configuration.isPathBlacklisted(fullPathWithFile)) {
+                    progress.increment();
                     continue;
                 }
             }
@@ -907,20 +978,21 @@ public class NexoConverter extends Converter {
                 }
 
                 if (resolvedMapping != null) {
-                    copyDirectoryContents(file, targetFile);
+                    copyDirectoryContents(file, targetFile, progress);
                 } else {
-                    copyDirectory(file, destination, assetsRoot);
+                    copyDirectory(file, destination, assetsRoot, progress);
                 }
             } else {
                 if (!targetFile.getParentFile().exists() && !targetFile.getParentFile().mkdirs()) {
                     Logger.debug("Failed to create parent directory for file: " + targetFile.getAbsolutePath(), LogType.ERROR);
                 }
                 copyFile(file, targetFile);
+                progress.increment();
             }
         }
     }
 
-    private void copyDirectoryContents(File source, File destination) throws IOException {
+    private void copyDirectoryContents(File source, File destination, BukkitProgressBar progress) throws IOException {
         if (!destination.exists() && !destination.mkdirs()) {
             Logger.debug("Failed to create destination directory: " + destination.getAbsolutePath(), LogType.ERROR);
             return;
@@ -933,25 +1005,18 @@ public class NexoConverter extends Converter {
             File targetFile = new File(destination, file.getName());
 
             if (file.isDirectory()) {
-                copyDirectoryContents(file, targetFile);
+                copyDirectoryContents(file, targetFile, progress);
             } else {
                 if (!targetFile.getParentFile().exists() && !targetFile.getParentFile().mkdirs()) {
                     Logger.debug("Failed to create parent directory for file: " + targetFile.getAbsolutePath(), LogType.ERROR);
                 }
                 copyFile(file, targetFile);
+                progress.increment();
             }
         }
     }
 
-    private void copyFile(File source, File destination) throws IOException {
-        Files.copy(
-            source.toPath(),
-            destination.toPath(),
-            StandardCopyOption.REPLACE_EXISTING
-        );
-    }
-
-    private void extractAndCopyZipAssets(File zipFile, File outputAssetsFolder, String packName) {
+    private void extractAndCopyZipAssets(File zipFile, File outputAssetsFolder, String packName, BukkitProgressBar progress) {
         File tempDir = new File(this.plugin.getDataFolder(), "temp/zip_extract_" + System.currentTimeMillis());
         if (!tempDir.exists() && !tempDir.mkdirs()) {
             Logger.debug("Failed to create temporary directory for ZIP extraction: " + tempDir.getAbsolutePath(), LogType.ERROR);
@@ -959,12 +1024,11 @@ public class NexoConverter extends Converter {
         }
 
         try {
-            extractZip(zipFile.toPath(), tempDir.toPath());
+            extractZip(zipFile.toPath(), tempDir.toPath(), progress);
 
             File extractedAssetsFolder = new File(tempDir, "assets");
             if (extractedAssetsFolder.exists() && extractedAssetsFolder.isDirectory()) {
-                Logger.debug("Found assets folder in ZIP: " + zipFile.getName(),LogType.SUCCESS);
-                copyAssetsFolder(extractedAssetsFolder, outputAssetsFolder, packName);
+                copyAssetsFolder(extractedAssetsFolder, outputAssetsFolder, packName, progress);
             } else {
                 Logger.debug("No assets folder found in ZIP: " + zipFile.getName());
             }
@@ -979,7 +1043,7 @@ public class NexoConverter extends Converter {
         }
     }
 
-    private void extractZip(Path zipPath, Path targetDir) throws IOException {
+    private void extractZip(Path zipPath, Path targetDir, BukkitProgressBar progress) throws IOException {
         Files.createDirectories(targetDir);
         File canonicalTargetDir = targetDir.toFile().getCanonicalFile();
 
@@ -1012,31 +1076,20 @@ public class NexoConverter extends Converter {
                     }
                 }
 
+                progress.increment();
                 zis.closeEntry();
             }
         }
     }
 
-    /**
-     * Validates and sanitizes a zip entry name to prevent directory traversal attacks.
-     * Checks for encoded URLs, UNC paths, absolute paths, and parent directory references.
-     * <p>
-     * Examples of rejected entries:
-     * - "../../../etc/passwd" (parent directory traversal)
-     * - "/etc/passwd" (absolute Unix path)
-     * - "C:\Windows\System32" (Windows absolute path)
-     * - "\\server\share\file" (UNC network path)
-     * - "..%2F..%2Fetc%2Fpasswd" (URL-encoded traversal)
-     * <p>
-     * Examples of accepted entries:
-     * - "documents/report.pdf"
-     * - "images/photo.jpg"
-     * - "folder/subfolder/file.txt"
-     *
-     * @param entryName The raw entry name from the zip file
-     * @return The validated entry name
-     * @throws IOException if the entry name is invalid or contains suspicious elements
-     */
+    private void copyFile(File source, File destination) throws IOException {
+        Files.copy(
+            source.toPath(),
+            destination.toPath(),
+            StandardCopyOption.REPLACE_EXISTING
+        );
+    }
+
     private String validateZipEntryName(@Nullable String entryName) throws IOException {
         // Reject null or empty names
         if (entryName == null || entryName.isEmpty()) {

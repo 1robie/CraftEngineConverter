@@ -2,23 +2,24 @@ package fr.robie.craftengineconverter.common.format;
 
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class ClassicMeta implements MessageFormatter{
     @Override
-    public void sendMessage(CommandSender sender, String message) {
+    public void sendMessage(@NotNull CommandSender sender, String message) {
         sender.sendMessage(color(message));
     }
 
     @Override
-    public void sendTitle(Player player, String title, String subtitle, int fadeIn, int stay, int fadeOut) {
+    public void sendTitle(@NotNull Player player, String title, String subtitle, int fadeIn, int stay, int fadeOut) {
         player.sendTitle(color(title), color(subtitle), fadeIn, stay, fadeOut);
     }
 
     @Override
-    public void sendAction(Player player, String message) {
+    public void sendAction(@NotNull Player player, String message) {
         player.sendActionBar(color(message));
     }
 
