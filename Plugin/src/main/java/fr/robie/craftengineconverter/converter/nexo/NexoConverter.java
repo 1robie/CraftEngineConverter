@@ -4,6 +4,7 @@ import fr.robie.craftengineconverter.CraftEngineConverter;
 import fr.robie.craftengineconverter.common.CraftEngineImageUtils;
 import fr.robie.craftengineconverter.common.ImageConversion;
 import fr.robie.craftengineconverter.common.configuration.Configuration;
+import fr.robie.craftengineconverter.common.enums.ConverterOptions;
 import fr.robie.craftengineconverter.common.logger.LogType;
 import fr.robie.craftengineconverter.common.logger.Logger;
 import fr.robie.craftengineconverter.common.progress.BukkitProgressBar;
@@ -77,10 +78,7 @@ public class NexoConverter extends Converter {
 
         BukkitProgressBar progress = progressBarBuilder.prefix("Converting items")
                 .suffix("items")
-                .progressColor(BukkitProgressBar.ProgressColor.GREEN)
-                .emptyColor(BukkitProgressBar.ProgressColor.DARK_GRAY)
-                .percentColor(BukkitProgressBar.ProgressColor.YELLOW)
-                .barWidth(50)
+                .options(ConverterOptions.ITEMS)
                 .updateInterval(5000)
                 .build(plugin);
 
@@ -214,10 +212,7 @@ public class NexoConverter extends Converter {
         BukkitProgressBar progress = progressBarBuilder
                 .prefix("Converting emojis")
                 .suffix("emojis")
-                .progressColor(BukkitProgressBar.ProgressColor.AQUA)
-                .emptyColor(BukkitProgressBar.ProgressColor.DARK_GRAY)
-                .percentColor(BukkitProgressBar.ProgressColor.YELLOW)
-                .barWidth(50)
+                .options(ConverterOptions.EMOJIS)
                 .updateInterval(5000)
                 .build(plugin);
 
@@ -368,10 +363,7 @@ public class NexoConverter extends Converter {
             BukkitProgressBar progress = progressBarBuilder
                     .prefix("Converting sounds")
                     .suffix("sounds")
-                    .progressColor(BukkitProgressBar.ProgressColor.LIGHT_PURPLE)
-                    .emptyColor(BukkitProgressBar.ProgressColor.DARK_GRAY)
-                    .percentColor(BukkitProgressBar.ProgressColor.YELLOW)
-                    .barWidth(50)
+                    .options(ConverterOptions.SOUNDS)
                     .updateInterval(5000)
                     .build(plugin);
 
@@ -580,10 +572,7 @@ public class NexoConverter extends Converter {
             BukkitProgressBar progress = progressBarBuilder
                     .prefix("Converting languages")
                     .suffix("translations")
-                    .progressColor(BukkitProgressBar.ProgressColor.BLUE)
-                    .emptyColor(BukkitProgressBar.ProgressColor.DARK_GRAY)
-                    .percentColor(BukkitProgressBar.ProgressColor.YELLOW)
-                    .barWidth(50)
+                    .options(ConverterOptions.LANGUAGES)
                     .updateInterval(5000)
                     .build(plugin);
 
@@ -680,10 +669,7 @@ public class NexoConverter extends Converter {
         BukkitProgressBar progress = progressBarBuilder
                 .prefix("Converting images")
                 .suffix("images")
-                .progressColor(BukkitProgressBar.ProgressColor.GOLD)
-                .emptyColor(BukkitProgressBar.ProgressColor.DARK_GRAY)
-                .percentColor(BukkitProgressBar.ProgressColor.YELLOW)
-                .barWidth(50)
+                .options(ConverterOptions.IMAGES)
                 .updateInterval(5000)
                 .build(plugin);
 
@@ -834,10 +820,7 @@ public class NexoConverter extends Converter {
             BukkitProgressBar progress = progressBarBuilder
                     .prefix("Converting resource pack")
                     .suffix("files")
-                    .progressColor(BukkitProgressBar.ProgressColor.RED)
-                    .emptyColor(BukkitProgressBar.ProgressColor.DARK_GRAY)
-                    .percentColor(BukkitProgressBar.ProgressColor.YELLOW)
-                    .barWidth(50)
+                    .options(ConverterOptions.PACKS)
                     .updateInterval(5000)
                     .build(plugin);
             progress.start();

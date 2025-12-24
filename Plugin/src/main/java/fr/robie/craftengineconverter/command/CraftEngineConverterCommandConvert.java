@@ -1,11 +1,11 @@
 package fr.robie.craftengineconverter.command;
 
 import fr.robie.craftengineconverter.CraftEngineConverter;
+import fr.robie.craftengineconverter.common.enums.ConverterOptions;
 import fr.robie.craftengineconverter.converter.Converter;
 import fr.robie.craftengineconverter.utils.builder.TimerBuilder;
 import fr.robie.craftengineconverter.utils.command.CommandType;
 import fr.robie.craftengineconverter.utils.command.VCommand;
-import fr.robie.craftengineconverter.utils.enums.ConverterOptions;
 import fr.robie.craftengineconverter.utils.format.Message;
 import fr.robie.craftengineconverter.utils.permission.Permission;
 import org.bukkit.entity.Player;

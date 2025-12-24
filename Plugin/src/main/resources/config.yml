@@ -30,3 +30,50 @@ tag:
     enabled: true
   placeholder-api: # <placeholderapi:placeholder> or <papi:placeholder>
     enabled: true
+
+# Available colors:
+# BLACK, DARK_BLUE, DARK_GREEN, DARK_AQUA, DARK_RED, DARK_PURPLE,
+# GOLD, GRAY, DARK_GRAY, BLUE, GREEN, AQUA, RED, LIGHT_PURPLE, YELLOW, WHITE
+progress-bar-options:
+  items:
+    progress-color: GREEN
+    empty-color: DARK_GRAY
+    percent-color: YELLOW
+    progress-char: █
+    empty-char: ░
+    bar-width: 50
+  emojis:
+    progress-color: AQUA
+    empty-color: DARK_GRAY
+    percent-color: YELLOW
+    progress-char: █
+    empty-char: ░
+    bar-width: 50
+  images:
+    progress-color: GOLD
+    empty-color: DARK_GRAY
+    percent-color: YELLOW
+    progress-char: █
+    empty-char: ░
+    bar-width: 50
+  languages:
+    progress-color: BLUE
+    empty-color: DARK_GRAY
+    percent-color: YELLOW
+    progress-char: █
+    empty-char: ░
+    bar-width: 50
+  sounds:
+    progress-color: LIGHT_PURPLE
+    empty-color: DARK_GRAY
+    percent-color: YELLOW
+    progress-char: █
+    empty-char: ░
+    bar-width: 50
+  packs:
+    progress-color: RED
+    empty-color: DARK_GRAY
+    percent-color: YELLOW
+    progress-char: █
+    empty-char: ░
+    bar-width: 50

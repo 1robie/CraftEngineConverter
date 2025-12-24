@@ -348,6 +348,16 @@ public class BukkitProgressBar extends ObjectUtils {
             return this;
         }
 
+        public Builder options(ProgressBarUtils options){
+            this.progressChar = options.getProgressChar();
+            this.emptyChar = options.getEmptyChar();
+            this.barWidth = options.getBarWidth();
+            this.progressColor = options.getProgressColor();
+            this.emptyColorCode = options.getEmptyColor();
+            this.percentColor = options.getPercentColor();
+            return this;
+        }
+
         /**
          * Builds the BukkitProgressBar instance.
          * @param plugin the plugin instance

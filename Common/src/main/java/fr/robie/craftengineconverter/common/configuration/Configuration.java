@@ -1,8 +1,10 @@
 package fr.robie.craftengineconverter.common.configuration;
 
 import fr.robie.craftengineconverter.common.enums.ArmorConverter;
+import fr.robie.craftengineconverter.common.enums.ConverterOptions;
 import fr.robie.craftengineconverter.common.logger.LogType;
 import fr.robie.craftengineconverter.common.logger.Logger;
+import fr.robie.craftengineconverter.common.progress.BukkitProgressBar;
 import org.bukkit.Material;
 import org.bukkit.configuration.file.YamlConfiguration;
 
@@ -124,6 +126,34 @@ public class Configuration {
             }
             configPath.assign(value);
         }
+        for (ConverterOptions options : ConverterOptions.values()){
+            if (options == ConverterOptions.ALL) continue;
+            String path = "progress-bar-options." + options.name().toLowerCase().replace("_", "-");
+            String progressColor = getOrAddString(config, path + ".progress-color", options.getProgressColor().name());
+            String emptyColor = getOrAddString(config, path + ".empty-color", options.getEmptyColor().name());
+            String percentColor = getOrAddString(config, path + ".percent-color", options.getPercentColor().name());
+            char progressChar = getOrAddString(config, path + ".progress-char", String.valueOf(options.getProgressChar())).charAt(0);
+            char emptyChar = getOrAddString(config, path + ".empty-char", String.valueOf(options.getEmptyChar())).charAt(0);
+            int barWidth = getOrAddInt(config, path + ".bar-width", options.getBarWidth());
+            try {
+                options.setProgressColor(BukkitProgressBar.ProgressColor.valueOf(progressColor.toUpperCase()));
+            } catch (Exception e) {
+                Logger.debug("Invalid progress color for " + options.name() + " in configuration, valid values are: "+ String.join(",", getAvailableColors()), LogType.WARNING);
+            }
+            try {
+                options.setEmptyColor(BukkitProgressBar.ProgressColor.valueOf(emptyColor.toUpperCase()));
+            } catch (Exception e) {
+                Logger.debug("Invalid empty color for " + options.name() + " in configuration, valid values are: "+ String.join(",",getAvailableColors()), LogType.WARNING);
+            }
+            try {
+                options.setPercentColor(BukkitProgressBar.ProgressColor.valueOf(percentColor.toUpperCase()));
+            } catch (Exception e) {
+                Logger.debug("Invalid percent color for " + options.name() + " in configuration, valid values are: "+ String.join(",",getAvailableColors()), LogType.WARNING);
+            }
+            options.setProgressChar(progressChar);
+            options.setEmptyChar(emptyChar);
+            options.setBarWidth(barWidth);
+        }
         if (isUpdated){
             try {
                 config.save(file);
@@ -132,6 +162,14 @@ public class Configuration {
                 Logger.info("Could not save the configuration file: " + e.getMessage(), LogType.ERROR);
             }
         }
+    }
+
+    private List<String> getAvailableColors(){
+        List<String> colors = new ArrayList<>();
+        for (BukkitProgressBar.ProgressColor color : BukkitProgressBar.ProgressColor.values()){
+            colors.add(color.name());
+        }
+        return colors;
     }
 
     private boolean getOrAddBoolean(YamlConfiguration config, String path, boolean defaultValue) {

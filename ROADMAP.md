@@ -97,6 +97,9 @@
 ---
 
 ## ✅ Recently Completed
+
+- Configuration for progress bar display for converters
+- Progress bars for long operations
 - Fixed NoSuchFileException in ZIP extraction
 - Added URL decoding validation (..%2F)
 - Added UNC path blocking (\\server\share)
