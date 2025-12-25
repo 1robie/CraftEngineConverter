@@ -36,14 +36,15 @@ public enum Message {
     COMMAND_CONVERTER_START_ALL("§aStarting conversion for all supported plugins..."),
     COMMAND_CONVERTER_COMPLETE("§aConversion completed for §e%plugin%§a! In §c%time%§a."),
     COMMAND_CONVERTER_COMPLETE_ALL("§aConversion completed for all plugins! In §c%time%§a."),
+    COMMAND_CONVERTER_DRYRUN_ENABLED("§eDry run §aenabled. No changes will be applied."),
+    COMMAND_CONVERTER_THREADS_LIMIT("§cThe number of threads specified exceeds the number of available processors. Using the maximum available: §e%max%§c."),
 
     COMMAND_RELOAD_SUCCESS("§aPlugin configuration and messages reloaded in §c%time%§a."),
 
     DESCRIPTION_COMMAND_RELOAD("Reloads the plugin configuration and messages."),
     DESCRIPTION_COMMAND_CONVERT("Converts items from another plugin to CraftEngine format."),
 
-    ITEM_CONVERTED("§aItem §e%item%§a converted successfully in §c%time%§a."),
-    COMMAND_CONVERTER_DRYRUN_ENABLED("§eDry run §aenabled. No changes will be applied.");
+    ITEM_CONVERTED("§aItem §e%item%§a converted successfully in §c%time%§a.");
 
     private List<String> messages;
     private String message;

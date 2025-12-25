@@ -13,7 +13,26 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public abstract class VCommand extends Arguments {
-    record FlagValue(String flag, boolean hasValue){}
+    record FlagValue<T>(String flag, boolean hasValue, Class<T> type, T defaultValue){
+        public T parseValue(String value){
+            if (type.equals(Boolean.class)){
+                return type.cast(Boolean.parseBoolean(value));
+            } else if (type.equals(Integer.class)){
+                try {
+                    return type.cast(Integer.parseInt(value));
+                } catch (NumberFormatException e){
+                    return defaultValue;
+                }
+            } else if (type.equals(Double.class)){
+                try {
+                    return type.cast(Double.parseDouble(value));
+                } catch (NumberFormatException e){
+                    return defaultValue;
+                }
+            }
+            return type.cast(value);
+        }
+    }
     protected final CraftEngineConverter plugin;
 
     /**
@@ -35,7 +54,7 @@ public abstract class VCommand extends Arguments {
 
     private final List<String> requireArgs = new ArrayList<>();
     private final List<String> optionalArgs = new ArrayList<>();
-    private final List<FlagValue> flagsArgs = new ArrayList<>();
+    private final List<FlagValue<?>> flagsArgs = new ArrayList<>();
     /**
      * If this variable is false the command will not be able to use this
      * command
@@ -292,7 +311,15 @@ public abstract class VCommand extends Arguments {
     }
 
     protected void addFlag(@NotNull String flag) {
-        this.flagsArgs.add(new FlagValue(flag, false));
+        this.flagsArgs.add(new FlagValue<>(flag, false, String.class, null));
+    }
+
+    protected void addFlag(@NotNull String flag, boolean hasValue) {
+        this.flagsArgs.add(new FlagValue<>(flag, hasValue, String.class, null));
+    }
+
+    protected <T> void addFlag(@NotNull String flag, @NotNull Class<T> type, @Nullable T defaultValue) {
+        this.flagsArgs.add(new FlagValue<>(flag, true, type, defaultValue));
     }
 
     /**
@@ -395,8 +422,23 @@ public abstract class VCommand extends Arguments {
     }
 
     private void appendFlags(StringBuilder syntaxBuilder) {
-        flagsArgs.forEach(flag -> syntaxBuilder.append(" [").append(flag.flag).append("]"));
+        flagsArgs.forEach(flag -> {
+            syntaxBuilder.append(" [").append(flag.flag);
+            if (flag.hasValue) {
+                syntaxBuilder.append("=<").append(getSimpleTypeName(flag.type)).append(">");
+            }
+            syntaxBuilder.append("]");
+        });
     }
+
+    private String getSimpleTypeName(Class<?> type) {
+        if (type == Boolean.class) return "bool";
+        if (type == Integer.class) return "int";
+        if (type == Double.class) return "double";
+        if (type == String.class) return "string";
+        return type.getSimpleName().toLowerCase();
+    }
+
 
     /**
      * Allows to know the number of parents in a recursive way
@@ -467,13 +509,19 @@ public abstract class VCommand extends Arguments {
             String arg = args[i];
 
             boolean isFlag = false;
-            for (FlagValue flag : this.flagsArgs) {
+            for (FlagValue<?> flag : this.flagsArgs) {
                 String flagKey = flag.flag;
                 if (arg.equals(flagKey)) {
                     isFlag = true;
 
                     if (flag.hasValue && i + 1 < args.length && !args[i + 1].startsWith("--")) {
-                        this.flags.put(flagKey, args[i + 1]);
+                        Object value;
+                        try {
+                            value = flag.parseValue(args[i + 1]);
+                        } catch (ClassCastException e) {
+                            value = flag.defaultValue;
+                        }
+                        this.flags.put(flagKey, value);
                         i++;
                     } else {
                         this.flags.put(flagKey, "true");
@@ -483,11 +531,17 @@ public abstract class VCommand extends Arguments {
                     isFlag = true;
                     String value;
                     if (flag.hasValue) {
-                        value = arg.substring((flag + "=").length());
+                        value = arg.substring((flag.flag + "=").length());
                     } else {
                         value = "true";
                     }
-                    this.flags.put(flagKey, value);
+                    Object parsedValue;
+                    try {
+                        parsedValue = flag.parseValue(value);
+                    } catch (ClassCastException e) {
+                        parsedValue = flag.defaultValue;
+                    }
+                    this.flags.put(flagKey, parsedValue);
                     break;
                 }
             }
@@ -563,7 +617,7 @@ public abstract class VCommand extends Arguments {
             if (flagSet.contains(arg)) {
                 usedFlags.add(arg);
 
-                FlagValue flagValue = findFlag(arg);
+                FlagValue<?> flagValue = findFlag(arg);
                 if (flagValue != null && flagValue.hasValue &&
                         i + 1 < args.length && !args[i + 1].startsWith("--")) {
                     i++;

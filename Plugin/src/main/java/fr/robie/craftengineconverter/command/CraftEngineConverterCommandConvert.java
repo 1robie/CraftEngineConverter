@@ -2,6 +2,7 @@ package fr.robie.craftengineconverter.command;
 
 import fr.robie.craftengineconverter.CraftEngineConverter;
 import fr.robie.craftengineconverter.common.builder.TimerBuilder;
+import fr.robie.craftengineconverter.common.configuration.ConverterSettings;
 import fr.robie.craftengineconverter.common.enums.ConverterOptions;
 import fr.robie.craftengineconverter.common.format.Message;
 import fr.robie.craftengineconverter.converter.Converter;
@@ -31,7 +32,8 @@ public class CraftEngineConverterCommandConvert extends VCommand {
             }
             return options;
         });
-        this.addFlag("-dryrun");
+        this.addFlag("--dryrun");
+        this.addFlag("--threads", Integer.class, 1);
     }
 
     @Override
@@ -42,19 +44,29 @@ public class CraftEngineConverterCommandConvert extends VCommand {
         if (dryRun){
             message(plugin,sender, Message.COMMAND_CONVERTER_DRYRUN_ENABLED);
         }
+        int threads = this.getFlagValueAsInteger("threads");
+        if (threads < 1){
+            threads = 1;
+        } else if (threads > Runtime.getRuntime().availableProcessors()){
+            int availableProcessors = Runtime.getRuntime().availableProcessors();
+            threads = availableProcessors;
+            message(plugin,sender, Message.COMMAND_CONVERTER_THREADS_LIMIT, "max", availableProcessors);
+        }
         if (targetPlugin == null){
             long startTime = System.currentTimeMillis();
             message(plugin,sender, Message.COMMAND_CONVERTER_START_ALL);
             Collection<Converter> converters = plugin.getConverters();
             AtomicInteger counter = new AtomicInteger(converters.size());
             for (Converter converter : converters){
-                CompletableFuture<Void> voidCompletableFuture = processConverter(converter, converterOption, Optional.ofNullable(this.player), dryRun);
+                ConverterSettings converterSettings = converter.getSettings();
+                converterSettings.createBackup();
+                CompletableFuture<Void> voidCompletableFuture = processConverter(converter, converterOption, Optional.ofNullable(this.player), dryRun, threads);
                 voidCompletableFuture.thenRun(() -> {
                     int remaining = counter.decrementAndGet();
                     if (remaining == 0) {
                         long endTime = System.currentTimeMillis();
                         message(plugin,sender, Message.COMMAND_CONVERTER_COMPLETE_ALL, "time", TimerBuilder.formatTimeAuto(endTime-startTime));
-                        converter.getSettings().setDryRunEnabled(false);
+                        converterSettings.restoreBackup();
                     }
                 });
             }
@@ -64,11 +76,13 @@ public class CraftEngineConverterCommandConvert extends VCommand {
                 long startTime = System.currentTimeMillis();
                 message(plugin,sender, Message.COMMAND_CONVERTER_START, "plugin", targetPlugin);
                 Converter converter = optionalConverter.get();
-                CompletableFuture<Void> voidCompletableFuture = processConverter(converter, converterOption, Optional.ofNullable(this.player), dryRun);
+                ConverterSettings converterSettings = converter.getSettings();
+                converterSettings.createBackup();
+                CompletableFuture<Void> voidCompletableFuture = processConverter(converter, converterOption, Optional.ofNullable(this.player), dryRun, threads);
                 voidCompletableFuture.thenRun(() -> {
                     long endTime = System.currentTimeMillis();
                     message(plugin,sender, Message.COMMAND_CONVERTER_COMPLETE, "plugin", targetPlugin, "time", TimerBuilder.formatTimeAuto(endTime-startTime));
-                    converter.getSettings().setDryRunEnabled(false);
+                    converterSettings.restoreBackup();
                 });
             } else {
                 message(plugin,sender, Message.COMMAND_CONVERTER_NOT_FOUND, "plugin", targetPlugin);
@@ -77,8 +91,10 @@ public class CraftEngineConverterCommandConvert extends VCommand {
         return CommandType.SUCCESS;
     }
 
-    private CompletableFuture<Void> processConverter(Converter converter, ConverterOptions converterOption, Optional<Player> player, boolean dryRun) {
-        converter.getSettings().setDryRunEnabled(dryRun);
+    private CompletableFuture<Void> processConverter(Converter converter, ConverterOptions converterOption, Optional<Player> player, boolean dryRun, int threads) {
+        ConverterSettings converterSettings = converter.getSettings();
+        converterSettings.setDryRunEnabled(dryRun);
+        converterSettings.setThreadCount(threads);
         return switch (converterOption){
             case ALL -> converter.convertAll(player);
             case ITEMS -> converter.convertItems(true, player);

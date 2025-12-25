@@ -8,13 +8,14 @@ import org.bukkit.World;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
 
 public abstract class Arguments extends CraftEngineConverterUtils {
     protected String[] args;
-    protected Map<String,String> flags = new HashMap<>();
+    protected Map<String,Object> flags = new HashMap<>();
     protected int parentCount = 0;
 
     /**
@@ -269,7 +270,33 @@ public abstract class Arguments extends CraftEngineConverterUtils {
         return this.flags.containsKey(flag);
     }
 
+    @Nullable
     protected String getFlagValue(@NotNull String flag) {
+        Object value = this.flags.get(flag);
+        if (value != null) {
+            return String.valueOf(value);
+        }
+        return null;
+    }
+
+    protected Object getFlagObjectValue(@NotNull String flag) {
         return this.flags.get(flag);
     }
+
+    protected int getFlagValueAsInteger(@NotNull String flag, int defaultValue) {
+        Object value = this.flags.get(flag);
+        if (value != null) {
+            try {
+                return Integer.parseInt(String.valueOf(value));
+            } catch (NumberFormatException e) {
+                return defaultValue;
+            }
+        }
+        return defaultValue;
+    }
+
+    protected int getFlagValueAsInteger(@NotNull String flag) {
+        return getFlagValueAsInteger(flag, 0);
+    }
+
 }

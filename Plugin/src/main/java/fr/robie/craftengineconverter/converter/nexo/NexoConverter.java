@@ -16,16 +16,14 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.OutputStream;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -389,7 +387,7 @@ public class NexoConverter extends Converter {
                         craftEngineSounds.save(outputSoundFile);
                 }
             } catch (Exception e) {
-                Logger.showException("Failed to process sounds file: " + inputSoundFile.getName(), e);
+                Logger.showException("Failed to copyFileWithProgress sounds file: " + inputSoundFile.getName(), e);
             } finally {
                 nexoSounds.close();
                 progress.stop();
@@ -774,7 +772,50 @@ public class NexoConverter extends Converter {
         return executeTask(async, ()-> convertPackSync(player));
     }
 
+    private int countFilesInDirectory(File directory) {
+        if (!directory.exists() || !directory.isDirectory()) {
+            return 0;
+        }
+
+        int count = 0;
+        File[] files = directory.listFiles();
+        if (files == null) return 0;
+
+        for (File file : files) {
+            if (file.isDirectory()) {
+                count += countFilesInDirectory(file);
+            } else if (file.isFile()) {
+                count++;
+            }
+        }
+
+        return count;
+    }
+
+    private int countFilesInZip(File zipFile) {
+        int count = 0;
+
+        try (ZipInputStream zis = new ZipInputStream(new BufferedInputStream(Files.newInputStream(zipFile.toPath())))) {
+            ZipEntry entry;
+            while ((entry = zis.getNextEntry()) != null) {
+                try {
+                    validateZipEntryName(entry.getName());
+                    if (!entry.isDirectory()) {
+                        count++;
+                    }
+                } catch (IOException ignored) {
+                }
+                zis.closeEntry();
+            }
+        } catch (IOException e) {
+            Logger.debug("Failed to count files in ZIP: " + zipFile.getName() + " - " + e.getMessage(), LogType.ERROR);
+        }
+
+        return count;
+    }
+
     private void convertPackSync(Optional<Player> player) {
+        ExecutorService executor = null;
         try {
             File inputPackFile = new File("plugins/" + converterName + "/pack");
             File outputPackFile = new File(this.plugin.getDataFolder(), "converted/"+converterName+"/CraftEngine/resources/craftengineconverter/resourcepack");
@@ -825,10 +866,19 @@ public class NexoConverter extends Converter {
                     .build(plugin);
             progress.start();
 
+            int threadCount = Math.max(1, this.getSettings().threadCount());
+            boolean useMultiThread = threadCount > 1;
+
+            if (useMultiThread) {
+                executor = Executors.newFixedThreadPool(threadCount);
+            }
+            CountDownLatch latch = new CountDownLatch(1);
+            AtomicReference<Exception> errorRef = new AtomicReference<>();
+
             try {
                 File outputAssetsFolder = new File(outputPackFile, "assets");
 
-                copyAssetsFolder(new File(inputPackFile, "assets"), outputAssetsFolder, "main", progress);
+                copyAssetsFolder(new File(inputPackFile, "assets"), outputAssetsFolder, "main", progress, executor, latch, errorRef, useMultiThread);
 
                 if (nexoExternalPacksFolder.exists() && nexoExternalPacksFolder.isDirectory()) {
                     File[] externalPacks = nexoExternalPacksFolder.listFiles();
@@ -836,77 +886,63 @@ public class NexoConverter extends Converter {
                         for (File externalPack : externalPacks) {
                             if (externalPack.isDirectory()) {
                                 File externalPackAssetsFolder = new File(externalPack, "assets");
-                                copyAssetsFolder(externalPackAssetsFolder, outputAssetsFolder, externalPack.getName(), progress);
+                                copyAssetsFolder(externalPackAssetsFolder, outputAssetsFolder, externalPack.getName(), progress, executor, latch, errorRef, useMultiThread);
                             } else if (externalPack.isFile() && externalPack.getName().endsWith(".zip")) {
-                                extractAndCopyZipAssets(externalPack, outputAssetsFolder, externalPack.getName().replace(".zip", ""), progress);
+                                extractAndCopyZipAssets(externalPack, outputAssetsFolder, externalPack.getName().replace(".zip", ""), progress, executor, latch, errorRef, useMultiThread);
                             }
                         }
                     }
                 }
+
+                if (useMultiThread) {
+                    latch.countDown();
+                    executor.shutdown();
+                    if (!executor.awaitTermination(1, TimeUnit.HOURS)) {
+                        Logger.debug("Timeout waiting for file operations to complete", LogType.ERROR);
+                        Logger.debug("Forcing shutdown of file operation threads", LogType.ERROR);
+                    }
+                }
+
+                if (errorRef.get() != null) {
+                    throw errorRef.get();
+                }
+
             } finally {
                 progress.stop();
+                if (executor != null && !executor.isShutdown()) {
+                    executor.shutdownNow();
+                }
             }
         } catch (Exception e) {
             Logger.showException("Error during Nexo pack conversion", e);
-        }
-    }
-
-    private int countFilesInDirectory(File directory) {
-        if (!directory.exists() || !directory.isDirectory()) {
-            return 0;
-        }
-
-        int count = 0;
-        File[] files = directory.listFiles();
-        if (files == null) return 0;
-
-        for (File file : files) {
-            if (file.isDirectory()) {
-                count += countFilesInDirectory(file);
-            } else if (file.isFile()) {
-                count++;
+        } finally {
+            if (executor != null && !executor.isShutdown()) {
+                executor.shutdownNow();
             }
         }
-
-        return count;
     }
 
-    private int countFilesInZip(File zipFile) {
-        int count = 0;
-
-        try (ZipInputStream zis = new ZipInputStream(new BufferedInputStream(Files.newInputStream(zipFile.toPath())))) {
-            ZipEntry entry;
-            while ((entry = zis.getNextEntry()) != null) {
-                try {
-                    validateZipEntryName(entry.getName());
-                    if (!entry.isDirectory()) {
-                        count++;
-                    }
-                } catch (IOException ignored) {
-                }
-                zis.closeEntry();
-            }
-        } catch (IOException e) {
-            Logger.debug("Failed to count files in ZIP: " + zipFile.getName() + " - " + e.getMessage(), LogType.ERROR);
-        }
-
-        return count;
-    }
-
-    private void copyAssetsFolder(File assetsFolder, File outputAssetsFolder, String packName, BukkitProgressBar progress) {
+    private void copyAssetsFolder(File assetsFolder, File outputAssetsFolder, String packName,
+                                  BukkitProgressBar progress, ExecutorService executor,
+                                  CountDownLatch latch, AtomicReference<Exception> errorRef,
+                                  boolean useMultiThread) {
         if (!assetsFolder.exists() || !assetsFolder.isDirectory()) {
             Logger.debug("Assets folder not found for pack '" + packName + "' at: " + assetsFolder.getAbsolutePath());
             return;
         }
 
         try {
-            copyDirectory(assetsFolder, outputAssetsFolder, assetsFolder, progress);
+            copyDirectory(assetsFolder, outputAssetsFolder, assetsFolder, progress, executor, latch, errorRef, useMultiThread);
         } catch (IOException e) {
             Logger.info("Failed to copy assets from " + packName + " pack: " + e.getMessage(), LogType.ERROR);
+            errorRef.compareAndSet(null, e);
         }
     }
 
-    private void copyDirectory(File source, File destination, File assetsRoot, BukkitProgressBar progress) throws IOException {
+    private void copyDirectory(File source, File destination, File assetsRoot,
+                               BukkitProgressBar progress, ExecutorService executor,
+                               CountDownLatch latch, AtomicReference<Exception> errorRef,
+                               boolean useMultiThread) throws IOException {
         if (!this.settings.dryRunEnabled() && !destination.exists() && !destination.mkdirs()) {
             Logger.debug("Failed to create destination directory: " + destination.getAbsolutePath(), LogType.ERROR);
             return;
@@ -961,21 +997,45 @@ public class NexoConverter extends Converter {
                 }
 
                 if (resolvedMapping != null) {
-                    copyDirectoryContents(file, targetFile, progress);
+                    copyDirectoryContents(file, targetFile, progress, executor, latch, errorRef, useMultiThread);
                 } else {
-                    copyDirectory(file, destination, assetsRoot, progress);
+                    copyDirectory(file, destination, assetsRoot, progress, executor, latch, errorRef, useMultiThread);
                 }
             } else {
-                if (!this.settings.dryRunEnabled() && !targetFile.getParentFile().exists() && !targetFile.getParentFile().mkdirs()) {
-                    Logger.debug("Failed to create parent directory for file: " + targetFile.getAbsolutePath(), LogType.ERROR);
-                }
-                copyFile(file, targetFile);
-                progress.increment();
+                copyFileWithProgress(progress, executor, latch, errorRef, useMultiThread, file, targetFile);
             }
         }
     }
 
-    private void copyDirectoryContents(File source, File destination, BukkitProgressBar progress) throws IOException {
+    private void copyFileWithProgress(BukkitProgressBar progress, ExecutorService executor, CountDownLatch latch, AtomicReference<Exception> errorRef, boolean useMultiThread, File file, File targetFile) throws IOException {
+        if (useMultiThread) {
+            executor.submit(() -> {
+                try {
+                    latch.await();
+                    if (!this.settings.dryRunEnabled() && !targetFile.getParentFile().exists()
+                            && !targetFile.getParentFile().mkdirs()) {
+                        Logger.debug("Failed to create parent directory for file: " + targetFile.getAbsolutePath(), LogType.ERROR);
+                    }
+                    copyFile(file, targetFile);
+                    progress.increment();
+                } catch (Exception e) {
+                    Logger.debug("Error copying file: " + file.getName() + " - " + e.getMessage(), LogType.ERROR);
+                    errorRef.compareAndSet(null, e);
+                }
+            });
+        } else {
+            if (!this.settings.dryRunEnabled() && !targetFile.getParentFile().exists()
+                    && !targetFile.getParentFile().mkdirs()) {
+                Logger.debug("Failed to create parent directory for file: " + targetFile.getAbsolutePath(), LogType.ERROR);
+            }
+            copyFile(file, targetFile);
+            progress.increment();
+        }
+    }
+
+    private void copyDirectoryContents(File source, File destination, BukkitProgressBar progress,
+                                       ExecutorService executor, CountDownLatch latch,
+                                       AtomicReference<Exception> errorRef, boolean useMultiThread) throws IOException {
         if (!this.settings.dryRunEnabled() && !destination.exists() && !destination.mkdirs()) {
             Logger.debug("Failed to create destination directory: " + destination.getAbsolutePath(), LogType.ERROR);
             return;
@@ -988,18 +1048,17 @@ public class NexoConverter extends Converter {
             File targetFile = new File(destination, file.getName());
 
             if (file.isDirectory()) {
-                copyDirectoryContents(file, targetFile, progress);
+                copyDirectoryContents(file, targetFile, progress, executor, latch, errorRef, useMultiThread);
             } else {
-                if (!this.settings.dryRunEnabled() && !targetFile.getParentFile().exists() && !targetFile.getParentFile().mkdirs()) {
-                    Logger.debug("Failed to create parent directory for file: " + targetFile.getAbsolutePath(), LogType.ERROR);
-                }
-                copyFile(file, targetFile);
-                progress.increment();
+                copyFileWithProgress(progress, executor, latch, errorRef, useMultiThread, file, targetFile);
             }
         }
     }
 
-    private void extractAndCopyZipAssets(File zipFile, File outputAssetsFolder, String packName, BukkitProgressBar progress) {
+    private void extractAndCopyZipAssets(File zipFile, File outputAssetsFolder, String packName,
+                                         BukkitProgressBar progress, ExecutorService executor,
+                                         CountDownLatch latch, AtomicReference<Exception> errorRef,
+                                         boolean useMultiThread) {
         File tempDir = new File(this.plugin.getDataFolder(), "temp/zip_extract_" + System.currentTimeMillis());
 
         if (!this.settings.dryRunEnabled() && !tempDir.exists() && !tempDir.mkdirs()) {
@@ -1008,11 +1067,11 @@ public class NexoConverter extends Converter {
         }
 
         try {
-            extractZip(zipFile.toPath(), tempDir.toPath(), progress);
+            extractZip(zipFile.toPath(), tempDir.toPath(), progress, executor, latch, errorRef, useMultiThread);
 
             File extractedAssetsFolder = new File(tempDir, "assets");
             if (extractedAssetsFolder.exists() && extractedAssetsFolder.isDirectory()) {
-                copyAssetsFolder(extractedAssetsFolder, outputAssetsFolder, packName, progress);
+                copyAssetsFolder(extractedAssetsFolder, outputAssetsFolder, packName, progress, executor, latch, errorRef, useMultiThread);
             } else if (!this.settings.dryRunEnabled()) {
                 Logger.debug("No assets folder found in ZIP: " + zipFile.getName());
             }
@@ -1022,6 +1081,7 @@ public class NexoConverter extends Converter {
             }
         } catch (IOException e) {
             Logger.showException("Failed to extract and copy assets from ZIP: " + zipFile.getName(), e);
+            errorRef.compareAndSet(null, e);
         } finally {
             if (!this.settings.dryRunEnabled() && tempDir.exists()) {
                 deleteDirectory(tempDir);
@@ -1029,7 +1089,9 @@ public class NexoConverter extends Converter {
         }
     }
 
-    private void extractZip(Path zipPath, Path targetDir, BukkitProgressBar progress) throws IOException {
+    private void extractZip(Path zipPath, Path targetDir, BukkitProgressBar progress,
+                            ExecutorService executor, CountDownLatch latch,
+                            AtomicReference<Exception> errorRef, boolean useMultiThread) throws IOException {
         if (this.settings.dryRunEnabled()) {
             try (ZipInputStream zis = new ZipInputStream(new BufferedInputStream(Files.newInputStream(zipPath)))) {
                 ZipEntry entry;
@@ -1066,16 +1128,37 @@ public class NexoConverter extends Converter {
 
                 Files.createDirectories(canonicalDestination.getParentFile().toPath());
 
-                try (OutputStream out = Files.newOutputStream(canonicalDestination.toPath(),
-                        StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)) {
-                    byte[] buffer = new byte[8192];
-                    int len;
-                    while ((len = zis.read(buffer)) > 0) {
-                        out.write(buffer, 0, len);
+                ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+                byte[] tempBuffer = new byte[8192];
+                int len;
+                while ((len = zis.read(tempBuffer)) > 0) {
+                    buffer.write(tempBuffer, 0, len);
+                }
+                byte[] fileContent = buffer.toByteArray();
+
+                Path finalPath = canonicalDestination.toPath();
+                if (useMultiThread) {
+                    executor.submit(() -> {
+                        try {
+                            latch.await();
+                            try (OutputStream out = Files.newOutputStream(finalPath,
+                                    StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)) {
+                                out.write(fileContent);
+                            }
+                            progress.increment();
+                        } catch (Exception e) {
+                            Logger.debug("Error extracting file from ZIP: " + entryName + " - " + e.getMessage(), LogType.ERROR);
+                            errorRef.compareAndSet(null, e);
+                        }
+                    });
+                } else {
+                    try (OutputStream out = Files.newOutputStream(finalPath,
+                            StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)) {
+                        out.write(fileContent);
                     }
+                    progress.increment();
                 }
 
-                progress.increment();
                 zis.closeEntry();
             }
         }

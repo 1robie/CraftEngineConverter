@@ -1,6 +1,6 @@
 # 🗺️ ROADMAP - CraftEngineConverter
 
-> **Last Updated:** December 23, 2025
+> **Last Updated:** December 25, 2025
 > **Project Status:** 🟢 Active Development
 > **This file serves as the main project roadmap and development tracker.**
 
@@ -99,7 +99,8 @@
 
 ## ✅ Recently Completed
 
-- Dry-run mode for converters just need to add `-dryrun` argument to the command line
+- Multi-threaded pack conversion: just add the `--threads=<number>` argument to the command line
+- Dry-run mode for converters just need to add `--dryrun` argument to the command line
 - Configuration for progress bar display for converters
 - Progress bars for long operations
 - Fixed NoSuchFileException in ZIP extraction
