@@ -22,19 +22,19 @@ Download the latest version of **CraftEngineConverter** from one of the followin
 
 1. **Stop your Minecraft server** if it is running.
 2. **Download the CraftEngineConverter.jar** file from the link above.
-3. **Place the {{vars.SINGLE_BACKTICK}}CraftEngineConverter.{{vars.PLUGIN_VERSION}}.jar{{vars.SINGLE_BACKTICK}} file** into your server's `plugins` directory.
+3. **Place the <code class="expression">space.vars.SINGLE_BACKTICK</code>CraftEngineConverter.<code class="expression">space.vars.PLUGIN_VERSION</code>.jar<code class="expression">space.vars.SINGLE_BACKTICK</code> file** into your server's `plugins` directory.
 4. **Ensure that the required dependency, CraftEngine**, is also installed in the `plugins` directory.
 5. **Start your Minecraft server.**
 
 ### Step 2: Verification
 
 After starting your server, check the console logs for messages indicating that **CraftEngineConverter** has been enabled successfully. You should see output similar to the following:
-{{vars.CODE_BLOCK_TRIPLEBACKTICKS}} bash
-[xx:xx:xx INFO]: [CraftEngineConverter v{{vars.PLUGIN_VERSION}}] Enabling plugin ...
-[xx:xx:xx INFO]: [CraftEngineConverter v{{vars.PLUGIN_VERSION}}] Loading 1 commands
-[xx:xx:xx INFO]: [CraftEngineConverter v{{vars.PLUGIN_VERSION}}] Auto-conversion is enabled, starting conversion...
-[xx:xx:xx INFO]: [CraftEngineConverter v{{vars.PLUGIN_VERSION}}] Plugin enabled !
-{{vars.CODE_BLOCK_TRIPLEBACKTICKS}}
+<code class="expression">space.vars.CODE_BLOCK_TRIPLEBACKTICKS</code> bash
+[xx:xx:xx INFO]: [CraftEngineConverter v<code class="expression">space.vars.PLUGIN_VERSION</code>] Enabling plugin ...
+[xx:xx:xx INFO]: [CraftEngineConverter v<code class="expression">space.vars.PLUGIN_VERSION</code>] Loading 1 commands
+[xx:xx:xx INFO]: [CraftEngineConverter v<code class="expression">space.vars.PLUGIN_VERSION</code>] Auto-conversion is enabled, starting conversion...
+[xx:xx:xx INFO]: [CraftEngineConverter v<code class="expression">space.vars.PLUGIN_VERSION</code>] Plugin enabled !
+<code class="expression">space.vars.CODE_BLOCK_TRIPLEBACKTICKS</code>
 
 If you see any errors, please refer to the [🐛 Common Issues](../troubleshooting/common-issues.md) page for troubleshooting tips.
 
