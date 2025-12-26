@@ -26,7 +26,7 @@ public enum Plugins {
             return bukkitPlugin != null;
         });
     }
-    private boolean isEnabled() {
+    public boolean isEnabled() {
         Plugin bukkitPlugin = Bukkit.getServer().getPluginManager().getPlugin(pluginName);
         return bukkitPlugin != null && bukkitPlugin.isEnabled();
     }
