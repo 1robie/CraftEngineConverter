@@ -1,0 +1,91 @@
+# 🛠️ Main Config (`config.yml`) Guide
+
+This guide provides a detailed overview of the main configuration file (`config.yml`) for **CraftEngineConverter**. Here, you'll find explanations for each configurable option, allowing you to customize the plugin to suit your server's needs.
+
+## 📁 Configuration File Location
+The `config.yml` file is located in the `plugins/CraftEngineConverter/` directory of your Minecraft server.
+
+## ⚙️ Configuration Options
+
+```yaml
+# Enable or disable debug mode
+enable-debug: false
+
+# Auto-convert items on plugin enable
+auto-convert-on-startup: false
+
+# Default material for items
+default-material: "PAPER"
+
+# Disable italic formatting in item lore by adding <!i> tag
+disable-default-italic: true
+
+# Armor converter settings
+# Available types: COMPONENT, TRIM , BOTH
+armor-converter-type: "COMPONENT"
+
+blacklisted-paths:
+  - "shaders/*" # Blacklist all files in shaders folder
+  # - "shaders/rendertype_text.fsh" # Example of how to blacklist a specific file
+  # - "minecraft:textures/shaders/" # Example of how to blacklist the entire shaders namespace
+
+formatting:
+  packet-events: true
+  boss-bar: true
+  action-bar: true
+  plugin-message: true
+  title: true
+
+tag:
+  glyph: # <glyph:old_name>
+    enabled: true
+  placeholder-api: # <placeholderapi:placeholder> or <papi:placeholder>
+    enabled: true
+
+# Available colors:
+# BLACK, DARK_BLUE, DARK_GREEN, DARK_AQUA, DARK_RED, DARK_PURPLE,
+# GOLD, GRAY, DARK_GRAY, BLUE, GREEN, AQUA, RED, LIGHT_PURPLE, YELLOW, WHITE
+progress-bar-options:
+  items:
+    progress-color: GREEN
+    empty-color: DARK_GRAY
+    percent-color: YELLOW
+    progress-char: █
+    empty-char: ░
+    bar-width: 50
+  emojis:
+    progress-color: AQUA
+    empty-color: DARK_GRAY
+    percent-color: YELLOW
+    progress-char: █
+    empty-char: ░
+    bar-width: 50
+  images:
+    progress-color: GOLD
+    empty-color: DARK_GRAY
+    percent-color: YELLOW
+    progress-char: █
+    empty-char: ░
+    bar-width: 50
+  languages:
+    progress-color: BLUE
+    empty-color: DARK_GRAY
+    percent-color: YELLOW
+    progress-char: █
+    empty-char: ░
+    bar-width: 50
+  sounds:
+    progress-color: LIGHT_PURPLE
+    empty-color: DARK_GRAY
+    percent-color: YELLOW
+    progress-char: █
+    empty-char: ░
+    bar-width: 50
+  packs:
+    progress-color: RED
+    empty-color: DARK_GRAY
+    percent-color: YELLOW
+    progress-char: █
+    empty-char: ░
+    bar-width: 50
+```

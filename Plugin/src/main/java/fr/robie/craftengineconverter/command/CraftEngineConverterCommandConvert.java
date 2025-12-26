@@ -21,7 +21,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class CraftEngineConverterCommandConvert extends VCommand {
     public CraftEngineConverterCommandConvert(CraftEngineConverter plugin) {
         super(plugin);
-        this.setPermission(Permission.COMMAND_RELOAD);
+        this.setPermission(Permission.COMMAND_CONVERT);
         this.setDescription(Message.DESCRIPTION_COMMAND_CONVERT);
         this.addSubCommand("convert");
         this.addOptionalArg("plugin",(sender,args)-> this.plugin.getConverterNames());
