@@ -22,19 +22,19 @@ Download the latest version of **CraftEngineConverter** from one of the followin
 
 1. **Stop your Minecraft server** if it is running.
 2. **Download the CraftEngineConverter.jar** file from the link above.
-3. **Place the {{space.vars.SINGLE_BACKTICK}}CraftEngineConverter.{{space.vars.PLUGIN_VERSION}}.jar{{space.vars.SINGLE_BACKTICK}} file** into your server's `plugins` directory.
+3. **Place the {{vars.SINGLE_BACKTICK}}CraftEngineConverter.{{vars.PLUGIN_VERSION}}.jar{{vars.SINGLE_BACKTICK}} file** into your server's `plugins` directory.
 4. **Ensure that the required dependency, CraftEngine**, is also installed in the `plugins` directory.
 5. **Start your Minecraft server.**
 
 ### Step 2: Verification
 
 After starting your server, check the console logs for messages indicating that **CraftEngineConverter** has been enabled successfully. You should see output similar to the following:
-{{space.vars.CODE_BLOCK_TRIPLEBACKTICKS}} bash
-[xx:xx:xx INFO]: [CraftEngineConverter v{{space.vars.PLUGIN_VERSION}}] Enabling plugin ...
-[xx:xx:xx INFO]: [CraftEngineConverter v{{space.vars.PLUGIN_VERSION}}] Loading 1 commands
-[xx:xx:xx INFO]: [CraftEngineConverter v{{space.vars.PLUGIN_VERSION}}] Auto-conversion is enabled, starting conversion...
-[xx:xx:xx INFO]: [CraftEngineConverter v{{space.vars.PLUGIN_VERSION}}] Plugin enabled !
-{{space.vars.CODE_BLOCK_TRIPLEBACKTICKS}}
+{{vars.CODE_BLOCK_TRIPLEBACKTICKS}} bash
+[xx:xx:xx INFO]: [CraftEngineConverter v{{vars.PLUGIN_VERSION}}] Enabling plugin ...
+[xx:xx:xx INFO]: [CraftEngineConverter v{{vars.PLUGIN_VERSION}}] Loading 1 commands
+[xx:xx:xx INFO]: [CraftEngineConverter v{{vars.PLUGIN_VERSION}}] Auto-conversion is enabled, starting conversion...
+[xx:xx:xx INFO]: [CraftEngineConverter v{{vars.PLUGIN_VERSION}}] Plugin enabled !
+{{vars.CODE_BLOCK_TRIPLEBACKTICKS}}
 
 If you see any errors, please refer to the [🐛 Common Issues](../troubleshooting/common-issues.md) page for troubleshooting tips.
 
