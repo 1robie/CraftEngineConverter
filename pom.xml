@@ -99,7 +99,7 @@
             <dependency>
                 <groupId>net.momirealms</groupId>
                 <artifactId>craft-engine-bukkit</artifactId>
-                <version>0.0.66</version>
+                <version>0.0.66.25</version>
                 <scope>provided</scope>
             </dependency>
 
