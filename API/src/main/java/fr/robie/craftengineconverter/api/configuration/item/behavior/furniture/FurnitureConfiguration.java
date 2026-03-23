@@ -39,27 +39,27 @@ public class FurnitureConfiguration implements ItemConfigurationSerializable {
 
     @Override
     public void serialize(@NotNull YamlConfiguration yamlConfiguration, @NotNull String path, @NotNull ConfigurationSection itemSection, @NotNull String itemId) {
-        ConfigurationSection behaviorSection = getOrCreateSection(itemSection, "behavior");
+        ConfigurationSection behaviorSection = this.getOrCreateSection(itemSection, "behavior");
         behaviorSection.set("type", "furniture_item");
 
-        ConfigurationSection settingsSection = getOrCreateSection(behaviorSection, "settings");
+        ConfigurationSection settingsSection = this.getOrCreateSection(behaviorSection, "settings");
         settingsSection.set("item", itemId);
 
-        ConfigurationSection furnitureSection = getOrCreateSection(behaviorSection, "furniture");
+        ConfigurationSection furnitureSection = this.getOrCreateSection(behaviorSection, "furniture");
         if (this.furnitureSettings != null) {
-            ConfigurationSection furnitureSettingsSection = getOrCreateSection(furnitureSection, "settings");
+            ConfigurationSection furnitureSettingsSection = this.getOrCreateSection(furnitureSection, "settings");
             furnitureSettingsSection.set("item", this.furnitureSettings.getItem());
             if (this.furnitureSettings.getHitTimes() != null) {
                 furnitureSettingsSection.set("hit-times", this.furnitureSettings.getHitTimes());
             }
             if (this.furnitureSettings.getBreakSound() != null) {
-                getOrCreateSection(furnitureSettingsSection, "sounds").set("break", this.furnitureSettings.getBreakSound());
+                this.getOrCreateSection(furnitureSettingsSection, "sounds").set("break", this.furnitureSettings.getBreakSound());
             }
             if (this.furnitureSettings.getPlaceSound() != null) {
-                getOrCreateSection(furnitureSettingsSection, "sounds").set("place", this.furnitureSettings.getPlaceSound());
+                this.getOrCreateSection(furnitureSettingsSection, "sounds").set("place", this.furnitureSettings.getPlaceSound());
             }
             if (this.furnitureSettings.getHitSound() != null) {
-                getOrCreateSection(furnitureSettingsSection, "sounds").set("hit", this.furnitureSettings.getHitSound());
+                this.getOrCreateSection(furnitureSettingsSection, "sounds").set("hit", this.furnitureSettings.getHitSound());
             }
         }
 
@@ -72,7 +72,7 @@ public class FurnitureConfiguration implements ItemConfigurationSerializable {
         }
 
         if (!this.placements.isEmpty()) {
-            ConfigurationSection placementSection = getOrCreateSection(furnitureSection, "placement");
+            ConfigurationSection placementSection = this.getOrCreateSection(furnitureSection, "placement");
             for (Placement placement : this.placements.values()) {
                 placement.serialize(placementSection);
             }

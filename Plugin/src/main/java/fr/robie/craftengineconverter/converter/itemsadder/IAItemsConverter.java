@@ -2,6 +2,7 @@ package fr.robie.craftengineconverter.converter.itemsadder;
 
 import fr.robie.craftengineconverter.api.configuration.Configuration;
 import fr.robie.craftengineconverter.api.configuration.ConfigurationKey;
+import fr.robie.craftengineconverter.api.configuration.conditions.SurvivesExplosionCondition;
 import fr.robie.craftengineconverter.api.configuration.item.LoreConfiguration;
 import fr.robie.craftengineconverter.api.configuration.item.behavior.block.BlockConfiguration;
 import fr.robie.craftengineconverter.api.configuration.item.behavior.block.BlockSettings;
@@ -23,7 +24,6 @@ import fr.robie.craftengineconverter.api.configuration.item.behavior.furniture.h
 import fr.robie.craftengineconverter.api.configuration.item.data.*;
 import fr.robie.craftengineconverter.api.configuration.item.loottables.LootPool;
 import fr.robie.craftengineconverter.api.configuration.item.loottables.LootTable;
-import fr.robie.craftengineconverter.api.configuration.conditions.SurvivesExplosionCondition;
 import fr.robie.craftengineconverter.api.configuration.item.loottables.entries.FurnitureItemEntry;
 import fr.robie.craftengineconverter.api.configuration.item.models.condition.ConditionModelConfiguration;
 import fr.robie.craftengineconverter.api.configuration.item.models.model.GenerationConfiguration;
@@ -77,7 +77,7 @@ public class IAItemsConverter extends ItemConverter {
     @Override
     public void convertMaterial() {
         ConfigurationSection resourceSection = this.iaItemSection.getConfigurationSection("resource");
-        if (isNotNull(resourceSection)) {
+        if (this.isNotNull(resourceSection)) {
             try {
                 this.craftEngineItemsConfiguration.setMaterial(Material.valueOf(resourceSection.getString("material", "").toUpperCase()));
             } catch (Exception ignored) {
@@ -88,7 +88,7 @@ public class IAItemsConverter extends ItemConverter {
     @Override
     public void convertItemName() {
         String itemName = this.iaItemSection.getString("name", this.iaItemSection.getString("display_name"));
-        if (isValidString(itemName)) {
+        if (this.isValidString(itemName)) {
             if (itemName.startsWith("display-name-")) {
                 itemName = "<l10n:" + itemName + ">";
             }
@@ -113,7 +113,7 @@ public class IAItemsConverter extends ItemConverter {
     @Override
     public void convertDyedColor() {
         Object color = this.iaItemSection.get("graphics.color");
-        if (isNotNull(color)) {
+        if (this.isNotNull(color)) {
             try {
                 this.craftEngineItemsConfiguration.addItemConfiguration(DyedColorConfiguration.parse(color));
             } catch (Exception ignored) {
@@ -124,7 +124,7 @@ public class IAItemsConverter extends ItemConverter {
     @Override
     public void convertUnbreakable() {
         ConfigurationSection durabilitySection = this.iaItemSection.getConfigurationSection("durability");
-        if (isNotNull(durabilitySection)) {
+        if (this.isNotNull(durabilitySection)) {
             boolean unbreakable = durabilitySection.getBoolean("unbreakable", false);
             if (unbreakable) {
                 this.craftEngineItemsConfiguration.addItemConfiguration(new UnbreakableConfiguration(true));
@@ -154,12 +154,12 @@ public class IAItemsConverter extends ItemConverter {
     @Override
     public void convertAttributeModifiers() {
         ConfigurationSection attributesSection = this.iaItemSection.getConfigurationSection("attribute_modifiers");
-        if (isNotNull(attributesSection)) {
+        if (this.isNotNull(attributesSection)) {
             List<fr.robie.craftengineconverter.api.configuration.item.data.AttributeModifier> attributeModifiers = new ArrayList<>();
 
             for (String equipmentSlot : attributesSection.getKeys(false)) {
                 ConfigurationSection slotSection = attributesSection.getConfigurationSection(equipmentSlot);
-                if (isNull(slotSection)) {
+                if (this.isNull(slotSection)) {
                     continue;
                 }
 
@@ -174,11 +174,11 @@ public class IAItemsConverter extends ItemConverter {
                 for (String attributeKey : slotSection.getKeys(false)) {
                     if (slotSection.isConfigurationSection(attributeKey)) {
                         ConfigurationSection attributeSection = slotSection.getConfigurationSection(attributeKey);
-                        if (isNull(attributeSection)) {
+                        if (this.isNull(attributeSection)) {
                             continue;
                         }
 
-                        Attribute attribute = getAttributeByKey(attributeKey);
+                        Attribute attribute = this.getAttributeByKey(attributeKey);
                         if (attribute == null) {
                             continue;
                         }
@@ -198,7 +198,7 @@ public class IAItemsConverter extends ItemConverter {
                         }
                         attributeModifiers.add(new fr.robie.craftengineconverter.api.configuration.item.data.AttributeModifier(attribute.name(), slot, null, value, operation, null));
                     } else {
-                        Attribute attribute = getAttributeByKey(attributeKey);
+                        Attribute attribute = this.getAttributeByKey(attributeKey);
                         if (attribute == null) {
                             continue;
                         }
@@ -234,7 +234,7 @@ public class IAItemsConverter extends ItemConverter {
     @Override
     public void convertEnchantments() {
         ConfigurationSection enchantsSection = this.iaItemSection.getConfigurationSection("enchants");
-        if (isNotNull(enchantsSection)) {
+        if (this.isNotNull(enchantsSection)) {
             fr.robie.craftengineconverter.api.configuration.item.data.EnchantmentConfiguration enchantmentConfiguration = new fr.robie.craftengineconverter.api.configuration.item.data.EnchantmentConfiguration();
             for (String enchantmentKey : enchantsSection.getKeys(false)) {
                 int enchantLevel = enchantsSection.getInt(enchantmentKey, 1);
@@ -271,7 +271,7 @@ public class IAItemsConverter extends ItemConverter {
     @Override
     public void convertCustomModelData() {
         ConfigurationSection resourceSection = this.iaItemSection.getConfigurationSection("resource");
-        if (isNotNull(resourceSection)) {
+        if (this.isNotNull(resourceSection)) {
             int customModelData = resourceSection.getInt("custom_model_data", resourceSection.getInt("model_id", 0));
             if (customModelData != 0) {
                 this.craftEngineItemsConfiguration.addItemConfiguration(new fr.robie.craftengineconverter.api.configuration.item.data.CustomModelDataConfiguration(customModelData));
@@ -282,7 +282,7 @@ public class IAItemsConverter extends ItemConverter {
     @Override
     public void convertItemModel() {
         String itemModel = this.iaItemSection.getString("item_model");
-        if (isValidString(itemModel)) {
+        if (this.isValidString(itemModel)) {
             this.craftEngineItemsConfiguration.addItemConfiguration(new fr.robie.craftengineconverter.api.configuration.item.components.ItemModelConfiguration(itemModel));
         }
     }
@@ -310,7 +310,7 @@ public class IAItemsConverter extends ItemConverter {
     @Override
     public void convertMaxDamage() {
         ConfigurationSection durability = this.iaItemSection.getConfigurationSection("durability");
-        if (isNotNull(durability)) {
+        if (this.isNotNull(durability)) {
             int maxDamage = durability.getInt("max_durability", -1);
             if (maxDamage > 0) {
                 this.craftEngineItemsConfiguration.addItemConfiguration(new fr.robie.craftengineconverter.api.configuration.item.data.MaxDamageConfiguration(maxDamage));
@@ -321,9 +321,9 @@ public class IAItemsConverter extends ItemConverter {
     @Override
     public void convertGlowDropColor() {
         ConfigurationSection dropSection = this.iaItemSection.getConfigurationSection("drop");
-        if (isNotNull(dropSection)) {
+        if (this.isNotNull(dropSection)) {
             ConfigurationSection glowSection = dropSection.getConfigurationSection("glow");
-            if (isNotNull(glowSection)) {
+            if (this.isNotNull(glowSection)) {
                 boolean glow = glowSection.getBoolean("enabled", false);
                 if (glow) {
                     String color = glowSection.getString("color");
@@ -340,7 +340,7 @@ public class IAItemsConverter extends ItemConverter {
     @Override
     public void convertDropShowName() {
         ConfigurationSection dropSection = this.iaItemSection.getConfigurationSection("drop");
-        if (isNotNull(dropSection)) {
+        if (this.isNotNull(dropSection)) {
             boolean showName = dropSection.getBoolean("show_name", true);
             if (!showName) {
                 this.craftEngineItemsConfiguration.addItemConfiguration(new fr.robie.craftengineconverter.api.configuration.item.settings.DropDisplayConfiguration(false));
@@ -356,7 +356,7 @@ public class IAItemsConverter extends ItemConverter {
     @Override
     public void convertToolTipStyle() {
         String toolTipStyle = this.iaItemSection.getString("tooltip_style");
-        if (isValidString(toolTipStyle)) {
+        if (this.isValidString(toolTipStyle)) {
             this.craftEngineItemsConfiguration.addItemConfiguration(new fr.robie.craftengineconverter.api.configuration.item.data.TooltipStyleConfiguration(toolTipStyle));
         }
     }
@@ -364,7 +364,7 @@ public class IAItemsConverter extends ItemConverter {
     @Override
     public void convertFood() {
         ConfigurationSection consumableSection = this.iaItemSection.getConfigurationSection("consumable");
-        if (isNotNull(consumableSection)) {
+        if (this.isNotNull(consumableSection)) {
             int nutrition = consumableSection.getInt("nutrition", -1);
             float saturation = (float) consumableSection.getDouble("saturation", -1.0);
             if (nutrition >= 0 && saturation >= 0) {
@@ -376,47 +376,47 @@ public class IAItemsConverter extends ItemConverter {
     @Override
     public void convertJukeboxPlayable() {
         String song = this.iaItemSection.getString("jukebox_disc.song", this.iaItemSection.getString("behaviours.music_disc.song.name"));
-        if (isValidString(song)) {
+        if (this.isValidString(song)) {
             this.craftEngineItemsConfiguration.addItemConfiguration(new fr.robie.craftengineconverter.api.configuration.item.components.JukeboxPlayableConfiguration(song));
         }
     }
 
     @Override
     public void convertEquippable() {
-        convertEquipmentSection();
-        convertSpecificPropertiesArmorSection();
+        this.convertEquipmentSection();
+        this.convertSpecificPropertiesArmorSection();
     }
 
     private void convertEquipmentSection() {
         ConfigurationSection equipmentSection = this.iaItemSection.getConfigurationSection("equipment");
-        if (!isNotNull(equipmentSection)) {
+        if (!this.isNotNull(equipmentSection)) {
             return;
         }
 
         String assetId = equipmentSection.getString("id");
-        if (!isValidString(assetId)) {
+        if (!this.isValidString(assetId)) {
             return;
         }
 
-        assetId = namespaced(assetId, this.namespace);
-        EquipmentSlot equipmentSlot = resolveEquipmentSlot(equipmentSection);
+        assetId = this.namespaced(assetId, this.namespace);
+        EquipmentSlot equipmentSlot = this.resolveEquipmentSlot(equipmentSection);
 
         this.craftEngineItemsConfiguration.addItemConfiguration(new fr.robie.craftengineconverter.api.configuration.item.settings.EquippableConfiguration(assetId, equipmentSlot));
-        applySlotAttributeModifiers(equipmentSection, equipmentSlot);
+        this.applySlotAttributeModifiers(equipmentSection, equipmentSlot);
     }
 
     private EquipmentSlot resolveEquipmentSlot(ConfigurationSection equipmentSection) {
-        EquipmentSlot fromItemId = getEquipmentSlotFromSuffix(this.itemId.toLowerCase(), false);
+        EquipmentSlot fromItemId = this.getEquipmentSlotFromSuffix(this.itemId.toLowerCase(), false);
         if (fromItemId != null) {
             return fromItemId;
         }
 
         String slot = equipmentSection.getString("slot");
-        if (isValidString(slot)) {
+        if (this.isValidString(slot)) {
             return null;
         }
 
-        return getEquipmentSlotFromSuffix(this.craftEngineItemsConfiguration.getMaterial().name(), true);
+        return this.getEquipmentSlotFromSuffix(this.craftEngineItemsConfiguration.getMaterial().name(), true);
     }
 
     private EquipmentSlot getEquipmentSlotFromSuffix(String name, boolean uppercase) {
@@ -442,11 +442,11 @@ public class IAItemsConverter extends ItemConverter {
         }
 
         ConfigurationSection slotAttributeModifiers = equipmentSection.getConfigurationSection("slot_attribute_modifiers");
-        if (!isNotNull(slotAttributeModifiers)) {
+        if (!this.isNotNull(slotAttributeModifiers)) {
             return;
         }
 
-        net.momirealms.craftengine.core.attribute.AttributeModifier.Slot attributeSlot = toAttributeSlot(equipmentSlot);
+        net.momirealms.craftengine.core.attribute.AttributeModifier.Slot attributeSlot = this.toAttributeSlot(equipmentSlot);
         if (attributeSlot == null) {
             return;
         }
@@ -468,17 +468,17 @@ public class IAItemsConverter extends ItemConverter {
 
     private void convertSpecificPropertiesArmorSection() {
         ConfigurationSection specificPropertiesSection = this.iaItemSection.getConfigurationSection("specific_properties");
-        if (!isNotNull(specificPropertiesSection)) {
+        if (!this.isNotNull(specificPropertiesSection)) {
             return;
         }
 
         ConfigurationSection armorSection = specificPropertiesSection.getConfigurationSection("armor");
-        if (!isNotNull(armorSection)) {
+        if (!this.isNotNull(armorSection)) {
             return;
         }
 
         String color = armorSection.getString("color");
-        if (isValidString(color)) {
+        if (this.isValidString(color)) {
             try {
                 this.craftEngineItemsConfiguration.addItemConfiguration(DyedColorConfiguration.parse(color));
                 Material customMaterial = this.craftEngineItemsConfiguration.getCustomMaterial();
@@ -499,16 +499,16 @@ public class IAItemsConverter extends ItemConverter {
         }
 
         String assetId = armorSection.getString("custom_armor");
-        if (!isValidString(assetId)) {
+        if (!this.isValidString(assetId)) {
             return;
         }
 
-        assetId = namespaced(assetId, this.namespace);
+        assetId = this.namespaced(assetId, this.namespace);
         this.isValidString(assetId);
 
         this.setAssetId(assetId);
 
-        EquipmentSlot equipmentSlot = parseEquipmentSlot(armorSection.getString("slot"));
+        EquipmentSlot equipmentSlot = this.parseEquipmentSlot(armorSection.getString("slot"));
         this.craftEngineItemsConfiguration.addItemConfiguration(new fr.robie.craftengineconverter.api.configuration.item.settings.EquippableConfiguration(assetId, equipmentSlot));
     }
 
@@ -528,10 +528,10 @@ public class IAItemsConverter extends ItemConverter {
     public void convertItemTexture() {
         ConfigurationSection resourceSection = this.iaItemSection.getConfigurationSection("resource");
 
-        if (isNotNull(resourceSection)) {
-            handleResourceSection(resourceSection);
+        if (this.isNotNull(resourceSection)) {
+            this.handleResourceSection(resourceSection);
         } else {
-            handleGraphicsSection();
+            this.handleGraphicsSection();
         }
     }
 
@@ -539,19 +539,19 @@ public class IAItemsConverter extends ItemConverter {
         boolean generate = resourceSection.getBoolean("generate", false);
 
         if (generate) {
-            handleGeneratedResource(resourceSection);
+            this.handleGeneratedResource(resourceSection);
         } else {
-            handleExistingResource(resourceSection);
+            this.handleExistingResource(resourceSection);
         }
     }
 
     private void handleGeneratedResource(ConfigurationSection resourceSection) {
-        IADirectionalMode directionalMode = getDirectionalMode();
+        IADirectionalMode directionalMode = this.getDirectionalMode();
 
         switch (directionalMode) {
-            case NONE -> handleNoneDirectionalMode(resourceSection);
-            case ALL, LOG -> handleAllOrLogDirectionalMode(resourceSection);
-            case FURNACE -> handleFurnaceDirectionalMode(resourceSection);
+            case NONE -> this.handleNoneDirectionalMode(resourceSection);
+            case ALL, LOG -> this.handleAllOrLogDirectionalMode(resourceSection);
+            case FURNACE -> this.handleFurnaceDirectionalMode(resourceSection);
             default ->
                     Logger.debug("[IAItemsConverter] Directional mode " + directionalMode + " is not supported for item " + this.itemId);
         }
@@ -567,13 +567,13 @@ public class IAItemsConverter extends ItemConverter {
     }
 
     private void handleNoneDirectionalMode(ConfigurationSection resourceSection) {
-        String texturePath = getTexturePath(resourceSection);
-        if (isValidString(texturePath)) {
-            texturePath = namespaced(texturePath, this.namespace);
+        String texturePath = this.getTexturePath(resourceSection);
+        if (this.isValidString(texturePath)) {
+            texturePath = this.namespaced(texturePath, this.namespace);
             ConfigurationSection blockSection = this.iaItemSection.getConfigurationSection("specific_properties.block");
-            if (isNotNull(blockSection)) {
+            if (this.isNotNull(blockSection)) {
                 this.craftEngineItemsConfiguration.setModelConfiguration(new SimpleModelConfiguration(texturePath));
-                handleBlockItem(resourceSection, blockSection);
+                this.handleBlockItem(resourceSection, blockSection);
 
                 return;
             }
@@ -586,12 +586,12 @@ public class IAItemsConverter extends ItemConverter {
     }
 
     private void handleAllOrLogDirectionalMode(ConfigurationSection resourceSection) {
-        Map<BlockFace, String> faceTextureMap = buildFaceTextureMap(resourceSection, "ALL");
+        Map<BlockFace, String> faceTextureMap = this.buildFaceTextureMap(resourceSection, "ALL");
         if (faceTextureMap == null) {
             return;
         }
 
-        SimpleModelConfiguration simpleModelConfiguration = createCubeModelTemplate(faceTextureMap);
+        SimpleModelConfiguration simpleModelConfiguration = this.createCubeModelTemplate(faceTextureMap);
         this.craftEngineItemsConfiguration.setModelConfiguration(simpleModelConfiguration);
 
         BlockConfiguration blockConfiguration = new BlockConfiguration(this.itemId);
@@ -611,20 +611,20 @@ public class IAItemsConverter extends ItemConverter {
     }
 
     private void handleFurnaceDirectionalMode(ConfigurationSection resourceSection) {
-        Map<BlockFace, String> faceTextureMap = buildFaceTextureMap(resourceSection, "Furnace");
+        Map<BlockFace, String> faceTextureMap = this.buildFaceTextureMap(resourceSection, "Furnace");
         if (faceTextureMap == null) {
             return;
         }
 
-        SimpleModelConfiguration simpleModelConfiguration = createCubeModelTemplate(faceTextureMap);
+        SimpleModelConfiguration simpleModelConfiguration = this.createCubeModelTemplate(faceTextureMap);
         this.craftEngineItemsConfiguration.setModelConfiguration(simpleModelConfiguration);
 
         BlockConfiguration blockConfiguration = new BlockConfiguration(this.itemId);
         MultiStateBlock multiStateBlock = new MultiStateBlock();
-        multiStateBlock.addAppearance("east", BlockAppearance.autoState(Plugins.ITEMS_ADDER, getBlockState(IAPlacedModelTypes.TILE), this.itemId, simpleModelConfiguration).build());
-        multiStateBlock.addAppearance("west", BlockAppearance.autoState(Plugins.ITEMS_ADDER, getBlockState(IAPlacedModelTypes.TILE), this.itemId, simpleModelConfiguration).build());
-        multiStateBlock.addAppearance("north", BlockAppearance.autoState(Plugins.ITEMS_ADDER, getBlockState(IAPlacedModelTypes.TILE), this.itemId, simpleModelConfiguration).build());
-        multiStateBlock.addAppearance("south", BlockAppearance.autoState(Plugins.ITEMS_ADDER, getBlockState(IAPlacedModelTypes.TILE), this.itemId, simpleModelConfiguration).build());
+        multiStateBlock.addAppearance("east", BlockAppearance.autoState(Plugins.ITEMS_ADDER, this.getBlockState(IAPlacedModelTypes.TILE), this.itemId, simpleModelConfiguration).build());
+        multiStateBlock.addAppearance("west", BlockAppearance.autoState(Plugins.ITEMS_ADDER, this.getBlockState(IAPlacedModelTypes.TILE), this.itemId, simpleModelConfiguration).build());
+        multiStateBlock.addAppearance("north", BlockAppearance.autoState(Plugins.ITEMS_ADDER, this.getBlockState(IAPlacedModelTypes.TILE), this.itemId, simpleModelConfiguration).build());
+        multiStateBlock.addAppearance("south", BlockAppearance.autoState(Plugins.ITEMS_ADDER, this.getBlockState(IAPlacedModelTypes.TILE), this.itemId, simpleModelConfiguration).build());
         HorizontalDirectionBlockStateProperty facing = new HorizontalDirectionBlockStateProperty("facing", HorizontalDirection.NORTH);
         multiStateBlock.addProperty(facing);
         multiStateBlock.addVariant(new BlockVariant("east").addVariantCondition(facing, HorizontalDirection.EAST));
@@ -648,14 +648,14 @@ public class IAItemsConverter extends ItemConverter {
         Map<BlockFace, String> faceTextureMap = new HashMap<>();
 
         for (String faceTexture : faceTextures) {
-            String cleanedTexture = cleanPath(faceTexture);
-            if (isNull(cleanedTexture)) {
+            String cleanedTexture = this.cleanPath(faceTexture);
+            if (this.isNull(cleanedTexture)) {
                 continue;
             }
 
-            BlockFace face = determineBlockFace(cleanedTexture);
+            BlockFace face = this.determineBlockFace(cleanedTexture);
             if (face != null) {
-                faceTextureMap.put(face, namespaced(cleanedTexture, this.namespace));
+                faceTextureMap.put(face, this.namespaced(cleanedTexture, this.namespace));
             } else {
                 Logger.debug("[IAItemsConverter] Invalid texture name " + faceTexture + " for directional mode " + modeName + " for item " + this.itemId);
                 return null;
@@ -709,54 +709,54 @@ public class IAItemsConverter extends ItemConverter {
     private void handleExistingResource(ConfigurationSection resourceSection) {
         ConfigurationSection blockSection = this.iaItemSection.getConfigurationSection("specific_properties.block");
 
-        if (isNotNull(blockSection)) {
-            handleBlockItem(resourceSection, blockSection);
+        if (this.isNotNull(blockSection)) {
+            this.handleBlockItem(resourceSection, blockSection);
         }
         String modelPath = resourceSection.getString("model_path");
-        if (!isValidString(modelPath)) {
+        if (!this.isValidString(modelPath)) {
             return;
         }
-        modelPath = namespaced(modelPath, this.namespace);
-        if (isNull(modelPath)) {
+        modelPath = this.namespaced(modelPath, this.namespace);
+        if (this.isNull(modelPath)) {
             Logger.debug("[IAItemsConverter] Missing model path for item " + this.itemId + ". Cannot convert item texture.");
             return;
         }
         Material itemMaterial = this.craftEngineItemsConfiguration.getMaterial();
         if (itemMaterial == Material.FISHING_ROD) {
-            handleFishingRod3D(modelPath, modelPath + "_cast");
+            this.handleFishingRod3D(modelPath, modelPath + "_cast");
             return;
         }
         if (itemMaterial == Material.BOW) {
-            handleBow3D(modelPath, modelPath + "_0", modelPath + "_1", modelPath + "_2");
+            this.handleBow3D(modelPath, modelPath + "_0", modelPath + "_1", modelPath + "_2");
             return;
         }
         if (itemMaterial == Material.SHIELD) {
-            handleShield3D(modelPath, modelPath + "_blocking");
+            this.handleShield3D(modelPath, modelPath + "_blocking");
             return;
         }
-        handleSimpleModelPath(modelPath);
+        this.handleSimpleModelPath(modelPath);
     }
 
     private void handleBlockItem(ConfigurationSection resourceSection, ConfigurationSection blockSection) {
-        IAPlacedModelTypes placedModelType = getPlacedModelType(blockSection);
+        IAPlacedModelTypes placedModelType = this.getPlacedModelType(blockSection);
 
         BlockConfiguration blockConfiguration = new BlockConfiguration(this.itemId);
         BlockSettings blockSettings = blockConfiguration.getBlockSettings();
 
-        configureBlockProperties(blockSection, blockSettings);
-        configureBlockSounds(blockSection, blockSettings);
-        configureLiquidPlacement(blockSection, blockConfiguration);
+        this.configureBlockProperties(blockSection, blockSettings);
+        this.configureBlockSounds(blockSection, blockSettings);
+        this.configureLiquidPlacement(blockSection, blockConfiguration);
 
         String modelPath = resourceSection.getString("model_path");
-        if (!isValidString(modelPath)) {
+        if (!this.isValidString(modelPath)) {
             boolean isGenerated = resourceSection.getBoolean("generate", false);
             if (isGenerated) {
-                String texturePath = getTexturePath(resourceSection);
-                if (!isValidString(texturePath)) {
+                String texturePath = this.getTexturePath(resourceSection);
+                if (!this.isValidString(texturePath)) {
                     Logger.debug("[IAItemsConverter] Missing texture path for generated block item " + this.itemId + ". Cannot convert item texture.");
                     return;
                 }
-                texturePath = namespaced(texturePath, this.namespace);
+                texturePath = this.namespaced(texturePath, this.namespace);
 
                 GenerationConfiguration generation = new GenerationConfiguration("minecraft:block/cube_all");
                 generation.addTexture("all", texturePath);
@@ -764,7 +764,7 @@ public class IAItemsConverter extends ItemConverter {
                 SimpleModelConfiguration model = new SimpleModelConfiguration(texturePath);
                 model.setGeneration(generation);
 
-                blockConfiguration.setStateBlock(new SingleStateBlock(Plugins.ITEMS_ADDER, getBlockState(placedModelType), this.itemId, model));
+                blockConfiguration.setStateBlock(new SingleStateBlock(Plugins.ITEMS_ADDER, this.getBlockState(placedModelType), this.itemId, model));
                 this.craftEngineItemsConfiguration.addItemConfiguration(blockConfiguration);
                 return;
             } else {
@@ -773,9 +773,9 @@ public class IAItemsConverter extends ItemConverter {
             }
         }
 
-        modelPath = namespaced(modelPath, this.namespace);
+        modelPath = this.namespaced(modelPath, this.namespace);
 
-        blockConfiguration.setStateBlock(new SingleStateBlock(Plugins.ITEMS_ADDER, getBlockState(placedModelType), this.itemId, new SimpleModelConfiguration(modelPath)));
+        blockConfiguration.setStateBlock(new SingleStateBlock(Plugins.ITEMS_ADDER, this.getBlockState(placedModelType), this.itemId, new SimpleModelConfiguration(modelPath)));
         this.craftEngineItemsConfiguration.addItemConfiguration(blockConfiguration);
     }
 
@@ -814,7 +814,7 @@ public class IAItemsConverter extends ItemConverter {
 
     private void configureBlockSounds(ConfigurationSection blockSection, BlockSettings blockSettings) {
         ConfigurationSection soundSection = blockSection.getConfigurationSection("sounds");
-        if (isNotNull(soundSection)) {
+        if (this.isNotNull(soundSection)) {
             String fallSound = soundSection.getString("fall");
             blockSettings.setFallSound(fallSound);
             String hitSound = soundSection.getString("hit");
@@ -859,30 +859,30 @@ public class IAItemsConverter extends ItemConverter {
 
     private void handleGraphicsSection() {
         ConfigurationSection graphicsSection = this.iaItemSection.getConfigurationSection("graphics");
-        if (isNull(graphicsSection)) {
+        if (this.isNull(graphicsSection)) {
             return;
         }
 
-        if (handleGraphicsModel(graphicsSection)) {
+        if (this.handleGraphicsModel(graphicsSection)) {
             return;
         }
 
         boolean isBlock = this.iaItemSection.contains("behaviours.block.placed_model.type");
         String texturePath = graphicsSection.getString("texture");
 
-        if (isValidString(texturePath) && !isBlock) {
-            handleSimpleTexture(texturePath);
+        if (this.isValidString(texturePath) && !isBlock) {
+            this.handleSimpleTexture(texturePath);
         } else if (isBlock) {
-            handleBlockGraphics(graphicsSection, texturePath);
+            this.handleBlockGraphics(graphicsSection, texturePath);
         } else {
-            handleComplexModels(graphicsSection);
+            this.handleComplexModels(graphicsSection);
         }
     }
 
     private boolean handleGraphicsModel(ConfigurationSection graphicsSection) {
         String modelPath = graphicsSection.getString("model");
-        if (isValidString(modelPath)) {
-            modelPath = namespaced(modelPath, this.namespace);
+        if (this.isValidString(modelPath)) {
+            modelPath = this.namespaced(modelPath, this.namespace);
             this.craftEngineItemsConfiguration.setModelConfiguration(new SimpleModelConfiguration(modelPath));
             return true;
         }
@@ -890,7 +890,7 @@ public class IAItemsConverter extends ItemConverter {
     }
 
     private void handleSimpleTexture(String texturePath) {
-        texturePath = namespaced(texturePath, this.namespace);
+        texturePath = this.namespaced(texturePath, this.namespace);
         SimpleModelConfiguration modelConfiguration = new SimpleModelConfiguration(texturePath);
         GenerationConfiguration generation = new GenerationConfiguration("minecraft:item/generated");
         generation.addTexture("layer0", texturePath);
@@ -899,18 +899,18 @@ public class IAItemsConverter extends ItemConverter {
     }
 
     private void handleBlockGraphics(ConfigurationSection graphicsSection, String texturePath) {
-        BlockParent parent = getBlockParent(graphicsSection);
+        BlockParent parent = this.getBlockParent(graphicsSection);
 
-        if (isNotNull(parent)) {
-            handleBlockIcon(graphicsSection);
+        if (this.isNotNull(parent)) {
+            this.handleBlockIcon(graphicsSection);
 
             if (parent == BlockParent.CROSS) {
-                handleCrossBlock(graphicsSection);
+                this.handleCrossBlock(graphicsSection);
             } else {
                 Logger.debug("[IAItemsConverter] Block parent " + parent + " is not supported for item " + this.itemId + ". Please open an issue to request support.");
             }
-        } else if (isValidString(texturePath)) {
-            texturePath = namespaced(texturePath, this.namespace);
+        } else if (this.isValidString(texturePath)) {
+            texturePath = this.namespaced(texturePath, this.namespace);
             SimpleModelConfiguration modelConfiguration = new SimpleModelConfiguration(texturePath);
             GenerationConfiguration generation = new GenerationConfiguration("minecraft:block/cube_all");
             generation.addTexture("all", texturePath);
@@ -930,8 +930,8 @@ public class IAItemsConverter extends ItemConverter {
 
     private void handleBlockIcon(ConfigurationSection graphicsSection) {
         String iconPath = graphicsSection.getString("icon");
-        if (isValidString(iconPath)) {
-            iconPath = namespaced(iconPath, this.namespace);
+        if (this.isValidString(iconPath)) {
+            iconPath = this.namespaced(iconPath, this.namespace);
             SimpleModelConfiguration modelConfiguration = new SimpleModelConfiguration(iconPath);
             GenerationConfiguration generation = new GenerationConfiguration("minecraft:item/generated");
             generation.addTexture("layer0", iconPath);
@@ -942,11 +942,11 @@ public class IAItemsConverter extends ItemConverter {
 
     private void handleCrossBlock(ConfigurationSection graphicsSection) {
         String crossTexture = graphicsSection.getString("textures.cross", graphicsSection.getString("texture"));
-        if (!isValidString(crossTexture)) {
+        if (!this.isValidString(crossTexture)) {
             return;
         }
 
-        crossTexture = namespaced(crossTexture, this.namespace);
+        crossTexture = this.namespaced(crossTexture, this.namespace);
 
         BlockConfiguration blockConfiguration = new BlockConfiguration(this.itemId);
 
@@ -963,14 +963,14 @@ public class IAItemsConverter extends ItemConverter {
 
     private void handleComplexModels(ConfigurationSection graphicsSection) {
         ConfigurationSection texturesSection = graphicsSection.getConfigurationSection("textures");
-        if (isNotNull(texturesSection)) {
-            handle2DModels(texturesSection);
+        if (this.isNotNull(texturesSection)) {
+            this.handle2DModels(texturesSection);
             return;
         }
 
         ConfigurationSection modelsSection = graphicsSection.getConfigurationSection("models");
-        if (isNotNull(modelsSection)) {
-            handle3DModels(modelsSection);
+        if (this.isNotNull(modelsSection)) {
+            this.handle3DModels(modelsSection);
         }
     }
 
@@ -978,11 +978,11 @@ public class IAItemsConverter extends ItemConverter {
         Set<String> keys = texturesSection.getKeys(false);
 
         if (IAModelsKeys.BOW.containsAny(keys) && keys.size() == IAModelsKeys.BOW.getKeysCount()) {
-            handleBow2D(texturesSection);
+            this.handleBow2D(texturesSection);
         } else if (IAModelsKeys.FISHING_ROD.containsAny(keys) && keys.size() == IAModelsKeys.FISHING_ROD.getKeysCount()) {
-            handleFishingRod2D(texturesSection);
+            this.handleFishingRod2D(texturesSection);
         } else if (IAModelsKeys.CROSSBOW.containsAny(keys) && keys.size() == IAModelsKeys.CROSSBOW.getKeysCount()) {
-            handleCrossbow2D(texturesSection);
+            this.handleCrossbow2D(texturesSection);
         }
     }
 
@@ -990,71 +990,71 @@ public class IAItemsConverter extends ItemConverter {
         Set<String> keys = modelsSection.getKeys(false);
 
         if (IAModelsKeys.BOW.containsAny(keys) && keys.size() == IAModelsKeys.BOW.getKeysCount()) {
-            handleBow3D(namespaced(modelsSection.getString("normal"), this.namespace),
-                    namespaced(modelsSection.getString("pulling_0"), this.namespace),
-                    namespaced(modelsSection.getString("pulling_1"), this.namespace),
-                    namespaced(modelsSection.getString("pulling_2"), this.namespace)
+            this.handleBow3D(this.namespaced(modelsSection.getString("normal"), this.namespace),
+                    this.namespaced(modelsSection.getString("pulling_0"), this.namespace),
+                    this.namespaced(modelsSection.getString("pulling_1"), this.namespace),
+                    this.namespaced(modelsSection.getString("pulling_2"), this.namespace)
             );
         } else if (IAModelsKeys.FISHING_ROD.containsAny(keys) && keys.size() == IAModelsKeys.FISHING_ROD.getKeysCount()) {
-            handleFishingRod3D(namespaced(modelsSection.getString("normal"), this.namespace), namespaced(modelsSection.getString("cast"), this.namespace));
+            this.handleFishingRod3D(this.namespaced(modelsSection.getString("normal"), this.namespace), this.namespaced(modelsSection.getString("cast"), this.namespace));
         } else if (IAModelsKeys.CROSSBOW.containsAny(keys) && keys.size() == IAModelsKeys.CROSSBOW.getKeysCount()) {
-            handleCrossbow3D(modelsSection);
+            this.handleCrossbow3D(modelsSection);
         } else if (IAModelsKeys.TRIDENT.containsAny(keys) && keys.size() == IAModelsKeys.TRIDENT.getKeysCount()) {
-            handleTrident3D(modelsSection);
+            this.handleTrident3D(modelsSection);
         } else if (IAModelsKeys.SHIELD.containsAny(keys) && keys.size() == IAModelsKeys.SHIELD.getKeysCount()) {
-            handleShield3D(namespaced(modelsSection.getString("normal"), this.namespace),
-                    namespaced(modelsSection.getString("blocking"), this.namespace)
+            this.handleShield3D(this.namespaced(modelsSection.getString("normal"), this.namespace),
+                    this.namespaced(modelsSection.getString("blocking"), this.namespace)
             );
         }
     }
 
     private void handleBow2D(ConfigurationSection texturesSection) {
-        String normalTexture = namespaced(texturesSection.getString("normal"), this.namespace);
-        String pulling0Texture = namespaced(texturesSection.getString("pulling_0"), this.namespace);
-        String pulling1Texture = namespaced(texturesSection.getString("pulling_1"), this.namespace);
-        String pulling2Texture = namespaced(texturesSection.getString("pulling_2"), this.namespace);
+        String normalTexture = this.namespaced(texturesSection.getString("normal"), this.namespace);
+        String pulling0Texture = this.namespaced(texturesSection.getString("pulling_0"), this.namespace);
+        String pulling1Texture = this.namespaced(texturesSection.getString("pulling_1"), this.namespace);
+        String pulling2Texture = this.namespaced(texturesSection.getString("pulling_2"), this.namespace);
 
         UseDurationRangeDispatchConfiguration pullingDispatch = new UseDurationRangeDispatchConfiguration();
         pullingDispatch.setScale(0.05);
-        pullingDispatch.addEntry(0.65, buildSimpleModel("minecraft:item/bow_pulling_1", pulling1Texture));
-        pullingDispatch.addEntry(0.90, buildSimpleModel("minecraft:item/bow_pulling_2", pulling2Texture));
-        pullingDispatch.setFallback(buildSimpleModel("minecraft:item/bow_pulling_0", pulling0Texture));
+        pullingDispatch.addEntry(0.65, this.buildSimpleModel("minecraft:item/bow_pulling_1", pulling1Texture));
+        pullingDispatch.addEntry(0.90, this.buildSimpleModel("minecraft:item/bow_pulling_2", pulling2Texture));
+        pullingDispatch.setFallback(this.buildSimpleModel("minecraft:item/bow_pulling_0", pulling0Texture));
 
         ConditionModelConfiguration usingItemCondition = new ConditionModelConfiguration("minecraft:using_item");
         usingItemCondition.setOnTrue(pullingDispatch);
-        usingItemCondition.setOnFalse(buildSimpleModel("minecraft:item/bow", normalTexture));
+        usingItemCondition.setOnFalse(this.buildSimpleModel("minecraft:item/bow", normalTexture));
 
         this.craftEngineItemsConfiguration.setModelConfiguration(usingItemCondition);
     }
 
     private void handleFishingRod2D(ConfigurationSection texturesSection) {
-        String normalTexture = namespaced(texturesSection.getString("normal"), this.namespace);
-        String castTexture = namespaced(texturesSection.getString("cast"), this.namespace);
+        String normalTexture = this.namespaced(texturesSection.getString("normal"), this.namespace);
+        String castTexture = this.namespaced(texturesSection.getString("cast"), this.namespace);
 
         ConditionModelConfiguration castCondition = new ConditionModelConfiguration("minecraft:fishing_rod/cast");
-        castCondition.setOnFalse(buildSimpleModel("minecraft:item/fishing_rod", normalTexture));
-        castCondition.setOnTrue(buildSimpleModel("minecraft:item/fishing_rod", castTexture));
+        castCondition.setOnFalse(this.buildSimpleModel("minecraft:item/fishing_rod", normalTexture));
+        castCondition.setOnTrue(this.buildSimpleModel("minecraft:item/fishing_rod", castTexture));
 
         this.craftEngineItemsConfiguration.setModelConfiguration(castCondition);
     }
 
     private void handleCrossbow2D(ConfigurationSection texturesSection) {
-        String normalTexture = namespaced(texturesSection.getString("normal"), this.namespace);
-        String pulling0Texture = namespaced(texturesSection.getString("pulling_0"), this.namespace);
-        String pulling1Texture = namespaced(texturesSection.getString("pulling_1"), this.namespace);
-        String pulling2Texture = namespaced(texturesSection.getString("pulling_2"), this.namespace);
-        String rocketTexture = namespaced(texturesSection.getString("rocket"), this.namespace);
-        String arrowTexture = namespaced(texturesSection.getString("arrow"), this.namespace);
+        String normalTexture = this.namespaced(texturesSection.getString("normal"), this.namespace);
+        String pulling0Texture = this.namespaced(texturesSection.getString("pulling_0"), this.namespace);
+        String pulling1Texture = this.namespaced(texturesSection.getString("pulling_1"), this.namespace);
+        String pulling2Texture = this.namespaced(texturesSection.getString("pulling_2"), this.namespace);
+        String rocketTexture = this.namespaced(texturesSection.getString("rocket"), this.namespace);
+        String arrowTexture = this.namespaced(texturesSection.getString("arrow"), this.namespace);
 
         ChargeTypeSelectConfiguration chargeTypeSelect = new ChargeTypeSelectConfiguration();
-        chargeTypeSelect.addCase(ChargeTypeSelectConfiguration.ChargeType.ARROW, buildSimpleModel("minecraft:item/crossbow_arrow", arrowTexture));
-        chargeTypeSelect.addCase(ChargeTypeSelectConfiguration.ChargeType.ROCKET, buildSimpleModel("minecraft:item/crossbow_firework", rocketTexture));
-        chargeTypeSelect.setFallback(buildSimpleModel("minecraft:item/crossbow", normalTexture));
+        chargeTypeSelect.addCase(ChargeTypeSelectConfiguration.ChargeType.ARROW, this.buildSimpleModel("minecraft:item/crossbow_arrow", arrowTexture));
+        chargeTypeSelect.addCase(ChargeTypeSelectConfiguration.ChargeType.ROCKET, this.buildSimpleModel("minecraft:item/crossbow_firework", rocketTexture));
+        chargeTypeSelect.setFallback(this.buildSimpleModel("minecraft:item/crossbow", normalTexture));
 
         UseDurationRangeDispatchConfiguration pullingDispatch = new UseDurationRangeDispatchConfiguration();
-        pullingDispatch.addEntry(0.58, buildSimpleModel("minecraft:item/crossbow_pulling_1", pulling1Texture));
-        pullingDispatch.addEntry(1.0, buildSimpleModel("minecraft:item/crossbow_pulling_2", pulling2Texture));
-        pullingDispatch.setFallback(buildSimpleModel("minecraft:item/crossbow_pulling_0", pulling0Texture));
+        pullingDispatch.addEntry(0.58, this.buildSimpleModel("minecraft:item/crossbow_pulling_1", pulling1Texture));
+        pullingDispatch.addEntry(1.0, this.buildSimpleModel("minecraft:item/crossbow_pulling_2", pulling2Texture));
+        pullingDispatch.setFallback(this.buildSimpleModel("minecraft:item/crossbow_pulling_0", pulling0Texture));
 
         ConditionModelConfiguration usingItemCondition = new ConditionModelConfiguration("minecraft:using_item");
         usingItemCondition.setOnFalse(chargeTypeSelect);
@@ -1086,12 +1086,12 @@ public class IAItemsConverter extends ItemConverter {
     }
 
     private void handleCrossbow3D(ConfigurationSection modelsSection) {
-        String normalModel = namespaced(modelsSection.getString("normal"), this.namespace);
-        String pulling0Model = namespaced(modelsSection.getString("pulling_0"), this.namespace);
-        String pulling1Model = namespaced(modelsSection.getString("pulling_1"), this.namespace);
-        String pulling2Model = namespaced(modelsSection.getString("pulling_2"), this.namespace);
-        String rocketModel = namespaced(modelsSection.getString("rocket"), this.namespace);
-        String arrowModel = namespaced(modelsSection.getString("arrow"), this.namespace);
+        String normalModel = this.namespaced(modelsSection.getString("normal"), this.namespace);
+        String pulling0Model = this.namespaced(modelsSection.getString("pulling_0"), this.namespace);
+        String pulling1Model = this.namespaced(modelsSection.getString("pulling_1"), this.namespace);
+        String pulling2Model = this.namespaced(modelsSection.getString("pulling_2"), this.namespace);
+        String rocketModel = this.namespaced(modelsSection.getString("rocket"), this.namespace);
+        String arrowModel = this.namespaced(modelsSection.getString("arrow"), this.namespace);
 
         ChargeTypeSelectConfiguration chargeTypeSelect = new ChargeTypeSelectConfiguration();
         chargeTypeSelect.addCase(ChargeTypeSelectConfiguration.ChargeType.ARROW, new SimpleModelConfiguration(arrowModel));
@@ -1111,8 +1111,8 @@ public class IAItemsConverter extends ItemConverter {
     }
 
     private void handleTrident3D(ConfigurationSection modelsSection) {
-        String normalModel = namespaced(modelsSection.getString("normal"), this.namespace);
-        String throwingModel = namespaced(modelsSection.getString("throwing"), this.namespace);
+        String normalModel = this.namespaced(modelsSection.getString("normal"), this.namespace);
+        String throwingModel = this.namespaced(modelsSection.getString("throwing"), this.namespace);
 
         ConditionModelConfiguration usingItemCondition = new ConditionModelConfiguration("minecraft:using_item");
         usingItemCondition.setOnTrue(new SimpleModelConfiguration(throwingModel));
@@ -1140,18 +1140,18 @@ public class IAItemsConverter extends ItemConverter {
     @Override
     public void convertOther() {
         ConfigurationSection behavioursSection = this.iaItemSection.getConfigurationSection("behaviours");
-        if (isNotNull(behavioursSection)) {
+        if (this.isNotNull(behavioursSection)) {
             for (String behaviourKey : behavioursSection.getKeys(false)) {
                 switch (behaviourKey) {
                     case "furniture" -> {
                         ConfigurationSection furnitureSection = behavioursSection.getConfigurationSection("furniture");
-                        if (isNotNull(furnitureSection)) {
+                        if (this.isNotNull(furnitureSection)) {
                             this.convertFurniture(furnitureSection, behavioursSection);
                         }
                     }
                     case "fuel" -> {
                         ConfigurationSection fuelSection = behavioursSection.getConfigurationSection("fuel");
-                        if (isNotNull(fuelSection)) {
+                        if (this.isNotNull(fuelSection)) {
                             int burnTicks = fuelSection.getInt("burn_ticks", -1);
                             if (burnTicks > 0) {
                                 this.craftEngineItemsConfiguration.addItemConfiguration(new fr.robie.craftengineconverter.api.configuration.item.settings.FuelTimeSettingConfiguration(burnTicks));
@@ -1178,7 +1178,7 @@ public class IAItemsConverter extends ItemConverter {
 
         Set<FurniturePlacement> placements = new HashSet<>();
         ConfigurationSection placeableSection = furnitureSection.getConfigurationSection("placeable_on");
-        if (isNotNull(placeableSection)) {
+        if (this.isNotNull(placeableSection)) {
             if (placeableSection.getBoolean("floor", true)) {
                 placements.add(FurniturePlacement.GROUND);
             }
@@ -1208,14 +1208,14 @@ public class IAItemsConverter extends ItemConverter {
         FloatsUtils scale = new FloatsUtils(3, new float[]{1f, 1f, 1f});
 
         ConfigurationSection displayTransformationSection = furnitureSection.getConfigurationSection("display_transformation");
-        if (isNotNull(displayTransformationSection)) {
+        if (this.isNotNull(displayTransformationSection)) {
             try {
                 displayType = ItemDisplayType.valueOf(displayTransformationSection.getString("transform", "FIXED").toUpperCase());
             } catch (Exception e) {
                 Logger.debug(Message.WARNING__CONVERTER__IA__FURNITURE__UNKNOWN_DISPLAY_TRANSFORM, "item", this.itemId, "transform", displayTransformationSection.getString("transform"));
             }
             ConfigurationSection translationSection = displayTransformationSection.getConfigurationSection("translation");
-            if (isNotNull(translationSection)) {
+            if (this.isNotNull(translationSection)) {
                 double x = translationSection.getDouble("x");
                 double y = translationSection.getDouble("y");
                 double z = translationSection.getDouble("z");
@@ -1230,7 +1230,7 @@ public class IAItemsConverter extends ItemConverter {
                 }
             }
             ConfigurationSection scaleSection = displayTransformationSection.getConfigurationSection("scale");
-            if (isNotNull(scaleSection)) {
+            if (this.isNotNull(scaleSection)) {
                 double x = scaleSection.getDouble("x", 1.0);
                 double y = scaleSection.getDouble("y", 1.0);
                 double z = scaleSection.getDouble("z", 1.0);
@@ -1280,8 +1280,8 @@ public class IAItemsConverter extends ItemConverter {
         double sitHeight = behavioursSection.getDouble("furniture_sit.sit_height", 0d);
         List<Hitbox> hitboxList = new ArrayList<>();
         ConfigurationSection iaHitboxesSection = furnitureSection.getConfigurationSection("hitbox");
-        if (isNotNull(iaHitboxesSection)) {
-            parseItemsAdderHitboxes(iaHitboxesSection, hitboxList, sitHeight);
+        if (this.isNotNull(iaHitboxesSection)) {
+            this.parseItemsAdderHitboxes(iaHitboxesSection, hitboxList, sitHeight);
         }
 
         // --- Loot ---

@@ -26,7 +26,7 @@ public class BlockConfiguration implements ItemConfigurationSerializable {
 
     @NotNull
     public BlockSettings getBlockSettings() {
-        return blockSettings;
+        return this.blockSettings;
     }
 
     public void addBehavior(@NotNull BlockBehavior behavior) {
@@ -47,12 +47,12 @@ public class BlockConfiguration implements ItemConfigurationSerializable {
 
     @Override
     public void serialize(@NotNull YamlConfiguration yamlConfiguration, @NotNull String path, @NotNull ConfigurationSection itemSection, @NotNull String itemId) {
-        ConfigurationSection behaviorSection = getOrCreateSection(itemSection, "behavior");
+        ConfigurationSection behaviorSection = this.getOrCreateSection(itemSection, "behavior");
         behaviorSection.set("type", "block_item");
 
-        ConfigurationSection blockBehaviorSection = getOrCreateSection(behaviorSection, "block");
+        ConfigurationSection blockBehaviorSection = this.getOrCreateSection(behaviorSection, "block");
         if (this.blockSettings.isUpdated()) {
-            ConfigurationSection blockSettingsSection = getOrCreateSection(blockBehaviorSection, "settings");
+            ConfigurationSection blockSettingsSection = this.getOrCreateSection(blockBehaviorSection, "settings");
             this.blockSettings.serialize(blockSettingsSection);
         }
 
