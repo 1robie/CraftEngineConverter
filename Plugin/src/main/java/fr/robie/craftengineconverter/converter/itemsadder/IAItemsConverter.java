@@ -7,12 +7,10 @@ import fr.robie.craftengineconverter.api.configuration.item.LoreConfiguration;
 import fr.robie.craftengineconverter.api.configuration.item.behavior.block.BlockConfiguration;
 import fr.robie.craftengineconverter.api.configuration.item.behavior.block.BlockSettings;
 import fr.robie.craftengineconverter.api.configuration.item.behavior.block.behaviors.OnLiquidBlockBehavior;
-import fr.robie.craftengineconverter.api.configuration.item.behavior.block.states.BlockAppearance;
-import fr.robie.craftengineconverter.api.configuration.item.behavior.block.states.BlockVariant;
-import fr.robie.craftengineconverter.api.configuration.item.behavior.block.states.MultiStateBlock;
 import fr.robie.craftengineconverter.api.configuration.item.behavior.block.states.SingleStateBlock;
+import fr.robie.craftengineconverter.api.configuration.item.behavior.block.states.defaults.DirectionalBlockState;
+import fr.robie.craftengineconverter.api.configuration.item.behavior.block.states.defaults.HorizontalFacingBlockState;
 import fr.robie.craftengineconverter.api.configuration.item.behavior.block.states.defaults.PillarBlockState;
-import fr.robie.craftengineconverter.api.configuration.item.behavior.block.states.properties.HorizontalDirectionBlockStateProperty;
 import fr.robie.craftengineconverter.api.configuration.item.behavior.furniture.FurnitureConfiguration;
 import fr.robie.craftengineconverter.api.configuration.item.behavior.furniture.FurniturePlacement;
 import fr.robie.craftengineconverter.api.configuration.item.behavior.furniture.ItemElement;
@@ -50,7 +48,6 @@ import fr.robie.craftengineconverter.converter.ItemConverter;
 import net.momirealms.craftengine.core.attribute.AttributeModifier;
 import net.momirealms.craftengine.core.entity.EquipmentSlot;
 import net.momirealms.craftengine.core.entity.display.Billboard;
-import net.momirealms.craftengine.core.util.HorizontalDirection;
 import org.bukkit.DyeColor;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
@@ -67,11 +64,13 @@ import java.util.*;
 public class IAItemsConverter extends ItemConverter {
     private final ConfigurationSection iaItemSection;
     private final String namespace;
+    private final String rawItemId;
 
-    public IAItemsConverter(@NotNull String itemId, Converter converter, YamlConfiguration fileConfig, ConfigurationSection iaItemSection, String namespace) {
+    public IAItemsConverter(@NotNull String itemId, Converter converter, YamlConfiguration fileConfig, ConfigurationSection iaItemSection, String namespace, String rawItemId) {
         super(itemId, converter, fileConfig);
         this.iaItemSection = iaItemSection;
         this.namespace = namespace;
+        this.rawItemId = rawItemId;
     }
 
     @Override
@@ -552,6 +551,7 @@ public class IAItemsConverter extends ItemConverter {
             case NONE -> this.handleNoneDirectionalMode(resourceSection);
             case ALL, LOG -> this.handleAllOrLogDirectionalMode(resourceSection);
             case FURNACE -> this.handleFurnaceDirectionalMode(resourceSection);
+            case DROPPER -> this.handleDropperDirectionalMode(resourceSection);
             default ->
                     Logger.debug("[IAItemsConverter] Directional mode " + directionalMode + " is not supported for item " + this.itemId);
         }
@@ -610,6 +610,27 @@ public class IAItemsConverter extends ItemConverter {
 
     }
 
+    private void handleDropperDirectionalMode(ConfigurationSection resourceSection) {
+        Map<BlockFace, String> faceTextureMap = this.buildFaceTextureMap(resourceSection, "Dropper");
+        if (faceTextureMap == null) {
+            return;
+        }
+
+        SimpleModelConfiguration simpleModelConfiguration = this.createCubeModelTemplate(faceTextureMap);
+        this.craftEngineItemsConfiguration.setModelConfiguration(simpleModelConfiguration);
+
+        BlockConfiguration blockConfiguration = new BlockConfiguration(this.itemId);
+
+        blockConfiguration.setStateBlock(new DirectionalBlockState(
+                Plugins.ITEMS_ADDER,
+                this.itemId,
+                CraftEngineBlockState.SOLID,
+                simpleModelConfiguration
+        ));
+
+        this.craftEngineItemsConfiguration.addItemConfiguration(blockConfiguration);
+    }
+
     private void handleFurnaceDirectionalMode(ConfigurationSection resourceSection) {
         Map<BlockFace, String> faceTextureMap = this.buildFaceTextureMap(resourceSection, "Furnace");
         if (faceTextureMap == null) {
@@ -620,18 +641,13 @@ public class IAItemsConverter extends ItemConverter {
         this.craftEngineItemsConfiguration.setModelConfiguration(simpleModelConfiguration);
 
         BlockConfiguration blockConfiguration = new BlockConfiguration(this.itemId);
-        MultiStateBlock multiStateBlock = new MultiStateBlock();
-        multiStateBlock.addAppearance("east", BlockAppearance.autoState(Plugins.ITEMS_ADDER, this.getBlockState(IAPlacedModelTypes.TILE), this.itemId, simpleModelConfiguration).build());
-        multiStateBlock.addAppearance("west", BlockAppearance.autoState(Plugins.ITEMS_ADDER, this.getBlockState(IAPlacedModelTypes.TILE), this.itemId, simpleModelConfiguration).build());
-        multiStateBlock.addAppearance("north", BlockAppearance.autoState(Plugins.ITEMS_ADDER, this.getBlockState(IAPlacedModelTypes.TILE), this.itemId, simpleModelConfiguration).build());
-        multiStateBlock.addAppearance("south", BlockAppearance.autoState(Plugins.ITEMS_ADDER, this.getBlockState(IAPlacedModelTypes.TILE), this.itemId, simpleModelConfiguration).build());
-        HorizontalDirectionBlockStateProperty facing = new HorizontalDirectionBlockStateProperty("facing", HorizontalDirection.NORTH);
-        multiStateBlock.addProperty(facing);
-        multiStateBlock.addVariant(new BlockVariant("east").addVariantCondition(facing, HorizontalDirection.EAST));
-        multiStateBlock.addVariant(new BlockVariant("west").addVariantCondition(facing, HorizontalDirection.WEST));
-        multiStateBlock.addVariant(new BlockVariant("north").addVariantCondition(facing, HorizontalDirection.NORTH));
-        multiStateBlock.addVariant(new BlockVariant("south").addVariantCondition(facing, HorizontalDirection.SOUTH));
-        blockConfiguration.setStateBlock(multiStateBlock);
+
+        blockConfiguration.setStateBlock(new HorizontalFacingBlockState(
+                Plugins.ITEMS_ADDER,
+                this.itemId,
+                CraftEngineBlockState.SOLID,
+                simpleModelConfiguration
+        ));
 
         this.craftEngineItemsConfiguration.addItemConfiguration(blockConfiguration);
     }
@@ -766,11 +782,10 @@ public class IAItemsConverter extends ItemConverter {
 
                 blockConfiguration.setStateBlock(new SingleStateBlock(Plugins.ITEMS_ADDER, this.getBlockState(placedModelType), this.itemId, model));
                 this.craftEngineItemsConfiguration.addItemConfiguration(blockConfiguration);
-                return;
             } else {
                 Logger.debug("[IAItemsConverter] Missing model path for block item " + this.itemId + ". Cannot convert item texture.");
-                return;
             }
+            return;
         }
 
         modelPath = this.namespaced(modelPath, this.namespace);

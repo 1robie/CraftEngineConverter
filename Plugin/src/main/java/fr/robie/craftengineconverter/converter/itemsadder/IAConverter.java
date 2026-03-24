@@ -89,12 +89,16 @@ public class IAConverter extends Converter {
             for (CacheConversion conversion : this.conversions) {
                 Optional<FileCacheEntry<YamlConfiguration>> entryFile = FileCacheManager.getYamlCache()
                         .getEntryFile(Path.of("plugins", this.converterName, "storage", conversion.fileName()));
-                if (entryFile.isEmpty()) continue;
+                if (entryFile.isEmpty()) {
+                    continue;
+                }
 
                 YamlConfiguration cacheConfig = entryFile.get().getData();
                 for (String blockId : cacheConfig.getKeys(false)) {
                     int customVariation = cacheConfig.getInt(blockId) - conversion.offset();
-                    if (customVariation < 0) continue;
+                    if (customVariation < 0) {
+                        continue;
+                    }
 
                     String newName = PluginNameMapper.getInstance().getNewName(Plugins.ITEMS_ADDER, blockId);
                     if (newName == null) {
@@ -121,7 +125,7 @@ public class IAConverter extends Converter {
                 new ArrayList<>(toConvert),
                 (configFile, rawItemId, finalItemId, itemSection, convertedConfig) -> {
                     String namespace = configFile.config().getString("info.namespace", configFile.sourceFile().getName().replace(".yml", ""));
-                    return new IAItemsConverter(finalItemId, this, convertedConfig, itemSection, namespace);
+                    return new IAItemsConverter(finalItemId, this, convertedConfig, itemSection, namespace, rawItemId);
                 },
                 (configFile, convertedConfig) -> {
                     YamlConfiguration config = configFile.config();
@@ -139,7 +143,9 @@ public class IAConverter extends Converter {
                 },
                 (configFile, rawItemId) -> {
                     ConfigurationSection originalItems = configFile.config().getConfigurationSection("items");
-                    if (isNull(originalItems)) return null;
+                    if (isNull(originalItems)) {
+                        return null;
+                    }
                     return originalItems.getConfigurationSection(rawItemId);
                 },
                 (configFile, rawItemId) -> configFile.config().getString("info.namespace", configFile.sourceFile().getName().replace(".yml", "")) + ":" + rawItemId
@@ -154,20 +160,28 @@ public class IAConverter extends Converter {
     }
 
     private void convertArmorSection(ConfigurationSection armorSection, YamlConfiguration convertedConfig, String namespace, boolean requireArmorType) {
-        if (isNull(armorSection)) return;
+        if (isNull(armorSection)) {
+            return;
+        }
 
         for (String equipmentId : armorSection.getKeys(false)) {
             ConfigurationSection equipmentSection = armorSection.getConfigurationSection(equipmentId);
-            if (isNull(equipmentSection)) continue;
+            if (isNull(equipmentSection)) {
+                continue;
+            }
 
             if (requireArmorType) {
                 String type = equipmentSection.getString("type", "");
-                if (!type.equalsIgnoreCase("armor")) continue;
+                if (!type.equalsIgnoreCase("armor")) {
+                    continue;
+                }
             }
 
             String layer1 = equipmentSection.getString("layer_1");
             String layer2 = equipmentSection.getString("layer_2");
-            if (!isValidString(layer1) || !isValidString(layer2)) continue;
+            if (!isValidString(layer1) || !isValidString(layer2)) {
+                continue;
+            }
 
             layer1 = cleanPath(layer1);
             layer2 = cleanPath(layer2);
@@ -199,7 +213,9 @@ public class IAConverter extends Converter {
 
     private String getFileName(@NotNull String path) {
         int lastIndexOf = path.lastIndexOf("/");
-        if (lastIndexOf == -1) return path;
+        if (lastIndexOf == -1) {
+            return path;
+        }
         return path.substring(lastIndexOf + 1);
     }
 
@@ -258,7 +274,9 @@ public class IAConverter extends Converter {
         File sourceFile = configFile.sourceFile();
         YamlConfiguration config = configFile.config();
         ConfigurationSection fontImagesSection = config.getConfigurationSection("font_images");
-        if (isNull(fontImagesSection)) return;
+        if (isNull(fontImagesSection)) {
+            return;
+        }
         YamlConfiguration convertedConfig = new YamlConfiguration();
         ConfigurationSection ceImagesSection = convertedConfig.createSection("images");
 
@@ -293,7 +311,9 @@ public class IAConverter extends Converter {
             convertedImages++;
             progressBar.increment();
         }
-        if (this.settings.dryRunEnabled()) return;
+        if (this.settings.dryRunEnabled()) {
+            return;
+        }
         if (convertedImages > 0) {
             saveConvertedConfig(convertedConfig, configFile, sourceFile, outputBase, "images", "image");
         }
@@ -329,7 +349,9 @@ public class IAConverter extends Converter {
 
                     for (String translationKey : langSection.getKeys()) {
                         SnakeUtils translationSection = langSection.getSection(translationKey);
-                        if (translationSection == null) continue;
+                        if (translationSection == null) {
+                            continue;
+                        }
 
                         Map<String, Object> entries = translationSection.getMap("entries");
                         List<String> languages = translationSection.getStringList("languages");
@@ -385,7 +407,9 @@ public class IAConverter extends Converter {
 
                 for (String translationGroup : minecraftLangOverwrite.getKeys()) {
                     SnakeUtils section = minecraftLangOverwrite.getSection(translationGroup);
-                    if (section == null) continue;
+                    if (section == null) {
+                        continue;
+                    }
 
                     Map<String, Object> entries = section.getMap("entries");
                     List<String> languages = section.getStringList("languages");
@@ -519,7 +543,9 @@ public class IAConverter extends Converter {
             }
             progressBar.increment();
         }
-        if (this.settings.dryRunEnabled()) return;
+        if (this.settings.dryRunEnabled()) {
+            return;
+        }
         saveConvertedConfig(convertedConfig, configFile, soundFile, outputFolder, "sounds", "sound");
     }
 
@@ -553,10 +579,14 @@ public class IAConverter extends Converter {
         for (ConfigFile configFile : toConvert) {
             YamlConfiguration config = configFile.config();
             ConfigurationSection recipesSection = config.getConfigurationSection("recipes");
-            if (isNull(recipesSection)) continue;
+            if (isNull(recipesSection)) {
+                continue;
+            }
             for (String craftingType : recipesSection.getKeys(false)) {
                 ConfigurationSection craftingSection = recipesSection.getConfigurationSection(craftingType);
-                if (isNull(craftingSection)) continue;
+                if (isNull(craftingSection)) {
+                    continue;
+                }
                 totalRecipes += craftingSection.getKeys(false).size();
             }
         }
@@ -594,7 +624,9 @@ public class IAConverter extends Converter {
 
         for (String craftingType : originalRecipes.getKeys(false)) {
             ConfigurationSection craftingSection = originalRecipes.getConfigurationSection(craftingType);
-            if (isNull(craftingSection)) continue;
+            if (isNull(craftingSection)) {
+                continue;
+            }
 
             for (String recipeId : craftingSection.getKeys(false)) {
                 IARecipesTypes iaRecipesType;
@@ -623,7 +655,9 @@ public class IAConverter extends Converter {
             }
         }
 
-        if (this.settings.dryRunEnabled()) return;
+        if (this.settings.dryRunEnabled()) {
+            return;
+        }
         saveConvertedConfig(convertedConfig, configFile, recipeFile, outputFolder, "recipes", "recipe");
     }
 
@@ -906,11 +940,15 @@ public class IAConverter extends Converter {
             blacklistedNamespacesList.addAll(Configuration.<List<String>>get(ConfigurationKey.ITEMS_ADDER_BLACKLISTED_CONTENT_FOLDERS_NAMESPACES));
             List<String> validMinecraftFolders = List.of("atlases", "blockstates", "equipment", "font", "items", "lang", "models", "particles", "post_effect", "shaders", "texts", "textures", "waypoint_style");
             File[] listed = inputFolder.listFiles();
-            if (isNull(listed)) return;
+            if (isNull(listed)) {
+                return;
+            }
             for (File f : listed) {
                 if (f.isDirectory() && !blacklistedNamespacesList.contains(f.getName().toLowerCase())) {
                     File[] listedFiles = f.listFiles();
-                    if (isNull(listedFiles)) continue;
+                    if (isNull(listedFiles)) {
+                        continue;
+                    }
                     for (File subFile : listedFiles) {
                         if (subFile.isDirectory() && validMinecraftFolders.contains(subFile.getName().toLowerCase())) {
                             totalFiles += countFilesInDirectory(subFile);
@@ -922,9 +960,13 @@ public class IAConverter extends Converter {
                                 File[] subDirs = subFile.listFiles();
                                 if (subDirs != null) {
                                     for (File potentialNamespace : subDirs) {
-                                        if (!potentialNamespace.isDirectory()) continue;
+                                        if (!potentialNamespace.isDirectory()) {
+                                            continue;
+                                        }
                                         File[] namespaceFolders = potentialNamespace.listFiles();
-                                        if (namespaceFolders == null) continue;
+                                        if (namespaceFolders == null) {
+                                            continue;
+                                        }
                                         boolean looksLikeNamespace = Arrays.stream(namespaceFolders).anyMatch(nf -> nf.isDirectory() && validMinecraftFolders.contains(nf.getName().toLowerCase()));
                                         if (looksLikeNamespace) {
                                             totalFiles += countFilesInDirectory(potentialNamespace);
@@ -957,7 +999,9 @@ public class IAConverter extends Converter {
                 for (File namespaceDir : listed) {
                     if (namespaceDir.isDirectory() && !blacklistedNamespacesList.contains(namespaceDir.getName().toLowerCase())) {
                         File[] namespaceFiles = namespaceDir.listFiles();
-                        if (isNull(namespaceFiles)) continue;
+                        if (isNull(namespaceFiles)) {
+                            continue;
+                        }
                         for (File f : namespaceFiles) {
                             String folderName = f.getName().toLowerCase();
                             if (f.isDirectory() && validMinecraftFolders.contains(folderName)) {
@@ -971,9 +1015,13 @@ public class IAConverter extends Converter {
                                     File[] subDirs = f.listFiles();
                                     if (subDirs != null) {
                                         for (File potentialNamespace : subDirs) {
-                                            if (!potentialNamespace.isDirectory()) continue;
+                                            if (!potentialNamespace.isDirectory()) {
+                                                continue;
+                                            }
                                             File[] namespaceFolders = potentialNamespace.listFiles();
-                                            if (namespaceFolders == null) continue;
+                                            if (namespaceFolders == null) {
+                                                continue;
+                                            }
                                             boolean looksLikeNamespace = Arrays.stream(namespaceFolders).anyMatch(nf -> nf.isDirectory() && validMinecraftFolders.contains(nf.getName().toLowerCase()));
                                             if (looksLikeNamespace) {
                                                 copyDirectory(potentialNamespace, outputAssetsFolder, f, progressBar, executor, latch, errorRef, useMultiThread);
@@ -1022,7 +1070,9 @@ public class IAConverter extends Converter {
     protected int populateQueueIA(File baseDir, File currentDir, Queue<ConfigFile> toConvert, List<String> requiredSectionName) {
         int totalItems = 0;
         File[] listed = currentDir.listFiles();
-        if (isNull(listed)) return 0;
+        if (isNull(listed)) {
+            return 0;
+        }
         for (File f : listed) {
             if (f.isDirectory()) {
                 if (f.getName().equals("configs")) {
