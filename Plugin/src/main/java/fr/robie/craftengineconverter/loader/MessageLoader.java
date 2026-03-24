@@ -39,17 +39,17 @@ public class MessageLoader extends ObjectUtils implements Manageable {
     @Override
     public void reload() {
         for (Languages lang : Languages.values()) {
-            String path = getLanguagePath(lang);
+            String path = this.getLanguagePath(lang);
             File file = new File(this.plugin.getDataFolder(), path);
 
             try {
-                ensureFileExists(file, path);
-                updateLanguageFile(file, path, lang);
+                this.ensureFileExists(file, path);
+                this.updateLanguageFile(file, path, lang);
             } catch (Exception e) {
                 Logger.showException("Failed to process language file: " + path, e);
             }
         }
-        loadLanguage(Configuration.get(ConfigurationKey.LANGUAGE));
+        this.loadLanguage(Configuration.get(ConfigurationKey.LANGUAGE));
     }
 
     private void ensureFileExists(File file, String path) {
@@ -62,11 +62,11 @@ public class MessageLoader extends ObjectUtils implements Manageable {
         YamlConfiguration config = YamlConfiguration.loadConfiguration(file);
         Object fileVersion = config.get(VERSION_KEY);
 
-        boolean needsSave = removeObsoleteKeys(config, file, lang);
+        boolean needsSave = this.removeObsoleteKeys(config, file, lang);
 
         if (!(fileVersion instanceof Integer intVersion) || intVersion < this.version) {
             config.set(VERSION_KEY, this.version);
-            if (updateMissingKeys(config, path, lang)) {
+            if (this.updateMissingKeys(config, path, lang)) {
                 needsSave = true;
             }
         }
@@ -77,13 +77,17 @@ public class MessageLoader extends ObjectUtils implements Manageable {
     }
 
     private boolean removeObsoleteKeys(YamlConfiguration config, File file, Languages lang) {
-        Set<String> validKeys = buildValidKeySet();
+        Set<String> validKeys = this.buildValidKeySet();
 
         List<String> obsoleteKeys = new ArrayList<>();
         for (String key : config.getKeys(true)) {
-            if (VERSION_KEY.equals(key)) continue;
-            if (config.isConfigurationSection(key)) continue;
-            String rootKey = resolveRootKey(key, validKeys);
+            if (VERSION_KEY.equals(key)) {
+                continue;
+            }
+            if (config.isConfigurationSection(key)) {
+                continue;
+            }
+            String rootKey = this.resolveRootKey(key, validKeys);
             if (rootKey == null) {
                 obsoleteKeys.add(key);
             }
@@ -93,13 +97,13 @@ public class MessageLoader extends ObjectUtils implements Manageable {
             return false;
         }
 
-        backupFile(file, lang);
+        this.backupFile(file, lang);
 
         for (String key : obsoleteKeys) {
             config.set(key, null);
         }
 
-        removeEmptySections(config);
+        this.removeEmptySections(config);
 
         Logger.info(
                 "Removed " + obsoleteKeys.size() + " obsolete key(s) from language file '" + lang.name() + "': " + obsoleteKeys,
@@ -125,7 +129,7 @@ public class MessageLoader extends ObjectUtils implements Manageable {
         Set<String> keys = new HashSet<>();
         keys.add(VERSION_KEY);
         for (Message message : Message.values()) {
-            keys.add(enumNameToKey(message.name()));
+            keys.add(this.enumNameToKey(message.name()));
         }
         return keys;
     }
@@ -175,7 +179,7 @@ public class MessageLoader extends ObjectUtils implements Manageable {
 
             try (SnakeUtils reader = new SnakeUtils(inputStream)) {
                 for (Message message : Message.values()) {
-                    String key = enumNameToKey(message.name());
+                    String key = this.enumNameToKey(message.name());
 
                     if (!config.contains(key)) {
                         if (reader.contains(key)) {
@@ -187,7 +191,9 @@ public class MessageLoader extends ObjectUtils implements Manageable {
                                     LogType.WARNING
                             );
                             MessageType type = message.getType();
-                            if (type != MessageType.TCHAT) config.set(key + ".type", type.name());
+                            if (type != MessageType.TCHAT) {
+                                config.set(key + ".type", type.name());
+                            }
                             if (type == MessageType.TITLE) {
                                 config.set(key + ".title", message.getTitle());
                                 config.set(key + ".subtitle", message.getSubTitle());
@@ -217,7 +223,7 @@ public class MessageLoader extends ObjectUtils implements Manageable {
     }
 
     public void loadLanguage(Languages language) {
-        File file = new File(this.plugin.getDataFolder(), getLanguagePath(language));
+        File file = new File(this.plugin.getDataFolder(), this.getLanguagePath(language));
 
         if (!file.exists()) {
             Logger.info("Language file not found: " + file.getPath(), LogType.WARNING);
@@ -229,11 +235,13 @@ public class MessageLoader extends ObjectUtils implements Manageable {
         List<Message> loadedMessages = new ArrayList<>();
 
         for (String key : keys) {
-            if (VERSION_KEY.equals(key) || config.isConfigurationSection(key)) continue;
+            if (VERSION_KEY.equals(key) || config.isConfigurationSection(key)) {
+                continue;
+            }
 
             try {
-                Message message = parseMessage(key);
-                loadMessageContent(message, config, key);
+                Message message = this.parseMessage(key);
+                this.loadMessageContent(message, config, key);
                 loadedMessages.add(message);
             } catch (IllegalArgumentException e) {
                 Logger.info("Unknown message key: " + key, LogType.WARNING);
@@ -242,18 +250,18 @@ public class MessageLoader extends ObjectUtils implements Manageable {
             }
         }
 
-        validateLoadedMessages(loadedMessages, language);
+        this.validateLoadedMessages(loadedMessages, language);
     }
 
     private Message parseMessage(String key) {
-        return Message.valueOf(keyToEnumName(key));
+        return Message.valueOf(this.keyToEnumName(key));
     }
 
     private void loadMessageContent(Message message, YamlConfiguration config, String key) {
         if (config.contains(key + ".type")) {
-            loadTypedMessage(message, config, key);
+            this.loadTypedMessage(message, config, key);
         } else {
-            loadSimpleMessage(message, config, key);
+            this.loadSimpleMessage(message, config, key);
         }
     }
 
@@ -264,9 +272,9 @@ public class MessageLoader extends ObjectUtils implements Manageable {
         message.setType(messageType);
 
         switch (messageType) {
-            case ACTION, TCHAT_AND_ACTION -> loadActionMessage(message, config, key);
-            case CENTER, TCHAT, WITHOUT_PREFIX -> loadTextMessage(message, config, key);
-            case TITLE -> loadTitleMessage(message, config, key);
+            case ACTION, TCHAT_AND_ACTION -> this.loadActionMessage(message, config, key);
+            case CENTER, TCHAT, WITHOUT_PREFIX -> this.loadTextMessage(message, config, key);
+            case TITLE -> this.loadTitleMessage(message, config, key);
         }
     }
 
@@ -309,7 +317,7 @@ public class MessageLoader extends ObjectUtils implements Manageable {
             Set<Message> loaded = new HashSet<>(loadedMessages);
             List<String> missing = Arrays.stream(Message.values())
                     .filter(m -> !loaded.contains(m))
-                    .map(m -> enumNameToKey(m.name()))
+                    .map(m -> this.enumNameToKey(m.name()))
                     .toList();
 
             Logger.info(String.format(
