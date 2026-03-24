@@ -55,4 +55,38 @@ public class DirectionalBlockState extends AbstractDefaultBlockState {
                     .addVariantCondition(facingProperty, facing));
         }
     }
+
+    public DirectionalBlockState(
+            @NotNull Plugins plugin,
+            @NotNull String itemId,
+            @NotNull CraftEngineBlockState northBlockState,
+            @NotNull ModelConfiguration northModel,
+            @NotNull CraftEngineBlockState eastBlockState,
+            @NotNull ModelConfiguration eastModel,
+            @NotNull CraftEngineBlockState southBlockState,
+            @NotNull ModelConfiguration southModel,
+            @NotNull CraftEngineBlockState westBlockState,
+            @NotNull ModelConfiguration westModel,
+            @NotNull CraftEngineBlockState upBlockState,
+            @NotNull ModelConfiguration upModel,
+            @NotNull CraftEngineBlockState downBlockState,
+            @NotNull ModelConfiguration downModel
+    ) {
+        DirectionBlockStateProperty facingProperty = new DirectionBlockStateProperty("facing", Direction.NORTH);
+        this.addProperty(facingProperty);
+
+        this.addAppearance("north", BlockAppearance.autoState(plugin, northBlockState, itemId, northModel).build());
+        this.addAppearance("east", BlockAppearance.autoState(plugin, eastBlockState, itemId, eastModel).build());
+        this.addAppearance("south", BlockAppearance.autoState(plugin, southBlockState, itemId, southModel).build());
+        this.addAppearance("west", BlockAppearance.autoState(plugin, westBlockState, itemId, westModel).build());
+        this.addAppearance("up", BlockAppearance.autoState(plugin, upBlockState, itemId, upModel).build());
+        this.addAppearance("down", BlockAppearance.autoState(plugin, downBlockState, itemId, downModel).build());
+
+        this.addVariant(new BlockVariant("north").addVariantCondition(facingProperty, Direction.NORTH));
+        this.addVariant(new BlockVariant("east").addVariantCondition(facingProperty, Direction.EAST));
+        this.addVariant(new BlockVariant("south").addVariantCondition(facingProperty, Direction.SOUTH));
+        this.addVariant(new BlockVariant("west").addVariantCondition(facingProperty, Direction.WEST));
+        this.addVariant(new BlockVariant("up").addVariantCondition(facingProperty, Direction.UP));
+        this.addVariant(new BlockVariant("down").addVariantCondition(facingProperty, Direction.DOWN));
+    }
 }

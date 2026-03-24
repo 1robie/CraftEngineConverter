@@ -14,6 +14,8 @@ import fr.robie.craftengineconverter.api.configuration.item.behavior.block.Block
 import fr.robie.craftengineconverter.api.configuration.item.behavior.block.behaviors.FallingBlockBehavior;
 import fr.robie.craftengineconverter.api.configuration.item.behavior.block.behaviors.StrippableBlockBehavior;
 import fr.robie.craftengineconverter.api.configuration.item.behavior.block.states.SingleStateBlock;
+import fr.robie.craftengineconverter.api.configuration.item.behavior.block.states.defaults.DirectionalBlockState;
+import fr.robie.craftengineconverter.api.configuration.item.behavior.block.states.defaults.HorizontalFacingBlockState;
 import fr.robie.craftengineconverter.api.configuration.item.behavior.block.states.defaults.PillarBlockState;
 import fr.robie.craftengineconverter.api.configuration.item.behavior.furniture.*;
 import fr.robie.craftengineconverter.api.configuration.item.behavior.furniture.element.ItemDisplayElement;
@@ -2071,28 +2073,104 @@ public class NexoItemConverter extends ItemConverter {
                                             )
                                     );
                                 } else {
-                                    Logger.info("Ignoring directional configuration for custom block " + this.itemId + " due to missing model configuration in axis blocks", LogType.INFO);
+                                    Logger.info("Ignoring directional configuration for custom block " + this.itemId + " due to missing model configuration in axis blocks, falling back to main model", LogType.INFO);
+                                    blockConfiguration.setStateBlock(new PillarBlockState(Plugins.NEXO, this.itemId, state, modelConfiguration, state, modelConfiguration, state, modelConfiguration));
                                 }
                             } else {
-                                if (!this.isNotNull(xResolvedDependency)) {
-                                    Logger.info("Ignoring directional configuration for custom block " + this.itemId + " due to unknown x_block dependency " + xBlock, LogType.INFO);
+                                Logger.info("Ignoring directional configuration for custom block " + this.itemId + " due to unknown axis block dependency, falling back to main model", LogType.INFO);
+                                blockConfiguration.setStateBlock(new PillarBlockState(Plugins.NEXO, this.itemId, state, modelConfiguration, state, modelConfiguration, state, modelConfiguration));
+                            }
+                        } else {
+                            blockConfiguration.setStateBlock(new PillarBlockState(Plugins.NEXO, this.itemId, state, modelConfiguration, state, modelConfiguration, state, modelConfiguration));
+                        }
+                    }
+                    case FURNACE, DROPPER -> {
+                        String northBlock = directionalSection.getString("north_block", "");
+                        String eastBlock = directionalSection.getString("east_block", "");
+                        String southBlock = directionalSection.getString("south_block", "");
+                        String westBlock = directionalSection.getString("west_block", "");
+                        String upBlock = directionalSection.getString("up_block", "");
+                        String downBlock = directionalSection.getString("down_block", "");
+
+                        if (this.isValidString(northBlock) && this.isValidString(eastBlock) && this.isValidString(southBlock) && this.isValidString(westBlock)) {
+                            ItemConverter northResolved = this.getResolvedDependency(northBlock);
+                            ItemConverter eastResolved = this.getResolvedDependency(eastBlock);
+                            ItemConverter southResolved = this.getResolvedDependency(southBlock);
+                            ItemConverter westResolved = this.getResolvedDependency(westBlock);
+
+                            if (this.isNotNull(northResolved) && this.isNotNull(eastResolved) && this.isNotNull(southResolved) && this.isNotNull(westResolved)) {
+                                northResolved.markAsInternalOnly();
+                                eastResolved.markAsInternalOnly();
+                                southResolved.markAsInternalOnly();
+                                westResolved.markAsInternalOnly();
+
+                                ModelConfiguration northModel = northResolved.getCraftEngineItemsConfiguration().getModelConfiguration();
+                                ModelConfiguration eastModel = eastResolved.getCraftEngineItemsConfiguration().getModelConfiguration();
+                                ModelConfiguration southModel = southResolved.getCraftEngineItemsConfiguration().getModelConfiguration();
+                                ModelConfiguration westModel = westResolved.getCraftEngineItemsConfiguration().getModelConfiguration();
+
+                                if (this.isNotNull(northModel) && this.isNotNull(eastModel) && this.isNotNull(southModel) && this.isNotNull(westModel)) {
+                                    if (directionBlock == NexoDirectionBlock.FURNACE) {
+                                        blockConfiguration.setStateBlock(new HorizontalFacingBlockState(
+                                                Plugins.NEXO, this.itemId,
+                                                state, northModel,
+                                                state, eastModel,
+                                                state, southModel,
+                                                state, westModel
+                                        ));
+                                    } else {
+                                        if (this.isValidString(upBlock) && this.isValidString(downBlock)) {
+                                            ItemConverter upResolved = this.getResolvedDependency(upBlock);
+                                            ItemConverter downResolved = this.getResolvedDependency(downBlock);
+                                            if (this.isNotNull(upResolved) && this.isNotNull(downResolved)) {
+                                                upResolved.markAsInternalOnly();
+                                                downResolved.markAsInternalOnly();
+                                                ModelConfiguration upModel = upResolved.getCraftEngineItemsConfiguration().getModelConfiguration();
+                                                ModelConfiguration downModel = downResolved.getCraftEngineItemsConfiguration().getModelConfiguration();
+                                                if (this.isNotNull(upModel) && this.isNotNull(downModel)) {
+                                                    blockConfiguration.setStateBlock(new DirectionalBlockState(
+                                                            Plugins.NEXO, this.itemId,
+                                                            state, northModel,
+                                                            state, eastModel,
+                                                            state, southModel,
+                                                            state, westModel,
+                                                            state, upModel,
+                                                            state, downModel
+                                                    ));
+                                                } else {
+                                                    Logger.info("Ignoring directional configuration for custom block " + this.itemId + " due to missing model configuration in vertical blocks, falling back to main model", LogType.INFO);
+                                                    blockConfiguration.setStateBlock(new DirectionalBlockState(Plugins.NEXO, this.itemId, state, modelConfiguration));
+                                                }
+                                            } else {
+                                                Logger.info("Ignoring directional configuration for custom block " + this.itemId + " due to unknown up/down dependency, falling back to main model", LogType.INFO);
+                                                blockConfiguration.setStateBlock(new DirectionalBlockState(Plugins.NEXO, this.itemId, state, modelConfiguration));
+                                            }
+                                        } else {
+                                            Logger.info("Ignoring directional configuration for custom block " + this.itemId + " due to missing up/down_block for DROPPER, falling back to main model", LogType.INFO);
+                                            blockConfiguration.setStateBlock(new DirectionalBlockState(Plugins.NEXO, this.itemId, state, modelConfiguration));
+                                        }
+                                    }
+                                } else {
+                                    Logger.info("Ignoring directional configuration for custom block " + this.itemId + " due to missing model configuration in horizontal blocks, falling back to main model", LogType.INFO);
+                                    if (directionBlock == NexoDirectionBlock.FURNACE) {
+                                        blockConfiguration.setStateBlock(new HorizontalFacingBlockState(Plugins.NEXO, this.itemId, state, modelConfiguration));
+                                    } else {
+                                        blockConfiguration.setStateBlock(new DirectionalBlockState(Plugins.NEXO, this.itemId, state, modelConfiguration));
+                                    }
                                 }
-                                if (!this.isNotNull(yResolvedDependency)) {
-                                    Logger.info("Ignoring directional configuration for custom block " + this.itemId + " due to unknown y_block dependency " + yBlock, LogType.INFO);
-                                }
-                                if (!this.isNotNull(zResolvedDependency)) {
-                                    Logger.info("Ignoring directional configuration for custom block " + this.itemId + " due to unknown z_block dependency " + zBlock, LogType.INFO);
+                            } else {
+                                Logger.info("Ignoring directional configuration for custom block " + this.itemId + " due to unknown horizontal dependency, falling back to main model", LogType.INFO);
+                                if (directionBlock == NexoDirectionBlock.FURNACE) {
+                                    blockConfiguration.setStateBlock(new HorizontalFacingBlockState(Plugins.NEXO, this.itemId, state, modelConfiguration));
+                                } else {
+                                    blockConfiguration.setStateBlock(new DirectionalBlockState(Plugins.NEXO, this.itemId, state, modelConfiguration));
                                 }
                             }
                         } else {
-                            if (!this.isValidString(xBlock)) {
-                                Logger.info("Ignoring directional configuration for custom block " + this.itemId + " due to missing x_block", LogType.INFO);
-                            }
-                            if (!this.isValidString(yBlock)) {
-                                Logger.info("Ignoring directional configuration for custom block " + this.itemId + " due to missing y_block", LogType.INFO);
-                            }
-                            if (!this.isValidString(zBlock)) {
-                                Logger.info("Ignoring directional configuration for custom block " + this.itemId + " due to missing z_block", LogType.INFO);
+                            if (directionBlock == NexoDirectionBlock.FURNACE) {
+                                blockConfiguration.setStateBlock(new HorizontalFacingBlockState(Plugins.NEXO, this.itemId, state, modelConfiguration));
+                            } else {
+                                blockConfiguration.setStateBlock(new DirectionalBlockState(Plugins.NEXO, this.itemId, state, modelConfiguration));
                             }
                         }
                     }
