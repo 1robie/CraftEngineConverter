@@ -40,7 +40,7 @@ public class NexoConverter extends Converter {
 
     @Override
     public CompletableFuture<Void> convertItems(boolean async, Optional<Player> player) {
-        return executeTask(async, () -> convertItemsSync(player));
+        return this.executeTask(async, () -> this.convertItemsSync(player));
     }
 
     private void convertItemsSync(Optional<Player> player) {
@@ -53,7 +53,7 @@ public class NexoConverter extends Converter {
         }
 
         if (outputBase.exists()) {
-            deleteDirectory(outputBase);
+            this.deleteDirectory(outputBase);
         }
 
         if (!outputBase.mkdirs()) {
@@ -62,7 +62,7 @@ public class NexoConverter extends Converter {
         }
 
         Queue<ConfigFile> toConvert = new LinkedList<>();
-        populateQueue(inputBase, inputBase, toConvert);
+        this.populateQueue(inputBase, inputBase, toConvert);
 
         if (toConvert.isEmpty()) {
             return;
@@ -70,10 +70,10 @@ public class NexoConverter extends Converter {
 
         int totalItems = 0;
         for (ConfigFile configFile : toConvert) {
-            totalItems += countItemsInConfig(configFile.config());
+            totalItems += this.countItemsInConfig(configFile.config());
         }
 
-        BukkitProgressBar progress = createProgressBar(player, totalItems, "Converting Nexo items", "items", ConverterOption.ITEMS);
+        BukkitProgressBar progress = this.createProgressBar(player, totalItems, "Converting Nexo items", "items", ConverterOption.ITEMS);
 
         progress.start();
 
@@ -81,7 +81,7 @@ public class NexoConverter extends Converter {
         BlockStatesMapper.getInstance().clearMappingsForPlugin(this.pluginType);
 
         try {
-            processConfigs(toConvert, outputBase, progress);
+            this.processConfigs(toConvert, outputBase, progress);
             toConvert.clear();
         } catch (Exception e) {
             Logger.showException(Message.ERROR__CONVERTER__NEXO__ITEMS__CONVERSION_EXCEPTION, e);
@@ -109,7 +109,7 @@ public class NexoConverter extends Converter {
 
     @Override
     public CompletableFuture<Void> convertEmojis(boolean async, Optional<Player> player) {
-        return executeTask(async, () -> convertEmojisSync(player));
+        return this.executeTask(async, () -> this.convertEmojisSync(player));
     }
 
     private void convertEmojisSync(Optional<Player> player) {
@@ -122,7 +122,7 @@ public class NexoConverter extends Converter {
         }
 
         if (outputEmojisFolder.exists()) {
-            deleteDirectory(outputEmojisFolder);
+            this.deleteDirectory(outputEmojisFolder);
         }
 
         if (!outputEmojisFolder.mkdirs()) {
@@ -131,7 +131,7 @@ public class NexoConverter extends Converter {
         }
 
         Queue<ConfigFile> toConvert = new LinkedList<>();
-        populateQueue(inputEmojisFolder, inputEmojisFolder, toConvert);
+        this.populateQueue(inputEmojisFolder, inputEmojisFolder, toConvert);
 
         if (toConvert.isEmpty()) {
             this.log(Message.WARNING__CONVERTER__NO_EMOJIS_FOUND, LogType.INFO);
@@ -140,15 +140,15 @@ public class NexoConverter extends Converter {
 
         int totalEmojis = 0;
         for (ConfigFile configFile : toConvert) {
-            totalEmojis += countItemsInConfig(configFile.config());
+            totalEmojis += this.countItemsInConfig(configFile.config());
         }
 
-        BukkitProgressBar progress = createProgressBar(player, totalEmojis, "Converting Nexo emojis", "emojis", ConverterOption.EMOJIS);
+        BukkitProgressBar progress = this.createProgressBar(player, totalEmojis, "Converting Nexo emojis", "emojis", ConverterOption.EMOJIS);
 
         progress.start();
 
         try {
-            processEmojisConfigs(toConvert, outputEmojisFolder, progress);
+            this.processEmojisConfigs(toConvert, outputEmojisFolder, progress);
             toConvert.clear();
         } catch (Exception e) {
             Logger.showException(Message.ERROR__CONVERTER__NEXO__EMOJIS__CONVERSION_EXCEPTION, e);
@@ -159,7 +159,7 @@ public class NexoConverter extends Converter {
 
     private void processEmojisConfigs(Queue<ConfigFile> toConvert, File outputBaseDir, BukkitProgressBar progress) {
         for (ConfigFile configFile : toConvert) {
-            convertEmojiFile(configFile, outputBaseDir, progress);
+            this.convertEmojiFile(configFile, outputBaseDir, progress);
         }
     }
 
@@ -217,30 +217,32 @@ public class NexoConverter extends Converter {
 
             progress.increment();
         }
-        if (this.settings.dryRunEnabled()) return;
+        if (this.settings.dryRunEnabled()) {
+            return;
+        }
         if (convertedCount > 0) {
-            saveConvertedConfig(convertedConfig, configFile, emojiFile, outputBaseDir, "emojis", "emoji");
+            this.saveConvertedConfig(convertedConfig, configFile, emojiFile, outputBaseDir, "emojis", "emoji");
         }
     }
 
     @Override
     public CompletableFuture<Void> convertImages(boolean async, Optional<Player> player) {
-        return executeTask(async, () -> this.convertImagesSync(player));
+        return this.executeTask(async, () -> this.convertImagesSync(player));
     }
 
     @Override
     public CompletableFuture<Void> convertLanguages(boolean async, Optional<Player> player) {
-        return executeTask(async, () -> this.convertLanguagesSync(player));
+        return this.executeTask(async, () -> this.convertLanguagesSync(player));
     }
 
     @Override
     public CompletableFuture<Void> convertSounds(boolean async, Optional<Player> player) {
-        return executeTask(async, () -> this.convertSoundsSync(player));
+        return this.executeTask(async, () -> this.convertSoundsSync(player));
     }
 
     @Override
     public CompletableFuture<Void> convertRecipes(boolean async, Optional<Player> player) {
-        return executeTask(async, () -> this.convertRecipesSync(player));
+        return this.executeTask(async, () -> this.convertRecipesSync(player));
     }
 
     private void convertRecipesSync(Optional<Player> player) {
@@ -251,28 +253,28 @@ public class NexoConverter extends Converter {
             return;
         }
         if (outputFolder.exists()) {
-            deleteDirectory(outputFolder);
+            this.deleteDirectory(outputFolder);
         }
         if (!outputFolder.mkdirs()) {
             this.logDebug(Message.ERROR__MKDIR_FAILURE, LogType.ERROR, "directory", outputFolder.getName(), "path", outputFolder.getAbsolutePath());
             return;
         }
         Map<RecipeType, List<ConfigFile>> toConvert = new HashMap<>();
-        populateRecipeQueue(recipesFolder, recipesFolder, toConvert);
+        this.populateRecipeQueue(recipesFolder, recipesFolder, toConvert);
 
         int totalRecipes = 0;
         for (List<ConfigFile> configFiles : toConvert.values()) {
             for (ConfigFile configFile : configFiles) {
-                totalRecipes += countItemsInConfig(configFile.config());
+                totalRecipes += this.countItemsInConfig(configFile.config());
             }
         }
 
-        BukkitProgressBar progress = createProgressBar(player, totalRecipes, "Converting Nexo recipes", "recipes", ConverterOption.RECIPES);
+        BukkitProgressBar progress = this.createProgressBar(player, totalRecipes, "Converting Nexo recipes", "recipes", ConverterOption.RECIPES);
 
         progress.start();
 
         try {
-            processRecipeConfigs(toConvert, outputFolder, progress);
+            this.processRecipeConfigs(toConvert, outputFolder, progress);
             toConvert.clear();
         } catch (Exception e) {
             Logger.showException(Message.ERROR__CONVERTER__NEXO__RECIPES__CONVERSION_EXCEPTION, e);
@@ -287,7 +289,7 @@ public class NexoConverter extends Converter {
             List<ConfigFile> configFiles = entry.getValue();
 
             for (ConfigFile configFile : configFiles) {
-                processRecipeConfigFile(configFile, outputFolder, recipeType, progress);
+                this.processRecipeConfigFile(configFile, outputFolder, recipeType, progress);
             }
         }
     }
@@ -314,17 +316,17 @@ public class NexoConverter extends Converter {
             switch (recipeType) {
                 case SHAPELESS -> {
                     ceRecipeSection.set("type", "shapeless");
-                    setCategory(recipeSection, ceRecipeSection);
-                    setGroup(recipeSection, ceRecipeSection);
+                    this.setCategory(recipeSection, ceRecipeSection);
+                    this.setGroup(recipeSection, ceRecipeSection);
 
-                    convertResult(recipeSection, ceRecipeSection, finalRecipeId);
+                    this.convertResult(recipeSection, ceRecipeSection, finalRecipeId);
 
                     ConfigurationSection ingredientsSection = recipeSection.getConfigurationSection("ingredients");
-                    if (isNotNull(ingredientsSection)) {
+                    if (this.isNotNull(ingredientsSection)) {
                         List<String> ingredientsList = new ArrayList<>();
                         for (String letter : ingredientsSection.getKeys(false)) {
-                            String ingredient = convertItemOrTag(ingredientsSection, letter, finalRecipeId);
-                            if (isValidString(ingredient)) {
+                            String ingredient = this.convertItemOrTag(ingredientsSection, letter, finalRecipeId);
+                            if (this.isValidString(ingredient)) {
                                 ingredientsList.add(ingredient);
                             }
                         }
@@ -339,10 +341,10 @@ public class NexoConverter extends Converter {
 
                 case SHAPED -> {
                     ceRecipeSection.set("type", "shaped");
-                    setCategory(recipeSection, ceRecipeSection);
-                    setGroup(recipeSection, ceRecipeSection);
+                    this.setCategory(recipeSection, ceRecipeSection);
+                    this.setGroup(recipeSection, ceRecipeSection);
 
-                    convertResult(recipeSection, ceRecipeSection, finalRecipeId);
+                    this.convertResult(recipeSection, ceRecipeSection, finalRecipeId);
 
                     List<String> pattern = recipeSection.getStringList("shape");
                     if (!pattern.isEmpty()) {
@@ -350,11 +352,11 @@ public class NexoConverter extends Converter {
                     }
 
                     ConfigurationSection ingredientsSection = recipeSection.getConfigurationSection("ingredients");
-                    if (isNotNull(ingredientsSection)) {
+                    if (this.isNotNull(ingredientsSection)) {
                         ConfigurationSection ceIngredientsSection = ceRecipeSection.createSection("ingredients");
                         for (String letter : ingredientsSection.getKeys(false)) {
-                            String ingredient = convertItemOrTag(ingredientsSection, letter, finalRecipeId);
-                            if (isValidString(ingredient)) {
+                            String ingredient = this.convertItemOrTag(ingredientsSection, letter, finalRecipeId);
+                            if (this.isValidString(ingredient)) {
                                 ceIngredientsSection.set(letter, ingredient);
                             }
                         }
@@ -364,27 +366,29 @@ public class NexoConverter extends Converter {
 
                 case FURNACE, BLASTING, SMOKING -> {
                     ceRecipeSection.set("type", recipeType.name().toLowerCase());
-                    setCategory(recipeSection, ceRecipeSection);
-                    setGroup(recipeSection, ceRecipeSection);
+                    this.setCategory(recipeSection, ceRecipeSection);
+                    this.setGroup(recipeSection, ceRecipeSection);
 
                     double experience = recipeSection.getDouble("experience", 0.0);
-                    if (experience > 0) ceRecipeSection.set("experience", experience);
+                    if (experience > 0) {
+                        ceRecipeSection.set("experience", experience);
+                    }
 
                     int cookingTime = recipeSection.getInt("cookingTime", 200);
                     ceRecipeSection.set("time", cookingTime);
 
-                    convertIngredient(recipeSection, ceRecipeSection, finalRecipeId);
-                    convertResult(recipeSection, ceRecipeSection, finalRecipeId);
+                    this.convertIngredient(recipeSection, ceRecipeSection, finalRecipeId);
+                    this.convertResult(recipeSection, ceRecipeSection, finalRecipeId);
 
                     convertedCount++;
                 }
 
                 case STONECUTTING -> {
                     ceRecipeSection.set("type", "stonecutting");
-                    setGroup(recipeSection, ceRecipeSection);
+                    this.setGroup(recipeSection, ceRecipeSection);
 
-                    convertIngredient(recipeSection, ceRecipeSection, finalRecipeId);
-                    convertResult(recipeSection, ceRecipeSection, finalRecipeId);
+                    this.convertIngredient(recipeSection, ceRecipeSection, finalRecipeId);
+                    this.convertResult(recipeSection, ceRecipeSection, finalRecipeId);
 
                     convertedCount++;
                 }
@@ -392,9 +396,9 @@ public class NexoConverter extends Converter {
                 case BREWING -> {
                     ceRecipeSection.set("type", "brewing");
 
-                    convertContainer(recipeSection, ceRecipeSection, finalRecipeId);
-                    convertBrewingIngredient(recipeSection, ceRecipeSection, finalRecipeId);
-                    convertResult(recipeSection, ceRecipeSection, finalRecipeId);
+                    this.convertContainer(recipeSection, ceRecipeSection, finalRecipeId);
+                    this.convertBrewingIngredient(recipeSection, ceRecipeSection, finalRecipeId);
+                    this.convertResult(recipeSection, ceRecipeSection, finalRecipeId);
 
                     convertedCount++;
                 }
@@ -406,38 +410,44 @@ public class NexoConverter extends Converter {
             progress.increment();
         }
 
-        if (this.settings.dryRunEnabled()) return;
+        if (this.settings.dryRunEnabled()) {
+            return;
+        }
         if (convertedCount > 0) {
-            saveConvertedConfig(convertedConfig, configFile, recipeFile, outputFolder, "recipes", "recipe");
+            this.saveConvertedConfig(convertedConfig, configFile, recipeFile, outputFolder, "recipes", "recipe");
         }
     }
 
 
     private void setCategory(ConfigurationSection source, ConfigurationSection target) {
         String category = source.getString("category");
-        if (isValidString(category)) target.set("category", category);
+        if (this.isValidString(category)) {
+            target.set("category", category);
+        }
     }
 
     private void setGroup(ConfigurationSection source, ConfigurationSection target) {
         String group = source.getString("group");
-        if (isValidString(group)) target.set("group", group);
+        if (this.isValidString(group)) {
+            target.set("group", group);
+        }
     }
 
     private String convertItemOrTag(ConfigurationSection section, String key, String recipeId) {
         String tag = section.getString(key + ".tag");
-        if (isValidString(tag)) {
+        if (this.isValidString(tag)) {
             return "#" + tag;
         }
 
         String minecraftType = section.getString(key + ".minecraft_type");
-        if (isValidString(minecraftType)) {
-            return namespaced(minecraftType.toLowerCase());
+        if (this.isValidString(minecraftType)) {
+            return this.namespaced(minecraftType.toLowerCase());
         }
 
         String nexoItem = section.getString(key + ".nexo_item");
-        if (isValidString(nexoItem)) {
+        if (this.isValidString(nexoItem)) {
             String newName = PluginNameMapper.getInstance().getNewName(Plugins.NEXO, nexoItem);
-            if (isValidString(newName)) {
+            if (this.isValidString(newName)) {
                 return newName;
             } else {
                 this.logDebug(Message.WARNING__CONVERTER__NEXO__RECIPE__NO_MAPPING_INGREDIENT, LogType.WARNING, "item", nexoItem, "recipe", recipeId);
@@ -449,18 +459,18 @@ public class NexoConverter extends Converter {
 
     private void convertResult(ConfigurationSection recipeSection, ConfigurationSection ceRecipeSection, String finalRecipeId) {
         ConfigurationSection resultSection = recipeSection.getConfigurationSection("result");
-        if (isNotNull(resultSection)) {
+        if (this.isNotNull(resultSection)) {
             ConfigurationSection ceResultSection = ceRecipeSection.createSection("result");
 
             String minecraftType = resultSection.getString("minecraft_type");
-            if (isValidString(minecraftType)) {
-                ceResultSection.set("id", namespaced(minecraftType.toLowerCase()));
+            if (this.isValidString(minecraftType)) {
+                ceResultSection.set("id", this.namespaced(minecraftType.toLowerCase()));
             }
 
             String nexoItem = resultSection.getString("nexo_item");
-            if (isValidString(nexoItem)) {
+            if (this.isValidString(nexoItem)) {
                 String newName = PluginNameMapper.getInstance().getNewName(Plugins.NEXO, nexoItem);
-                if (isValidString(newName)) {
+                if (this.isValidString(newName)) {
                     ceResultSection.set("id", newName);
                 } else {
                     this.logDebug(Message.WARNING__CONVERTER__NEXO__RECIPE__NO_MAPPING_RESULT, LogType.WARNING, "item", nexoItem, "recipe", finalRecipeId);
@@ -468,28 +478,30 @@ public class NexoConverter extends Converter {
             }
 
             int amount = resultSection.getInt("amount", 1);
-            if (amount != 1) ceResultSection.set("count", amount);
+            if (amount != 1) {
+                ceResultSection.set("count", amount);
+            }
         }
     }
 
     private void convertIngredient(ConfigurationSection recipeSection, ConfigurationSection ceRecipeSection, String finalRecipeId) {
         ConfigurationSection inputSection = recipeSection.getConfigurationSection("input");
-        if (isNotNull(inputSection)) {
+        if (this.isNotNull(inputSection)) {
             String tag = inputSection.getString("tag");
-            if (isValidString(tag)) {
+            if (this.isValidString(tag)) {
                 ceRecipeSection.set("ingredient", "#" + tag);
                 return;
             }
 
             String minecraftType = inputSection.getString("minecraft_type");
-            if (isValidString(minecraftType)) {
-                ceRecipeSection.set("ingredient", namespaced(minecraftType.toLowerCase()));
+            if (this.isValidString(minecraftType)) {
+                ceRecipeSection.set("ingredient", this.namespaced(minecraftType.toLowerCase()));
             }
 
             String nexoItem = inputSection.getString("nexo_item");
-            if (isValidString(nexoItem)) {
+            if (this.isValidString(nexoItem)) {
                 String newName = PluginNameMapper.getInstance().getNewName(Plugins.NEXO, nexoItem);
-                if (isValidString(newName)) {
+                if (this.isValidString(newName)) {
                     ceRecipeSection.set("ingredient", newName);
                 } else {
                     this.logDebug(Message.WARNING__CONVERTER__NEXO__RECIPE__NO_MAPPING_INPUT, LogType.WARNING, "item", nexoItem, "recipe", finalRecipeId);
@@ -500,22 +512,22 @@ public class NexoConverter extends Converter {
 
     private void convertContainer(ConfigurationSection recipeSection, ConfigurationSection ceRecipeSection, String finalRecipeId) {
         ConfigurationSection inputSection = recipeSection.getConfigurationSection("input");
-        if (isNotNull(inputSection)) {
+        if (this.isNotNull(inputSection)) {
             String tag = inputSection.getString("tag");
-            if (isValidString(tag)) {
+            if (this.isValidString(tag)) {
                 ceRecipeSection.set("container", "#" + tag);
                 return;
             }
 
             String minecraftType = inputSection.getString("minecraft_type");
-            if (isValidString(minecraftType)) {
-                ceRecipeSection.set("container", namespaced(minecraftType.toLowerCase()));
+            if (this.isValidString(minecraftType)) {
+                ceRecipeSection.set("container", this.namespaced(minecraftType.toLowerCase()));
             }
 
             String nexoItem = inputSection.getString("nexo_item");
-            if (isValidString(nexoItem)) {
+            if (this.isValidString(nexoItem)) {
                 String newName = PluginNameMapper.getInstance().getNewName(Plugins.NEXO, nexoItem);
-                if (isValidString(newName)) {
+                if (this.isValidString(newName)) {
                     ceRecipeSection.set("container", newName);
                 } else {
                     this.logDebug(Message.WARNING__CONVERTER__NEXO__RECIPE__NO_MAPPING_CONTAINER, LogType.WARNING, "item", nexoItem, "recipe", finalRecipeId);
@@ -526,22 +538,22 @@ public class NexoConverter extends Converter {
 
     private void convertBrewingIngredient(ConfigurationSection recipeSection, ConfigurationSection ceRecipeSection, String finalRecipeId) {
         ConfigurationSection ingredientSection = recipeSection.getConfigurationSection("ingredient");
-        if (isNotNull(ingredientSection)) {
+        if (this.isNotNull(ingredientSection)) {
             String tag = ingredientSection.getString("tag");
-            if (isValidString(tag)) {
+            if (this.isValidString(tag)) {
                 ceRecipeSection.set("ingredient", "#" + tag);
                 return;
             }
 
             String minecraftType = ingredientSection.getString("minecraft_type");
-            if (isValidString(minecraftType)) {
-                ceRecipeSection.set("ingredient", namespaced(minecraftType.toLowerCase()));
+            if (this.isValidString(minecraftType)) {
+                ceRecipeSection.set("ingredient", this.namespaced(minecraftType.toLowerCase()));
             }
 
             String nexoItem = ingredientSection.getString("nexo_item");
-            if (isValidString(nexoItem)) {
+            if (this.isValidString(nexoItem)) {
                 String newName = PluginNameMapper.getInstance().getNewName(Plugins.NEXO, nexoItem);
-                if (isValidString(newName)) {
+                if (this.isValidString(newName)) {
                     ceRecipeSection.set("ingredient", newName);
                 } else {
                     this.logDebug(Message.WARNING__CONVERTER__NEXO__BREWING_INGREDIENT_NO_MAPPING, LogType.WARNING, "item", nexoItem, "recipe", finalRecipeId);
@@ -558,11 +570,11 @@ public class NexoConverter extends Converter {
 
         for (File file : files) {
             if (file.isDirectory()) {
-                populateRecipeQueue(baseDir, file, toConvert);
+                this.populateRecipeQueue(baseDir, file, toConvert);
             } else if (file.isFile() && file.getName().endsWith(".yml")) {
                 Optional<FileCacheEntry<YamlConfiguration>> entry = FileCacheManager.getYamlCache().getEntryFile(file.toPath());
                 if (entry.isPresent()) {
-                    RecipeType recipeType = determineRecipeType(file, baseDir);
+                    RecipeType recipeType = this.determineRecipeType(file, baseDir);
                     if (recipeType != null) {
                         ConfigFile configFile = new ConfigFile(file, baseDir, entry.get().getData());
                         toConvert.computeIfAbsent(recipeType, k -> new ArrayList<>()).add(configFile);
@@ -624,7 +636,7 @@ public class NexoConverter extends Converter {
 
             int totalSounds = nexoSoundsList.size();
 
-            BukkitProgressBar progress = createProgressBar(player, totalSounds, "Converting Nexo sounds", "sounds", ConverterOption.SOUNDS);
+            BukkitProgressBar progress = this.createProgressBar(player, totalSounds, "Converting Nexo sounds", "sounds", ConverterOption.SOUNDS);
 
             progress.start();
 
@@ -637,7 +649,7 @@ public class NexoConverter extends Converter {
 
                     for (Map<String, Object> soundEntry : nexoSoundsList) {
                         try {
-                            convertSoundEntry(soundEntry, soundsSection, craftEngineSounds, progress);
+                            this.convertSoundEntry(soundEntry, soundsSection, craftEngineSounds, progress);
                         } catch (Exception e) {
                             Object idObj = soundEntry.get("id");
                             String soundId = idObj != null ? idObj.toString() : "unknown";
@@ -645,8 +657,9 @@ public class NexoConverter extends Converter {
                             progress.increment();
                         }
                     }
-                    if (!this.settings.dryRunEnabled())
+                    if (!this.settings.dryRunEnabled()) {
                         craftEngineSounds.save(outputSoundFile);
+                    }
                 }
             } catch (Exception e) {
                 Logger.showException(Message.ERROR__CONVERTER__NEXO__SOUNDS__CONVERT_FAILURE, e, "file", inputSoundFile.getName());
@@ -675,7 +688,7 @@ public class NexoConverter extends Converter {
 
         SnakeUtils soundSection = soundsSection.getOrCreateSection(soundId);
 
-        boolean replace = parseBoolean(soundEntry.get("replace"));
+        boolean replace = this.parseBoolean(soundEntry.get("replace"));
         if (replace) {
             soundSection.addData("replace", true);
         }
@@ -683,8 +696,8 @@ public class NexoConverter extends Converter {
         List<Map<String, Object>> convertedSounds = new ArrayList<>();
 
         Object singleSound = soundEntry.get("sound");
-        if (singleSound != null && isValidString(singleSound.toString())) {
-            Map<String, Object> soundMap = createSoundMap(
+        if (singleSound != null && this.isValidString(singleSound.toString())) {
+            Map<String, Object> soundMap = this.createSoundMap(
                     singleSound.toString(),
                     soundEntry
             );
@@ -700,15 +713,17 @@ public class NexoConverter extends Converter {
                     @SuppressWarnings("unchecked")
                     Map<String, Object> soundMap = (Map<String, Object>) soundObj;
                     Object nameObj = soundMap.get("name");
-                    if (nameObj == null) continue;
+                    if (nameObj == null) {
+                        continue;
+                    }
 
-                    Map<String, Object> convertedSound = createSoundMap(
+                    Map<String, Object> convertedSound = this.createSoundMap(
                             nameObj.toString(),
                             soundMap
                     );
                     convertedSounds.add(convertedSound);
                 } else if (soundObj instanceof String) {
-                    Map<String, Object> soundMap = createSoundMap(
+                    Map<String, Object> soundMap = this.createSoundMap(
                             soundObj.toString(),
                             soundEntry
                     );
@@ -744,14 +759,14 @@ public class NexoConverter extends Converter {
                 jukeboxSongSection.addData("description", descriptionObj.toString());
             }
 
-            int comparatorOutput = parseInt(finalJukeboxMap.get("comparator_output"), 15);
+            int comparatorOutput = this.parseInt(finalJukeboxMap.get("comparator_output"), 15);
             if (comparatorOutput != 15) {
                 jukeboxSongSection.addData("comparator-output", comparatorOutput);
             }
 
             Object rangeObj = finalJukeboxMap.get("range");
             if (rangeObj != null) {
-                int range = parseInt(rangeObj, 32);
+                int range = this.parseInt(rangeObj, 32);
                 jukeboxSongSection.addData("range", range);
             }
         }
@@ -767,23 +782,35 @@ public class NexoConverter extends Converter {
         Map<String, Object> soundMap = new LinkedHashMap<>();
         soundMap.put("name", soundName);
 
-        boolean stream = parseBoolean(properties.get("stream"));
-        if (stream) soundMap.put("stream", true);
+        boolean stream = this.parseBoolean(properties.get("stream"));
+        if (stream) {
+            soundMap.put("stream", true);
+        }
 
-        boolean preload = parseBoolean(properties.get("preload"));
-        if (preload) soundMap.put("preload", true);
+        boolean preload = this.parseBoolean(properties.get("preload"));
+        if (preload) {
+            soundMap.put("preload", true);
+        }
 
-        double volume = parseDouble(properties.get("volume"), 1f);
-        if (volume != 1.0) soundMap.put("volume", volume);
+        double volume = this.parseDouble(properties.get("volume"), 1f);
+        if (volume != 1.0) {
+            soundMap.put("volume", volume);
+        }
 
-        double pitch = parseDouble(properties.get("pitch"), 1f);
-        if (pitch != 1.0) soundMap.put("pitch", pitch);
+        double pitch = this.parseDouble(properties.get("pitch"), 1f);
+        if (pitch != 1.0) {
+            soundMap.put("pitch", pitch);
+        }
 
-        int weight = parseInt(properties.get("weight"), 1);
-        if (weight != 1) soundMap.put("weight", weight);
+        int weight = this.parseInt(properties.get("weight"), 1);
+        if (weight != 1) {
+            soundMap.put("weight", weight);
+        }
 
-        int attenuationDistance = parseInt(properties.get("attenuation_distance"), 16);
-        if (attenuationDistance != 16) soundMap.put("attenuation_distance", attenuationDistance);
+        int attenuationDistance = this.parseInt(properties.get("attenuation_distance"), 16);
+        if (attenuationDistance != 16) {
+            soundMap.put("attenuation_distance", attenuationDistance);
+        }
 
         return soundMap;
     }
@@ -822,7 +849,7 @@ public class NexoConverter extends Converter {
                 return;
             }
 
-            BukkitProgressBar progress = createProgressBar(player, totalTranslations, "Converting Nexo languages", "translations", ConverterOption.LANGUAGES);
+            BukkitProgressBar progress = this.createProgressBar(player, totalTranslations, "Converting Nexo languages", "translations", ConverterOption.LANGUAGES);
 
             progress.start();
 
@@ -833,7 +860,7 @@ public class NexoConverter extends Converter {
                 try (SnakeUtils craftEngineLanguages = SnakeUtils.createEmpty(tempOutputFile)) {
                     for (String langKey : languageKeys) {
                         try {
-                            convertLanguage(langKey, nexoLanguages, craftEngineLanguages, progress);
+                            this.convertLanguage(langKey, nexoLanguages, craftEngineLanguages, progress);
                         } catch (Exception e) {
                             this.logDebug(Message.ERROR__CONVERTER__NEXO__LANGUAGE__FAILED_CONVERT_LANGUAGE, LogType.ERROR, "lang", langKey, "file", languagesFile.getAbsolutePath());
                             Map<String, Object> langData = nexoLanguages.getMap(langKey);
@@ -842,8 +869,9 @@ public class NexoConverter extends Converter {
                             }
                         }
                     }
-                    if (!this.settings.dryRunEnabled())
+                    if (!this.settings.dryRunEnabled()) {
                         craftEngineLanguages.save(outputFile);
+                    }
                 }
             } catch (Exception e) {
                 Logger.showException(Message.ERROR__CONVERTER__NEXO__LANGUAGES__CONVERT_FAILURE, e, "file", languagesFile.getName());
@@ -888,7 +916,7 @@ public class NexoConverter extends Converter {
         }
 
         if (outputFolder.exists()) {
-            deleteDirectory(outputFolder);
+            this.deleteDirectory(outputFolder);
         }
 
         if (!outputFolder.mkdirs()) {
@@ -897,7 +925,7 @@ public class NexoConverter extends Converter {
         }
 
         Queue<ConfigFile> toConvert = new LinkedList<>();
-        populateQueue(inputBase, inputBase, toConvert);
+        this.populateQueue(inputBase, inputBase, toConvert);
 
         if (toConvert.isEmpty()) {
             this.log(Message.WARNING__CONVERTER__NEXO__GLYPH__NO_GLYPHS_FOUND, LogType.INFO);
@@ -906,15 +934,15 @@ public class NexoConverter extends Converter {
 
         int totalImages = 0;
         for (ConfigFile configFile : toConvert) {
-            totalImages += countItemsInConfig(configFile.config());
+            totalImages += this.countItemsInConfig(configFile.config());
         }
 
-        BukkitProgressBar progress = createProgressBar(player, totalImages, "Converting Nexo images", "images", ConverterOption.IMAGES);
+        BukkitProgressBar progress = this.createProgressBar(player, totalImages, "Converting Nexo images", "images", ConverterOption.IMAGES);
 
         progress.start();
 
         try {
-            processImagesConfigs(toConvert, outputFolder, progress);
+            this.processImagesConfigs(toConvert, outputFolder, progress);
             toConvert.clear();
         } catch (Exception e) {
             Logger.showException(Message.ERROR__CONVERTER__NEXO__IMAGES__CONVERSION_EXCEPTION, e);
@@ -925,7 +953,7 @@ public class NexoConverter extends Converter {
 
     private void processImagesConfigs(Queue<ConfigFile> toConvert, File outputBase, BukkitProgressBar progress) {
         for (ConfigFile configFile : toConvert) {
-            processImageFile(configFile, outputBase, progress);
+            this.processImageFile(configFile, outputBase, progress);
         }
     }
 
@@ -952,8 +980,8 @@ public class NexoConverter extends Converter {
                 ConfigurationSection section = imagesSection.createSection(finalKey);
 
                 String texture = imageSection.getString("texture");
-                if (isValidString(texture)) {
-                    section.set("file", namespaced(texture));
+                if (this.isValidString(texture)) {
+                    section.set("file", this.namespaced(texture));
                 }
 
                 int ascent = imageSection.getInt("ascent", 0);
@@ -965,7 +993,7 @@ public class NexoConverter extends Converter {
                 section.set("height", height < ascent && height == 0 ? ascent : height);
 
                 String font = imageSection.getString("font");
-                if (isValidString(font)) {
+                if (this.isValidString(font)) {
                     section.set("font", font);
                 }
 
@@ -983,7 +1011,9 @@ public class NexoConverter extends Converter {
 
             progress.increment();
         }
-        if (this.settings.dryRunEnabled()) return;
+        if (this.settings.dryRunEnabled()) {
+            return;
+        }
         if (convertedCount > 0) {
             try {
                 Path relative = configFile.baseDir().toPath().relativize(configFile.sourceFile().toPath());
@@ -1006,7 +1036,7 @@ public class NexoConverter extends Converter {
 
     @Override
     public CompletableFuture<Void> convertPack(boolean async, Optional<Player> player) {
-        return executeTask(async, () -> convertPackSync(player));
+        return this.executeTask(async, () -> this.convertPackSync(player));
     }
 
     private int countFilesInZip(File zipFile) {
@@ -1016,7 +1046,7 @@ public class NexoConverter extends Converter {
             ZipEntry entry;
             while ((entry = zis.getNextEntry()) != null) {
                 try {
-                    validateZipEntryName(entry.getName());
+                    this.validateZipEntryName(entry.getName());
                     if (!entry.isDirectory()) {
                         count++;
                     }
@@ -1043,7 +1073,7 @@ public class NexoConverter extends Converter {
             }
 
             if (outputPackFile.exists()) {
-                deleteDirectory(outputPackFile);
+                this.deleteDirectory(outputPackFile);
             }
             if (!outputPackFile.mkdirs()) {
                 this.logDebug(Message.ERROR__MKDIR_FAILURE, LogType.ERROR, "directory", outputPackFile.getName(), "path", outputPackFile.getAbsolutePath());
@@ -1053,7 +1083,7 @@ public class NexoConverter extends Converter {
             int totalFiles = 0;
 
             File mainAssetsFolder = new File(inputPackFile, "assets");
-            totalFiles += countFilesInDirectory(mainAssetsFolder);
+            totalFiles += this.countFilesInDirectory(mainAssetsFolder);
 
             File nexoExternalPacksFolder = new File(inputPackFile, "external_packs");
             if (nexoExternalPacksFolder.exists() && nexoExternalPacksFolder.isDirectory()) {
@@ -1062,15 +1092,15 @@ public class NexoConverter extends Converter {
                     for (File externalPack : externalPacks) {
                         if (externalPack.isDirectory()) {
                             File externalPackAssetsFolder = new File(externalPack, "assets");
-                            totalFiles += countFilesInDirectory(externalPackAssetsFolder);
+                            totalFiles += this.countFilesInDirectory(externalPackAssetsFolder);
                         } else if (externalPack.isFile() && externalPack.getName().endsWith(".zip")) {
-                            totalFiles += countFilesInZip(externalPack);
+                            totalFiles += this.countFilesInZip(externalPack);
                         }
                     }
                 }
             }
 
-            BukkitProgressBar progress = createProgressBar(optionalPlayer, totalFiles, "Converting Nexo resource pack", "files", ConverterOption.PACKS);
+            BukkitProgressBar progress = this.createProgressBar(optionalPlayer, totalFiles, "Converting Nexo resource pack", "files", ConverterOption.PACKS);
 
             progress.start();
 
@@ -1086,7 +1116,7 @@ public class NexoConverter extends Converter {
             try {
                 File outputAssetsFolder = new File(outputPackFile, "assets");
 
-                copyAssetsFolder(new File(inputPackFile, "assets"), outputAssetsFolder, "main", progress, executor, latch, errorRef, useMultiThread);
+                this.copyAssetsFolder(new File(inputPackFile, "assets"), outputAssetsFolder, "main", progress, executor, latch, errorRef, useMultiThread);
 
                 if (nexoExternalPacksFolder.exists() && nexoExternalPacksFolder.isDirectory()) {
                     File[] externalPacks = nexoExternalPacksFolder.listFiles();
@@ -1094,9 +1124,9 @@ public class NexoConverter extends Converter {
                         for (File externalPack : externalPacks) {
                             if (externalPack.isDirectory()) {
                                 File externalPackAssetsFolder = new File(externalPack, "assets");
-                                copyAssetsFolder(externalPackAssetsFolder, outputAssetsFolder, externalPack.getName(), progress, executor, latch, errorRef, useMultiThread);
+                                this.copyAssetsFolder(externalPackAssetsFolder, outputAssetsFolder, externalPack.getName(), progress, executor, latch, errorRef, useMultiThread);
                             } else if (externalPack.isFile() && externalPack.getName().endsWith(".zip")) {
-                                extractAndCopyZipAssets(externalPack, outputAssetsFolder, externalPack.getName().replace(".zip", ""), progress, executor, latch, errorRef, useMultiThread);
+                                this.extractAndCopyZipAssets(externalPack, outputAssetsFolder, externalPack.getName().replace(".zip", ""), progress, executor, latch, errorRef, useMultiThread);
                             }
                         }
                     }
@@ -1147,24 +1177,24 @@ public class NexoConverter extends Converter {
         }
 
         try {
-            extractZip(zipFile.toPath(), tempDir.toPath(), progress, executor, latch, errorRef, useMultiThread);
+            this.extractZip(zipFile.toPath(), tempDir.toPath(), progress, executor, latch, errorRef, useMultiThread);
 
             File extractedAssetsFolder = new File(tempDir, "assets");
             if (extractedAssetsFolder.exists() && extractedAssetsFolder.isDirectory()) {
-                copyAssetsFolder(extractedAssetsFolder, outputAssetsFolder, packName, progress, executor, latch, errorRef, useMultiThread);
+                this.copyAssetsFolder(extractedAssetsFolder, outputAssetsFolder, packName, progress, executor, latch, errorRef, useMultiThread);
             } else if (!this.settings.dryRunEnabled()) {
                 this.logDebug(Message.WARNING__NO_ASSETS_FOLDER, LogType.INFO, "zip", zipFile.getName());
             }
 
             if (!this.settings.dryRunEnabled()) {
-                deleteDirectory(tempDir);
+                this.deleteDirectory(tempDir);
             }
         } catch (IOException e) {
             Logger.showException(Message.ERROR__CONVERTER__NEXO__PACK__ZIP_EXTRACT_FAILURE, e, "file", zipFile.getName());
             errorRef.compareAndSet(null, e);
         } finally {
             if (!this.settings.dryRunEnabled() && tempDir.exists()) {
-                deleteDirectory(tempDir);
+                this.deleteDirectory(tempDir);
             }
         }
     }
@@ -1191,7 +1221,7 @@ public class NexoConverter extends Converter {
         try (ZipInputStream zis = new ZipInputStream(new BufferedInputStream(Files.newInputStream(zipPath)))) {
             ZipEntry entry;
             while ((entry = zis.getNextEntry()) != null) {
-                String entryName = validateZipEntryName(entry.getName());
+                String entryName = this.validateZipEntryName(entry.getName());
                 File destinationFile = new File(canonicalTargetDir, entryName);
 
                 File canonicalDestination = destinationFile.getCanonicalFile();

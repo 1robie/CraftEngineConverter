@@ -3,6 +3,10 @@ package fr.robie.craftengineconverter.converter.nexo;
 import fr.robie.craftengineconverter.api.builder.TimerBuilder;
 import fr.robie.craftengineconverter.api.configuration.Configuration;
 import fr.robie.craftengineconverter.api.configuration.ConfigurationKey;
+import fr.robie.craftengineconverter.api.configuration.conditions.EnchantmentCondition;
+import fr.robie.craftengineconverter.api.configuration.conditions.InvertedCondition;
+import fr.robie.craftengineconverter.api.configuration.conditions.RandomCondition;
+import fr.robie.craftengineconverter.api.configuration.conditions.SurvivesExplosionCondition;
 import fr.robie.craftengineconverter.api.configuration.item.AbstractEffectsConfiguration;
 import fr.robie.craftengineconverter.api.configuration.item.LoreConfiguration;
 import fr.robie.craftengineconverter.api.configuration.item.behavior.block.BlockConfiguration;
@@ -17,16 +21,10 @@ import fr.robie.craftengineconverter.api.configuration.item.behavior.furniture.h
 import fr.robie.craftengineconverter.api.configuration.item.behavior.furniture.hitbox.Hitbox;
 import fr.robie.craftengineconverter.api.configuration.item.behavior.furniture.hitbox.InteractionHitbox;
 import fr.robie.craftengineconverter.api.configuration.item.behavior.furniture.hitbox.ShulkerHitbox;
-import fr.robie.craftengineconverter.api.configuration.item.components.ConsumableConfiguration;
-import fr.robie.craftengineconverter.api.configuration.item.components.HideTooltipDisplayConfiguration;
-import fr.robie.craftengineconverter.api.configuration.item.components.WeaponConfiguration;
+import fr.robie.craftengineconverter.api.configuration.item.components.*;
 import fr.robie.craftengineconverter.api.configuration.item.data.*;
 import fr.robie.craftengineconverter.api.configuration.item.loottables.LootPool;
 import fr.robie.craftengineconverter.api.configuration.item.loottables.LootTable;
-import fr.robie.craftengineconverter.api.configuration.conditions.EnchantmentCondition;
-import fr.robie.craftengineconverter.api.configuration.conditions.InvertedCondition;
-import fr.robie.craftengineconverter.api.configuration.conditions.RandomCondition;
-import fr.robie.craftengineconverter.api.configuration.conditions.SurvivesExplosionCondition;
 import fr.robie.craftengineconverter.api.configuration.item.loottables.entries.FurnitureItemEntry;
 import fr.robie.craftengineconverter.api.configuration.item.loottables.entries.ItemEntry;
 import fr.robie.craftengineconverter.api.configuration.item.loottables.formulas.OreDropsFormula;
@@ -40,6 +38,7 @@ import fr.robie.craftengineconverter.api.configuration.item.models.model.SimpleM
 import fr.robie.craftengineconverter.api.configuration.item.models.range_dispatch.UseDurationRangeDispatchConfiguration;
 import fr.robie.craftengineconverter.api.configuration.item.models.select.ChargeTypeSelectConfiguration;
 import fr.robie.craftengineconverter.api.configuration.item.models.select.DisplayContentSelectConfiguration;
+import fr.robie.craftengineconverter.api.configuration.item.settings.InvulnerableSettingConfiguration;
 import fr.robie.craftengineconverter.api.configuration.item.settings.ProjectileSettingConfiguration;
 import fr.robie.craftengineconverter.api.enums.*;
 import fr.robie.craftengineconverter.api.format.Message;
@@ -90,20 +89,20 @@ public class NexoItemConverter extends ItemConverter {
         List<String> dependencies = new ArrayList<>();
 
         ConfigurationSection customBlockSection = this.nexoItemSection.getConfigurationSection("Mechanics.custom_block");
-        if (isNotNull(customBlockSection)) {
+        if (this.isNotNull(customBlockSection)) {
             ConfigurationSection directionalSection = customBlockSection.getConfigurationSection("directional");
-            if (isNotNull(directionalSection)) {
+            if (this.isNotNull(directionalSection)) {
                 for (String key : List.of("y_block", "x_block", "z_block", "north_block", "east_block", "south_block", "west_block", "up_block", "down_block")) {
                     String depRawId = directionalSection.getString(key);
-                    if (isValidString(depRawId)) {
+                    if (this.isValidString(depRawId)) {
                         dependencies.add(depRawId);
                     }
                 }
             }
             ConfigurationSection logStripSection = customBlockSection.getConfigurationSection("log_strip");
-            if (isNotNull(logStripSection)) {
+            if (this.isNotNull(logStripSection)) {
                 String strippedLog = logStripSection.getString("stripped_log");
-                if (isValidString(strippedLog)) {
+                if (this.isValidString(strippedLog)) {
                     dependencies.add(strippedLog);
                 }
             }
@@ -123,7 +122,7 @@ public class NexoItemConverter extends ItemConverter {
     @Override
     public void convertItemName() {
         String itemName = this.nexoItemSection.getString("itemname");
-        if (isValidString(itemName)) {
+        if (this.isValidString(itemName)) {
             this.craftEngineItemsConfiguration.addItemConfiguration(new ItemNameConfiguration(itemName, Configuration.<Boolean>get(ConfigurationKey.DISABLE_DEFAULT_ITALIC)));
         }
     }
@@ -144,7 +143,7 @@ public class NexoItemConverter extends ItemConverter {
     @Override
     public void convertDyedColor() {
         Object color = this.nexoItemSection.get("color");
-        if (isNotNull(color)) {
+        if (this.isNotNull(color)) {
             try {
                 this.craftEngineItemsConfiguration.addItemConfiguration(DyedColorConfiguration.parse(color));
             } catch (Exception ignored) {
@@ -300,7 +299,7 @@ public class NexoItemConverter extends ItemConverter {
     @Override
     public void convertItemModel() {
         String itemModel = this.nexoItemSection.getString("Components.item_model");
-        if (isValidString(itemModel)) {
+        if (this.isValidString(itemModel)) {
             this.craftEngineItemsConfiguration.addItemConfiguration(new fr.robie.craftengineconverter.api.configuration.item.components.ItemModelConfiguration(itemModel));
         }
     }
@@ -309,14 +308,14 @@ public class NexoItemConverter extends ItemConverter {
     public void convertMaxStackSize() {
         int maxStackSize = this.nexoItemSection.getInt("Components.max_stack_size", 0);
         if (maxStackSize > 0 && maxStackSize <= 99) {
-            this.craftEngineItemsConfiguration.addItemConfiguration(new fr.robie.craftengineconverter.api.configuration.item.components.MaxStackSizeConfiguration(maxStackSize));
+            this.craftEngineItemsConfiguration.addItemConfiguration(new MaxStackSizeConfiguration(maxStackSize));
         }
     }
 
     @Override
     public void convertEnchantmentGlintOverride() {
         if (this.nexoItemSection.getBoolean("Components.enchantment_glint_override", false)) {
-            this.craftEngineItemsConfiguration.addItemConfiguration(new fr.robie.craftengineconverter.api.configuration.item.components.EnchantmentGlintOverrideConfiguration(true));
+            this.craftEngineItemsConfiguration.addItemConfiguration(new EnchantmentGlintOverrideConfiguration(true));
         }
     }
 
@@ -325,15 +324,14 @@ public class NexoItemConverter extends ItemConverter {
         if (!this.nexoItemSection.getBoolean("Components.fire_resistant", false)) {
             return;
         }
-
-        this.craftEngineItemsConfiguration.addItemConfiguration(new fr.robie.craftengineconverter.api.configuration.item.settings.InvulnerableSettingConfiguration(Set.of(fr.robie.craftengineconverter.api.configuration.item.settings.InvulnerableSettingConfiguration.InvulnerableType.FIRE, fr.robie.craftengineconverter.api.configuration.item.settings.InvulnerableSettingConfiguration.InvulnerableType.FIRE_TICK, fr.robie.craftengineconverter.api.configuration.item.settings.InvulnerableSettingConfiguration.InvulnerableType.LAVA), true));
+        this.craftEngineItemsConfiguration.addItemConfiguration(new InvulnerableSettingConfiguration(Set.of(fr.robie.craftengineconverter.api.configuration.item.settings.InvulnerableSettingConfiguration.InvulnerableType.FIRE, fr.robie.craftengineconverter.api.configuration.item.settings.InvulnerableSettingConfiguration.InvulnerableType.FIRE_TICK, fr.robie.craftengineconverter.api.configuration.item.settings.InvulnerableSettingConfiguration.InvulnerableType.LAVA), true));
     }
 
     @Override
     public void convertMaxDamage() {
         int maxDamage = this.nexoItemSection.getInt("Components.max_damage", 0);
         if (maxDamage > 0) {
-            this.craftEngineItemsConfiguration.addItemConfiguration(new fr.robie.craftengineconverter.api.configuration.item.data.MaxDamageConfiguration(maxDamage));
+            this.craftEngineItemsConfiguration.addItemConfiguration(new MaxDamageConfiguration(maxDamage));
         }
     }
 
@@ -342,7 +340,6 @@ public class NexoItemConverter extends ItemConverter {
         if (!this.nexoItemSection.getBoolean("Components.hide_tooltip", false)) {
             return;
         }
-
         this.craftEngineItemsConfiguration.addItemConfiguration(new HideTooltipDisplayConfiguration(true));
     }
 
@@ -362,7 +359,7 @@ public class NexoItemConverter extends ItemConverter {
     @Override
     public void convertTool() {
         ConfigurationSection nexoToolSection = this.nexoItemSection.getConfigurationSection("Components.tool");
-        if (isNotNull(nexoToolSection)) {
+        if (this.isNotNull(nexoToolSection)) {
             float defaultMiningSpeed = (float) nexoToolSection.getDouble("default_mining_speed", 1.0);
             int damagePerBlock = nexoToolSection.getInt("damage_per_block", 1);
             // can_destroy_blocks_in_creative not supported in Nexo, defaults to false
@@ -378,20 +375,20 @@ public class NexoItemConverter extends ItemConverter {
                 for (var nexoRule : nexoRulesList) {
                     float speed = 0f;
                     Object speedObj = nexoRule.get("speed");
-                    if (isNotNull(speedObj) && speedObj instanceof Number speedNum) {
+                    if (this.isNotNull(speedObj) && speedObj instanceof Number speedNum) {
                         speed = speedNum.floatValue();
                     }
 
                     boolean correctForDrops = false;
                     Object correctForDropsObj = nexoRule.get("correct_for_drops");
-                    if (isNotNull(correctForDropsObj) && correctForDropsObj instanceof Boolean correctForDropsBool) {
+                    if (this.isNotNull(correctForDropsObj) && correctForDropsObj instanceof Boolean correctForDropsBool) {
                         correctForDrops = correctForDropsBool;
                     }
 
                     // --- Blocks (material / materials) ---
                     List<String> materialBlocks = new ArrayList<>();
                     Object material = nexoRule.get("material");
-                    if (isNotNull(material) && material instanceof String materialStr && !materialStr.isEmpty()) {
+                    if (this.isNotNull(material) && material instanceof String materialStr && !materialStr.isEmpty()) {
                         String normalized = materialStr.toLowerCase(Locale.ROOT);
                         if (!normalized.contains(":")) {
                             normalized = "minecraft:" + normalized;
@@ -399,7 +396,7 @@ public class NexoItemConverter extends ItemConverter {
                         materialBlocks.add(normalized);
                     }
                     Object materials = nexoRule.get("materials");
-                    if (isNotNull(materials) && materials instanceof List<?> materialsList && !materialsList.isEmpty()) {
+                    if (this.isNotNull(materials) && materials instanceof List<?> materialsList && !materialsList.isEmpty()) {
                         //noinspection unchecked
                         for (String mat : (List<String>) materialsList) {
                             String normalized = mat.toLowerCase(Locale.ROOT);
@@ -417,11 +414,12 @@ public class NexoItemConverter extends ItemConverter {
                     // --- Tags (tag / tags) ---
                     List<String> tagsList = new ArrayList<>();
                     Object tag = nexoRule.get("tag");
-                    if (isNotNull(tag) && tag instanceof String tagStr && !tagStr.isEmpty()) {
+                    if (this.isNotNull(tag) && tag instanceof String tagStr && !tagStr.isEmpty()) {
                         tagsList.add(tagStr);
                     }
                     Object tags = nexoRule.get("tags");
-                    if (isNotNull(tags) && tags instanceof List<?> tagsListObj && !tagsListObj.isEmpty()) {
+                    if (this.isNotNull(tags) && tags instanceof List<?> tagsListObj && !tagsListObj.isEmpty()) {
+                        //noinspection unchecked
                         tagsList.addAll((List<String>) tagsListObj);
                     }
 
@@ -453,7 +451,7 @@ public class NexoItemConverter extends ItemConverter {
             List<fr.robie.craftengineconverter.api.configuration.item.components.CustomDataConfiguration.CustomDataEntry> customDataEntries = new ArrayList<>();
             for (String key : customDataSection.getKeys(false)) {
                 Object value = customDataSection.get(key);
-                if (isNotNull(value)) {
+                if (this.isNotNull(value)) {
                     customDataEntries.add(new fr.robie.craftengineconverter.api.configuration.item.components.CustomDataConfiguration.CustomDataEntry(key, value));
                 }
             }
@@ -466,7 +464,7 @@ public class NexoItemConverter extends ItemConverter {
     @Override
     public void convertJukeboxPlayable() {
         String song = this.nexoItemSection.getString("Components.jukebox_playable.song_key");
-        if (isValidString(song)) {
+        if (this.isValidString(song)) {
             this.craftEngineItemsConfiguration.addItemConfiguration(new fr.robie.craftengineconverter.api.configuration.item.components.JukeboxPlayableConfiguration(song));
         }
     }
@@ -564,19 +562,19 @@ public class NexoItemConverter extends ItemConverter {
             allowedEntities = allowedEntityTypes.size() == 1 ? allowedEntityTypes.getFirst() : allowedEntityTypes;
         }
 
-        if (isValidString(assetId) && this.craftEngineItemsConfiguration.getMaterial() == Material.ELYTRA) {
+        if (this.isValidString(assetId) && this.craftEngineItemsConfiguration.getMaterial() == Material.ELYTRA) {
             for (String keyToCheck : new String[]{"_elytra"}) {
                 if (assetId.endsWith(keyToCheck)) {
                     assetId = assetId.substring(0, assetId.length() - keyToCheck.length());
                 }
             }
-            if (!isValidString(slot)) {
+            if (!this.isValidString(slot)) {
                 slot = "chest";
             }
         }
 
         EquipmentSlot equipmentSlot = null;
-        if (isValidString(slot)) {
+        if (this.isValidString(slot)) {
             try {
                 equipmentSlot = EquipmentSlot.valueOf(slot.toUpperCase());
             } catch (IllegalArgumentException e) {
@@ -584,7 +582,7 @@ public class NexoItemConverter extends ItemConverter {
             }
         }
 
-        if (isValidString(assetId)) {
+        if (this.isValidString(assetId)) {
             this.setAssetId(assetId);
         }
 
@@ -594,7 +592,7 @@ public class NexoItemConverter extends ItemConverter {
     @Override
     public void convertDamageResistance() {
         String damageResistance = this.nexoItemSection.getString("Components.damage_resistant");
-        if (isValidString(damageResistance)) {
+        if (this.isValidString(damageResistance)) {
             this.craftEngineItemsConfiguration.addItemConfiguration(new fr.robie.craftengineconverter.api.configuration.item.components.DamageResistantConfiguration(damageResistance));
         }
     }
@@ -617,7 +615,7 @@ public class NexoItemConverter extends ItemConverter {
     @Override
     public void convertToolTipStyle() {
         String toolTipStyle = this.nexoItemSection.getString("Components.tooltip_style");
-        if (isValidString(toolTipStyle)) {
+        if (this.isValidString(toolTipStyle)) {
             try {
                 this.craftEngineItemsConfiguration.addItemConfiguration(new fr.robie.craftengineconverter.api.configuration.item.data.TooltipStyleConfiguration(NamespacedKey.fromString(toolTipStyle)));
             } catch (IllegalArgumentException e) {
@@ -670,11 +668,11 @@ public class NexoItemConverter extends ItemConverter {
 
         List<AnvilRepairItem> anvilRepairItems = new ArrayList<>();
         Object singleRepairItem = componentsSection.get("anvil_repairable.repairable");
-        if (singleRepairItem instanceof String singleRepairItemStr && isValidString(singleRepairItemStr)) {
+        if (singleRepairItem instanceof String singleRepairItemStr && this.isValidString(singleRepairItemStr)) {
             anvilRepairItems.add(new AnvilRepairItem(List.of(singleRepairItemStr), 1, 1.0));
         } else if (singleRepairItem instanceof List<?> singleRepairItemList) {
             for (Object item : singleRepairItemList) {
-                if (item instanceof String itemStr && isValidString(itemStr)) {
+                if (item instanceof String itemStr && this.isValidString(itemStr)) {
                     anvilRepairItems.add(new AnvilRepairItem(List.of(itemStr), 1, 1.0));
                 }
             }
@@ -688,13 +686,13 @@ public class NexoItemConverter extends ItemConverter {
     @Override
     public void convertDeathProtection() {
         ConfigurationSection nexoDeathProtectionSection = this.nexoItemSection.getConfigurationSection("Components.death_protection");
-        if (isNull(nexoDeathProtectionSection)) {
+        if (this.isNull(nexoDeathProtectionSection)) {
             return;
         }
 
         ConfigurationSection deathEffectsSection = nexoDeathProtectionSection.getConfigurationSection("death_effects");
 
-        if (isNull(deathEffectsSection)) {
+        if (this.isNull(deathEffectsSection)) {
             this.craftEngineItemsConfiguration.addItemConfiguration(new fr.robie.craftengineconverter.api.configuration.item.components.DeathProtectionConfiguration(null));
             return;
         }
@@ -702,7 +700,7 @@ public class NexoItemConverter extends ItemConverter {
         List<AbstractEffectsConfiguration.ConsumeEffect> deathEffects = new ArrayList<>();
 
         ConfigurationSection applyEffectsSection = deathEffectsSection.getConfigurationSection("APPLY_EFFECTS");
-        if (isNotNull(applyEffectsSection)) {
+        if (this.isNotNull(applyEffectsSection)) {
             List<AbstractEffectsConfiguration.ApplyEffectsConsumeEffect.ApplyEffect> effects = new ArrayList<>();
             for (String key : applyEffectsSection.getKeys(false)) {
                 effects.add(new AbstractEffectsConfiguration.ApplyEffectsConsumeEffect.ApplyEffect(
@@ -733,9 +731,9 @@ public class NexoItemConverter extends ItemConverter {
         }
 
         ConfigurationSection playSoundSection = deathEffectsSection.getConfigurationSection("PLAY_SOUND");
-        if (isNotNull(playSoundSection)) {
+        if (this.isNotNull(playSoundSection)) {
             String sound = playSoundSection.getString("sound");
-            if (isValidString(sound)) {
+            if (this.isValidString(sound)) {
                 deathEffects.add(new AbstractEffectsConfiguration.PlaySoundConsumeEffect(
                         sound,
                         playSoundSection.getDouble("range", 16.0)
@@ -759,7 +757,7 @@ public class NexoItemConverter extends ItemConverter {
     @Override
     public void convertBreakSound() {
         String breakSound = this.nexoItemSection.getString("Components.break_sound");
-        if (isValidString(breakSound)) {
+        if (this.isValidString(breakSound)) {
             this.craftEngineItemsConfiguration.addItemConfiguration(new fr.robie.craftengineconverter.api.configuration.item.components.BreakSoundConfiguration(breakSound, 16.0f));
         }
     }
@@ -779,7 +777,7 @@ public class NexoItemConverter extends ItemConverter {
     @Override
     public void convertBlocksAttackComponent() {
         ConfigurationSection nexoBlocksAttacksSection = this.nexoItemSection.getConfigurationSection("Components.blocks_attacks");
-        if (isNull(nexoBlocksAttacksSection)) {
+        if (this.isNull(nexoBlocksAttacksSection)) {
             return;
         }
 
@@ -812,6 +810,7 @@ public class NexoItemConverter extends ItemConverter {
             List<String> types = new ArrayList<>();
             Object typesObj = dr.get("types");
             if (typesObj instanceof List<?> list) {
+                //noinspection unchecked
                 types.addAll((List<String>) list);
             } else if (typesObj instanceof String str) {
                 types.add(str);
@@ -825,17 +824,17 @@ public class NexoItemConverter extends ItemConverter {
 
     @Override
     public void convertCanPlaceOnComponent() {
-        convertBlockPredicateComponent("can_place_on");
+        this.convertBlockPredicateComponent("can_place_on");
     }
 
     @Override
     public void convertCanBreakComponent() {
-        convertBlockPredicateComponent("can_break");
+        this.convertBlockPredicateComponent("can_break");
     }
 
     private void convertBlockPredicateComponent(String componentName) {
         ConfigurationSection nexoSection = this.nexoItemSection.getConfigurationSection("Components." + componentName);
-        if (isNull(nexoSection)) {
+        if (this.isNull(nexoSection)) {
             return;
         }
 
@@ -843,13 +842,13 @@ public class NexoItemConverter extends ItemConverter {
         List<String> tagsArray = new ArrayList<>();
 
         String block = nexoSection.getString("block");
-        if (isValidString(block)) {
-            processBlockOrTag(block, blockArray, tagsArray);
+        if (this.isValidString(block)) {
+            this.processBlockOrTag(block, blockArray, tagsArray);
         }
 
         for (String blockItem : nexoSection.getStringList("blocks")) {
-            if (isValidString(blockItem)) {
-                processBlockOrTag(blockItem, blockArray, tagsArray);
+            if (this.isValidString(blockItem)) {
+                this.processBlockOrTag(blockItem, blockArray, tagsArray);
             }
         }
 
@@ -903,7 +902,7 @@ public class NexoItemConverter extends ItemConverter {
     @Override
     public void convertPaintingVariant() {
         String paintingVariant = this.nexoItemSection.getString("Components.painting_variant");
-        if (isValidString(paintingVariant)) {
+        if (this.isValidString(paintingVariant)) {
             this.craftEngineItemsConfiguration.addItemConfiguration(new fr.robie.craftengineconverter.api.configuration.item.components.PaintingVariantConfiguration(paintingVariant));
         }
     }
@@ -911,7 +910,7 @@ public class NexoItemConverter extends ItemConverter {
     @Override
     public void convertKineticComponent() {
         ConfigurationSection kineticSection = this.nexoItemSection.getConfigurationSection("Components.kinetic_weapon");
-        if (isNull(kineticSection)) {
+        if (this.isNull(kineticSection)) {
             return;
         }
 
@@ -921,9 +920,9 @@ public class NexoItemConverter extends ItemConverter {
         String sound = kineticSection.getString("sound");
         String hitSound = kineticSection.getString("hit_sound");
 
-        fr.robie.craftengineconverter.api.configuration.item.components.KineticWeaponConfiguration.KineticConditions dismountConditions = parseKineticConditions(kineticSection.getConfigurationSection("dismount_conditions"));
-        fr.robie.craftengineconverter.api.configuration.item.components.KineticWeaponConfiguration.KineticConditions knockbackConditions = parseKineticConditions(kineticSection.getConfigurationSection("knockback_conditions"));
-        fr.robie.craftengineconverter.api.configuration.item.components.KineticWeaponConfiguration.KineticConditions damageConditions = parseKineticConditions(kineticSection.getConfigurationSection("damage_conditions"));
+        fr.robie.craftengineconverter.api.configuration.item.components.KineticWeaponConfiguration.KineticConditions dismountConditions = this.parseKineticConditions(kineticSection.getConfigurationSection("dismount_conditions"));
+        fr.robie.craftengineconverter.api.configuration.item.components.KineticWeaponConfiguration.KineticConditions knockbackConditions = this.parseKineticConditions(kineticSection.getConfigurationSection("knockback_conditions"));
+        fr.robie.craftengineconverter.api.configuration.item.components.KineticWeaponConfiguration.KineticConditions damageConditions = this.parseKineticConditions(kineticSection.getConfigurationSection("damage_conditions"));
 
         this.craftEngineItemsConfiguration.addItemConfiguration(new fr.robie.craftengineconverter.api.configuration.item.components.KineticWeaponConfiguration(delayTicks, damageMultiplier, forwardMovement, sound, hitSound, dismountConditions, knockbackConditions, damageConditions));
     }
@@ -942,7 +941,7 @@ public class NexoItemConverter extends ItemConverter {
     @Override
     public void convertPiercingWeaponComponent() {
         ConfigurationSection piercingSection = this.nexoItemSection.getConfigurationSection("Components.piercing_weapon");
-        if (isNull(piercingSection)) {
+        if (this.isNull(piercingSection)) {
             return;
         }
 
@@ -957,7 +956,7 @@ public class NexoItemConverter extends ItemConverter {
     @Override
     public void convertAttackRangeComponent() {
         ConfigurationSection attackRangeSection = this.nexoItemSection.getConfigurationSection("Components.attack_range");
-        if (isNull(attackRangeSection)) {
+        if (this.isNull(attackRangeSection)) {
             return;
         }
 
@@ -965,7 +964,7 @@ public class NexoItemConverter extends ItemConverter {
         double maxReach = 3.0;
 
         String reach = attackRangeSection.getString("reach");
-        if (isValidString(reach)) {
+        if (this.isValidString(reach)) {
             if (reach.contains("..")) {
                 String[] parts = reach.split("\\.\\.");
                 if (parts.length == 2) {
@@ -1005,7 +1004,7 @@ public class NexoItemConverter extends ItemConverter {
     @Override
     public void convertSwingAnimationComponent() {
         ConfigurationSection swingAnimationSection = this.nexoItemSection.getConfigurationSection("Components.swing_animation");
-        if (isNull(swingAnimationSection)) {
+        if (this.isNull(swingAnimationSection)) {
             return;
         }
 
@@ -1031,7 +1030,7 @@ public class NexoItemConverter extends ItemConverter {
     @Override
     public void convertUseEffectsComponent() {
         ConfigurationSection useEffectsSection = this.nexoItemSection.getConfigurationSection("Components.use_effects");
-        if (isNull(useEffectsSection)) {
+        if (this.isNull(useEffectsSection)) {
             return;
         }
 
@@ -1045,7 +1044,7 @@ public class NexoItemConverter extends ItemConverter {
     @Override
     public void convertDamageTypeComponent() {
         String damageType = this.nexoItemSection.getString("Components.damage_type");
-        if (isValidString(damageType)) {
+        if (this.isValidString(damageType)) {
             this.craftEngineItemsConfiguration.addItemConfiguration(new fr.robie.craftengineconverter.api.configuration.item.components.DamageTypeConfiguration(damageType));
         }
     }
@@ -1062,7 +1061,7 @@ public class NexoItemConverter extends ItemConverter {
     @Override
     public void convertProfileComponent() {
         ConfigurationSection profileSection = this.nexoItemSection.getConfigurationSection("Components.profile");
-        if (isNull(profileSection)) {
+        if (this.isNull(profileSection)) {
             return;
         }
 
@@ -1075,7 +1074,7 @@ public class NexoItemConverter extends ItemConverter {
             String propName = propertiesSection.getString("name");
             String propValue = propertiesSection.getString("value");
             String propSignature = propertiesSection.getString("signature");
-            if (isValidString(propName) && isValidString(propValue)) {
+            if (this.isValidString(propName) && this.isValidString(propValue)) {
                 properties.add(new fr.robie.craftengineconverter.api.configuration.item.components.PlayerProfileConfiguration.Property(propName, propValue, propSignature));
             }
         }
@@ -1100,26 +1099,26 @@ public class NexoItemConverter extends ItemConverter {
 
         String parentModel = packSection.getString("parent_model");
 
-        if (!isValidString(parentModel)) {
-            convertModelWithoutParent(packSection);
+        if (!this.isValidString(parentModel)) {
+            this.convertModelWithoutParent(packSection);
         } else {
-            convertModelWithParent(packSection, parentModel);
+            this.convertModelWithParent(packSection, parentModel);
         }
     }
 
     private void convertModelWithoutParent(ConfigurationSection packSection) {
         String modelPath = packSection.getString("model");
-        if (!isValidString(modelPath)) {
+        if (!this.isValidString(modelPath)) {
             if (this.craftEngineItemsConfiguration.getMaterial() == Material.ELYTRA) {
-                buildElytraModel(packSection);
+                this.buildElytraModel(packSection);
             }
             if (packSection.isConfigurationSection("CustomArmor")) {
                 ConfigurationSection customArmorSection = packSection.getConfigurationSection("CustomArmor");
-                ConfigurationSection fileEquipementsSection = getEquipmentsSection();
+                ConfigurationSection fileEquipementsSection = this.getEquipmentsSection();
 
-                String assetId = determineAssetId(packSection, List.of("_wolf_armor", "_llama_armor", "_horse_armor", "_nautilus_armor"));
+                String assetId = this.determineAssetId(packSection, List.of("_wolf_armor", "_llama_armor", "_horse_armor", "_nautilus_armor"));
 
-                if (isNotNull(customArmorSection) && isNotNull(assetId)) {
+                if (this.isNotNull(customArmorSection) && this.isNotNull(assetId)) {
                     Set<String> keys = customArmorSection.getKeys(false);
                     Map<String, Set<Tuple<String>>> equipmentLayers = new HashMap<>();
 
@@ -1150,9 +1149,9 @@ public class NexoItemConverter extends ItemConverter {
                             for (var layer : layerTypeTuple.getValue()) {
                                 String originalKey = layer.getFirst();
                                 String mobTexture = customArmorSection.getString(originalKey);
-                                String namespacedTexture = namespaced(mobTexture);
+                                String namespacedTexture = this.namespaced(mobTexture);
 
-                                if (isValidString(namespacedTexture)) {
+                                if (this.isValidString(namespacedTexture)) {
                                     String[] split = namespacedTexture.split(":", 2);
                                     String namespace = split[0];
                                     String path = split[1];
@@ -1164,7 +1163,7 @@ public class NexoItemConverter extends ItemConverter {
                                         String fileName = lastSlash != -1 ? path.substring(lastSlash + 1) : path;
 
                                         String targetPath = "textures/entity/equipment/" + equipmentFolder + "/";
-                                        getConverter().addPackMapping(namespace, "textures/" + path + ".png", namespace, targetPath);
+                                        this.getConverter().addPackMapping(namespace, "textures/" + path + ".png", namespace, targetPath);
 
                                         for (ArmorConverter converter : convertersToProcess) {
                                             String convertedPath = converter.getTexturePath(namespace, equipmentFolder, fileName);
@@ -1179,7 +1178,7 @@ public class NexoItemConverter extends ItemConverter {
                                         }
 
                                         String targetPath = "textures/entity/equipment/" + equipmentFolder + "/" + pathPrefix;
-                                        getConverter().addPackMapping(namespace, "textures/" + path + ".png", namespace, targetPath);
+                                        this.getConverter().addPackMapping(namespace, "textures/" + path + ".png", namespace, targetPath);
 
                                         for (ArmorConverter converter : convertersToProcess) {
                                             converterTextures.computeIfAbsent(converter, k -> new HashSet<>()).add(namespacedTexture);
@@ -1192,16 +1191,16 @@ public class NexoItemConverter extends ItemConverter {
 
                             for (Map.Entry<ArmorConverter, Set<String>> entry : converterTextures.entrySet()) {
                                 ConfigurationSection section = converterSections.get(entry.getKey());
-                                if (isNotNull(section) && !entry.getValue().isEmpty()) {
+                                if (this.isNotNull(section) && !entry.getValue().isEmpty()) {
                                     ArmorConverter.addEquipmentTextures(section, layerType, entry.getValue());
                                 }
                             }
                         }
 
                         String texturePath = packSection.getString("texture");
-                        if (isValidString(texturePath)) {
-                            String namespacedTexturePath = namespaced(texturePath);
-                            this.craftEngineItemsConfiguration.setModelConfiguration(buildSimpleModel("minecraft:item/generated", namespacedTexturePath));
+                        if (this.isValidString(texturePath)) {
+                            String namespacedTexturePath = this.namespaced(texturePath);
+                            this.craftEngineItemsConfiguration.setModelConfiguration(this.buildSimpleModel("minecraft:item/generated", namespacedTexturePath));
                         }
                         return;
                     }
@@ -1210,13 +1209,13 @@ public class NexoItemConverter extends ItemConverter {
             if (this.itemId.endsWith("_helmet") || this.itemId.endsWith("_chestplate") || this.itemId.endsWith("_leggings") || this.itemId.endsWith("_boots")) {
                 String texturePath = packSection.getString("texture");
                 String modelTexturePath = packSection.getString("model");
-                if (isValidString(texturePath) && isNull(modelTexturePath) && !packSection.isConfigurationSection("CustomArmor")) {
-                    String namespacedTexturePath = namespaced(texturePath);
-                    ConfigurationSection fileEquipementsSection = getEquipmentsSection();
+                if (this.isValidString(texturePath) && this.isNull(modelTexturePath) && !packSection.isConfigurationSection("CustomArmor")) {
+                    String namespacedTexturePath = this.namespaced(texturePath);
+                    ConfigurationSection fileEquipementsSection = this.getEquipmentsSection();
 
-                    String assetId = determineAssetId(packSection, List.of("_helmet", "_chestplate", "_leggings", "_boots"));
+                    String assetId = this.determineAssetId(packSection, List.of("_helmet", "_chestplate", "_leggings", "_boots"));
 
-                    if (isValidString(assetId)) {
+                    if (this.isValidString(assetId)) {
                         List<ArmorConverter> convertersToProcess = Configuration.<ArmorConverter>get(ConfigurationKey.ARMOR_CONVERTER_TYPE).getComposition();
                         Map<ArmorConverter, ConfigurationSection> converterSections = ArmorConverter.createArmorConverterSections(fileEquipementsSection, assetId);
 
@@ -1234,16 +1233,16 @@ public class NexoItemConverter extends ItemConverter {
                         // Layer 1 - Humanoid (helmet, chestplate, boots)
                         String layer1FileName = armorName + "_armor_layer_1";
                         String originalPathLayer1 = "textures/" + textureDir + layer1FileName + ".png";
-                        getConverter().addPackMapping(namespace, originalPathLayer1, namespace, "textures/entity/equipment/humanoid/");
+                        this.getConverter().addPackMapping(namespace, originalPathLayer1, namespace, "textures/entity/equipment/humanoid/");
 
                         // Layer 2 - Humanoid-leggings (leggings)
                         String layer2FileName = armorName + "_armor_layer_2";
                         String originalPathLayer2 = "textures/" + textureDir + layer2FileName + ".png";
-                        getConverter().addPackMapping(namespace, originalPathLayer2, namespace, "textures/entity/equipment/humanoid_leggings/");
+                        this.getConverter().addPackMapping(namespace, originalPathLayer2, namespace, "textures/entity/equipment/humanoid_leggings/");
 
                         for (ArmorConverter converter : convertersToProcess) {
                             ConfigurationSection section = converterSections.get(converter);
-                            if (isNotNull(section)) {
+                            if (this.isNotNull(section)) {
                                 String layer1Texture = converter.getTexturePath(namespace, "humanoid", layer1FileName);
                                 String layer2Texture = converter.getTexturePath(namespace, "humanoid_leggings", layer2FileName);
 
@@ -1253,36 +1252,36 @@ public class NexoItemConverter extends ItemConverter {
                         }
 
                         this.craftEngineItemsConfiguration.addItemConfiguration(new fr.robie.craftengineconverter.api.configuration.item.settings.EquippableConfiguration(assetId, (EquipmentSlot) null));
-                        this.craftEngineItemsConfiguration.setModelConfiguration(buildSimpleModel("minecraft:item/generated", namespacedTexturePath));
+                        this.craftEngineItemsConfiguration.setModelConfiguration(this.buildSimpleModel("minecraft:item/generated", namespacedTexturePath));
                     }
                 }
             }
-            tryBuild2dShieldModel(packSection);
-            tryBuild2dFishingRodModel(packSection);
+            this.tryBuild2dShieldModel(packSection);
+            this.tryBuild2dFishingRodModel(packSection);
             return;
         }
 
-        modelPath = cleanPath(modelPath);
-        if (isNull(modelPath)) {
+        modelPath = this.cleanPath(modelPath);
+        if (this.isNull(modelPath)) {
             Logger.debug(Message.WARNING__CONVERTER__NEXO__MODEL__PROCESS_FAILURE, LogType.WARNING, "item", this.itemId);
             return;
         }
 
-        if (tryBuildTridentModel(packSection, modelPath)) {
+        if (this.tryBuildTridentModel(packSection, modelPath)) {
             return;
         }
-        if (tryBuildShieldModel(packSection, modelPath)) {
+        if (this.tryBuildShieldModel(packSection, modelPath)) {
             return;
         }
-        if (tryBuildPullingModel(packSection)) {
+        if (this.tryBuildPullingModel(packSection)) {
             return;
         }
-        if (tryBuildFishingRodModel(packSection, modelPath)) {
+        if (this.tryBuildFishingRodModel(packSection, modelPath)) {
             return;
         }
 
-        String namespacedPath = namespaced(modelPath);
-        if (isNull(namespacedPath)) {
+        String namespacedPath = this.namespaced(modelPath);
+        if (this.isNull(namespacedPath)) {
             Logger.debug(Message.WARNING__CONVERTER__NEXO__MODEL__NAMESPACE_FAILURE, LogType.WARNING, "item", this.itemId);
             return;
         }
@@ -1296,10 +1295,10 @@ public class NexoItemConverter extends ItemConverter {
 
         String castTexture = packSection.getString("cast_texture");
         String texture = packSection.getString("texture");
-        if (isValidString(castTexture) && isValidString(texture)) {
-            String namespacedCast = namespaced(castTexture);
-            String namespacedTexture = namespaced(texture);
-            if (isValidString(namespacedCast) && isValidString(namespacedTexture)) {
+        if (this.isValidString(castTexture) && this.isValidString(texture)) {
+            String namespacedCast = this.namespaced(castTexture);
+            String namespacedTexture = this.namespaced(texture);
+            if (this.isValidString(namespacedCast) && this.isValidString(namespacedTexture)) {
                 ConditionModelConfiguration castCondition = new ConditionModelConfiguration("minecraft:fishing_rod/cast");
 
                 SimpleModelConfiguration onTrue = new SimpleModelConfiguration(namespacedCast);
@@ -1326,10 +1325,10 @@ public class NexoItemConverter extends ItemConverter {
 
         String blockingTexture = packSection.getString("blocking_texture");
         String texture = packSection.getString("texture");
-        if (isValidString(blockingTexture) && isValidString(texture)) {
-            String namespacedBlocking = namespaced(blockingTexture);
-            String namespacedTexture = namespaced(texture);
-            if (isValidString(namespacedBlocking) && isValidString(namespacedTexture)) {
+        if (this.isValidString(blockingTexture) && this.isValidString(texture)) {
+            String namespacedBlocking = this.namespaced(blockingTexture);
+            String namespacedTexture = this.namespaced(texture);
+            if (this.isValidString(namespacedBlocking) && this.isValidString(namespacedTexture)) {
                 ConditionModelConfiguration usingItemCondition = new ConditionModelConfiguration("minecraft:using_item");
 
                 SimpleModelConfiguration onTrue = new SimpleModelConfiguration(namespacedBlocking);
@@ -1350,13 +1349,13 @@ public class NexoItemConverter extends ItemConverter {
     }
 
     private void buildElytraModel(ConfigurationSection packSection) {
-        String elytraModel = cleanPath(packSection.getString("texture"));
-        if (isValidString(elytraModel)) {
-            String namespacedElytra = namespaced(elytraModel);
+        String elytraModel = this.cleanPath(packSection.getString("texture"));
+        if (this.isValidString(elytraModel)) {
+            String namespacedElytra = this.namespaced(elytraModel);
 
             ConditionModelConfiguration brokenCondition = new ConditionModelConfiguration("minecraft:broken");
-            brokenCondition.setOnFalse(buildSimpleModel("minecraft:item/generated", namespacedElytra));
-            brokenCondition.setOnTrue(buildSimpleModel("minecraft:item/generated", namespacedElytra));
+            brokenCondition.setOnFalse(this.buildSimpleModel("minecraft:item/generated", namespacedElytra));
+            brokenCondition.setOnTrue(this.buildSimpleModel("minecraft:item/generated", namespacedElytra));
 
             this.craftEngineItemsConfiguration.setModelConfiguration(brokenCondition);
             String[] split = namespacedElytra.split(":", 2);
@@ -1368,7 +1367,7 @@ public class NexoItemConverter extends ItemConverter {
                 string = string.substring(0, lastIndexOf) + "/" + itemIdPartTwo;
             }
             String originalPath = "textures/" + string + ".png";
-            getConverter().addPackMapping(split[0], originalPath, split[0], "textures/entity/equipment/wings/");
+            this.getConverter().addPackMapping(split[0], originalPath, split[0], "textures/entity/equipment/wings/");
         }
     }
 
@@ -1376,12 +1375,12 @@ public class NexoItemConverter extends ItemConverter {
         if (this.craftEngineItemsConfiguration.getMaterial() != Material.TRIDENT) {
             return false;
         }
-        String namespacedModel = namespaced(modelPath);
-        if (isNull(namespacedModel)) {
+        String namespacedModel = this.namespaced(modelPath);
+        if (this.isNull(namespacedModel)) {
             return false;
         }
         String throwingModel = packSection.getString("throwing_model", namespacedModel + "_throwing");
-        String namespacedThrowingModel = namespaced(throwingModel);
+        String namespacedThrowingModel = this.namespaced(throwingModel);
 
         ConditionModelConfiguration usingItemCondition = new ConditionModelConfiguration("minecraft:using_item");
         usingItemCondition.setOnFalse(new SimpleModelConfiguration(namespacedModel));
@@ -1402,12 +1401,12 @@ public class NexoItemConverter extends ItemConverter {
 
     private boolean tryBuildShieldModel(ConfigurationSection packSection, String modelPath) {
         String shieldBlockingModel = packSection.getString("blocking_model");
-        if (isValidString(shieldBlockingModel)) {
-            shieldBlockingModel = cleanPath(shieldBlockingModel);
-            if (isNotNull(shieldBlockingModel)) {
-                String namespacedBlocking = namespaced(shieldBlockingModel);
-                String namespacedModel = namespaced(modelPath);
-                if (isValidString(namespacedModel)) {
+        if (this.isValidString(shieldBlockingModel)) {
+            shieldBlockingModel = this.cleanPath(shieldBlockingModel);
+            if (this.isNotNull(shieldBlockingModel)) {
+                String namespacedBlocking = this.namespaced(shieldBlockingModel);
+                String namespacedModel = this.namespaced(modelPath);
+                if (this.isValidString(namespacedModel)) {
                     ConditionModelConfiguration usingItemCondition = new ConditionModelConfiguration("minecraft:using_item");
                     usingItemCondition.setOnTrue(new SimpleModelConfiguration(namespacedBlocking));
                     usingItemCondition.setOnFalse(new SimpleModelConfiguration(namespacedModel));
@@ -1427,10 +1426,10 @@ public class NexoItemConverter extends ItemConverter {
         }
 
         if (this.craftEngineItemsConfiguration.getMaterial() == Material.CROSSBOW) {
-            buildCrossbowModel(packSection);
+            this.buildCrossbowModel(packSection);
             return true;
         } else if (this.craftEngineItemsConfiguration.getMaterial() == Material.BOW) {
-            buildBowModel(packSection);
+            this.buildBowModel(packSection);
             return true;
         }
         return false;
@@ -1438,12 +1437,12 @@ public class NexoItemConverter extends ItemConverter {
 
     private boolean tryBuildFishingRodModel(ConfigurationSection packSection, String modelPath) {
         String castModel = packSection.getString("cast_model");
-        if (isValidString(castModel)) {
-            castModel = cleanPath(castModel);
-            if (isNotNull(castModel)) {
-                String namespacedCast = namespaced(castModel);
-                String namespacedModel = namespaced(modelPath);
-                if (isNotNull(namespacedModel)) {
+        if (this.isValidString(castModel)) {
+            castModel = this.cleanPath(castModel);
+            if (this.isNotNull(castModel)) {
+                String namespacedCast = this.namespaced(castModel);
+                String namespacedModel = this.namespaced(modelPath);
+                if (this.isNotNull(namespacedModel)) {
                     ConditionModelConfiguration castCondition = new ConditionModelConfiguration("minecraft:fishing_rod/cast");
                     castCondition.setOnTrue(new SimpleModelConfiguration(namespacedCast));
                     castCondition.setOnFalse(new SimpleModelConfiguration(namespacedModel));
@@ -1460,322 +1459,346 @@ public class NexoItemConverter extends ItemConverter {
         switch (parentModel) {
             // Blocks
             case "block/block" ->
-                    buildModel(packSection, "minecraft:block/block", "all", "amethyst", "base", "beacon", "body", "bottom", "calibrated_side", "dirt", "down", "east", "end_rod", "flower", "flowerpot", "front", "glass", "inner_top", "inside", "leg", "log", "north", "obsidian", "overlay", "particle", "pivot", "plant", "propagule", "round", "saw", "side", "sides", "south", "stem", "tendrils", "texture", "tip", "top", "up", "west");
-            case "block/button" -> buildModel(packSection, "minecraft:block/button", "texture");
-            case "block/button_inventory" -> buildModel(packSection, "minecraft:block/button_inventory", "texture");
-            case "block/button_pressed" -> buildModel(packSection, "minecraft:block/button_pressed", "texture");
+                    this.buildModel(packSection, "minecraft:block/block", "all", "amethyst", "base", "beacon", "body", "bottom", "calibrated_side", "dirt", "down", "east", "end_rod", "flower", "flowerpot", "front", "glass", "inner_top", "inside", "leg", "log", "north", "obsidian", "overlay", "particle", "pivot", "plant", "propagule", "round", "saw", "side", "sides", "south", "stem", "tendrils", "texture", "tip", "top", "up", "west");
+            case "block/button" -> this.buildModel(packSection, "minecraft:block/button", "texture");
+            case "block/button_inventory" ->
+                    this.buildModel(packSection, "minecraft:block/button_inventory", "texture");
+            case "block/button_pressed" -> this.buildModel(packSection, "minecraft:block/button_pressed", "texture");
             case "block/calibrated_sculk_sensor" ->
-                    buildModel(packSection, "minecraft:block/calibrated_sculk_sensor", "tendrils");
-            case "block/carpet" -> buildModel(packSection, "minecraft:block/carpet", "wool");
-            case "block/coral_fan" -> buildModel(packSection, "minecraft:block/coral_fan", "fan");
-            case "block/coral_wall_fan" -> buildModel(packSection, "minecraft:block/coral_wall_fan", "fan");
-            case "block/crafter" -> buildModel(packSection, "minecraft:block/crafter", "east", "south", "top", "west");
+                    this.buildModel(packSection, "minecraft:block/calibrated_sculk_sensor", "tendrils");
+            case "block/carpet" -> this.buildModel(packSection, "minecraft:block/carpet", "wool");
+            case "block/coral_fan" -> this.buildModel(packSection, "minecraft:block/coral_fan", "fan");
+            case "block/coral_wall_fan" -> this.buildModel(packSection, "minecraft:block/coral_wall_fan", "fan");
+            case "block/crafter" ->
+                    this.buildModel(packSection, "minecraft:block/crafter", "east", "south", "top", "west");
             case "block/crafter_triggered" ->
-                    buildModel(packSection, "minecraft:block/crafter_triggered", "east", "north", "top", "west");
-            case "block/crop" -> buildModel(packSection, "minecraft:block/crop", "crop");
-            case "block/cross" -> buildModel(packSection, "minecraft:block/cross", "cross");
+                    this.buildModel(packSection, "minecraft:block/crafter_triggered", "east", "north", "top", "west");
+            case "block/crop" -> this.buildModel(packSection, "minecraft:block/crop", "crop");
+            case "block/cross" -> this.buildModel(packSection, "minecraft:block/cross", "cross");
             case "block/cross_emissive" ->
-                    buildModel(packSection, "minecraft:block/cross_emissive", "cross", "cross_emissive");
+                    this.buildModel(packSection, "minecraft:block/cross_emissive", "cross", "cross_emissive");
             case "block/cube" ->
-                    buildModel(packSection, "minecraft:block/cube", "down", "east", "north", "particle", "south", "up", "west");
-            case "block/cube_all" -> buildModel(packSection, "minecraft:block/cube_all", "all");
-            case "block/cube_all_inner_faces" -> buildModel(packSection, "minecraft:block/cube_all_inner_faces", "all");
+                    this.buildModel(packSection, "minecraft:block/cube", "down", "east", "north", "particle", "south", "up", "west");
+            case "block/cube_all" -> this.buildModel(packSection, "minecraft:block/cube_all", "all");
+            case "block/cube_all_inner_faces" ->
+                    this.buildModel(packSection, "minecraft:block/cube_all_inner_faces", "all");
             case "block/cube_bottom_top" ->
-                    buildModel(packSection, "minecraft:block/cube_bottom_top", "bottom", "particle", "side", "top");
+                    this.buildModel(packSection, "minecraft:block/cube_bottom_top", "bottom", "particle", "side", "top");
             case "block/cube_bottom_top_inner_faces" ->
-                    buildModel(packSection, "minecraft:block/cube_bottom_top_inner_faces", "bottom", "side", "top");
-            case "block/cube_column" -> buildModel(packSection, "minecraft:block/cube_column", "end", "side");
+                    this.buildModel(packSection, "minecraft:block/cube_bottom_top_inner_faces", "bottom", "side", "top");
+            case "block/cube_column" -> this.buildModel(packSection, "minecraft:block/cube_column", "end", "side");
             case "block/cube_column_horizontal" ->
-                    buildModel(packSection, "minecraft:block/cube_column_horizontal", "end", "side");
+                    this.buildModel(packSection, "minecraft:block/cube_column_horizontal", "end", "side");
             case "block/cube_column_mirrored" ->
-                    buildModel(packSection, "minecraft:block/cube_column_mirrored", "end", "side");
+                    this.buildModel(packSection, "minecraft:block/cube_column_mirrored", "end", "side");
             case "block/cube_column_uv_locked_x" ->
-                    buildModel(packSection, "minecraft:block/cube_column_uv_locked_x", "end", "side");
+                    this.buildModel(packSection, "minecraft:block/cube_column_uv_locked_x", "end", "side");
             case "block/cube_column_uv_locked_y" ->
-                    buildModel(packSection, "minecraft:block/cube_column_uv_locked_y", "end", "side");
+                    this.buildModel(packSection, "minecraft:block/cube_column_uv_locked_y", "end", "side");
             case "block/cube_column_uv_locked_z" ->
-                    buildModel(packSection, "minecraft:block/cube_column_uv_locked_z", "end", "side");
+                    this.buildModel(packSection, "minecraft:block/cube_column_uv_locked_z", "end", "side");
             case "block/cube_directional" ->
-                    buildModel(packSection, "minecraft:block/cube_directional", "down", "east", "north", "particle", "south", "up", "west");
+                    this.buildModel(packSection, "minecraft:block/cube_directional", "down", "east", "north", "particle", "south", "up", "west");
             case "block/cube_mirrored" ->
-                    buildModel(packSection, "minecraft:block/cube_mirrored", "down", "east", "north", "particle", "south", "up", "west");
-            case "block/cube_mirrored_all" -> buildModel(packSection, "minecraft:block/cube_mirrored_all", "all");
+                    this.buildModel(packSection, "minecraft:block/cube_mirrored", "down", "east", "north", "particle", "south", "up", "west");
+            case "block/cube_mirrored_all" -> this.buildModel(packSection, "minecraft:block/cube_mirrored_all", "all");
             case "block/cube_north_west_mirrored" ->
-                    buildModel(packSection, "minecraft:block/cube_north_west_mirrored", "down", "east", "north", "particle", "south", "up", "west");
+                    this.buildModel(packSection, "minecraft:block/cube_north_west_mirrored", "down", "east", "north", "particle", "south", "up", "west");
             case "block/cube_north_west_mirrored_all" ->
-                    buildModel(packSection, "minecraft:block/cube_north_west_mirrored_all", "all");
-            case "block/cube_top" -> buildModel(packSection, "minecraft:block/cube_top", "side", "top");
+                    this.buildModel(packSection, "minecraft:block/cube_north_west_mirrored_all", "all");
+            case "block/cube_top" -> this.buildModel(packSection, "minecraft:block/cube_top", "side", "top");
             case "block/custom_fence_inventory" ->
-                    buildModel(packSection, "minecraft:block/custom_fence_inventory", "texture");
+                    this.buildModel(packSection, "minecraft:block/custom_fence_inventory", "texture");
             case "block/custom_fence_post" ->
-                    buildModel(packSection, "minecraft:block/custom_fence_post", "particle", "texture");
+                    this.buildModel(packSection, "minecraft:block/custom_fence_post", "particle", "texture");
             case "block/custom_fence_side_east" ->
-                    buildModel(packSection, "minecraft:block/custom_fence_side_east", "texture");
+                    this.buildModel(packSection, "minecraft:block/custom_fence_side_east", "texture");
             case "block/custom_fence_side_north" ->
-                    buildModel(packSection, "minecraft:block/custom_fence_side_north", "texture");
+                    this.buildModel(packSection, "minecraft:block/custom_fence_side_north", "texture");
             case "block/custom_fence_side_south" ->
-                    buildModel(packSection, "minecraft:block/custom_fence_side_south", "texture");
+                    this.buildModel(packSection, "minecraft:block/custom_fence_side_south", "texture");
             case "block/custom_fence_side_west" ->
-                    buildModel(packSection, "minecraft:block/custom_fence_side_west", "texture");
+                    this.buildModel(packSection, "minecraft:block/custom_fence_side_west", "texture");
             case "block/door_bottom_left" ->
-                    buildModel(packSection, "minecraft:block/door_bottom_left", "bottom", "top");
+                    this.buildModel(packSection, "minecraft:block/door_bottom_left", "bottom", "top");
             case "block/door_bottom_left_open" ->
-                    buildModel(packSection, "minecraft:block/door_bottom_left_open", "bottom", "top");
+                    this.buildModel(packSection, "minecraft:block/door_bottom_left_open", "bottom", "top");
             case "block/door_bottom_right" ->
-                    buildModel(packSection, "minecraft:block/door_bottom_right", "bottom", "top");
+                    this.buildModel(packSection, "minecraft:block/door_bottom_right", "bottom", "top");
             case "block/door_bottom_right_open" ->
-                    buildModel(packSection, "minecraft:block/door_bottom_right_open", "bottom", "top");
-            case "block/door_top_left" -> buildModel(packSection, "minecraft:block/door_top_left", "bottom", "top");
+                    this.buildModel(packSection, "minecraft:block/door_bottom_right_open", "bottom", "top");
+            case "block/door_top_left" ->
+                    this.buildModel(packSection, "minecraft:block/door_top_left", "bottom", "top");
             case "block/door_top_left_open" ->
-                    buildModel(packSection, "minecraft:block/door_top_left_open", "bottom", "top");
-            case "block/door_top_right" -> buildModel(packSection, "minecraft:block/door_top_right", "bottom", "top");
+                    this.buildModel(packSection, "minecraft:block/door_top_left_open", "bottom", "top");
+            case "block/door_top_right" ->
+                    this.buildModel(packSection, "minecraft:block/door_top_right", "bottom", "top");
             case "block/door_top_right_open" ->
-                    buildModel(packSection, "minecraft:block/door_top_right_open", "bottom", "top");
+                    this.buildModel(packSection, "minecraft:block/door_top_right_open", "bottom", "top");
             case "block/dried_ghast" ->
-                    buildModel(packSection, "minecraft:block/dried_ghast", "bottom", "east", "north", "particle", "south", "tentacles", "top", "west");
-            case "block/fence_inventory" -> buildModel(packSection, "minecraft:block/fence_inventory", "texture");
-            case "block/fence_post" -> buildModel(packSection, "minecraft:block/fence_post", "texture");
-            case "block/fence_side" -> buildModel(packSection, "minecraft:block/fence_side", "texture");
-            case "block/flower_pot_cross" -> buildModel(packSection, "minecraft:block/flower_pot_cross", "plant");
+                    this.buildModel(packSection, "minecraft:block/dried_ghast", "bottom", "east", "north", "particle", "south", "tentacles", "top", "west");
+            case "block/fence_inventory" -> this.buildModel(packSection, "minecraft:block/fence_inventory", "texture");
+            case "block/fence_post" -> this.buildModel(packSection, "minecraft:block/fence_post", "texture");
+            case "block/fence_side" -> this.buildModel(packSection, "minecraft:block/fence_side", "texture");
+            case "block/flower_pot_cross" -> this.buildModel(packSection, "minecraft:block/flower_pot_cross", "plant");
             case "block/flower_pot_cross_emissive" ->
-                    buildModel(packSection, "minecraft:block/flower_pot_cross_emissive", "cross_emissive", "plant");
-            case "block/flowerbed_1" -> buildModel(packSection, "minecraft:block/flowerbed_1", "flowerbed", "stem");
-            case "block/flowerbed_2" -> buildModel(packSection, "minecraft:block/flowerbed_2", "flowerbed", "stem");
-            case "block/flowerbed_3" -> buildModel(packSection, "minecraft:block/flowerbed_3", "flowerbed", "stem");
-            case "block/flowerbed_4" -> buildModel(packSection, "minecraft:block/flowerbed_4", "flowerbed", "stem");
+                    this.buildModel(packSection, "minecraft:block/flower_pot_cross_emissive", "cross_emissive", "plant");
+            case "block/flowerbed_1" ->
+                    this.buildModel(packSection, "minecraft:block/flowerbed_1", "flowerbed", "stem");
+            case "block/flowerbed_2" ->
+                    this.buildModel(packSection, "minecraft:block/flowerbed_2", "flowerbed", "stem");
+            case "block/flowerbed_3" ->
+                    this.buildModel(packSection, "minecraft:block/flowerbed_3", "flowerbed", "stem");
+            case "block/flowerbed_4" ->
+                    this.buildModel(packSection, "minecraft:block/flowerbed_4", "flowerbed", "stem");
             case "block/inner_stairs" ->
-                    buildModel(packSection, "minecraft:block/inner_stairs", "bottom", "side", "top");
-            case "block/leaves" -> buildModel(packSection, "minecraft:block/leaves", "all");
-            case "block/mossy_carpet_side" -> buildModel(packSection, "minecraft:block/mossy_carpet_side", "side");
-            case "block/observer" -> buildModel(packSection, "minecraft:block/observer", "bottom");
-            case "block/orientable" -> buildModel(packSection, "minecraft:block/orientable", "front", "side", "top");
+                    this.buildModel(packSection, "minecraft:block/inner_stairs", "bottom", "side", "top");
+            case "block/leaves" -> this.buildModel(packSection, "minecraft:block/leaves", "all");
+            case "block/mossy_carpet_side" -> this.buildModel(packSection, "minecraft:block/mossy_carpet_side", "side");
+            case "block/observer" -> this.buildModel(packSection, "minecraft:block/observer", "bottom");
+            case "block/orientable" ->
+                    this.buildModel(packSection, "minecraft:block/orientable", "front", "side", "top");
             case "block/orientable_vertical" ->
-                    buildModel(packSection, "minecraft:block/orientable_vertical", "front", "side");
+                    this.buildModel(packSection, "minecraft:block/orientable_vertical", "front", "side");
             case "block/orientable_with_bottom" ->
-                    buildModel(packSection, "minecraft:block/orientable_with_bottom", "bottom", "front", "particle", "side", "top");
+                    this.buildModel(packSection, "minecraft:block/orientable_with_bottom", "bottom", "front", "particle", "side", "top");
             case "block/outer_stairs" ->
-                    buildModel(packSection, "minecraft:block/outer_stairs", "bottom", "side", "top");
+                    this.buildModel(packSection, "minecraft:block/outer_stairs", "bottom", "side", "top");
             case "block/piston_extended" ->
-                    buildModel(packSection, "minecraft:block/piston_extended", "bottom", "inside", "side");
-            case "block/pointed_dripstone" -> buildModel(packSection, "minecraft:block/pointed_dripstone", "cross");
+                    this.buildModel(packSection, "minecraft:block/piston_extended", "bottom", "inside", "side");
+            case "block/pointed_dripstone" ->
+                    this.buildModel(packSection, "minecraft:block/pointed_dripstone", "cross");
             case "block/pressure_plate_down" ->
-                    buildModel(packSection, "minecraft:block/pressure_plate_down", "texture");
-            case "block/pressure_plate_up" -> buildModel(packSection, "minecraft:block/pressure_plate_up", "texture");
-            case "block/rail_curved" -> buildModel(packSection, "minecraft:block/rail_curved", "rail");
-            case "block/rail_flat" -> buildModel(packSection, "minecraft:block/rail_flat", "rail");
-            case "block/redstone_dust_side" -> buildModel(packSection, "minecraft:block/redstone_dust_side", "line");
+                    this.buildModel(packSection, "minecraft:block/pressure_plate_down", "texture");
+            case "block/pressure_plate_up" ->
+                    this.buildModel(packSection, "minecraft:block/pressure_plate_up", "texture");
+            case "block/rail_curved" -> this.buildModel(packSection, "minecraft:block/rail_curved", "rail");
+            case "block/rail_flat" -> this.buildModel(packSection, "minecraft:block/rail_flat", "rail");
+            case "block/redstone_dust_side" ->
+                    this.buildModel(packSection, "minecraft:block/redstone_dust_side", "line");
             case "block/redstone_dust_side_alt" ->
-                    buildModel(packSection, "minecraft:block/redstone_dust_side_alt", "line");
-            case "block/sculk_sensor" -> buildModel(packSection, "minecraft:block/sculk_sensor", "tendrils");
-            case "block/slab" -> buildModel(packSection, "minecraft:block/slab", "bottom", "side", "top");
-            case "block/slab_top" -> buildModel(packSection, "minecraft:block/slab_top", "bottom", "side", "top");
+                    this.buildModel(packSection, "minecraft:block/redstone_dust_side_alt", "line");
+            case "block/sculk_sensor" -> this.buildModel(packSection, "minecraft:block/sculk_sensor", "tendrils");
+            case "block/slab" -> this.buildModel(packSection, "minecraft:block/slab", "bottom", "side", "top");
+            case "block/slab_top" -> this.buildModel(packSection, "minecraft:block/slab_top", "bottom", "side", "top");
             case "block/sniffer_egg" ->
-                    buildModel(packSection, "minecraft:block/sniffer_egg", "bottom", "east", "north", "south", "top", "west");
-            case "block/stairs" -> buildModel(packSection, "minecraft:block/stairs", "bottom", "side", "top");
-            case "block/stem_fruit" -> buildModel(packSection, "minecraft:block/stem_fruit", "stem", "upperstem");
-            case "block/stem_growth0" -> buildModel(packSection, "minecraft:block/stem_growth0", "stem");
-            case "block/stem_growth1" -> buildModel(packSection, "minecraft:block/stem_growth1", "stem");
-            case "block/stem_growth2" -> buildModel(packSection, "minecraft:block/stem_growth2", "stem");
-            case "block/stem_growth3" -> buildModel(packSection, "minecraft:block/stem_growth3", "stem");
-            case "block/stem_growth4" -> buildModel(packSection, "minecraft:block/stem_growth4", "stem");
-            case "block/stem_growth5" -> buildModel(packSection, "minecraft:block/stem_growth5", "stem");
-            case "block/stem_growth6" -> buildModel(packSection, "minecraft:block/stem_growth6", "stem");
-            case "block/stem_growth7" -> buildModel(packSection, "minecraft:block/stem_growth7", "stem");
-            case "block/template_anvil" -> buildModel(packSection, "minecraft:block/template_anvil", "top");
-            case "block/template_azalea" -> buildModel(packSection, "minecraft:block/template_azalea", "side", "top");
+                    this.buildModel(packSection, "minecraft:block/sniffer_egg", "bottom", "east", "north", "south", "top", "west");
+            case "block/stairs" -> this.buildModel(packSection, "minecraft:block/stairs", "bottom", "side", "top");
+            case "block/stem_fruit" -> this.buildModel(packSection, "minecraft:block/stem_fruit", "stem", "upperstem");
+            case "block/stem_growth0" -> this.buildModel(packSection, "minecraft:block/stem_growth0", "stem");
+            case "block/stem_growth1" -> this.buildModel(packSection, "minecraft:block/stem_growth1", "stem");
+            case "block/stem_growth2" -> this.buildModel(packSection, "minecraft:block/stem_growth2", "stem");
+            case "block/stem_growth3" -> this.buildModel(packSection, "minecraft:block/stem_growth3", "stem");
+            case "block/stem_growth4" -> this.buildModel(packSection, "minecraft:block/stem_growth4", "stem");
+            case "block/stem_growth5" -> this.buildModel(packSection, "minecraft:block/stem_growth5", "stem");
+            case "block/stem_growth6" -> this.buildModel(packSection, "minecraft:block/stem_growth6", "stem");
+            case "block/stem_growth7" -> this.buildModel(packSection, "minecraft:block/stem_growth7", "stem");
+            case "block/template_anvil" -> this.buildModel(packSection, "minecraft:block/template_anvil", "top");
+            case "block/template_azalea" ->
+                    this.buildModel(packSection, "minecraft:block/template_azalea", "side", "top");
             case "block/template_bars_cap" ->
-                    buildModel(packSection, "minecraft:block/template_bars_cap", "bars", "edge");
+                    this.buildModel(packSection, "minecraft:block/template_bars_cap", "bars", "edge");
             case "block/template_bars_cap_alt" ->
-                    buildModel(packSection, "minecraft:block/template_bars_cap_alt", "bars", "edge");
+                    this.buildModel(packSection, "minecraft:block/template_bars_cap_alt", "bars", "edge");
             case "block/template_bars_post" ->
-                    buildModel(packSection, "minecraft:block/template_bars_post", "bars", "edge");
+                    this.buildModel(packSection, "minecraft:block/template_bars_post", "bars", "edge");
             case "block/template_bars_post_ends" ->
-                    buildModel(packSection, "minecraft:block/template_bars_post_ends", "bars", "edge");
+                    this.buildModel(packSection, "minecraft:block/template_bars_post_ends", "bars", "edge");
             case "block/template_bars_side" ->
-                    buildModel(packSection, "minecraft:block/template_bars_side", "bars", "edge");
+                    this.buildModel(packSection, "minecraft:block/template_bars_side", "bars", "edge");
             case "block/template_bars_side_alt" ->
-                    buildModel(packSection, "minecraft:block/template_bars_side_alt", "bars", "edge");
+                    this.buildModel(packSection, "minecraft:block/template_bars_side_alt", "bars", "edge");
             case "block/template_cake_with_candle" ->
-                    buildModel(packSection, "minecraft:block/template_cake_with_candle", "bottom", "candle", "particle", "side", "top");
+                    this.buildModel(packSection, "minecraft:block/template_cake_with_candle", "bottom", "candle", "particle", "side", "top");
             case "block/template_campfire" ->
-                    buildModel(packSection, "minecraft:block/template_campfire", "fire", "lit_log");
+                    this.buildModel(packSection, "minecraft:block/template_campfire", "fire", "lit_log");
             case "block/template_candle" ->
-                    buildModel(packSection, "minecraft:block/template_candle", "all", "particle");
+                    this.buildModel(packSection, "minecraft:block/template_candle", "all", "particle");
             case "block/template_cauldron_full" ->
-                    buildModel(packSection, "minecraft:block/template_cauldron_full", "bottom", "content", "inside", "particle", "side", "top");
+                    this.buildModel(packSection, "minecraft:block/template_cauldron_full", "bottom", "content", "inside", "particle", "side", "top");
             case "block/template_cauldron_level1" ->
-                    buildModel(packSection, "minecraft:block/template_cauldron_level1", "bottom", "content", "inside", "particle", "side", "top");
+                    this.buildModel(packSection, "minecraft:block/template_cauldron_level1", "bottom", "content", "inside", "particle", "side", "top");
             case "block/template_cauldron_level2" ->
-                    buildModel(packSection, "minecraft:block/template_cauldron_level2", "bottom", "content", "inside", "particle", "side", "top");
-            case "block/template_chain" -> buildModel(packSection, "minecraft:block/template_chain", "texture");
+                    this.buildModel(packSection, "minecraft:block/template_cauldron_level2", "bottom", "content", "inside", "particle", "side", "top");
+            case "block/template_chain" -> this.buildModel(packSection, "minecraft:block/template_chain", "texture");
             case "block/template_chiseled_bookshelf_slot_bottom_left" ->
-                    buildModel(packSection, "minecraft:block/template_chiseled_bookshelf_slot_bottom_left", "texture");
+                    this.buildModel(packSection, "minecraft:block/template_chiseled_bookshelf_slot_bottom_left", "texture");
             case "block/template_chiseled_bookshelf_slot_bottom_mid" ->
-                    buildModel(packSection, "minecraft:block/template_chiseled_bookshelf_slot_bottom_mid", "texture");
+                    this.buildModel(packSection, "minecraft:block/template_chiseled_bookshelf_slot_bottom_mid", "texture");
             case "block/template_chiseled_bookshelf_slot_bottom_right" ->
-                    buildModel(packSection, "minecraft:block/template_chiseled_bookshelf_slot_bottom_right", "texture");
+                    this.buildModel(packSection, "minecraft:block/template_chiseled_bookshelf_slot_bottom_right", "texture");
             case "block/template_chiseled_bookshelf_slot_top_left" ->
-                    buildModel(packSection, "minecraft:block/template_chiseled_bookshelf_slot_top_left", "texture");
+                    this.buildModel(packSection, "minecraft:block/template_chiseled_bookshelf_slot_top_left", "texture");
             case "block/template_chiseled_bookshelf_slot_top_mid" ->
-                    buildModel(packSection, "minecraft:block/template_chiseled_bookshelf_slot_top_mid", "texture");
+                    this.buildModel(packSection, "minecraft:block/template_chiseled_bookshelf_slot_top_mid", "texture");
             case "block/template_chiseled_bookshelf_slot_top_right" ->
-                    buildModel(packSection, "minecraft:block/template_chiseled_bookshelf_slot_top_right", "texture");
+                    this.buildModel(packSection, "minecraft:block/template_chiseled_bookshelf_slot_top_right", "texture");
             case "block/template_chorus_flower" ->
-                    buildModel(packSection, "minecraft:block/template_chorus_flower", "texture");
+                    this.buildModel(packSection, "minecraft:block/template_chorus_flower", "texture");
             case "block/template_command_block" ->
-                    buildModel(packSection, "minecraft:block/template_command_block", "back", "front", "side");
+                    this.buildModel(packSection, "minecraft:block/template_command_block", "back", "front", "side");
             case "block/template_custom_fence_gate" ->
-                    buildModel(packSection, "minecraft:block/template_custom_fence_gate", "particle", "texture");
+                    this.buildModel(packSection, "minecraft:block/template_custom_fence_gate", "particle", "texture");
             case "block/template_custom_fence_gate_open" ->
-                    buildModel(packSection, "minecraft:block/template_custom_fence_gate_open", "particle", "texture");
+                    this.buildModel(packSection, "minecraft:block/template_custom_fence_gate_open", "particle", "texture");
             case "block/template_custom_fence_gate_wall" ->
-                    buildModel(packSection, "minecraft:block/template_custom_fence_gate_wall", "particle", "texture");
+                    this.buildModel(packSection, "minecraft:block/template_custom_fence_gate_wall", "particle", "texture");
             case "block/template_custom_fence_gate_wall_open" ->
-                    buildModel(packSection, "minecraft:block/template_custom_fence_gate_wall_open", "particle", "texture");
+                    this.buildModel(packSection, "minecraft:block/template_custom_fence_gate_wall_open", "particle", "texture");
             case "block/template_daylight_detector" ->
-                    buildModel(packSection, "minecraft:block/template_daylight_detector", "side", "top");
+                    this.buildModel(packSection, "minecraft:block/template_daylight_detector", "side", "top");
             case "block/template_farmland" ->
-                    buildModel(packSection, "minecraft:block/template_farmland", "dirt", "top");
+                    this.buildModel(packSection, "minecraft:block/template_farmland", "dirt", "top");
             case "block/template_fence_gate" ->
-                    buildModel(packSection, "minecraft:block/template_fence_gate", "texture");
+                    this.buildModel(packSection, "minecraft:block/template_fence_gate", "texture");
             case "block/template_fence_gate_open" ->
-                    buildModel(packSection, "minecraft:block/template_fence_gate_open", "texture");
+                    this.buildModel(packSection, "minecraft:block/template_fence_gate_open", "texture");
             case "block/template_fence_gate_wall" ->
-                    buildModel(packSection, "minecraft:block/template_fence_gate_wall", "texture");
+                    this.buildModel(packSection, "minecraft:block/template_fence_gate_wall", "texture");
             case "block/template_fence_gate_wall_open" ->
-                    buildModel(packSection, "minecraft:block/template_fence_gate_wall_open", "texture");
-            case "block/template_fire_floor" -> buildModel(packSection, "minecraft:block/template_fire_floor", "fire");
-            case "block/template_fire_side" -> buildModel(packSection, "minecraft:block/template_fire_side", "fire");
+                    this.buildModel(packSection, "minecraft:block/template_fence_gate_wall_open", "texture");
+            case "block/template_fire_floor" ->
+                    this.buildModel(packSection, "minecraft:block/template_fire_floor", "fire");
+            case "block/template_fire_side" ->
+                    this.buildModel(packSection, "minecraft:block/template_fire_side", "fire");
             case "block/template_fire_side_alt" ->
-                    buildModel(packSection, "minecraft:block/template_fire_side_alt", "fire");
-            case "block/template_fire_up" -> buildModel(packSection, "minecraft:block/template_fire_up", "fire");
+                    this.buildModel(packSection, "minecraft:block/template_fire_side_alt", "fire");
+            case "block/template_fire_up" -> this.buildModel(packSection, "minecraft:block/template_fire_up", "fire");
             case "block/template_fire_up_alt" ->
-                    buildModel(packSection, "minecraft:block/template_fire_up_alt", "fire");
+                    this.buildModel(packSection, "minecraft:block/template_fire_up_alt", "fire");
             case "block/template_four_candles" ->
-                    buildModel(packSection, "minecraft:block/template_four_candles", "all", "particle");
+                    this.buildModel(packSection, "minecraft:block/template_four_candles", "all", "particle");
             case "block/template_four_turtle_eggs" ->
-                    buildModel(packSection, "minecraft:block/template_four_turtle_eggs", "all");
+                    this.buildModel(packSection, "minecraft:block/template_four_turtle_eggs", "all");
             case "block/template_glass_pane_noside" ->
-                    buildModel(packSection, "minecraft:block/template_glass_pane_noside", "pane");
+                    this.buildModel(packSection, "minecraft:block/template_glass_pane_noside", "pane");
             case "block/template_glass_pane_noside_alt" ->
-                    buildModel(packSection, "minecraft:block/template_glass_pane_noside_alt", "pane");
+                    this.buildModel(packSection, "minecraft:block/template_glass_pane_noside_alt", "pane");
             case "block/template_glass_pane_post" ->
-                    buildModel(packSection, "minecraft:block/template_glass_pane_post", "edge", "pane");
+                    this.buildModel(packSection, "minecraft:block/template_glass_pane_post", "edge", "pane");
             case "block/template_glass_pane_side" ->
-                    buildModel(packSection, "minecraft:block/template_glass_pane_side", "edge", "pane");
+                    this.buildModel(packSection, "minecraft:block/template_glass_pane_side", "edge", "pane");
             case "block/template_glass_pane_side_alt" ->
-                    buildModel(packSection, "minecraft:block/template_glass_pane_side_alt", "edge", "pane");
+                    this.buildModel(packSection, "minecraft:block/template_glass_pane_side_alt", "edge", "pane");
             case "block/template_glazed_terracotta" ->
-                    buildModel(packSection, "minecraft:block/template_glazed_terracotta", "pattern");
+                    this.buildModel(packSection, "minecraft:block/template_glazed_terracotta", "pattern");
             case "block/template_hanging_lantern" ->
-                    buildModel(packSection, "minecraft:block/template_hanging_lantern", "lantern");
+                    this.buildModel(packSection, "minecraft:block/template_hanging_lantern", "lantern");
             case "block/template_item_frame" ->
-                    buildModel(packSection, "minecraft:block/template_item_frame", "back", "particle", "wood");
+                    this.buildModel(packSection, "minecraft:block/template_item_frame", "back", "particle", "wood");
             case "block/template_item_frame_map" ->
-                    buildModel(packSection, "minecraft:block/template_item_frame_map", "back", "particle", "wood");
-            case "block/template_lantern" -> buildModel(packSection, "minecraft:block/template_lantern", "lantern");
+                    this.buildModel(packSection, "minecraft:block/template_item_frame_map", "back", "particle", "wood");
+            case "block/template_lantern" ->
+                    this.buildModel(packSection, "minecraft:block/template_lantern", "lantern");
             case "block/template_leaf_litter_1" ->
-                    buildModel(packSection, "minecraft:block/template_leaf_litter_1", "texture");
+                    this.buildModel(packSection, "minecraft:block/template_leaf_litter_1", "texture");
             case "block/template_leaf_litter_2" ->
-                    buildModel(packSection, "minecraft:block/template_leaf_litter_2", "texture");
+                    this.buildModel(packSection, "minecraft:block/template_leaf_litter_2", "texture");
             case "block/template_leaf_litter_3" ->
-                    buildModel(packSection, "minecraft:block/template_leaf_litter_3", "texture");
+                    this.buildModel(packSection, "minecraft:block/template_leaf_litter_3", "texture");
             case "block/template_leaf_litter_4" ->
-                    buildModel(packSection, "minecraft:block/template_leaf_litter_4", "texture");
+                    this.buildModel(packSection, "minecraft:block/template_leaf_litter_4", "texture");
             case "block/template_lightning_rod" ->
-                    buildModel(packSection, "minecraft:block/template_lightning_rod", "texture");
+                    this.buildModel(packSection, "minecraft:block/template_lightning_rod", "texture");
             case "block/template_orientable_trapdoor_bottom" ->
-                    buildModel(packSection, "minecraft:block/template_orientable_trapdoor_bottom", "texture");
+                    this.buildModel(packSection, "minecraft:block/template_orientable_trapdoor_bottom", "texture");
             case "block/template_orientable_trapdoor_open" ->
-                    buildModel(packSection, "minecraft:block/template_orientable_trapdoor_open", "texture");
+                    this.buildModel(packSection, "minecraft:block/template_orientable_trapdoor_open", "texture");
             case "block/template_orientable_trapdoor_top" ->
-                    buildModel(packSection, "minecraft:block/template_orientable_trapdoor_top", "texture");
+                    this.buildModel(packSection, "minecraft:block/template_orientable_trapdoor_top", "texture");
             case "block/template_piston" ->
-                    buildModel(packSection, "minecraft:block/template_piston", "bottom", "platform", "side");
+                    this.buildModel(packSection, "minecraft:block/template_piston", "bottom", "platform", "side");
             case "block/template_piston_head" ->
-                    buildModel(packSection, "minecraft:block/template_piston_head", "platform", "side", "unsticky");
+                    this.buildModel(packSection, "minecraft:block/template_piston_head", "platform", "side", "unsticky");
             case "block/template_piston_head_short" ->
-                    buildModel(packSection, "minecraft:block/template_piston_head_short", "platform", "side", "unsticky");
+                    this.buildModel(packSection, "minecraft:block/template_piston_head_short", "platform", "side", "unsticky");
             case "block/template_potted_azalea_bush" ->
-                    buildModel(packSection, "minecraft:block/template_potted_azalea_bush", "plant", "side", "top");
+                    this.buildModel(packSection, "minecraft:block/template_potted_azalea_bush", "plant", "side", "top");
             case "block/template_rail_raised_ne" ->
-                    buildModel(packSection, "minecraft:block/template_rail_raised_ne", "rail");
+                    this.buildModel(packSection, "minecraft:block/template_rail_raised_ne", "rail");
             case "block/template_rail_raised_sw" ->
-                    buildModel(packSection, "minecraft:block/template_rail_raised_sw", "rail");
+                    this.buildModel(packSection, "minecraft:block/template_rail_raised_sw", "rail");
             case "block/template_redstone_torch" ->
-                    buildModel(packSection, "minecraft:block/template_redstone_torch", "torch");
+                    this.buildModel(packSection, "minecraft:block/template_redstone_torch", "torch");
             case "block/template_redstone_torch_wall" ->
-                    buildModel(packSection, "minecraft:block/template_redstone_torch_wall", "torch");
+                    this.buildModel(packSection, "minecraft:block/template_redstone_torch_wall", "torch");
             case "block/template_sculk_shrieker" ->
-                    buildModel(packSection, "minecraft:block/template_sculk_shrieker", "bottom", "inner_top", "particle", "side", "top");
-            case "block/template_seagrass" -> buildModel(packSection, "minecraft:block/template_seagrass", "texture");
+                    this.buildModel(packSection, "minecraft:block/template_sculk_shrieker", "bottom", "inner_top", "particle", "side", "top");
+            case "block/template_seagrass" ->
+                    this.buildModel(packSection, "minecraft:block/template_seagrass", "texture");
             case "block/template_shelf_body" ->
-                    buildModel(packSection, "minecraft:block/template_shelf_body", "all", "particle");
+                    this.buildModel(packSection, "minecraft:block/template_shelf_body", "all", "particle");
             case "block/template_shelf_center" ->
-                    buildModel(packSection, "minecraft:block/template_shelf_center", "all", "particle");
+                    this.buildModel(packSection, "minecraft:block/template_shelf_center", "all", "particle");
             case "block/template_shelf_inventory" ->
-                    buildModel(packSection, "minecraft:block/template_shelf_inventory", "all", "particle");
+                    this.buildModel(packSection, "minecraft:block/template_shelf_inventory", "all", "particle");
             case "block/template_shelf_left" ->
-                    buildModel(packSection, "minecraft:block/template_shelf_left", "all", "particle");
+                    this.buildModel(packSection, "minecraft:block/template_shelf_left", "all", "particle");
             case "block/template_shelf_right" ->
-                    buildModel(packSection, "minecraft:block/template_shelf_right", "all", "particle");
+                    this.buildModel(packSection, "minecraft:block/template_shelf_right", "all", "particle");
             case "block/template_shelf_unconnected" ->
-                    buildModel(packSection, "minecraft:block/template_shelf_unconnected", "all", "particle");
+                    this.buildModel(packSection, "minecraft:block/template_shelf_unconnected", "all", "particle");
             case "block/template_shelf_unpowered" ->
-                    buildModel(packSection, "minecraft:block/template_shelf_unpowered", "all", "particle");
+                    this.buildModel(packSection, "minecraft:block/template_shelf_unpowered", "all", "particle");
             case "block/template_single_face" ->
-                    buildModel(packSection, "minecraft:block/template_single_face", "texture");
+                    this.buildModel(packSection, "minecraft:block/template_single_face", "texture");
             case "block/template_three_candles" ->
-                    buildModel(packSection, "minecraft:block/template_three_candles", "all", "particle");
+                    this.buildModel(packSection, "minecraft:block/template_three_candles", "all", "particle");
             case "block/template_three_turtle_eggs" ->
-                    buildModel(packSection, "minecraft:block/template_three_turtle_eggs", "all");
-            case "block/template_torch" -> buildModel(packSection, "minecraft:block/template_torch", "torch");
+                    this.buildModel(packSection, "minecraft:block/template_three_turtle_eggs", "all");
+            case "block/template_torch" -> this.buildModel(packSection, "minecraft:block/template_torch", "torch");
             case "block/template_torch_unlit" ->
-                    buildModel(packSection, "minecraft:block/template_torch_unlit", "torch");
-            case "block/template_torch_wall" -> buildModel(packSection, "minecraft:block/template_torch_wall", "torch");
+                    this.buildModel(packSection, "minecraft:block/template_torch_unlit", "torch");
+            case "block/template_torch_wall" ->
+                    this.buildModel(packSection, "minecraft:block/template_torch_wall", "torch");
             case "block/template_torch_wall_unlit" ->
-                    buildModel(packSection, "minecraft:block/template_torch_wall_unlit", "torch");
+                    this.buildModel(packSection, "minecraft:block/template_torch_wall_unlit", "torch");
             case "block/template_trapdoor_bottom" ->
-                    buildModel(packSection, "minecraft:block/template_trapdoor_bottom", "texture");
+                    this.buildModel(packSection, "minecraft:block/template_trapdoor_bottom", "texture");
             case "block/template_trapdoor_open" ->
-                    buildModel(packSection, "minecraft:block/template_trapdoor_open", "texture");
+                    this.buildModel(packSection, "minecraft:block/template_trapdoor_open", "texture");
             case "block/template_trapdoor_top" ->
-                    buildModel(packSection, "minecraft:block/template_trapdoor_top", "texture");
-            case "block/template_turtle_egg" -> buildModel(packSection, "minecraft:block/template_turtle_egg", "all");
+                    this.buildModel(packSection, "minecraft:block/template_trapdoor_top", "texture");
+            case "block/template_turtle_egg" ->
+                    this.buildModel(packSection, "minecraft:block/template_turtle_egg", "all");
             case "block/template_two_candles" ->
-                    buildModel(packSection, "minecraft:block/template_two_candles", "all", "particle");
+                    this.buildModel(packSection, "minecraft:block/template_two_candles", "all", "particle");
             case "block/template_two_turtle_eggs" ->
-                    buildModel(packSection, "minecraft:block/template_two_turtle_eggs", "all");
+                    this.buildModel(packSection, "minecraft:block/template_two_turtle_eggs", "all");
             case "block/template_vault" ->
-                    buildModel(packSection, "minecraft:block/template_vault", "bottom", "front", "side", "top");
-            case "block/template_wall_post" -> buildModel(packSection, "minecraft:block/template_wall_post", "wall");
-            case "block/template_wall_side" -> buildModel(packSection, "minecraft:block/template_wall_side", "wall");
+                    this.buildModel(packSection, "minecraft:block/template_vault", "bottom", "front", "side", "top");
+            case "block/template_wall_post" ->
+                    this.buildModel(packSection, "minecraft:block/template_wall_post", "wall");
+            case "block/template_wall_side" ->
+                    this.buildModel(packSection, "minecraft:block/template_wall_side", "wall");
             case "block/template_wall_side_tall" ->
-                    buildModel(packSection, "minecraft:block/template_wall_side_tall", "wall");
-            case "block/thin_block" -> buildModel(packSection, "minecraft:block/thin_block", "particle", "texture");
-            case "block/tinted_cross" -> buildModel(packSection, "minecraft:block/tinted_cross", "cross");
+                    this.buildModel(packSection, "minecraft:block/template_wall_side_tall", "wall");
+            case "block/thin_block" ->
+                    this.buildModel(packSection, "minecraft:block/thin_block", "particle", "texture");
+            case "block/tinted_cross" -> this.buildModel(packSection, "minecraft:block/tinted_cross", "cross");
             case "block/tinted_flower_pot_cross" ->
-                    buildModel(packSection, "minecraft:block/tinted_flower_pot_cross", "plant");
-            case "block/wall_inventory" -> buildModel(packSection, "minecraft:block/wall_inventory", "wall");
+                    this.buildModel(packSection, "minecraft:block/tinted_flower_pot_cross", "plant");
+            case "block/wall_inventory" -> this.buildModel(packSection, "minecraft:block/wall_inventory", "wall");
 
             // Items
-            case "item/amethyst_bud" -> buildModel(packSection, "minecraft:item/amethyst_bud", "layer0");
-            case "item/bow" -> buildModel(packSection, "minecraft:item/bow", "layer0");
-            case "item/crossbow" -> buildModel(packSection, "minecraft:item/crossbow", "layer0");
-            case "item/generated" -> buildModel(packSection, "minecraft:item/generated", "layer0");
-            case "item/handheld" -> buildModel(packSection, "minecraft:item/handheld", "layer0");
-            case "item/handheld_mace" -> buildModel(packSection, "minecraft:item/handheld_mace", "layer0");
-            case "item/handheld_rod" -> buildModel(packSection, "minecraft:item/handheld_rod", "layer0");
-            case "item/spear_in_hand" -> buildModel(packSection, "minecraft:item/spear_in_hand", "layer0");
-            case "item/template_bed" -> buildModel(packSection, "minecraft:item/template_bed", "particle");
+            case "item/amethyst_bud" -> this.buildModel(packSection, "minecraft:item/amethyst_bud", "layer0");
+            case "item/bow" -> this.buildModel(packSection, "minecraft:item/bow", "layer0");
+            case "item/crossbow" -> this.buildModel(packSection, "minecraft:item/crossbow", "layer0");
+            case "item/generated" -> this.buildModel(packSection, "minecraft:item/generated", "layer0");
+            case "item/handheld" -> this.buildModel(packSection, "minecraft:item/handheld", "layer0");
+            case "item/handheld_mace" -> this.buildModel(packSection, "minecraft:item/handheld_mace", "layer0");
+            case "item/handheld_rod" -> this.buildModel(packSection, "minecraft:item/handheld_rod", "layer0");
+            case "item/spear_in_hand" -> this.buildModel(packSection, "minecraft:item/spear_in_hand", "layer0");
+            case "item/template_bed" -> this.buildModel(packSection, "minecraft:item/template_bed", "particle");
             case "item/template_bundle_open_back" ->
-                    buildModel(packSection, "minecraft:item/template_bundle_open_back", "layer0");
+                    this.buildModel(packSection, "minecraft:item/template_bundle_open_back", "layer0");
             case "item/template_bundle_open_front" ->
-                    buildModel(packSection, "minecraft:item/template_bundle_open_front", "layer0");
-            case "item/template_chest" -> buildModel(packSection, "minecraft:item/template_chest", "particle");
-            case "item/template_music_disc" -> buildModel(packSection, "minecraft:item/template_music_disc", "layer0");
+                    this.buildModel(packSection, "minecraft:item/template_bundle_open_front", "layer0");
+            case "item/template_chest" -> this.buildModel(packSection, "minecraft:item/template_chest", "particle");
+            case "item/template_music_disc" ->
+                    this.buildModel(packSection, "minecraft:item/template_music_disc", "layer0");
             case "item/template_shulker_box" ->
-                    buildModel(packSection, "minecraft:item/template_shulker_box", "particle");
+                    this.buildModel(packSection, "minecraft:item/template_shulker_box", "particle");
 
             default ->
                     Logger.info(Message.WARNING__CONVERTER__NEXO__MODEL__PARENT_NOT_SUPPORTED, LogType.WARNING, "parent", parentModel, "item", this.itemId);
@@ -1813,8 +1836,8 @@ public class NexoItemConverter extends ItemConverter {
                 texturePath = singleTexture;
             }
 
-            if (isValidString(texturePath)) {
-                String finalTexturePath = namespaced(texturePath);
+            if (this.isValidString(texturePath)) {
+                String finalTexturePath = this.namespaced(texturePath);
                 generation.addTexture(textureKey, finalTexturePath);
                 if (modelPath == null) {
                     modelPath = finalTexturePath;
@@ -1840,17 +1863,17 @@ public class NexoItemConverter extends ItemConverter {
      * @return The asset-id or null if invalid
      */
     private String determineAssetId(ConfigurationSection packSection, List<String> suffixesToRemove) {
-        if (isValidString(this.assetId)) {
+        if (this.isValidString(this.assetId)) {
             return this.assetId;
         }
 
         String texturePath = packSection.getString("texture");
-        if (isValidString(texturePath)) {
-            String namespacedTexturePath = namespaced(texturePath);
-            if (isValidString(namespacedTexturePath)) {
+        if (this.isValidString(texturePath)) {
+            String namespacedTexturePath = this.namespaced(texturePath);
+            if (this.isValidString(namespacedTexturePath)) {
                 String[] split = this.itemId.split(":", 2);
-                String secondPart = removeEndWith(split[1], suffixesToRemove, null);
-                if (isValidString(secondPart)) {
+                String secondPart = this.removeEndWith(split[1], suffixesToRemove, null);
+                if (this.isValidString(secondPart)) {
                     return namespacedTexturePath.split(":", 2)[0] + ":" + secondPart;
                 }
             }
@@ -1860,13 +1883,13 @@ public class NexoItemConverter extends ItemConverter {
     }
 
     private void buildBowModel(ConfigurationSection packSection) {
-        String baseModel = namespaced(packSection.getString("model"));
+        String baseModel = this.namespaced(packSection.getString("model"));
         List<String> pullingModels = packSection.getStringList("pulling_models");
-        String pulling0 = namespaced(notEmptyOrNull(pullingModels, 0) ? pullingModels.get(0) : packSection.getString("pulling_0_model"));
-        String pulling1 = namespaced(notEmptyOrNull(pullingModels, 1) ? pullingModels.get(1) : packSection.getString("pulling_1_model"));
-        String pulling2 = namespaced(notEmptyOrNull(pullingModels, 2) ? pullingModels.get(2) : packSection.getString("pulling_2_model"));
+        String pulling0 = this.namespaced(this.notEmptyOrNull(pullingModels, 0) ? pullingModels.get(0) : packSection.getString("pulling_0_model"));
+        String pulling1 = this.namespaced(this.notEmptyOrNull(pullingModels, 1) ? pullingModels.get(1) : packSection.getString("pulling_1_model"));
+        String pulling2 = this.namespaced(this.notEmptyOrNull(pullingModels, 2) ? pullingModels.get(2) : packSection.getString("pulling_2_model"));
 
-        if (isNotNull(baseModel) && isNotNull(pulling0) && isNotNull(pulling1) && isNotNull(pulling2)) {
+        if (this.isNotNull(baseModel) && this.isNotNull(pulling0) && this.isNotNull(pulling1) && this.isNotNull(pulling2)) {
             UseDurationRangeDispatchConfiguration pullingDispatch = new UseDurationRangeDispatchConfiguration();
             pullingDispatch.setScale(0.05);
             pullingDispatch.addEntry(0.65, new SimpleModelConfiguration(pulling1));
@@ -1884,16 +1907,16 @@ public class NexoItemConverter extends ItemConverter {
     }
 
     private void buildCrossbowModel(ConfigurationSection packSection) {
-        String baseModel = namespaced(packSection.getString("model"));
-        String arrowModel = namespaced(packSection.getString("charged_model"));
-        String fireworkModel = namespaced(packSection.getString("firework_model"));
+        String baseModel = this.namespaced(packSection.getString("model"));
+        String arrowModel = this.namespaced(packSection.getString("charged_model"));
+        String fireworkModel = this.namespaced(packSection.getString("firework_model"));
 
         List<String> pullingModels = packSection.getStringList("pulling_models");
-        String pulling0 = namespaced(notEmptyOrNull(pullingModels, 0) ? pullingModels.get(0) : packSection.getString("pulling_0_model"));
-        String pulling1 = namespaced(notEmptyOrNull(pullingModels, 1) ? pullingModels.get(1) : packSection.getString("pulling_1_model"));
-        String pulling2 = namespaced(notEmptyOrNull(pullingModels, 2) ? pullingModels.get(2) : packSection.getString("pulling_2_model"));
+        String pulling0 = this.namespaced(this.notEmptyOrNull(pullingModels, 0) ? pullingModels.get(0) : packSection.getString("pulling_0_model"));
+        String pulling1 = this.namespaced(this.notEmptyOrNull(pullingModels, 1) ? pullingModels.get(1) : packSection.getString("pulling_1_model"));
+        String pulling2 = this.namespaced(this.notEmptyOrNull(pullingModels, 2) ? pullingModels.get(2) : packSection.getString("pulling_2_model"));
 
-        if (isNotNull(baseModel) && isNotNull(pulling0) && isNotNull(pulling1) && isNotNull(pulling2)) {
+        if (this.isNotNull(baseModel) && this.isNotNull(pulling0) && this.isNotNull(pulling1) && this.isNotNull(pulling2)) {
             ChargeTypeSelectConfiguration chargeTypeSelect = new ChargeTypeSelectConfiguration();
             chargeTypeSelect.addCase(ChargeTypeSelectConfiguration.ChargeType.ARROW, new SimpleModelConfiguration(arrowModel != null ? arrowModel : pulling2));
             chargeTypeSelect.addCase(ChargeTypeSelectConfiguration.ChargeType.ROCKET, new SimpleModelConfiguration(fireworkModel != null ? fireworkModel : pulling2));
@@ -1925,11 +1948,11 @@ public class NexoItemConverter extends ItemConverter {
             switch (mechanicsKey) {
                 case "furniture" -> {
                     ConfigurationSection nexoFurnitureSection = mechanicsSection.getConfigurationSection(mechanicsKey);
-                    convertFurnitureMechanic(nexoFurnitureSection);
+                    this.convertFurnitureMechanic(nexoFurnitureSection);
                 }
                 case "custom_block" -> {
                     ConfigurationSection nexoCustomBlockSection = mechanicsSection.getConfigurationSection(mechanicsKey);
-                    convertCustomBlockMechanic(nexoCustomBlockSection);
+                    this.convertCustomBlockMechanic(nexoCustomBlockSection);
                 }
                 //TODO: convert energyblast mechanic
                 default -> {
@@ -1945,16 +1968,16 @@ public class NexoItemConverter extends ItemConverter {
         }
         BlockConfiguration blockConfiguration = new BlockConfiguration(this.itemId);
         ConfigurationSection logStripSection = nexoCustomBlockSection.getConfigurationSection("log_strip");
-        if (isNotNull(logStripSection)) {
+        if (this.isNotNull(logStripSection)) {
             String strippedBlock = logStripSection.getString("stripped_log");
-            if (isValidString(strippedBlock)) {
+            if (this.isValidString(strippedBlock)) {
                 ItemConverter resolvedDependency = this.getResolvedDependency(strippedBlock);
-                if (isNotNull(resolvedDependency)) {
+                if (this.isNotNull(resolvedDependency)) {
                     blockConfiguration.addBehavior(new StrippableBlockBehavior().setStripped(resolvedDependency.getItemId()));
                 }
             }
             String drop = logStripSection.getString("drop");
-            if (isValidString(drop)) {
+            if (this.isValidString(drop)) {
                 Logger.info("Custom block " + this.itemId + " has a log_strip configuration with a drop defined. This is not supported and will be ignored.", LogType.INFO);
             }
         }
@@ -2017,7 +2040,7 @@ public class NexoItemConverter extends ItemConverter {
             }
         }
         ConfigurationSection directionalSection = nexoCustomBlockSection.getConfigurationSection("directional");
-        if (isNotNull(directionalSection)) {
+        if (this.isNotNull(directionalSection)) {
             try {
                 NexoDirectionBlock directionBlock = NexoDirectionBlock.valueOf(directionalSection.getString("type", "").toUpperCase());
                 switch (directionBlock) {
@@ -2025,11 +2048,11 @@ public class NexoItemConverter extends ItemConverter {
                         String xBlock = directionalSection.getString("x_block", "");
                         String yBlock = directionalSection.getString("y_block", "");
                         String zBlock = directionalSection.getString("z_block", "");
-                        if (isValidString(yBlock) && isValidString(xBlock) && isValidString(zBlock)) {
+                        if (this.isValidString(yBlock) && this.isValidString(xBlock) && this.isValidString(zBlock)) {
                             ItemConverter xResolvedDependency = this.getResolvedDependency(xBlock);
                             ItemConverter yResolvedDependency = this.getResolvedDependency(yBlock);
                             ItemConverter zResolvedDependency = this.getResolvedDependency(zBlock);
-                            if (isNotNull(yResolvedDependency) && isNotNull(xResolvedDependency) && isNotNull(zResolvedDependency)) {
+                            if (this.isNotNull(yResolvedDependency) && this.isNotNull(xResolvedDependency) && this.isNotNull(zResolvedDependency)) {
                                 xResolvedDependency.markAsInternalOnly();
                                 yResolvedDependency.markAsInternalOnly();
                                 zResolvedDependency.markAsInternalOnly();
@@ -2037,7 +2060,7 @@ public class NexoItemConverter extends ItemConverter {
                                 ModelConfiguration xModelConfiguration = xResolvedDependency.getCraftEngineItemsConfiguration().getModelConfiguration();
                                 ModelConfiguration yModelConfiguration = yResolvedDependency.getCraftEngineItemsConfiguration().getModelConfiguration();
                                 ModelConfiguration zModelConfiguration = zResolvedDependency.getCraftEngineItemsConfiguration().getModelConfiguration();
-                                if (isNotNull(xModelConfiguration) && isNotNull(yModelConfiguration) && isNotNull(zModelConfiguration)) {
+                                if (this.isNotNull(xModelConfiguration) && this.isNotNull(yModelConfiguration) && this.isNotNull(zModelConfiguration)) {
                                     blockConfiguration.setStateBlock(
                                             new PillarBlockState(
                                                     Plugins.NEXO,
@@ -2051,24 +2074,24 @@ public class NexoItemConverter extends ItemConverter {
                                     Logger.info("Ignoring directional configuration for custom block " + this.itemId + " due to missing model configuration in axis blocks", LogType.INFO);
                                 }
                             } else {
-                                if (!isNotNull(xResolvedDependency)) {
+                                if (!this.isNotNull(xResolvedDependency)) {
                                     Logger.info("Ignoring directional configuration for custom block " + this.itemId + " due to unknown x_block dependency " + xBlock, LogType.INFO);
                                 }
-                                if (!isNotNull(yResolvedDependency)) {
+                                if (!this.isNotNull(yResolvedDependency)) {
                                     Logger.info("Ignoring directional configuration for custom block " + this.itemId + " due to unknown y_block dependency " + yBlock, LogType.INFO);
                                 }
-                                if (!isNotNull(zResolvedDependency)) {
+                                if (!this.isNotNull(zResolvedDependency)) {
                                     Logger.info("Ignoring directional configuration for custom block " + this.itemId + " due to unknown z_block dependency " + zBlock, LogType.INFO);
                                 }
                             }
                         } else {
-                            if (!isValidString(xBlock)) {
+                            if (!this.isValidString(xBlock)) {
                                 Logger.info("Ignoring directional configuration for custom block " + this.itemId + " due to missing x_block", LogType.INFO);
                             }
-                            if (!isValidString(yBlock)) {
+                            if (!this.isValidString(yBlock)) {
                                 Logger.info("Ignoring directional configuration for custom block " + this.itemId + " due to missing y_block", LogType.INFO);
                             }
-                            if (!isValidString(zBlock)) {
+                            if (!this.isValidString(zBlock)) {
                                 Logger.info("Ignoring directional configuration for custom block " + this.itemId + " due to missing z_block", LogType.INFO);
                             }
                         }
@@ -2084,23 +2107,23 @@ public class NexoItemConverter extends ItemConverter {
         BlockSettings blockSettings = blockConfiguration.getBlockSettings();
         if (sounds != null) {
             String placeSound = sounds.getString("place_sound");
-            if (isValidString(placeSound)) {
+            if (this.isValidString(placeSound)) {
                 blockSettings.setPlaceSound(placeSound);
             }
             String breakSound = sounds.getString("break_sound");
-            if (isValidString(breakSound)) {
+            if (this.isValidString(breakSound)) {
                 blockSettings.setBreakSound(breakSound);
             }
             String hitSound = sounds.getString("hit_sound");
-            if (isValidString(hitSound)) {
+            if (this.isValidString(hitSound)) {
                 blockSettings.setHitSound(hitSound);
             }
             String stepSound = sounds.getString("step_sound");
-            if (isValidString(stepSound)) {
+            if (this.isValidString(stepSound)) {
                 blockSettings.setStepSound(stepSound);
             }
             String fallSound = sounds.getString("fall_sound");
-            if (isValidString(fallSound)) {
+            if (this.isValidString(fallSound)) {
                 blockSettings.setFallSound(fallSound);
             }
         }
@@ -2115,7 +2138,7 @@ public class NexoItemConverter extends ItemConverter {
             blockConfiguration.addBehavior(new FallingBlockBehavior());
         }
         ConfigurationSection nexoSaplingSection = nexoCustomBlockSection.getConfigurationSection("sapling");
-        if (isNotNull(nexoSaplingSection)) {
+        if (this.isNotNull(nexoSaplingSection)) {
             Logger.debug(Message.WARNING__CONVERTER__NEXO__CUSTOM_BLOCK__SAPLING_NOT_SUPPORTED, LogType.WARNING, "item", this.itemId);
             // TODO implement sapling behavior conversion
             boolean growsNaturally = nexoSaplingSection.getBoolean("grows_naturally", true);
@@ -2124,37 +2147,37 @@ public class NexoItemConverter extends ItemConverter {
             }
         }
         ConfigurationSection nexoDropSection = nexoCustomBlockSection.getConfigurationSection("drop");
-        if (isNotNull(nexoDropSection)) {
+        if (this.isNotNull(nexoDropSection)) {
             boolean dropSelfWithSilktouch = nexoDropSection.getBoolean("silktouch", false);
             boolean fortuneAffectsDrop = nexoDropSection.getBoolean("fortune", false);
             String minimalType = nexoDropSection.getString("minimal_type", null);
             String bestTool = nexoDropSection.getString("best_tool", null);
             List<Map<?, ?>> loots = nexoDropSection.getMapList("loots");
-            if (isValidString(minimalType)) {
+            if (this.isValidString(minimalType)) {
                 NexoMinimalType nexoMinimalType = null;
                 try {
                     nexoMinimalType = NexoMinimalType.valueOf(minimalType.toUpperCase());
                 } catch (IllegalArgumentException e) {
                     Logger.debug(Message.WARNING__CONVERTER__NEXO__CUSTOM_BLOCK__UNKNOWN_MINIMAL_TYPE, LogType.WARNING, "type", minimalType, "item", this.itemId);
                 }
-                if (isNotNull(nexoMinimalType)) {
+                if (this.isNotNull(nexoMinimalType)) {
                     blockSettings.setRequireCorrectTools(true);
                     blockSettings.setCorrectTools(nexoMinimalType.getCorrectTools());
                 }
             }
-            if (isValidString(bestTool)) {
+            if (this.isValidString(bestTool)) {
                 NexoBestTool nexoBestTool = null;
                 try {
                     nexoBestTool = NexoBestTool.valueOf(bestTool.toUpperCase());
                 } catch (IllegalArgumentException e) {
                     Logger.debug(Message.WARNING__CONVERTER__NEXO__CUSTOM_BLOCK__UNKNOWN_BEST_TOOL, LogType.WARNING, "tool", bestTool, "item", this.itemId);
                 }
-                if (isNotNull(nexoBestTool)) {
+                if (this.isNotNull(nexoBestTool)) {
                     blockSettings.addTag(nexoBestTool.getBestTool());
                 }
             }
 
-            List<ItemLoot> itemLoots = parseItemLoots(loots);
+            List<ItemLoot> itemLoots = this.parseItemLoots(loots);
 
             if (dropSelfWithSilktouch && !fortuneAffectsDrop) {
                 // fortuneAffectsDrop == false && dropSelfWithSilktouch == true
@@ -2242,7 +2265,7 @@ public class NexoItemConverter extends ItemConverter {
 
         // --- Sounds ---
         ConfigurationSection nexoBlockSoundSection = nexoFurnitureMechanicsSection.getConfigurationSection("block_sounds");
-        if (isNotNull(nexoBlockSoundSection)) {
+        if (this.isNotNull(nexoBlockSoundSection)) {
             FurnitureSettings furnitureSettings = furnitureConfiguration.getOrCreateSettings(this.itemId);
             furnitureSettings.setPlaceSound(nexoBlockSoundSection.getString("place_sound"));
             furnitureSettings.setBreakSound(nexoBlockSoundSection.getString("break_sound"));
@@ -2255,7 +2278,7 @@ public class NexoItemConverter extends ItemConverter {
             furnitureRotation = FurnitureRotation.FOUR;
         }
         String restrictedRotation = nexoFurnitureMechanicsSection.getString("restricted_rotation");
-        if (isValidString(restrictedRotation)) {
+        if (this.isValidString(restrictedRotation)) {
             if (restrictedRotation.equals("VERY_STRICT")) {
                 furnitureRotation = FurnitureRotation.FOUR;
             } else if (restrictedRotation.equals("STRICT")) {
@@ -2285,7 +2308,7 @@ public class NexoItemConverter extends ItemConverter {
         FloatsUtils scale = new FloatsUtils(3, new float[]{1f, 1f, 1f});
 
         ConfigurationSection nexoPropertiesSection = nexoFurnitureMechanicsSection.getConfigurationSection("properties");
-        if (isNotNull(nexoPropertiesSection)) {
+        if (this.isNotNull(nexoPropertiesSection)) {
             String display_transform = nexoPropertiesSection.getString("display_transform", "NONE");
             try {
                 displayType = ItemDisplayType.valueOf(display_transform);
@@ -2308,7 +2331,7 @@ public class NexoItemConverter extends ItemConverter {
                 Logger.debug(Message.WARNING__FURNITURE__INVALID_TRANSLATION_SIZE, LogType.WARNING, "item", this.itemId, "size", translations.size());
             }
             String scales = nexoPropertiesSection.getString("scale");
-            if (isNotNull(scales)) {
+            if (this.isNotNull(scales)) {
                 String[] split = scales.split(",", 3);
                 try {
                     scale.setValue(0, Float.parseFloat(split[0].trim()));
@@ -2322,14 +2345,14 @@ public class NexoItemConverter extends ItemConverter {
 
         // --- Loot ---
         ConfigurationSection dropSection = nexoFurnitureMechanicsSection.getConfigurationSection("drop");
-        if (isNotNull(dropSection)) {
+        if (this.isNotNull(dropSection)) {
             boolean dropSelfWithSilktouch = dropSection.getBoolean("silktouch", false);
             boolean fortuneAffectsDrop = dropSection.getBoolean("fortune", false);
             String minimal_type = dropSection.getString("minimal_type", null);
             String best_tool = dropSection.getString("best_tool", null);
             List<Map<?, ?>> loots = dropSection.getMapList("loots");
-            List<ItemLoot> itemLoots = parseItemLoots(loots);
-            if (isValidString(minimal_type) || isValidString(best_tool)) {
+            List<ItemLoot> itemLoots = this.parseItemLoots(loots);
+            if (this.isValidString(minimal_type) || this.isValidString(best_tool)) {
                 Logger.debug(Message.WARNING__FURNITURE__CUSTOM_DROP_CONDITIONS_NOT_SUPPORTED, LogType.WARNING, "item", this.itemId);
             }
             if (dropSelfWithSilktouch && !fortuneAffectsDrop) {
@@ -2421,7 +2444,7 @@ public class NexoItemConverter extends ItemConverter {
         // --- Placements ---
         Set<FurniturePlacement> placementKeys = new HashSet<>();
         ConfigurationSection limitedPlacingSection = nexoFurnitureMechanicsSection.getConfigurationSection("limited_placing");
-        if (isNotNull(limitedPlacingSection)) {
+        if (this.isNotNull(limitedPlacingSection)) {
             if (limitedPlacingSection.getBoolean("floor", false)) {
                 placementKeys.add(FurniturePlacement.GROUND);
             }
@@ -2436,10 +2459,10 @@ public class NexoItemConverter extends ItemConverter {
         }
 
         if (!placementKeys.isEmpty()) {
-            if (isValidString(nexoBetterModel) || isValidString(nexoMEGModel)) {
+            if (this.isValidString(nexoBetterModel) || this.isValidString(nexoMEGModel)) {
                 for (FurniturePlacement placement : placementKeys) {
                     Placement p = furnitureConfiguration.getOrCreatePlacement(placement);
-                    if (isValidString(nexoBetterModel)) {
+                    if (this.isValidString(nexoBetterModel)) {
                         p.setBetterModel(nexoBetterModel);
                     } else {
                         p.setModelEngine(nexoMEGModel);
@@ -2456,11 +2479,11 @@ public class NexoItemConverter extends ItemConverter {
                 // Build hitboxes
                 List<Hitbox> hitboxList = new ArrayList<>();
                 ConfigurationSection nexoHitboxesSection = nexoFurnitureMechanicsSection.getConfigurationSection("hitbox");
-                if (isNotNull(nexoHitboxesSection)) {
+                if (this.isNotNull(nexoHitboxesSection)) {
                     AtomicBoolean seatsAdded = new AtomicBoolean(false);
 
                     // Barriers
-                    for (Position pos : expandBarrierPositions(nexoHitboxesSection.getStringList("barriers"))) {
+                    for (Position pos : this.expandBarrierPositions(nexoHitboxesSection.getStringList("barriers"))) {
                         ShulkerHitbox hitbox = new ShulkerHitbox();
                         hitbox.setPosition(pos.x(), pos.y(), pos.z());
                         hitboxList.add(hitbox);
@@ -2468,7 +2491,7 @@ public class NexoItemConverter extends ItemConverter {
 
                     // Shulkers
                     for (String shulker : nexoHitboxesSection.getStringList("shulkers")) {
-                        if (!isValidString(shulker)) {
+                        if (!this.isValidString(shulker)) {
                             continue;
                         }
                         String[] parts = shulker.trim().split("\\s+");
@@ -2487,7 +2510,7 @@ public class NexoItemConverter extends ItemConverter {
                             hitbox.setPeek((int) (Float.parseFloat(parts[2]) * 100));
                             if (parts.length >= 4) {
                                 String dir = parts[3].toUpperCase();
-                                hitbox.setDirection(getDirectionFromString(dir));
+                                hitbox.setDirection(this.getDirectionFromString(dir));
                             }
                             if (seatPosition.isUpdated() && !seatsAdded.getAndSet(true)) {
                                 hitbox.addSeat(seatPosition.getValue(0), seatPosition.getValue(1), seatPosition.getValue(2), 0);
@@ -2500,7 +2523,7 @@ public class NexoItemConverter extends ItemConverter {
 
                     // Ghasts
                     for (String ghast : nexoHitboxesSection.getStringList("ghasts")) {
-                        if (!isValidString(ghast)) {
+                        if (!this.isValidString(ghast)) {
                             continue;
                         }
                         String[] parts = ghast.trim().split("\\s+");
@@ -2527,7 +2550,7 @@ public class NexoItemConverter extends ItemConverter {
 
                     // Interactions
                     for (String interaction : nexoHitboxesSection.getStringList("interactions")) {
-                        if (!isValidString(interaction)) {
+                        if (!this.isValidString(interaction)) {
                             continue;
                         }
                         String[] parts = interaction.trim().split("\\s+");
@@ -2570,7 +2593,7 @@ public class NexoItemConverter extends ItemConverter {
         Set<String> duplicateGuard = new HashSet<>();
 
         for (String barrier : barriersList) {
-            if (!isValidString(barrier)) {
+            if (!this.isValidString(barrier)) {
                 continue;
             }
             String[] parts = barrier.trim().split("\\s*,\\s*");
@@ -2581,7 +2604,7 @@ public class NexoItemConverter extends ItemConverter {
 
             int[][] axisValues = new int[3][];
             for (int i = 0; i < 3; i++) {
-                axisValues[i] = parseAxisPart(parts[i], barrier);
+                axisValues[i] = this.parseAxisPart(parts[i], barrier);
                 if (axisValues[i].length == 0) {
                     axisValues[i] = new int[]{0};
                 }
@@ -2683,7 +2706,7 @@ public class NexoItemConverter extends ItemConverter {
             } else if (lootMap.get("minecraft_type") instanceof String minecraftTypeString) {
                 itemLoot = new MinecraftItemLoot(minecraftTypeString, minAmount, maxAmount, probability);
             }
-            if (isNotNull(itemLoot)) {
+            if (this.isNotNull(itemLoot)) {
                 itemLoots.add(itemLoot);
             }
         }
