@@ -40,7 +40,6 @@ import fr.robie.craftengineconverter.loader.MessageLoader;
 import fr.robie.craftengineconverter.utils.TagResolver;
 import fr.robie.craftengineconverter.utils.command.CommandManager;
 import org.bstats.bukkit.Metrics;
-import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.ServicePriority;
 import org.jetbrains.annotations.NotNull;
@@ -76,7 +75,7 @@ public final class CraftEngineConverter extends CraftEngineConverterPlugin {
     public void onLoad() {
         if (!Plugins.CRAFTENGINE.isPresent()) {
             Logger.info("CraftEngine plugin not found ! Disabling CraftEngineConverter ...");
-            getServer().getPluginManager().disablePlugin(this);
+            this.getServer().getPluginManager().disablePlugin(this);
             return;
         }
         this.reloadBlockStateMappings();
@@ -105,7 +104,7 @@ public final class CraftEngineConverter extends CraftEngineConverterPlugin {
 
         if (!this.getDataFolder().exists() && !this.getDataFolder().mkdirs()) {
             Logger.info("Unable to create plugin folder ! Disabling CraftEngineConverter ...", LogType.ERROR);
-            getServer().getPluginManager().disablePlugin(this);
+            this.getServer().getPluginManager().disablePlugin(this);
             return;
         }
         if (this.foliaCompatibilityManager.isPaper()) {
@@ -123,8 +122,8 @@ public final class CraftEngineConverter extends CraftEngineConverterPlugin {
 
         this.commandManager.enableCommands();
 
-        registerConverter(new NexoConverter(this));
-        registerConverter(new IAConverter(this));
+        this.registerConverter(new NexoConverter(this));
+        this.registerConverter(new IAConverter(this));
 
         ((TagResolver) this.tagResolver).initTagProcessors();
 
@@ -179,20 +178,23 @@ public final class CraftEngineConverter extends CraftEngineConverterPlugin {
             Logger.info(Message.MESSAGE__AUTO_CONVERTER__STARTUP__DISABLED);
         }
 
-        if (Configuration.<Boolean>get(ConfigurationKey.WORLD_CONVERTER_ENABLE))
+        if (Configuration.<Boolean>get(ConfigurationKey.WORLD_CONVERTER_ENABLE)) {
             this.registerListener(this.worldConverterManager);
+        }
 
         if (Plugins.NEXO.isEnabled() && Configuration.<Boolean>get(ConfigurationKey.NEXO_ENABLE_HOOK)) {
             this.registerListener(new NexoBlockConverter(this));
             this.registerListener(new NexoFurnitureConverter(this));
-            if (Configuration.<Boolean>get(ConfigurationKey.WORLD_CONVERTER_ENABLE) && Configuration.<Boolean>get(ConfigurationKey.WORLD_CONVERTER_NEXO_HOOK))
+            if (Configuration.<Boolean>get(ConfigurationKey.WORLD_CONVERTER_ENABLE) && Configuration.<Boolean>get(ConfigurationKey.WORLD_CONVERTER_NEXO_HOOK)) {
                 this.worldConverterManager.registerConverter(new NexoWorldConverter(this));
+            }
         }
         if (Plugins.ITEMS_ADDER.isEnabled() && Configuration.<Boolean>get(ConfigurationKey.ITEMS_ADDER_ENABLE_HOOK)) {
             this.registerListener(new ItemsAdderBlockConverter(this));
             this.registerListener(new ItemsAdderFurnitureConverter(this));
-            if (Configuration.<Boolean>get(ConfigurationKey.WORLD_CONVERTER_ENABLE) && Configuration.<Boolean>get(ConfigurationKey.WORLD_CONVERTER_ITEMS_ADDER_HOOK))
+            if (Configuration.<Boolean>get(ConfigurationKey.WORLD_CONVERTER_ENABLE) && Configuration.<Boolean>get(ConfigurationKey.WORLD_CONVERTER_ITEMS_ADDER_HOOK)) {
                 this.worldConverterManager.registerConverter(new ItemsAdderWorldConverter(this));
+            }
         }
 
         Logger.info(Message.MESSAGE__PLUGIN__STARTUP__COMPLETE, "time", TimerBuilder.formatTimeAuto(System.currentTimeMillis() - startTime));
@@ -295,8 +297,7 @@ public final class CraftEngineConverter extends CraftEngineConverterPlugin {
     public void reloadConfig() {
         this.saveDefaultConfig();
         File configFile = new File(this.getDataFolder(), "config.yml");
-        YamlConfiguration config = YamlConfiguration.loadConfiguration(configFile);
-        Configuration.getInstance().load(config, configFile);
+        FileCacheManager.getYamlCache().getEntryFile(configFile.toPath()).ifPresent(entry -> Configuration.getInstance().load(entry.getData(), configFile));
     }
 
     public void reloadBlockStateMappings() {

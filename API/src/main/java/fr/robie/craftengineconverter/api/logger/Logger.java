@@ -119,47 +119,48 @@ public class Logger extends TextFormatter {
         return this.prefix;
     }
 
-    // Core log method with optional subPrefix
     public void log(@Nullable String subPrefix, String message, LogType logType, Object... args) {
         String prefixPart = subPrefix != null
                 ? "§8[§e" + this.prefix + "§8] §8[" + subPrefix + "§8] "
                 : "§8[§e" + this.prefix + "§8] ";
-        Bukkit.getConsoleSender().sendMessage(prefixPart + logType.getColor() + parseText(message, args));
+        Bukkit.getConsoleSender().sendMessage(prefixPart + logType.getColor() + this.parseText(message, args));
     }
-
+    
     public void log(String message, LogType logType, Object... args) {
-        log(null, message, logType, args);
+        this.log(null, message, logType, args);
     }
 
     public void log(@Nullable String subPrefix, Message message, LogType logType, Object... args) {
-        log(subPrefix, message.getMessage(), logType, args);
+        this.log(subPrefix, message.getMessage(), logType, args);
     }
 
     public void log(Message message, LogType logType, Object... args) {
-        log(null, message.getMessage(), logType, args);
+        this.log(null, message.getMessage(), logType, args);
     }
 
     public void logDebug(String message, LogType type, Object... args) {
         if (Configuration.<Boolean>get(ConfigurationKey.ENABLE_DEBUG)) {
-            log(message, type, args);
+            this.log(message, type, args);
         }
     }
 
     public void logDebug(@Nullable String subPrefix, String message, LogType type, Object... args) {
         if (Configuration.<Boolean>get(ConfigurationKey.ENABLE_DEBUG)) {
-            log(subPrefix, message, type, args);
+            this.log(subPrefix, message, type, args);
         }
     }
 
     public void logDebug(@Nullable String subPrefix, String message, LogType type) {
         if (Configuration.<Boolean>get(ConfigurationKey.ENABLE_DEBUG)) {
-            log(subPrefix, message, type);
+            this.log(subPrefix, message, type);
         }
     }
 
     public void logException(String errorName, Throwable throwable, Object... args) {
-        if (!Configuration.<Boolean>get(ConfigurationKey.ENABLE_DEBUG)) return;
-        this.log("An exception occurred while " + parseText(errorName, args) + ":", LogType.ERROR);
+        if (!Configuration.<Boolean>get(ConfigurationKey.ENABLE_DEBUG)) {
+            return;
+        }
+        this.log("An exception occurred while " + this.parseText(errorName, args) + ":", LogType.ERROR);
         this.log("Exception error message: " + throwable.getMessage(), LogType.ERROR);
         this.log("Please check the stack trace below for more details. If you don't understand the issue report it to the developer.", LogType.ERROR);
         this.log("------------------- Stack Trace ------------------", LogType.ERROR);

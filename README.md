@@ -55,7 +55,7 @@ to [CraftEngine](https://modrinth.com/plugin/craftengine) format.
 | Plugin         | Items | Glyphs | Emojis | Sounds | Packs | Recipes | Languages |
 |----------------|-------|--------|--------|--------|-------|---------|-----------|
 | **Nexo**       | ✅     | ✅      | ✅      | ✅      | ✅     | ✅       | ✅         |
-| **ItemsAdder** | ✅     | ✅      | 🚧     | ✅      | ✅     | ✅       | ✅         |
+| **ItemsAdder** | ✅     | ✅      | ✅      | ✅      | ✅     | ✅       | ✅         |
 | **Oraxen**     | 🚧    | 🚧     | 🚧     | 🚧     | 🚧    | 🚧      | 🚧        |
 
 ✅ Fully Supported | 🚧 Work in Progress | ❌ Not Supported
@@ -64,6 +64,7 @@ to [CraftEngine](https://modrinth.com/plugin/craftengine) format.
 
 - English (default)
 - French (fr)
+- Deutsch (de)
 
 ## 📦 Requirements
 
@@ -211,6 +212,7 @@ No available for the moment.
 **Maven:**
 
 ```xml
+
 <dependency>
     <groupId>fr.robie.craftengineconverter</groupId>
     <artifactId>API</artifactId>
@@ -231,18 +233,18 @@ dependencies {
 
 ```java
 public class MyPluginConverter extends Converter {
-    
+
     public MyPluginConverter(CraftEngineConverter plugin) {
         super(plugin, "MyPlugin");
     }
-    
+
     @Override
     public CompletableFuture<Void> convertItems(boolean async) {
         return executeTask(async, () -> {
             // Your conversion logic here
         });
     }
-    
+
     // Implement other conversion methods...
 }
 ```
@@ -256,33 +258,35 @@ You can register custom tags to be processed in any text (packets, world convers
 ```java
 // Get the ITagResolver from Bukkit Services Manager
 RegisteredServiceProvider<ITagResolver> rsp = Bukkit.getServicesManager().getRegistration(ITagResolver.class);
-if (rsp != null) {
-    ITagResolver tagResolver = rsp.getProvider();
+if(rsp !=null){
+ITagResolver tagResolver = rsp.getProvider();
 
-    // Register your custom processor
-    tagResolver.registerTagProcessor(new TagProcessor() {
-        @Override
-        public String getTagName() {
-            return "My Custom Tag";
-        }
+// Register your custom processor
+    tagResolver.
 
-        @Override
-        public Pattern getPattern() {
-            return Pattern.compile("<my_tag:([^>]+)>");
-        }
+registerTagProcessor(new TagProcessor() {
+    @Override
+    public String getTagName () {
+        return "My Custom Tag";
+    }
 
-        @Override
-        public boolean hasTag(String input) {
-            return input.contains("<my_tag:");
-        }
+    @Override
+    public Pattern getPattern () {
+        return Pattern.compile("<my_tag:([^>]+)>");
+    }
 
-        @Override
-        public Optional<String> process(String input, Player player) {
-            // Replace <my_tag:hello> with "Hi!"
-            return Optional.of(input.replace("<my_tag:hello>", "Hi!"));
+    @Override
+    public boolean hasTag (String input){
+        return input.contains("<my_tag:");
+    }
+
+    @Override
+    public Optional<String> process (String input, Player player){
+        // Replace <my_tag:hello> with "Hi!"
+        return Optional.of(input.replace("<my_tag:hello>", "Hi!"));
+    }
+});
         }
-    });
-}
 ```
 
 **Resolving tags in a string:**
@@ -300,12 +304,17 @@ String output = resolved.orElse("<glyph:heart> Hello!");
 SnakeUtils utils = new SnakeUtils(yamlFile);
 
 // Get and set values with path notation
-utils.setValue("items.my_item.display_name", "My Item");
+utils.
+
+setValue("items.my_item.display_name","My Item");
+
 String name = utils.getString("items.my_item.display_name");
 
 // Work with sections
 SnakeUtils section = this.utils.getSection("items.my_item");
-section.setValue("material", "DIAMOND_SWORD");
+section.
+
+setValue("material","DIAMOND_SWORD");
 
 // Get typed values
 int amount = this.utils.getInt("items.my_item.amount", 1);
@@ -313,7 +322,9 @@ List<String> lore = this.utils.getStringList("items.my_item.lore");
 Map<String, Object> data = this.utils.getMap("items.my_item");
 
 // Save changes
-utils.save();
+utils.
+
+save();
 ```
 
 ## 🏗️ Building
