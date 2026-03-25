@@ -44,7 +44,7 @@ public class TimerBuilder {
         }
 
         public String getFormat(long value) {
-            return (value <= 1 ? this.singularFormat : this.pluralFormat).msg();
+            return (value <= 1 ? this.singularFormat : this.pluralFormat).getMessage();
         }
     }
 
@@ -64,7 +64,7 @@ public class TimerBuilder {
             remaining %= unit.getMilliseconds();
         }
 
-        String message = maxUnit.getTimeMessage().msg();
+        String message = maxUnit.getTimeMessage().getMessage();
 
         for (int i = 0; i < unitsToInclude.size(); i++) {
             TimeUnit unit = unitsToInclude.get(i);
@@ -151,8 +151,8 @@ public class TimerBuilder {
     @Contract(pure = true)
     public static String format(String message) {
         for (TimeUnit unit : TimeUnit.values()) {
-            message = message.replace(" 00 " + unit.singularFormat.msg(), "");
-            message = message.replace(" 00 " + unit.pluralFormat.msg(), "");
+            message = message.replace(" 00 " + unit.singularFormat.getMessage(), "");
+            message = message.replace(" 00 " + unit.pluralFormat.getMessage(), "");
         }
         message = message.replaceAll("\\s+", " ").trim();
 

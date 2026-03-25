@@ -3,15 +3,22 @@ package fr.robie.craftengineconverter.loader;
 import fr.robie.craftengineconverter.api.configuration.Configuration;
 import fr.robie.craftengineconverter.api.configuration.ConfigurationKey;
 import fr.robie.craftengineconverter.api.enums.Languages;
+import fr.robie.craftengineconverter.api.format.CraftEngineConverterMessage;
 import fr.robie.craftengineconverter.api.format.Message;
 import fr.robie.craftengineconverter.api.format.MessageType;
+import fr.robie.craftengineconverter.api.format.message.BossBarMessage;
+import fr.robie.craftengineconverter.api.format.message.ClassicMessage;
+import fr.robie.craftengineconverter.api.format.message.TitleMessage;
 import fr.robie.craftengineconverter.api.logger.LogType;
 import fr.robie.craftengineconverter.api.logger.Logger;
 import fr.robie.craftengineconverter.api.utils.ObjectUtils;
 import fr.robie.craftengineconverter.common.CraftEngineConverterPlugin;
 import fr.robie.craftengineconverter.common.manager.Manageable;
 import fr.robie.craftengineconverter.common.utils.SnakeUtils;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -41,7 +48,6 @@ public class MessageLoader extends ObjectUtils implements Manageable {
         for (Languages lang : Languages.values()) {
             String path = this.getLanguagePath(lang);
             File file = new File(this.plugin.getDataFolder(), path);
-
             try {
                 this.ensureFileExists(file, path);
                 this.updateLanguageFile(file, path, lang);
@@ -78,17 +84,13 @@ public class MessageLoader extends ObjectUtils implements Manageable {
 
     private boolean removeObsoleteKeys(YamlConfiguration config, File file, Languages lang) {
         Set<String> validKeys = this.buildValidKeySet();
-
         List<String> obsoleteKeys = new ArrayList<>();
+
         for (String key : config.getKeys(true)) {
-            if (VERSION_KEY.equals(key)) {
+            if (VERSION_KEY.equals(key) || config.isConfigurationSection(key)) {
                 continue;
             }
-            if (config.isConfigurationSection(key)) {
-                continue;
-            }
-            String rootKey = this.resolveRootKey(key, validKeys);
-            if (rootKey == null) {
+            if (this.resolveRootKey(key, validKeys) == null) {
                 obsoleteKeys.add(key);
             }
         }
@@ -98,17 +100,10 @@ public class MessageLoader extends ObjectUtils implements Manageable {
         }
 
         this.backupFile(file, lang);
-
-        for (String key : obsoleteKeys) {
-            config.set(key, null);
-        }
-
+        obsoleteKeys.forEach(key -> config.set(key, null));
         this.removeEmptySections(config);
 
-        Logger.info(
-                "Removed " + obsoleteKeys.size() + " obsolete key(s) from language file '" + lang.name() + "': " + obsoleteKeys,
-                LogType.WARNING
-        );
+        Logger.info("Removed " + obsoleteKeys.size() + " obsolete key(s) from language file '" + lang.name() + "': " + obsoleteKeys, LogType.WARNING);
         return true;
     }
 
@@ -134,11 +129,10 @@ public class MessageLoader extends ObjectUtils implements Manageable {
         return keys;
     }
 
-    private String resolveRootKey(String key, Set<String> validKeys) {
+    private @Nullable String resolveRootKey(String key, Set<String> validKeys) {
         if (validKeys.contains(key)) {
             return key;
         }
-
         int lastDot = key.lastIndexOf('.');
         while (lastDot > 0) {
             String parent = key.substring(0, lastDot);
@@ -156,14 +150,10 @@ public class MessageLoader extends ObjectUtils implements Manageable {
             Logger.info("Failed to create backup directory: " + backupDir.getPath(), LogType.WARNING);
             return;
         }
-
-        String timestamp = LocalDateTime.now().format(BACKUP_DATE_FORMAT);
-        String backupName = lang.name().toLowerCase() + "_messages_" + timestamp + ".yml";
-        File backupFile = new File(backupDir, backupName);
-
+        String backupName = lang.name().toLowerCase() + "_messages_" + LocalDateTime.now().format(BACKUP_DATE_FORMAT) + ".yml";
         try {
-            Files.copy(file.toPath(), backupFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
-            Logger.info("Backed up language file '" + lang.name() + "' to: " + backupFile.getPath(), LogType.INFO);
+            Files.copy(file.toPath(), new File(backupDir, backupName).toPath(), StandardCopyOption.REPLACE_EXISTING);
+            Logger.info("Backed up language file '" + lang.name() + "' to: " + backupName, LogType.INFO);
         } catch (IOException e) {
             Logger.showException("Failed to back up language file: " + file.getPath(), e);
         }
@@ -176,72 +166,66 @@ public class MessageLoader extends ObjectUtils implements Manageable {
                 Logger.info("Language file not found in resources: " + path);
                 return false;
             }
-
             try (SnakeUtils reader = new SnakeUtils(inputStream)) {
                 for (Message message : Message.values()) {
                     String key = this.enumNameToKey(message.name());
-
-                    if (!config.contains(key)) {
-                        if (reader.contains(key)) {
-                            config.set(key, reader.getObject(key));
-                        } else {
-                            Logger.info(
-                                    "Missing message key for language " + lang.name() + ": " + key
-                                            + ". Please report this. Using default message.",
-                                    LogType.WARNING
-                            );
-                            MessageType type = message.getType();
-                            if (type != MessageType.TCHAT) {
-                                config.set(key + ".type", type.name());
-                            }
-                            if (type == MessageType.TITLE) {
-                                config.set(key + ".title", message.getTitle());
-                                config.set(key + ".subtitle", message.getSubTitle());
-                                config.set(key + ".fade-in", message.getStart());
-                                config.set(key + ".show-time", message.getTime());
-                                config.set(key + ".fade-out", message.getEnd());
-                            } else {
-                                if (message.isMessage()) {
-                                    config.set(
-                                            key + (type != MessageType.TCHAT ? ".messages" : ""),
-                                            message.getMessages()
-                                    );
-                                } else {
-                                    config.set(
-                                            key + (type != MessageType.TCHAT ? ".message" : ""),
-                                            message.getMessage()
-                                    );
-                                }
-                            }
-                        }
-                        updated = true;
+                    if (config.contains(key)) {
+                        continue;
                     }
+
+                    if (reader.contains(key)) {
+                        config.set(key, reader.getObject(key));
+                    } else {
+                        Logger.info(
+                                "Missing key for language " + lang.name() + ": " + key + ". Please report this.",
+                                LogType.WARNING
+                        );
+                        config.set(key, this.buildDefaultEntry(message));
+                    }
+                    updated = true;
                 }
             }
         }
         return updated;
     }
 
+    private Object buildDefaultEntry(Message message) {
+        List<CraftEngineConverterMessage> defaults = message.getDefaults();
+
+        if (defaults.size() == 1 && defaults.getFirst() instanceof ClassicMessage(
+                MessageType messageType, List<String> messages
+        ) && messages != null && messageType == MessageType.TCHAT) {
+            return messages.size() == 1
+                    ? messages.getFirst()
+                    : messages;
+        }
+
+        List<Map<String, Object>> entries = new ArrayList<>();
+        for (CraftEngineConverterMessage craftMessage : defaults) {
+            Map<String, Object> entry = new LinkedHashMap<>(craftMessage.serialize());
+            entry.put("type", craftMessage.messageType().name());
+            entries.add(entry);
+        }
+        return entries.size() == 1 ? entries.getFirst() : entries;
+    }
+
     public void loadLanguage(Languages language) {
         File file = new File(this.plugin.getDataFolder(), this.getLanguagePath(language));
-
         if (!file.exists()) {
             Logger.info("Language file not found: " + file.getPath(), LogType.WARNING);
             return;
         }
 
         YamlConfiguration config = YamlConfiguration.loadConfiguration(file);
-        Set<String> keys = config.getKeys(true);
         List<Message> loadedMessages = new ArrayList<>();
 
-        for (String key : keys) {
-            if (VERSION_KEY.equals(key) || config.isConfigurationSection(key)) {
+        for (String key : config.getKeys(false)) {
+            if (VERSION_KEY.equals(key)) {
                 continue;
             }
-
             try {
-                Message message = this.parseMessage(key);
-                this.loadMessageContent(message, config, key);
+                Message message = Message.valueOf(this.keyToEnumName(key));
+                message.setCraftMessages(this.parseMessageList(config, key));
                 loadedMessages.add(message);
             } catch (IllegalArgumentException e) {
                 Logger.info("Unknown message key: " + key, LogType.WARNING);
@@ -253,78 +237,63 @@ public class MessageLoader extends ObjectUtils implements Manageable {
         this.validateLoadedMessages(loadedMessages, language);
     }
 
-    private Message parseMessage(String key) {
-        return Message.valueOf(this.keyToEnumName(key));
-    }
-
-    private void loadMessageContent(Message message, YamlConfiguration config, String key) {
-        if (config.contains(key + ".type")) {
-            this.loadTypedMessage(message, config, key);
-        } else {
-            this.loadSimpleMessage(message, config, key);
+    private List<CraftEngineConverterMessage> parseMessageList(YamlConfiguration config, String key) {
+        List<Map<?, ?>> mapList = config.getMapList(key);
+        if (mapList.isEmpty()) {
+            Logger.info("Message key '" + key + "' is empty or not a list — skipping.", LogType.WARNING);
+            return List.of();
         }
-    }
 
-    private void loadTypedMessage(Message message, YamlConfiguration config, String key) {
-        MessageType messageType = MessageType.valueOf(
-                config.getString(key + ".type", "TCHAT").toUpperCase()
-        );
-        message.setType(messageType);
-
-        switch (messageType) {
-            case ACTION, TCHAT_AND_ACTION -> this.loadActionMessage(message, config, key);
-            case CENTER, TCHAT, WITHOUT_PREFIX -> this.loadTextMessage(message, config, key);
-            case TITLE -> this.loadTitleMessage(message, config, key);
+        List<CraftEngineConverterMessage> result = new ArrayList<>();
+        for (Map<?, ?> map : mapList) {
+            YamlConfiguration section = new YamlConfiguration();
+            for (Map.Entry<?, ?> entry : map.entrySet()) {
+                section.set(String.valueOf(entry.getKey()), entry.getValue());
+            }
+            CraftEngineConverterMessage craftMessage = this.parseCraftMessage(section, key);
+            if (craftMessage != null) {
+                result.add(craftMessage);
+            }
         }
+        return result;
     }
 
-    private void loadActionMessage(Message message, YamlConfiguration config, String key) {
-        message.setMessage(config.getString(key + ".message"));
-    }
-
-    private void loadTextMessage(Message message, YamlConfiguration config, String key) {
-        List<String> messages = config.getStringList(key + ".messages");
-        if (messages.isEmpty()) {
-            message.setMessage(config.getString(key + ".message"));
-        } else {
-            message.setMessages(messages);
+    @Nullable
+    private CraftEngineConverterMessage parseCraftMessage(@NotNull ConfigurationSection section, String debugKey) {
+        MessageType messageType = MessageType.TCHAT;
+        if (section.contains("type")) {
+            try {
+                messageType = MessageType.valueOf(section.getString("type", "TCHAT").toUpperCase());
+            } catch (IllegalArgumentException e) {
+                Logger.info("Unknown message type '" + section.getString("type") + "' in: " + debugKey, LogType.WARNING);
+                return null;
+            }
         }
+
+        return switch (messageType) {
+            case TITLE -> TitleMessage.deserialize(section.getValues(false));
+            case BOSS_BAR -> BossBarMessage.deserialize(section.getValues(false));
+            case TCHAT, ACTION_BAR, TCHAT_AND_ACTION_BAR, WITHOUT_PREFIX, NONE ->
+                    ClassicMessage.deserialize(messageType, section.getValues(false));
+        };
     }
 
-    private void loadTitleMessage(Message message, YamlConfiguration config, String key) {
-        Map<String, Object> titles = new HashMap<>();
-        titles.put("title", config.getString(key + ".title"));
-        titles.put("subtitle", config.getString(key + ".subtitle"));
-        titles.put("start", config.getInt(key + ".fade-in", 10));
-        titles.put("time", config.getInt(key + ".show-time", 70));
-        titles.put("end", config.getInt(key + ".fade-out", 20));
-        titles.put("isUse", true);
-        message.setTitles(titles);
-    }
-
-    private void loadSimpleMessage(Message message, YamlConfiguration config, String key) {
-        message.setType(MessageType.TCHAT);
-        List<String> messages = config.getStringList(key);
-        if (messages.isEmpty()) {
-            message.setMessage(config.getString(key));
-        } else {
-            message.setMessages(messages);
-        }
-    }
 
     private void validateLoadedMessages(List<Message> loadedMessages, Languages language) {
-        if (loadedMessages.size() != Message.values().length) {
-            Set<Message> loaded = new HashSet<>(loadedMessages);
-            List<String> missing = Arrays.stream(Message.values())
-                    .filter(m -> !loaded.contains(m))
-                    .map(m -> this.enumNameToKey(m.name()))
-                    .toList();
-
-            Logger.info(String.format(
-                    "Loaded messages (%d) do not match expected count (%d) for language %s. Missing keys: %s",
-                    loadedMessages.size(), Message.values().length, language.name(), missing
-            ), LogType.WARNING);
+        if (loadedMessages.size() == Message.values().length) {
+            return;
         }
+
+        Set<Message> loaded = new HashSet<>(loadedMessages);
+        List<String> missing = Arrays.stream(Message.values())
+                .filter(m -> !loaded.contains(m))
+                .map(m -> this.enumNameToKey(m.name()))
+                .toList();
+
+        Logger.info(String.format(
+                "Loaded messages (%d) do not match expected count (%d) for language %s. Missing keys: %s",
+                loadedMessages.size(), Message.values().length, language.name(), missing
+        ), LogType.WARNING);
     }
 
     private String getLanguagePath(Languages language) {

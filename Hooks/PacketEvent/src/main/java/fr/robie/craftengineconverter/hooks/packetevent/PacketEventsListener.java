@@ -10,10 +10,10 @@ import fr.robie.craftengineconverter.api.configuration.Configuration;
 import fr.robie.craftengineconverter.api.configuration.ConfigurationKey;
 import fr.robie.craftengineconverter.api.format.ComponentMeta;
 import fr.robie.craftengineconverter.api.logger.Logger;
+import fr.robie.craftengineconverter.api.tag.ITagResolver;
 import fr.robie.craftengineconverter.common.CraftEngineConverterPlugin;
 import fr.robie.craftengineconverter.common.packet.PacketContent;
 import fr.robie.craftengineconverter.common.packet.PacketProcessor;
-import fr.robie.craftengineconverter.api.tag.ITagResolver;
 import net.kyori.adventure.text.Component;
 import org.jetbrains.annotations.NotNull;
 
@@ -31,31 +31,34 @@ public class PacketEventsListener extends PacketListenerAbstract {
         super(PacketListenerPriority.LOW);
         this.plugin = plugin;
 
-        if (Configuration.<Boolean>get(ConfigurationKey.PLUGIN_MESSAGE_FORMATTING)){
+        if (Configuration.<Boolean>get(ConfigurationKey.PLUGIN_MESSAGE_FORMATTING)) {
             this.packetTypeProcessors.put(PacketType.Play.Server.SYSTEM_CHAT_MESSAGE, PacketEventsProcessor.SYSTEM_CHAT_MESSAGE);
         }
-        if (Configuration.<Boolean>get(ConfigurationKey.TITLE_FORMATTING)){
+        if (Configuration.<Boolean>get(ConfigurationKey.TITLE_FORMATTING)) {
             this.packetTypeProcessors.put(PacketType.Play.Server.SET_TITLE_TEXT, PacketEventsProcessor.SET_TITLE_TEXT);
             this.packetTypeProcessors.put(PacketType.Play.Server.SET_TITLE_SUBTITLE, PacketEventsProcessor.SET_TITLE_SUBTITLE);
         }
-        if (Configuration.< Boolean >get(ConfigurationKey.ACTION_BAR_FORMATTING)){
+        if (Configuration.<Boolean>get(ConfigurationKey.ACTION_BAR_FORMATTING)) {
             this.packetTypeProcessors.put(PacketType.Play.Server.ACTION_BAR, PacketEventsProcessor.ACTION_BAR);
         }
-        if (Configuration.<Boolean>get(ConfigurationKey.BOSS_BAR_FORMATTING)){
+        if (Configuration.<Boolean>get(ConfigurationKey.BOSS_BAR_FORMATTING)) {
             this.packetTypeProcessors.put(PacketType.Play.Server.BOSS_BAR, PacketEventsProcessor.BOSS_BAR);
         }
-        if (Configuration.<Boolean>get(ConfigurationKey.MENU_TITLE_FORMATTING)){
+        if (Configuration.<Boolean>get(ConfigurationKey.MENU_TITLE_FORMATTING)) {
             this.packetTypeProcessors.put(PacketType.Play.Server.OPEN_WINDOW, PacketEventsProcessor.OPEN_WINDOW);
         }
 
-        this.componentMeta = this.plugin.getMessageFormatter() instanceof ComponentMeta meta ? meta : new ComponentMeta();
+        this.componentMeta = this.plugin.getMessageFormatter() instanceof ComponentMeta meta ? meta : new ComponentMeta(plugin);
         this.tagResolverUtils = this.plugin.getTagResolver();
     }
 
-    @Override @SuppressWarnings("unchecked")
-    public void onPacketSend(@NotNull PacketSendEvent event){
+    @Override
+    @SuppressWarnings("unchecked")
+    public void onPacketSend(@NotNull PacketSendEvent event) {
         final PacketTypeCommon packetType = event.getPacketType();
-        if (!(packetType instanceof PacketType.Play.Server server)) return;
+        if (!(packetType instanceof PacketType.Play.Server server)) {
+            return;
+        }
 
         final PacketProcessor<?> processor = this.packetTypeProcessors.get(server);
         if (processor == null) {
@@ -69,7 +72,7 @@ public class PacketEventsListener extends PacketListenerAbstract {
             return;
         }
 
-        Object wrappedPacket = switch (server){
+        Object wrappedPacket = switch (server) {
             case SYSTEM_CHAT_MESSAGE -> new WrapperPlayServerSystemChatMessage(event);
             case SET_TITLE_TEXT -> new WrapperPlayServerSetTitleText(event);
             case SET_TITLE_SUBTITLE -> new WrapperPlayServerSetTitleSubtitle(event);
@@ -92,7 +95,9 @@ public class PacketEventsListener extends PacketListenerAbstract {
             return;
         }
 
-        if (packet == null || packet.isEmpty()) return;
+        if (packet == null || packet.isEmpty()) {
+            return;
+        }
         final String message = packet.message();
 
         final Optional<String> parsed = this.tagResolverUtils.resolveTags(message, event.getPlayer());

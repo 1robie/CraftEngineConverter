@@ -11,11 +11,11 @@ import fr.robie.craftengineconverter.api.format.Message;
 import fr.robie.craftengineconverter.api.logger.LogType;
 import fr.robie.craftengineconverter.api.logger.Logger;
 import fr.robie.craftengineconverter.api.progress.BukkitProgressBar;
+import fr.robie.craftengineconverter.api.utils.ObjectUtils;
 import fr.robie.craftengineconverter.common.cache.FileCacheEntry;
 import fr.robie.craftengineconverter.common.manager.FileCacheManager;
 import fr.robie.craftengineconverter.converter.settings.BasicConverterSettings;
 import fr.robie.craftengineconverter.utils.ConfigFile;
-import fr.robie.craftengineconverter.utils.YamlUtils;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
@@ -35,7 +35,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
-public abstract class Converter extends YamlUtils {
+public abstract class Converter extends ObjectUtils {
     protected final CraftEngineConverter plugin;
     protected final Plugins pluginType;
     protected final String converterName;
@@ -43,7 +43,6 @@ public abstract class Converter extends YamlUtils {
     protected final Map<String, List<PackMapping>> packMappings = new HashMap<>();
 
     public Converter(@NotNull CraftEngineConverter plugin, @NotNull String converterName, @NotNull Plugins pluginType) {
-        super(plugin);
         this.plugin = plugin;
         this.converterName = converterName;
         this.pluginType = pluginType;
@@ -137,7 +136,9 @@ public abstract class Converter extends YamlUtils {
 
     protected void populateQueue(File baseDir, File currentDir, Queue<ConfigFile> toConvert) {
         File[] files = currentDir.listFiles();
-        if (files == null) return;
+        if (files == null) {
+            return;
+        }
 
         for (File itemFile : files) {
             if (itemFile.isDirectory()) {
@@ -177,7 +178,9 @@ public abstract class Converter extends YamlUtils {
 
         int count = 0;
         File[] files = directory.listFiles();
-        if (files == null) return 0;
+        if (files == null) {
+            return 0;
+        }
 
         for (File file : files) {
             if (file.isDirectory()) {
@@ -217,7 +220,9 @@ public abstract class Converter extends YamlUtils {
         }
 
         File[] files = source.listFiles();
-        if (files == null) return;
+        if (files == null) {
+            return;
+        }
 
         for (File file : files) {
             Path relativePath = assetsRoot.toPath().relativize(file.toPath());
@@ -230,7 +235,9 @@ public abstract class Converter extends YamlUtils {
             String fullPath = namespace + ":" + pathInNamespace;
 
             if (Configuration.isPathBlacklisted(fullPath)) {
-                if (file.isFile()) progress.increment();
+                if (file.isFile()) {
+                    progress.increment();
+                }
                 continue;
             }
 
@@ -281,7 +288,9 @@ public abstract class Converter extends YamlUtils {
 
     public List<PackMapping> resolveAllPackMappings(@NotNull String namespaceSource, @NotNull String originalPath) {
         List<PackMapping> mappings = this.packMappings.get(namespaceSource);
-        if (mappings == null) return Collections.emptyList();
+        if (mappings == null) {
+            return Collections.emptyList();
+        }
 
         int bestMatchLength = -1;
         List<PackMapping> bestMatches = new ArrayList<>();
@@ -313,7 +322,9 @@ public abstract class Converter extends YamlUtils {
         }
 
         File[] files = source.listFiles();
-        if (files == null) return;
+        if (files == null) {
+            return;
+        }
 
         for (File file : files) {
             File targetFile = new File(destination, file.getName());
@@ -353,7 +364,9 @@ public abstract class Converter extends YamlUtils {
     }
 
     private void copyFile(File source, File destination) throws IOException {
-        if (this.settings.dryRunEnabled()) return;
+        if (this.settings.dryRunEnabled()) {
+            return;
+        }
         Files.copy(
                 source.toPath(),
                 destination.toPath(),
@@ -362,7 +375,9 @@ public abstract class Converter extends YamlUtils {
     }
 
     protected void generateCategorie(List<String> itemsIds, YamlConfiguration config, String fileName) {
-        if (itemsIds.isEmpty()) return;
+        if (itemsIds.isEmpty()) {
+            return;
+        }
         ConfigurationSection categoriesSection = config.createSection("categories");
         ConfigurationSection categorySection = categoriesSection.createSection(itemsIds.getFirst());
         categorySection.set("name", (Configuration.<Boolean>get(ConfigurationKey.DISABLE_DEFAULT_ITALIC) ? "<!i>" : "") + "Category " + fileName);
@@ -504,7 +519,9 @@ public abstract class Converter extends YamlUtils {
         }
 
         public void scanWithDependencies() {
-            if (this.fileList.isEmpty()) return;
+            if (this.fileList.isEmpty()) {
+                return;
+            }
             scanFile(this.fileList.getFirst());
 
             boolean pendingDependenciesFound = true;
@@ -523,7 +540,9 @@ public abstract class Converter extends YamlUtils {
         }
 
         private void scanFile(ConfigFile configFile) {
-            if (this.scannedFiles.contains(configFile)) return;
+            if (this.scannedFiles.contains(configFile)) {
+                return;
+            }
             this.scannedFiles.add(configFile);
 
             YamlConfiguration convertedConfig = new YamlConfiguration();
@@ -544,7 +563,9 @@ public abstract class Converter extends YamlUtils {
                             configFile, rawItemId, finalItemId, itemSection,
                             convertedConfig
                     );
-                    if (converter == null) continue;
+                    if (converter == null) {
+                        continue;
+                    }
                     this.convertersByRawId.put(rawItemId, converter);
                     this.fileByRawId.put(rawItemId, configFile);
                     this.finalIdByRawId.put(rawItemId, finalItemId);
@@ -555,11 +576,17 @@ public abstract class Converter extends YamlUtils {
         }
 
         private boolean scanFileContaining(String rawItemId) {
-            if (this.fileByRawId.containsKey(rawItemId)) return false;
+            if (this.fileByRawId.containsKey(rawItemId)) {
+                return false;
+            }
             for (ConfigFile file : this.fileList) {
-                if (this.scannedFiles.contains(file)) continue;
+                if (this.scannedFiles.contains(file)) {
+                    continue;
+                }
                 scanFile(file);
-                if (this.fileByRawId.containsKey(rawItemId)) return true;
+                if (this.fileByRawId.containsKey(rawItemId)) {
+                    return true;
+                }
             }
             Logger.debug(Message.ERROR__CONVERTER__MISSING_DEPENDENCY, LogType.WARNING, "item-id", rawItemId);
             return false;
@@ -576,14 +603,18 @@ public abstract class Converter extends YamlUtils {
             }
             for (Map.Entry<String, T> entry : this.convertersByRawId.entrySet()) {
                 for (String depRawId : entry.getValue().getDependencies()) {
-                    if (!this.convertersByRawId.containsKey(depRawId)) continue;
+                    if (!this.convertersByRawId.containsKey(depRawId)) {
+                        continue;
+                    }
                     dependantsByRawId.get(depRawId).add(entry.getKey());
                     pendingDepsCountByRawId.merge(entry.getKey(), 1, Integer::sum);
                 }
             }
             Queue<String> resolvedQueue = new LinkedList<>();
             for (Map.Entry<String, Integer> entry : pendingDepsCountByRawId.entrySet()) {
-                if (entry.getValue() == 0) resolvedQueue.add(entry.getKey());
+                if (entry.getValue() == 0) {
+                    resolvedQueue.add(entry.getKey());
+                }
             }
             List<String> sortedRawIds = new ArrayList<>();
             while (!resolvedQueue.isEmpty()) {
@@ -609,10 +640,14 @@ public abstract class Converter extends YamlUtils {
 
             for (String rawItemId : sortedRawIds) {
                 T converter = this.convertersByRawId.get(rawItemId);
-                if (converter == null) continue;
+                if (converter == null) {
+                    continue;
+                }
                 try {
                     converter.convertItem();
-                    if (itemPostProcessor != null) itemPostProcessor.process(rawItemId, converter);
+                    if (itemPostProcessor != null) {
+                        itemPostProcessor.process(rawItemId, converter);
+                    }
                     this.injectResolvedDependency(rawItemId, converter);
                 } catch (Exception e) {
                     Logger.showException(Message.ERROR__CONVERTER__ITEM_CONVERT_EXCEPTION, e, "item", this.finalIdByRawId.get(rawItemId));
@@ -623,7 +658,9 @@ public abstract class Converter extends YamlUtils {
 
             for (String rawItemId : sortedRawIds) {
                 T converter = this.convertersByRawId.get(rawItemId);
-                if (converter == null || converter.isInternalOnly()) continue;
+                if (converter == null || converter.isInternalOnly()) {
+                    continue;
+                }
 
                 String finalItemId = this.finalIdByRawId.get(rawItemId);
                 ConfigFile configFile = this.fileByRawId.get(rawItemId);
@@ -646,7 +683,9 @@ public abstract class Converter extends YamlUtils {
         public void saveAll(File outputBase, Converter converter) {
             for (ConfigFile configFile : this.fileList) {
                 YamlConfiguration convertedConfig = this.convertedConfigByFile.get(configFile);
-                if (convertedConfig == null) continue;
+                if (convertedConfig == null) {
+                    continue;
+                }
 
                 if (this.postProcessor != null) {
                     this.postProcessor.process(configFile, convertedConfig);
@@ -655,7 +694,9 @@ public abstract class Converter extends YamlUtils {
                 String fileName = configFile.sourceFile().getName();
                 String fileNameWithoutExtension = fileName.substring(0, fileName.length() - 4);
                 converter.generateCategorie(this.getFinalItemIds(configFile), convertedConfig, fileNameWithoutExtension);
-                if (converter.getSettings().dryRunEnabled()) continue;
+                if (converter.getSettings().dryRunEnabled()) {
+                    continue;
+                }
                 converter.saveConvertedConfig(convertedConfig, configFile, configFile.sourceFile(), outputBase, "items", "item");
             }
         }

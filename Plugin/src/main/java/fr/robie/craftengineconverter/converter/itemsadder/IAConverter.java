@@ -50,7 +50,7 @@ public class IAConverter extends Converter {
 
     @Override
     public CompletableFuture<Void> convertItems(boolean async, Optional<Player> player) {
-        return executeTask(async, () -> convertItemsSync(player));
+        return this.executeTask(async, () -> this.convertItemsSync(player));
     }
 
     private void convertItemsSync(Optional<Player> player) {
@@ -62,7 +62,7 @@ public class IAConverter extends Converter {
         }
 
         if (outputFolder.exists()) {
-            deleteDirectory(outputFolder);
+            this.deleteDirectory(outputFolder);
         }
 
         if (!outputFolder.mkdirs()) {
@@ -71,20 +71,20 @@ public class IAConverter extends Converter {
         }
 
         Queue<@NotNull ConfigFile> toConvert = new LinkedList<>();
-        int totalItems = populateQueueIA(inputFolder, inputFolder, toConvert, List.of("items"));
+        int totalItems = this.populateQueueIA(inputFolder, inputFolder, toConvert, List.of("items"));
 
         if (toConvert.isEmpty()) {
             return;
         }
 
-        BukkitProgressBar progressBar = createProgressBar(player, totalItems, "Converting ItemsAdder items", "items", ConverterOption.ITEMS);
+        BukkitProgressBar progressBar = this.createProgressBar(player, totalItems, "Converting ItemsAdder items", "items", ConverterOption.ITEMS);
         progressBar.start();
 
         PluginNameMapper.getInstance().clearMappingsForPlugin(this.pluginType);
         BlockStatesMapper.getInstance().clearMappingsForPlugin(this.pluginType);
 
         try {
-            processItemFiles(toConvert, outputFolder, progressBar);
+            this.processItemFiles(toConvert, outputFolder, progressBar);
 
             for (CacheConversion conversion : this.conversions) {
                 Optional<FileCacheEntry<YamlConfiguration>> entryFile = FileCacheManager.getYamlCache()
@@ -130,12 +130,12 @@ public class IAConverter extends Converter {
                 (configFile, convertedConfig) -> {
                     YamlConfiguration config = configFile.config();
                     String namespace = config.getString("info.namespace", configFile.sourceFile().getName().replace(".yml", ""));
-                    convertArmorSection(config.getConfigurationSection("equipments"), convertedConfig, namespace, true);
-                    convertArmorSection(config.getConfigurationSection("armors_rendering"), convertedConfig, namespace, false);
+                    this.convertArmorSection(config.getConfigurationSection("equipments"), convertedConfig, namespace, true);
+                    this.convertArmorSection(config.getConfigurationSection("armors_rendering"), convertedConfig, namespace, false);
                 },
                 configFile -> {
                     ConfigurationSection originalItems = configFile.config().getConfigurationSection("items");
-                    if (isNull(originalItems)) {
+                    if (this.isNull(originalItems)) {
                         this.logDebug(Message.WARNING__CONVERTER__IA__ITEMS__NO_SECTION, LogType.WARNING, "file", configFile.sourceFile().getName());
                         return Collections.emptySet();
                     }
@@ -143,7 +143,7 @@ public class IAConverter extends Converter {
                 },
                 (configFile, rawItemId) -> {
                     ConfigurationSection originalItems = configFile.config().getConfigurationSection("items");
-                    if (isNull(originalItems)) {
+                    if (this.isNull(originalItems)) {
                         return null;
                     }
                     return originalItems.getConfigurationSection(rawItemId);
@@ -160,13 +160,13 @@ public class IAConverter extends Converter {
     }
 
     private void convertArmorSection(ConfigurationSection armorSection, YamlConfiguration convertedConfig, String namespace, boolean requireArmorType) {
-        if (isNull(armorSection)) {
+        if (this.isNull(armorSection)) {
             return;
         }
 
         for (String equipmentId : armorSection.getKeys(false)) {
             ConfigurationSection equipmentSection = armorSection.getConfigurationSection(equipmentId);
-            if (isNull(equipmentSection)) {
+            if (this.isNull(equipmentSection)) {
                 continue;
             }
 
@@ -179,29 +179,29 @@ public class IAConverter extends Converter {
 
             String layer1 = equipmentSection.getString("layer_1");
             String layer2 = equipmentSection.getString("layer_2");
-            if (!isValidString(layer1) || !isValidString(layer2)) {
+            if (!this.isValidString(layer1) || !this.isValidString(layer2)) {
                 continue;
             }
 
-            layer1 = cleanPath(layer1);
-            layer2 = cleanPath(layer2);
+            layer1 = this.cleanPath(layer1);
+            layer2 = this.cleanPath(layer2);
             if (layer1.equals(layer2)) {
                 layer2 = layer2 + "_2";
             }
 
             List<ArmorConverter> convertersToProcess = Configuration.<ArmorConverter>get(ConfigurationKey.ARMOR_CONVERTER_TYPE).getComposition();
             Map<ArmorConverter, ConfigurationSection> converterSections = ArmorConverter.createArmorConverterSections(
-                    getOrCreateSection(convertedConfig, "equipments"), namespaced(equipmentId, namespace));
+                    this.getOrCreateSection(convertedConfig, "equipments"), this.namespaced(equipmentId, namespace));
 
-            String layer1FileName = namespace + "_" + equipmentId + "_" + getFileName(layer1);
-            String layer2FileName = namespace + "_" + equipmentId + "_" + getFileName(layer2);
+            String layer1FileName = namespace + "_" + equipmentId + "_" + this.getFileName(layer1);
+            String layer2FileName = namespace + "_" + equipmentId + "_" + this.getFileName(layer2);
 
-            addPackMapping(namespace, "textures/" + layer1 + ".png", namespace, "textures/entity/equipment/humanoid/", layer1FileName + ".png");
-            addPackMapping(namespace, "textures/" + layer2 + ".png", namespace, "textures/entity/equipment/humanoid_leggings/", layer2FileName + ".png");
+            this.addPackMapping(namespace, "textures/" + layer1 + ".png", namespace, "textures/entity/equipment/humanoid/", layer1FileName + ".png");
+            this.addPackMapping(namespace, "textures/" + layer2 + ".png", namespace, "textures/entity/equipment/humanoid_leggings/", layer2FileName + ".png");
 
             for (ArmorConverter converter : convertersToProcess) {
                 ConfigurationSection section = converterSections.get(converter);
-                if (isNotNull(section)) {
+                if (this.isNotNull(section)) {
                     String layer1Texture = converter.getTexturePath(namespace, "humanoid", layer1FileName);
                     String layer2Texture = converter.getTexturePath(namespace, "humanoid_leggings", layer2FileName);
                     ArmorConverter.addEquipmentTextures(section, "humanoid", Set.of(layer1Texture));
@@ -226,7 +226,7 @@ public class IAConverter extends Converter {
 
     @Override
     public CompletableFuture<Void> convertImages(boolean async, Optional<Player> player) {
-        return executeTask(async, () -> convertImagesSync(player));
+        return this.executeTask(async, () -> this.convertImagesSync(player));
     }
 
     private void convertImagesSync(Optional<Player> optionalPlayer) {
@@ -238,7 +238,7 @@ public class IAConverter extends Converter {
         }
 
         if (outputBase.exists()) {
-            deleteDirectory(outputBase);
+            this.deleteDirectory(outputBase);
         }
         if (!outputBase.mkdirs()) {
             this.logDebug(Message.ERROR__CONVERTER__IA__OUTPUT_FOLDER_CREATION_FAILED, LogType.ERROR, "path", outputBase.getAbsolutePath());
@@ -247,21 +247,21 @@ public class IAConverter extends Converter {
 
 
         Queue<ConfigFile> toConvert = new LinkedList<>();
-        int totalFontImage = populateQueueIA(inputFolder, inputFolder, toConvert, List.of("font_images"));
+        int totalFontImage = this.populateQueueIA(inputFolder, inputFolder, toConvert, List.of("font_images"));
 
         if (toConvert.isEmpty()) {
             this.logDebug(Message.WARNING__CONVERTER__IA__IMAGES__NONE_FOUND, LogType.WARNING);
             return;
         }
 
-        BukkitProgressBar progressBar = createProgressBar(optionalPlayer, totalFontImage,
+        BukkitProgressBar progressBar = this.createProgressBar(optionalPlayer, totalFontImage,
                 "Converting ItemsAdder font images", "images", ConverterOption.IMAGES);
         progressBar.start();
 
         try {
             while (!toConvert.isEmpty()) {
                 ConfigFile configFile = toConvert.poll();
-                convertFontImageFile(configFile, outputBase, progressBar);
+                this.convertFontImageFile(configFile, outputBase, progressBar);
             }
         } catch (Exception e) {
             Logger.showException(Message.ERROR__CONVERTER__IA__IMAGES__CONVERSION_EXCEPTION, e);
@@ -274,7 +274,7 @@ public class IAConverter extends Converter {
         File sourceFile = configFile.sourceFile();
         YamlConfiguration config = configFile.config();
         ConfigurationSection fontImagesSection = config.getConfigurationSection("font_images");
-        if (isNull(fontImagesSection)) {
+        if (this.isNull(fontImagesSection)) {
             return;
         }
         YamlConfiguration convertedConfig = new YamlConfiguration();
@@ -287,7 +287,7 @@ public class IAConverter extends Converter {
 
         for (String imageId : fontImagesSection.getKeys(false)) {
             ConfigurationSection imageSection = fontImagesSection.getConfigurationSection(imageId);
-            if (isNull(imageSection)) {
+            if (this.isNull(imageSection)) {
                 progressBar.increment();
                 continue;
             }
@@ -295,8 +295,8 @@ public class IAConverter extends Converter {
             String finalImageId = namespace + ":" + imageId;
             ConfigurationSection ceImageSection = ceImagesSection.createSection(finalImageId);
             String path = imageSection.getString("path");
-            if (isValidString(path)) {
-                ceImageSection.set("file", namespaced(path, namespace));
+            if (this.isValidString(path)) {
+                ceImageSection.set("file", this.namespaced(path, namespace));
             }
 
             int scaleRatio = imageSection.getInt("scale_ratio", 0);
@@ -315,13 +315,13 @@ public class IAConverter extends Converter {
             return;
         }
         if (convertedImages > 0) {
-            saveConvertedConfig(convertedConfig, configFile, sourceFile, outputBase, "images", "image");
+            this.saveConvertedConfig(convertedConfig, configFile, sourceFile, outputBase, "images", "image");
         }
     }
 
     @Override
     public CompletableFuture<Void> convertLanguages(boolean async, Optional<Player> player) {
-        return executeTask(async, () -> convertLanguagesSync(player));
+        return this.executeTask(async, () -> this.convertLanguagesSync(player));
     }
 
     protected void convertLanguagesSync(Optional<Player> optionalPlayer) {
@@ -334,7 +334,7 @@ public class IAConverter extends Converter {
         }
 
         Queue<ConfigFile> toConvert = new LinkedList<>();
-        populateQueueIA(inputFolder, inputFolder, toConvert, List.of("minecraft_lang_overwrite", "dictionary"));
+        this.populateQueueIA(inputFolder, inputFolder, toConvert, List.of("minecraft_lang_overwrite", "dictionary"));
 
         if (toConvert.isEmpty()) {
             this.logDebug(Message.WARNING__CONVERTER__IA__LANGUAGES__NONE_FOUND, LogType.WARNING);
@@ -375,7 +375,7 @@ public class IAConverter extends Converter {
             return;
         }
 
-        BukkitProgressBar progressBar = createProgressBar(optionalPlayer, totalEntries,
+        BukkitProgressBar progressBar = this.createProgressBar(optionalPlayer, totalEntries,
                 "Converting ItemsAdder languages", "translations", ConverterOption.LANGUAGES);
         progressBar.start();
 
@@ -386,7 +386,7 @@ public class IAConverter extends Converter {
             try (SnakeUtils ceTranslation = SnakeUtils.createEmpty(tempOutputFile)) {
                 while (!toConvert.isEmpty()) {
                     ConfigFile configFile = toConvert.poll();
-                    convertLanguageFile(configFile, ceTranslation, progressBar);
+                    this.convertLanguageFile(configFile, ceTranslation, progressBar);
                 }
 
                 if (!this.settings.dryRunEnabled()) {
@@ -453,7 +453,7 @@ public class IAConverter extends Converter {
 
     @Override
     public CompletableFuture<Void> convertSounds(boolean async, Optional<Player> player) {
-        return executeTask(async, () -> convertSoundsSync(player));
+        return this.executeTask(async, () -> this.convertSoundsSync(player));
     }
 
     private void convertSoundsSync(Optional<Player> optionalPlayer) {
@@ -465,7 +465,7 @@ public class IAConverter extends Converter {
         }
 
         if (outputFolder.exists()) {
-            deleteDirectory(outputFolder);
+            this.deleteDirectory(outputFolder);
         }
 
         if (!outputFolder.mkdirs()) {
@@ -474,19 +474,19 @@ public class IAConverter extends Converter {
         }
 
         Queue<ConfigFile> toConvert = new LinkedList<>();
-        int totalSounds = populateQueueIA(inputFolder, inputFolder, toConvert, List.of("sounds"));
+        int totalSounds = this.populateQueueIA(inputFolder, inputFolder, toConvert, List.of("sounds"));
 
         if (toConvert.isEmpty()) {
             return;
         }
 
-        BukkitProgressBar progressBar = createProgressBar(optionalPlayer, totalSounds, "Converting ItemsAdder sounds", "sounds", ConverterOption.SOUNDS);
+        BukkitProgressBar progressBar = this.createProgressBar(optionalPlayer, totalSounds, "Converting ItemsAdder sounds", "sounds", ConverterOption.SOUNDS);
         progressBar.start();
 
         try {
             while (!toConvert.isEmpty()) {
                 ConfigFile configFile = toConvert.poll();
-                convertSoundsFile(configFile, outputFolder, progressBar);
+                this.convertSoundsFile(configFile, outputFolder, progressBar);
             }
         } catch (Exception e) {
             Logger.showException(Message.ERROR__CONVERTER__IA__SOUNDS__CONVERSION_EXCEPTION, e);
@@ -505,14 +505,14 @@ public class IAConverter extends Converter {
         String namespace = config.getString("info.namespace", finalFileName);
         ConfigurationSection sounds = convertedConfig.createSection("sounds");
         ConfigurationSection originalSounds = config.getConfigurationSection("sounds");
-        if (isNull(originalSounds)) {
+        if (this.isNull(originalSounds)) {
             this.logDebug(Message.WARNING__CONVERTER__IA__SOUNDS__NO_SECTION, LogType.WARNING, "file", fileName);
             return;
         }
 
         for (String soundId : originalSounds.getKeys(false)) {
             ConfigurationSection section = originalSounds.getConfigurationSection(soundId);
-            if (isNull(section)) {
+            if (this.isNull(section)) {
                 this.logDebug(Message.WARNING__CONVERTER__IA__SOUNDS__SKIPPED_NO_SECTION, LogType.WARNING, "sound", soundId, "file", fileName);
                 progressBar.increment();
                 continue;
@@ -521,20 +521,20 @@ public class IAConverter extends Converter {
             try {
                 ConfigurationSection ceSoundSection = sounds.createSection(finalSoundId);
                 String path = section.getString("path");
-                if (isValidString(path)) {
-                    ceSoundSection.set("sounds", List.of(cleanPath(path)));
+                if (this.isValidString(path)) {
+                    ceSoundSection.set("sounds", List.of(this.cleanPath(path)));
                 }
                 String subtitle = section.getString("settings.subtitle");
-                if (isValidString(subtitle)) {
+                if (this.isValidString(subtitle)) {
                     ceSoundSection.set("subtitle", subtitle);
                 }
                 ConfigurationSection jukeboxSection = section.getConfigurationSection("jukebox");
-                if (isNotNull(jukeboxSection)) {
-                    ConfigurationSection ceJukeBoxSection = getOrCreateSection(convertedConfig, "jukebox-songs");
+                if (this.isNotNull(jukeboxSection)) {
+                    ConfigurationSection ceJukeBoxSection = this.getOrCreateSection(convertedConfig, "jukebox-songs");
                     ConfigurationSection ceJukeBoxSoundSection = ceJukeBoxSection.createSection(finalSoundId);
                     ceJukeBoxSoundSection.set("sound", finalSoundId);
                     String description = jukeboxSection.getString("description");
-                    if (isValidString(description)) {
+                    if (this.isValidString(description)) {
                         ceJukeBoxSoundSection.set("description", description);
                     }
                 }
@@ -546,12 +546,12 @@ public class IAConverter extends Converter {
         if (this.settings.dryRunEnabled()) {
             return;
         }
-        saveConvertedConfig(convertedConfig, configFile, soundFile, outputFolder, "sounds", "sound");
+        this.saveConvertedConfig(convertedConfig, configFile, soundFile, outputFolder, "sounds", "sound");
     }
 
     @Override
     public CompletableFuture<Void> convertRecipes(boolean async, Optional<Player> player) {
-        return executeTask(async, () -> convertRecipesSync(player));
+        return this.executeTask(async, () -> this.convertRecipesSync(player));
     }
 
     private void convertRecipesSync(Optional<Player> optionalPlayer) {
@@ -562,7 +562,7 @@ public class IAConverter extends Converter {
             return;
         }
         if (outputFolder.exists()) {
-            deleteDirectory(outputFolder);
+            this.deleteDirectory(outputFolder);
         }
         if (!outputFolder.mkdirs()) {
             this.logDebug(Message.ERROR__CONVERTER__IA__OUTPUT_FOLDER_CREATION_FAILED, LogType.ERROR, "path", outputFolder.getAbsolutePath());
@@ -570,7 +570,7 @@ public class IAConverter extends Converter {
         }
 
         Queue<ConfigFile> toConvert = new LinkedList<>();
-        populateQueueIA(inputFolder, inputFolder, toConvert, List.of("recipes"));
+        this.populateQueueIA(inputFolder, inputFolder, toConvert, List.of("recipes"));
         if (toConvert.isEmpty()) {
             return;
         }
@@ -579,25 +579,25 @@ public class IAConverter extends Converter {
         for (ConfigFile configFile : toConvert) {
             YamlConfiguration config = configFile.config();
             ConfigurationSection recipesSection = config.getConfigurationSection("recipes");
-            if (isNull(recipesSection)) {
+            if (this.isNull(recipesSection)) {
                 continue;
             }
             for (String craftingType : recipesSection.getKeys(false)) {
                 ConfigurationSection craftingSection = recipesSection.getConfigurationSection(craftingType);
-                if (isNull(craftingSection)) {
+                if (this.isNull(craftingSection)) {
                     continue;
                 }
                 totalRecipes += craftingSection.getKeys(false).size();
             }
         }
 
-        BukkitProgressBar progressBar = createProgressBar(optionalPlayer, totalRecipes, "Converting ItemsAdder recipes", "recipes", ConverterOption.RECIPES);
+        BukkitProgressBar progressBar = this.createProgressBar(optionalPlayer, totalRecipes, "Converting ItemsAdder recipes", "recipes", ConverterOption.RECIPES);
         progressBar.start();
 
         try {
             while (!toConvert.isEmpty()) {
                 ConfigFile configFile = toConvert.poll();
-                convertRecipesFile(configFile, outputFolder, progressBar);
+                this.convertRecipesFile(configFile, outputFolder, progressBar);
             }
         } catch (Exception e) {
             Logger.showException(Message.ERROR__CONVERTER__IA__RECIPES__CONVERSION_EXCEPTION, e);
@@ -617,14 +617,14 @@ public class IAConverter extends Converter {
         ConfigurationSection recipes = convertedConfig.createSection("recipes");
         ConfigurationSection originalRecipes = config.getConfigurationSection("recipes");
 
-        if (isNull(originalRecipes)) {
+        if (this.isNull(originalRecipes)) {
             this.logDebug(Message.WARNING__CONVERTER__IA__RECIPES__NO_SECTION, LogType.WARNING, "file", fileName);
             return;
         }
 
         for (String craftingType : originalRecipes.getKeys(false)) {
             ConfigurationSection craftingSection = originalRecipes.getConfigurationSection(craftingType);
-            if (isNull(craftingSection)) {
+            if (this.isNull(craftingSection)) {
                 continue;
             }
 
@@ -639,7 +639,7 @@ public class IAConverter extends Converter {
                 }
 
                 ConfigurationSection recipeSection = craftingSection.getConfigurationSection(recipeId);
-                if (isNull(recipeSection)) {
+                if (this.isNull(recipeSection)) {
                     this.logDebug(Message.WARNING__CONVERTER__IA__RECIPES__SKIPPED_NO_SECTION, LogType.WARNING, "recipe", recipeId, "file", fileName);
                     progressBar.increment();
                     continue;
@@ -647,7 +647,7 @@ public class IAConverter extends Converter {
 
                 String baseRecipeId = namespace + ":" + recipeId.toLowerCase();
                 try {
-                    convertRecipe(iaRecipesType, recipeSection, recipes, baseRecipeId, recipeId, fileName);
+                    this.convertRecipe(iaRecipesType, recipeSection, recipes, baseRecipeId, recipeId, fileName);
                 } catch (Exception e) {
                     Logger.showException(Message.ERROR__CONVERTER__IA__RECIPES__CONVERSION_FAILURE, e, "recipe", recipeId, "file", fileName);
                 }
@@ -658,7 +658,7 @@ public class IAConverter extends Converter {
         if (this.settings.dryRunEnabled()) {
             return;
         }
-        saveConvertedConfig(convertedConfig, configFile, recipeFile, outputFolder, "recipes", "recipe");
+        this.saveConvertedConfig(convertedConfig, configFile, recipeFile, outputFolder, "recipes", "recipe");
     }
 
     private void convertRecipe(IARecipesTypes type, ConfigurationSection iaRecipe,
@@ -667,14 +667,14 @@ public class IAConverter extends Converter {
         switch (type) {
             case CRAFTING_TABLE -> {
                 ConfigurationSection ceRecipe = recipesSection.createSection(baseRecipeId);
-                convertCraftingTableRecipe(iaRecipe, ceRecipe, recipeId, fileName);
+                this.convertCraftingTableRecipe(iaRecipe, ceRecipe, recipeId, fileName);
             }
-            case COOKING -> convertCookingRecipes(iaRecipe, recipesSection, baseRecipeId, recipeId, fileName);
+            case COOKING -> this.convertCookingRecipes(iaRecipe, recipesSection, baseRecipeId, recipeId, fileName);
             case ANVIL_REPAIR -> //TODO: Implement Anvil Repair conversion
                     this.logDebug(Message.WARNING__CONVERTER__IA__RECIPES__ANVIL_REPAIR_NOT_IMPLEMENTED, LogType.WARNING, "recipe", recipeId);
             case SMITHING -> {
                 ConfigurationSection ceRecipe = recipesSection.createSection(baseRecipeId);
-                convertSmithingRecipe(iaRecipe, ceRecipe, recipeId, fileName);
+                this.convertSmithingRecipe(iaRecipe, ceRecipe, recipeId, fileName);
             }
             default ->
                     this.logDebug(Message.WARNING__CONVERTER__IA__RECIPES__UNSUPPORTED_TYPE, LogType.WARNING, "type", type, "recipe", recipeId);
@@ -689,12 +689,12 @@ public class IAConverter extends Converter {
             ceRecipe.set("type", "shapeless");
 
             ConfigurationSection ingredients = iaRecipe.getConfigurationSection("ingredients");
-            if (isNotNull(ingredients)) {
+            if (this.isNotNull(ingredients)) {
                 List<String> ceIngredients = new ArrayList<>();
                 for (String key : ingredients.getKeys(false)) {
                     String ingredientName = ingredients.getString(key);
-                    String convertedIngredient = convertItemReference(ingredientName, recipeId, fileName);
-                    if (isValidString(convertedIngredient)) {
+                    String convertedIngredient = this.convertItemReference(ingredientName, recipeId, fileName);
+                    if (this.isValidString(convertedIngredient)) {
                         ceIngredients.add(convertedIngredient);
                     }
                 }
@@ -708,11 +708,11 @@ public class IAConverter extends Converter {
             Map<String, String> ceIngredients = new HashMap<>();
 
             Set<String> definedKeys = new HashSet<>();
-            if (isNotNull(ingredients)) {
+            if (this.isNotNull(ingredients)) {
                 for (String key : ingredients.getKeys(false)) {
                     String ingredientName = ingredients.getString(key);
-                    String convertedIngredient = convertItemReference(ingredientName, recipeId, fileName);
-                    if (isValidString(convertedIngredient)) {
+                    String convertedIngredient = this.convertItemReference(ingredientName, recipeId, fileName);
+                    if (this.isValidString(convertedIngredient)) {
                         ceIngredients.put(key, convertedIngredient);
                         definedKeys.add(key);
                     }
@@ -735,7 +735,7 @@ public class IAConverter extends Converter {
             ceRecipe.set("ingredients", ceIngredients);
         }
 
-        convertRecipeResult(iaRecipe, ceRecipe, recipeId, fileName);
+        this.convertRecipeResult(iaRecipe, ceRecipe, recipeId, fileName);
     }
 
     private void convertCookingRecipes(ConfigurationSection iaRecipe, ConfigurationSection recipesSection,
@@ -748,7 +748,7 @@ public class IAConverter extends Converter {
 
         for (int i = 0; i < machines.size(); i++) {
             String machine = machines.get(i);
-            String cookingType = getCookingTypeFromMachine(machine);
+            String cookingType = this.getCookingTypeFromMachine(machine);
 
             if (cookingType == null) {
                 Logger.debug(Message.WARNING__CONVERTER__IA__RECIPES__UNKNOWN_MACHINE_TYPE, "machine", machine, "recipe", recipeId);
@@ -758,7 +758,7 @@ public class IAConverter extends Converter {
             String finalRecipeId = machines.size() > 1 ? baseRecipeId + "_" + (i + 1) : baseRecipeId;
 
             ConfigurationSection ceRecipe = recipesSection.createSection(finalRecipeId);
-            convertSingleCookingRecipe(iaRecipe, ceRecipe, cookingType, recipeId, fileName);
+            this.convertSingleCookingRecipe(iaRecipe, ceRecipe, cookingType, recipeId, fileName);
         }
     }
 
@@ -767,10 +767,10 @@ public class IAConverter extends Converter {
         ceRecipe.set("type", cookingType);
 
         ConfigurationSection ingredientSection = iaRecipe.getConfigurationSection("ingredient");
-        if (isNotNull(ingredientSection)) {
+        if (this.isNotNull(ingredientSection)) {
             String ingredientItem = ingredientSection.getString("item");
-            String convertedIngredient = convertItemReference(ingredientItem, recipeId, fileName);
-            if (isValidString(convertedIngredient)) {
+            String convertedIngredient = this.convertItemReference(ingredientItem, recipeId, fileName);
+            if (this.isValidString(convertedIngredient)) {
                 ceRecipe.set("ingredient", convertedIngredient);
             }
         }
@@ -784,12 +784,12 @@ public class IAConverter extends Converter {
         ceRecipe.set("time", cookTime);
 
         ConfigurationSection resultSection = iaRecipe.getConfigurationSection("result");
-        if (isNotNull(resultSection)) {
+        if (this.isNotNull(resultSection)) {
             ConfigurationSection ceResultSection = ceRecipe.createSection("result");
 
             String resultItem = resultSection.getString("item");
-            String convertedResult = convertItemReference(resultItem, recipeId, fileName);
-            if (isValidString(convertedResult)) {
+            String convertedResult = this.convertItemReference(resultItem, recipeId, fileName);
+            if (this.isValidString(convertedResult)) {
                 ceResultSection.set("id", convertedResult);
             }
 
@@ -805,17 +805,17 @@ public class IAConverter extends Converter {
         ceRecipe.set("type", "smithing_transform");
 
         String template = iaRecipe.getString("template");
-        if (isValidString(template)) {
-            String convertedTemplate = convertItemReference(template, recipeId, fileName);
-            if (isValidString(convertedTemplate)) {
+        if (this.isValidString(template)) {
+            String convertedTemplate = this.convertItemReference(template, recipeId, fileName);
+            if (this.isValidString(convertedTemplate)) {
                 ceRecipe.set("template-type", convertedTemplate);
             }
         }
 
         String base = iaRecipe.getString("base");
-        if (isValidString(base)) {
-            String convertedBase = convertItemReference(base, recipeId, fileName);
-            if (isValidString(convertedBase)) {
+        if (this.isValidString(base)) {
+            String convertedBase = this.convertItemReference(base, recipeId, fileName);
+            if (this.isValidString(convertedBase)) {
                 ceRecipe.set("base", convertedBase);
             }
         } else {
@@ -823,20 +823,20 @@ public class IAConverter extends Converter {
         }
 
         String addition = iaRecipe.getString("addition");
-        if (isValidString(addition)) {
-            String convertedAddition = convertItemReference(addition, recipeId, fileName);
-            if (isValidString(convertedAddition)) {
+        if (this.isValidString(addition)) {
+            String convertedAddition = this.convertItemReference(addition, recipeId, fileName);
+            if (this.isValidString(convertedAddition)) {
                 ceRecipe.set("addition", convertedAddition);
             }
         }
 
         ConfigurationSection resultSection = iaRecipe.getConfigurationSection("result");
-        if (isNotNull(resultSection)) {
+        if (this.isNotNull(resultSection)) {
             ConfigurationSection ceResultSection = ceRecipe.createSection("result");
 
             String resultItem = resultSection.getString("item");
-            String convertedResult = convertItemReference(resultItem, recipeId, fileName);
-            if (isValidString(convertedResult)) {
+            String convertedResult = this.convertItemReference(resultItem, recipeId, fileName);
+            if (this.isValidString(convertedResult)) {
                 ceResultSection.set("id", convertedResult);
             }
 
@@ -856,7 +856,7 @@ public class IAConverter extends Converter {
     }
 
     private String convertItemReference(String itemReference, String recipeId, String fileName) {
-        if (!isValidString(itemReference)) {
+        if (!this.isValidString(itemReference)) {
             return null;
         }
 
@@ -869,7 +869,7 @@ public class IAConverter extends Converter {
         if (itemReference.startsWith("itemsadder:")) {
             String iaItemId = itemReference.replace("itemsadder:", "");
             String mappedId = PluginNameMapper.getInstance().getNewName(Plugins.ITEMS_ADDER, iaItemId);
-            if (isValidString(mappedId)) {
+            if (this.isValidString(mappedId)) {
                 return mappedId;
             } else {
                 this.logDebug(Message.WARNING__CONVERTER__IA__RECIPES__UNKNOWN_ITEM_REFERENCE, LogType.WARNING, "item", itemReference, "recipe", recipeId, "file", fileName);
@@ -878,7 +878,7 @@ public class IAConverter extends Converter {
         }
 
         String mappedId = PluginNameMapper.getInstance().getNewName(Plugins.ITEMS_ADDER, itemReference);
-        if (isValidString(mappedId)) {
+        if (this.isValidString(mappedId)) {
             return mappedId;
         }
 
@@ -894,12 +894,12 @@ public class IAConverter extends Converter {
     private void convertRecipeResult(ConfigurationSection iaRecipe, ConfigurationSection ceRecipe,
                                      String recipeId, String fileName) {
         ConfigurationSection resultSection = iaRecipe.getConfigurationSection("result");
-        if (isNotNull(resultSection)) {
+        if (this.isNotNull(resultSection)) {
             ConfigurationSection ceResultSection = ceRecipe.createSection("result");
 
             String resultItem = resultSection.getString("item");
-            String convertedResult = convertItemReference(resultItem, recipeId, fileName);
-            if (isValidString(convertedResult)) {
+            String convertedResult = this.convertItemReference(resultItem, recipeId, fileName);
+            if (this.isValidString(convertedResult)) {
                 ceResultSection.set("id", convertedResult);
             }
 
@@ -912,7 +912,7 @@ public class IAConverter extends Converter {
 
     @Override
     public CompletableFuture<Void> convertPack(boolean async, Optional<Player> player) {
-        return executeTask(async, () -> convertPackSync(player));
+        return this.executeTask(async, () -> this.convertPackSync(player));
     }
 
     private void convertPackSync(Optional<Player> optionalPlayer) {
@@ -927,7 +927,7 @@ public class IAConverter extends Converter {
             }
 
             if (outputPackFile.exists()) {
-                deleteDirectory(outputPackFile);
+                this.deleteDirectory(outputPackFile);
             }
 
             if (!outputPackFile.mkdirs()) {
@@ -940,22 +940,22 @@ public class IAConverter extends Converter {
             blacklistedNamespacesList.addAll(Configuration.<List<String>>get(ConfigurationKey.ITEMS_ADDER_BLACKLISTED_CONTENT_FOLDERS_NAMESPACES));
             List<String> validMinecraftFolders = List.of("atlases", "blockstates", "equipment", "font", "items", "lang", "models", "particles", "post_effect", "shaders", "texts", "textures", "waypoint_style");
             File[] listed = inputFolder.listFiles();
-            if (isNull(listed)) {
+            if (this.isNull(listed)) {
                 return;
             }
             for (File f : listed) {
                 if (f.isDirectory() && !blacklistedNamespacesList.contains(f.getName().toLowerCase())) {
                     File[] listedFiles = f.listFiles();
-                    if (isNull(listedFiles)) {
+                    if (this.isNull(listedFiles)) {
                         continue;
                     }
                     for (File subFile : listedFiles) {
                         if (subFile.isDirectory() && validMinecraftFolders.contains(subFile.getName().toLowerCase())) {
-                            totalFiles += countFilesInDirectory(subFile);
+                            totalFiles += this.countFilesInDirectory(subFile);
                         } else if (subFile.getName().equalsIgnoreCase("resourcepack")) {
                             File assetsDir = new File(subFile, "assets");
                             if (assetsDir.exists()) {
-                                totalFiles += countFilesInDirectory(assetsDir);
+                                totalFiles += this.countFilesInDirectory(assetsDir);
                             } else {
                                 File[] subDirs = subFile.listFiles();
                                 if (subDirs != null) {
@@ -969,7 +969,7 @@ public class IAConverter extends Converter {
                                         }
                                         boolean looksLikeNamespace = Arrays.stream(namespaceFolders).anyMatch(nf -> nf.isDirectory() && validMinecraftFolders.contains(nf.getName().toLowerCase()));
                                         if (looksLikeNamespace) {
-                                            totalFiles += countFilesInDirectory(potentialNamespace);
+                                            totalFiles += this.countFilesInDirectory(potentialNamespace);
                                         }
                                     }
                                 }
@@ -978,7 +978,7 @@ public class IAConverter extends Converter {
                     }
                 }
             }
-            BukkitProgressBar progressBar = createProgressBar(optionalPlayer, totalFiles,
+            BukkitProgressBar progressBar = this.createProgressBar(optionalPlayer, totalFiles,
                     "Converting ItemsAdder resource pack", "pack", ConverterOption.PACKS);
 
             progressBar.start();
@@ -999,18 +999,18 @@ public class IAConverter extends Converter {
                 for (File namespaceDir : listed) {
                     if (namespaceDir.isDirectory() && !blacklistedNamespacesList.contains(namespaceDir.getName().toLowerCase())) {
                         File[] namespaceFiles = namespaceDir.listFiles();
-                        if (isNull(namespaceFiles)) {
+                        if (this.isNull(namespaceFiles)) {
                             continue;
                         }
                         for (File f : namespaceFiles) {
                             String folderName = f.getName().toLowerCase();
                             if (f.isDirectory() && validMinecraftFolders.contains(folderName)) {
                                 File assetsRoot = contentsFolder != null ? contentsFolder : namespaceDir.getParentFile();
-                                copyDirectory(f, outputAssetsFolder, assetsRoot, progressBar, executor, latch, errorRef, useMultiThread);
+                                this.copyDirectory(f, outputAssetsFolder, assetsRoot, progressBar, executor, latch, errorRef, useMultiThread);
                             } else if (folderName.equals("resourcepack")) {
                                 File assetsDir = new File(f, "assets");
                                 if (assetsDir.exists()) {
-                                    copyAssetsFolder(assetsDir, outputAssetsFolder, folderName, progressBar, executor, latch, errorRef, useMultiThread);
+                                    this.copyAssetsFolder(assetsDir, outputAssetsFolder, folderName, progressBar, executor, latch, errorRef, useMultiThread);
                                 } else {
                                     File[] subDirs = f.listFiles();
                                     if (subDirs != null) {
@@ -1024,7 +1024,7 @@ public class IAConverter extends Converter {
                                             }
                                             boolean looksLikeNamespace = Arrays.stream(namespaceFolders).anyMatch(nf -> nf.isDirectory() && validMinecraftFolders.contains(nf.getName().toLowerCase()));
                                             if (looksLikeNamespace) {
-                                                copyDirectory(potentialNamespace, outputAssetsFolder, f, progressBar, executor, latch, errorRef, useMultiThread);
+                                                this.copyDirectory(potentialNamespace, outputAssetsFolder, f, progressBar, executor, latch, errorRef, useMultiThread);
                                             }
                                         }
                                     }
@@ -1061,7 +1061,7 @@ public class IAConverter extends Converter {
         } catch (Exception e) {
             Logger.showException(Message.ERROR__PACK_CONVERSION__EXCEPTION, e, "plugin", this.converterName);
         } finally {
-            if (isNotNull(executor) && !executor.isShutdown()) {
+            if (this.isNotNull(executor) && !executor.isShutdown()) {
                 executor.shutdown();
             }
         }
@@ -1070,15 +1070,15 @@ public class IAConverter extends Converter {
     protected int populateQueueIA(File baseDir, File currentDir, Queue<ConfigFile> toConvert, List<String> requiredSectionName) {
         int totalItems = 0;
         File[] listed = currentDir.listFiles();
-        if (isNull(listed)) {
+        if (this.isNull(listed)) {
             return 0;
         }
         for (File f : listed) {
             if (f.isDirectory()) {
                 if (f.getName().equals("configs")) {
-                    totalItems += addAllYmlFilesRecursively(f, baseDir, toConvert, requiredSectionName);
+                    totalItems += this.addAllYmlFilesRecursively(f, baseDir, toConvert, requiredSectionName);
                 }
-                totalItems += populateQueueIA(baseDir, f, toConvert, requiredSectionName);
+                totalItems += this.populateQueueIA(baseDir, f, toConvert, requiredSectionName);
             }
         }
         return totalItems;
@@ -1090,7 +1090,7 @@ public class IAConverter extends Converter {
         if (files != null) {
             for (File f : files) {
                 if (f.isDirectory()) {
-                    count += addAllYmlFilesRecursively(f, baseDir, toConvert, requiredSectionNames);
+                    count += this.addAllYmlFilesRecursively(f, baseDir, toConvert, requiredSectionNames);
                 } else if (f.isFile() && f.getName().endsWith(".yml")) {
                     Optional<FileCacheEntry<YamlConfiguration>> entry = FileCacheManager.getYamlCache().getEntryFile(f.toPath());
                     if (entry.isPresent()) {

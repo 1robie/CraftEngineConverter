@@ -57,7 +57,9 @@ public class JsonFileValidator {
         } catch (Exception e) {
             Logger.debug("An error occurred during JSON validation: " + e.getMessage(), LogType.ERROR);
         } finally {
-            if (this.progressBar != null) this.progressBar.stop();
+            if (this.progressBar != null) {
+                this.progressBar.stop();
+            }
         }
     }
 
@@ -69,13 +71,19 @@ public class JsonFileValidator {
         }
 
         File[] namespaces = assetsFolder.listFiles();
-        if (namespaces == null) return queue;
+        if (namespaces == null) {
+            return queue;
+        }
 
         for (File namespaceDir : namespaces) {
-            if (!namespaceDir.isDirectory()) continue;
+            if (!namespaceDir.isDirectory()) {
+                continue;
+            }
 
             File modelsDir = new File(namespaceDir, "models");
-            if (!modelsDir.exists() || !modelsDir.isDirectory()) continue;
+            if (!modelsDir.exists() || !modelsDir.isDirectory()) {
+                continue;
+            }
 
             collectJsonFilesRecursive(namespaceDir, modelsDir, queue);
         }
@@ -85,7 +93,9 @@ public class JsonFileValidator {
 
     private void collectJsonFilesRecursive(File namespaceDir, File current, List<FileValidationEntry> queue) {
         File[] children = current.listFiles();
-        if (children == null) return;
+        if (children == null) {
+            return;
+        }
 
         for (File child : children) {
             if (child.isDirectory()) {
@@ -98,13 +108,19 @@ public class JsonFileValidator {
 
     private void validateJsonFile(File namespaceDir, File jsonFile) throws Exception {
         Optional<FileCacheEntry<JsonObject>> entryFile = FileCacheManager.getJsonCache().getEntryFile(jsonFile.toPath());
-        if (entryFile.isEmpty()) return;
+        if (entryFile.isEmpty()) {
+            return;
+        }
 
         JsonObject jsonObject = entryFile.get().getData();
-        if (jsonObject == null) return;
+        if (jsonObject == null) {
+            return;
+        }
 
         JsonElement texturesElement = jsonObject.get("textures");
-        if (texturesElement == null || !texturesElement.isJsonObject()) return;
+        if (texturesElement == null || !texturesElement.isJsonObject()) {
+            return;
+        }
 
         JsonObject textures = texturesElement.getAsJsonObject();
         File assetsFolder = new File(this.outputPackFile, "assets");
@@ -158,7 +174,9 @@ public class JsonFileValidator {
             }
 
             File textureFile = new File(assetsFolder, textureNamespace + "/textures/" + texturePath + ".png");
-            if (textureFile.exists()) continue;
+            if (textureFile.exists()) {
+                continue;
+            }
 
             String fallbackNamespace = namespaceDir.getName();
 

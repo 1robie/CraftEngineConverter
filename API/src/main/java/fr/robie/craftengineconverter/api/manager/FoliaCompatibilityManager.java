@@ -47,6 +47,10 @@ public class FoliaCompatibilityManager {
         return this.foliaLib.isSpigot();
     }
 
+    public boolean isPaperOrFolia() {
+        return this.foliaLib.isPaper() || this.foliaLib.isFolia();
+    }
+
     /**
      * Run a task on the next tick.
      * On Folia: Uses GlobalRegionScheduler

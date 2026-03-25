@@ -1,16 +1,22 @@
 package fr.robie.craftengineconverter.api.format;
 
-import org.bukkit.inventory.ItemStack;
+import fr.robie.craftengineconverter.api.format.message.ClassicMessage;
+import fr.robie.craftengineconverter.api.format.message.TitleMessage;
 
-import java.util.*;
+import java.util.List;
 
 /**
  * __ = . and _ = - when storing in a file.
+ * <p>
+ * Each constant declares its default message(s) via constructor.
+ * At runtime, {@link #setCraftMessages(List)} replaces the defaults
+ * with values loaded from the language file.
  */
 public enum Message {
-    /**
-     * Time format messages.
-     */
+
+    // -------------------------------------------------------------------------
+    // Time formats
+    // -------------------------------------------------------------------------
     TIME__FORMAT__YEAR("%02d %year% %02d %month% %02d %day% %02d %hour% %02d %minute% %02d %second% %02d %millisecond%"),
     TIME__FORMAT__MONTH("%02d %month% %02d %day% %02d %hour% %02d %minute% %02d %second% %02d %millisecond%"),
     TIME__FORMAT__WEEK("%02d %week% %02d %day% %02d %hour% %02d %minute% %02d %second% %02d %millisecond%"),
@@ -28,9 +34,9 @@ public enum Message {
     TIME__UNIT__SECOND("second"), TIME__UNIT__SECONDS("seconds"),
     TIME__UNIT__MILLISECOND("millisecond"), TIME__UNIT__MILLISECONDS("milliseconds"),
 
-    /**
-     * Command prefix message.
-     */
+    // -------------------------------------------------------------------------
+    // Command messages
+    // -------------------------------------------------------------------------
     COMMAND__PREFIX("&#FFD166C&#FFC863r&#FEBF61a&#FEB65Ef&#FEAD5Bt&#FEA459E&#FD9B56n&#FD9253g&#FD8951i&#FC814En&#FC784Ce&#FC6F49C&#FB6646o&#FB5D44n&#FB5441v&#FB4B3Ee&#FA423Cr&#FA3939t ┃&r "),
     COMMAND__NO_PERMISSION("§cYou do not have permission to run this command."),
     COMMAND__PLAYER_ONLY("§cOnly one player can execute this command."),
@@ -77,7 +83,9 @@ public enum Message {
     COMMAND__WORLD_CONVERTER__RESTORE__ALL__NONE("§eThere are no converted blocks or entities to restore."),
     COMMAND__WORLD_CONVERTER__RESTORE__DATABASE_DISABLED("§cDatabase is not enabled. Restoration requires database history."),
 
-
+    // -------------------------------------------------------------------------
+    // Plugin lifecycle
+    // -------------------------------------------------------------------------
     MESSAGE__PLUGIN__STARTUP__START("Enabling plugin ..."),
     MESSAGE__PLUGIN__STARTUP__COMPLETE("Plugin enabled in §c%time%§a!"),
     MESSAGE__PLUGIN__SHUTDOWN__START("Disabling plugin ..."),
@@ -87,6 +95,9 @@ public enum Message {
     MESSAGE__AUTO_CONVERTER__STARTUP__COMPLETE("Auto-conversion for supported plugins completed! In §c%time%§a."),
     MESSAGE__AUTO_CONVERTER__STARTUP__DISABLED("Auto-conversion is disabled. Use /cec convert to manually convert supported plugins."),
 
+    // -------------------------------------------------------------------------
+    // Warnings
+    // -------------------------------------------------------------------------
     WARNING__FILE__DELETE_FAILURE("Failed to delete file §e%file% (%path%)§c!"),
     WARNING__FOLDER__DELETE_FAILURE("Failed to delete folder §e%folder% (%path%)§c!"),
 
@@ -125,14 +136,12 @@ public enum Message {
     WARNING__CONVERTER__NEXO__LANGUAGE__NO_LANGUAGES_FOUND("No languages found in languages file."),
     WARNING__CONVERTER__NEXO__GLYPH__NO_GLYPHS_FOUND("No glyphs found to convert."),
 
-
     WARNING__CONVERTER__PACK_DIRECTORY_NOT_FOUND("Nexo pack directory not found at: %path%"),
     WARNING__CONVERTER__ITEMS_DIRECTORY_NOT_FOUND("Items directory not found at: %path%"),
     WARNING__CONVERTER__EMOJIS_DIRECTORY_NOT_FOUND("Emojis directory not found at: %path%"),
     WARNING__CONVERTER__LANGUAGES_FILE_NOT_FOUND("Languages file not found at: %path%"),
     WARNING__CONVERTER__RECIPES_DIRECTORY_NOT_FOUND("Recipes directory not found at: %path%"),
     WARNING__CONVERTER__GLYPH_DIRECTORY_NOT_FOUND("Glyph directory not found at: %path%"),
-
     WARNING__CONVERTER__NO_EMOJIS_FOUND("No emojis found to convert"),
 
     WARNING__FURNITURE__INVALID_SEAT_FORMAT("§cInvalid seat format for furniture item §e%item%§c, expected 3 comma-separated float values but got §e%value%§c. Defaulting to (0,0,0)."),
@@ -156,19 +165,13 @@ public enum Message {
     WARNING__FURNITURE__NON_NUMERIC_BARRIER_VALUE("§cNon-numeric value §e%value%§c in barrier entry §e%entry%§c."),
 
     WARNING__CONVERTER__CIRCULAR_DEPENDENCY("§eCircular dependency detected, falling back to original order for unresolved items."),
-
     WARNING__CONVERTER__IA__FURNITURE__UNKNOWN_DISPLAY_TRANSFORM("§cUnknown furniture display transform type §e%transform%§c for item §e%item%§c."),
-
     WARNING__CONVERTER__IA__ITEMS__NO_SECTION("No 'items' section found in: §e%file%§c"),
     WARNING__CONVERTER__IA__ITEMS__SKIPPED_NO_SECTION("Skipped item (no section): §e%item%§c in file: §e%file%§c"),
-
     WARNING__CONVERTER__IA__IMAGES__NONE_FOUND("No ItemsAdder font images found to convert"),
-
     WARNING__CONVERTER__IA__LANGUAGES__NONE_FOUND("No ItemsAdder language files found to convert"),
-
     WARNING__CONVERTER__IA__SOUNDS__NO_SECTION("No 'sounds' section found in: §e%file%§c"),
     WARNING__CONVERTER__IA__SOUNDS__SKIPPED_NO_SECTION("Skipped sound (no section): §e%sound%§c in file: §e%file%§c"),
-
     WARNING__CONVERTER__IA__RECIPES__NO_SECTION("No 'recipes' section found in: §e%file%§c"),
     WARNING__CONVERTER__IA__RECIPES__SKIPPED_UNKNOWN_TYPE("Skipped recipe (unknown type): §e%type%§c for recipe: §e%recipe%§c in file: §e%file%§c"),
     WARNING__CONVERTER__IA__RECIPES__SKIPPED_NO_SECTION("Skipped recipe (no section): §e%recipe%§c in file: §e%file%§c"),
@@ -178,9 +181,13 @@ public enum Message {
     WARNING__CONVERTER__IA__RECIPES__SMITHING_MISSING_BASE("Missing required 'base' for smithing recipe: §e%recipe%§c in file: §e%file%§c"),
     WARNING__CONVERTER__IA__RECIPES__UNKNOWN_ITEM_REFERENCE("Unknown ItemsAdder item: §e%item%§c for recipe: §e%recipe%§c in file: §e%file%§c"),
     WARNING__CONVERTER__IA__RECIPES__ITEM_REFERENCE_CONVERSION_FAILURE("Could not convert item reference: §e%item%§c for recipe: §e%recipe%§c in file: §e%file%§c"),
-
     WARNING__NO_ASSETS_FOLDER("Assets folder not found inside the ZIP §e%zip%§c."),
+    WARNING__CONVERTER__IA__LANGUAGES__NO_ENTRIES_FOUND("No language entries found to convert in the ItemsAdder contents folder."),
+    WARNING__CONVERTER__NEXO__BREWING_INGREDIENT_NO_MAPPING("§cNo mapping found for brewing ingredient §e%item%§c in recipe §e%recipe%§c."),
 
+    // -------------------------------------------------------------------------
+    // Errors
+    // -------------------------------------------------------------------------
     ERROR__FAILED_COUNT_FILES_ZIP("Failed to count files in zip: §e%zip%§c. Error: §e%message%§c"),
     ERROR__EXTRACT_FILE_FROM_ZIP("Failed to extract file §e%file%§c from zip: §e%zip%§c. Error: §e%message%§c"),
 
@@ -201,7 +208,6 @@ public enum Message {
     ERROR__CONVERTER__IA__CONTENTS_FOLDER_NOT_FOUND("ItemsAdder contents folder not found: §e%path%§c"),
     ERROR__CONVERTER__IA__OUTPUT_FOLDER_CREATION_FAILED("Failed to create output folder: §e%path%§c"),
     ERROR__CONVERTER__IA__ITEM_CONVERSION_EXCEPTION("An error occurred during ItemsAdder item conversion"),
-
     ERROR__CONVERTER__IA__ITEMS__CONVERSION_FAILURE("Failed to convert ItemsAdder item: §e%item%§c in file: §e%file%§c"),
 
     ERROR__CONVERTER__IA__LANGUAGES__COUNT_FAILURE("Failed to count entries in: §e%file%§c"),
@@ -233,15 +239,10 @@ public enum Message {
     ERROR__PACK_CONVERSION__EXCEPTION("An error occurred during pack conversion for plugin §e%plugin%§c"),
     ERROR__PLUGIN__CONFIGURATION__TYPE_MISMATCH("§cType mismatch for §e%path%§c in configuration, expected §e%expected%§c but got §e%got%§c, using default value: §e%default%§c"),
 
-    // Generic item conversion context errors
     ERROR__CONVERTER__ITEM_CONVERT_EXCEPTION("An error occurred while converting item §e%item%§c"),
     ERROR__CONVERTER__ITEM_SERIALIZE_EXCEPTION("An error occurred while serializing item §e%item%§c"),
     ERROR__CONVERTER__FAILED_SAVE_FILE("Failed to save converted §e%type%§c file: §e%file%§c"),
 
-    // IA-specific missing
-    WARNING__CONVERTER__IA__LANGUAGES__NO_ENTRIES_FOUND("No language entries found to convert in the ItemsAdder contents folder."),
-
-    // Nexo conversion exceptions
     ERROR__CONVERTER__NEXO__ITEMS__CONVERSION_EXCEPTION("An error occurred during Nexo items conversion"),
     ERROR__CONVERTER__NEXO__EMOJIS__CONVERSION_EXCEPTION("An error occurred during Nexo emojis conversion"),
     ERROR__CONVERTER__NEXO__IMAGES__CONVERSION_EXCEPTION("An error occurred during Nexo images conversion"),
@@ -254,285 +255,47 @@ public enum Message {
 
     ERROR__CONVERTER__NEXO__PACK__ZIP_EXTRACT_FAILURE("Failed to extract and copy assets from ZIP: §e%file%§c"),
     ERROR__CONVERTER__NEXO__IMAGES__SAVE_FAILURE("Failed to save converted image file: §e%file%§c"),
-    ERROR__CONVERTER__NEXO__IMAGES__RELATIVE_PATH_FAILURE("Failed to compute relative path for image file: §e%file%§c"),
+    ERROR__CONVERTER__NEXO__IMAGES__RELATIVE_PATH_FAILURE("Failed to compute relative path for image file: §e%file%§c");
+    private final List<CraftEngineConverterMessage> defaults;
+    private List<CraftEngineConverterMessage> loaded;
 
-    WARNING__CONVERTER__NEXO__BREWING_INGREDIENT_NO_MAPPING("§cNo mapping found for brewing ingredient §e%item%§c in recipe §e%recipe%§c");
-    private List<String> messages;
-    private String message;
-    private Map<String, Object> titles = new HashMap<>();
-    private boolean use = true;
-    private MessageType type = MessageType.TCHAT;
-    private ItemStack itemStack;
-
-    /**
-     * Constructs a new Message with the specified message string.
-     *
-     * @param message the message string.
-     */
     Message(String message) {
-        this.message = message;
+        this.defaults = List.of(new ClassicMessage(MessageType.TCHAT, List.of(message)));
     }
 
-    /**
-     * Constructs a new Message with the specified title, subtitle, and timings.
-     *
-     * @param title    the title string.
-     * @param subTitle the subtitle string.
-     * @param a        the start time in ticks.
-     * @param b        the display time in ticks.
-     * @param c        the end time in ticks.
-     */
-    Message(String title, String subTitle, int a, int b, int c) {
-        this.titles.put("title", title);
-        this.titles.put("subtitle", subTitle);
-        this.titles.put("start", a);
-        this.titles.put("time", b);
-        this.titles.put("end", c);
-        this.titles.put("isUse", true);
-        this.type = MessageType.TITLE;
+    Message(String title, String subtitle, int fadeIn, int stay, int fadeOut) {
+        this.defaults = List.of(new TitleMessage(title, subtitle, fadeIn, stay, fadeOut));
     }
 
-    /**
-     * Constructs a new Message with multiple message strings.
-     *
-     * @param message the array of message strings.
-     */
-    Message(String... message) {
-        this.messages = Arrays.asList(message);
+    Message(String... messages) {
+        this.defaults = List.of(new ClassicMessage(MessageType.TCHAT, List.of(messages)));
     }
 
-    /**
-     * Constructs a new Message with a specific type and multiple message strings.
-     *
-     * @param type    the type of the message.
-     * @param message the array of message strings.
-     */
-    Message(MessageType type, String... message) {
-        this.messages = Arrays.asList(message);
-        this.type = type;
+    Message(MessageType type, String... messages) {
+        this.defaults = List.of(new ClassicMessage(type, List.of(messages)));
     }
 
-    /**
-     * Constructs a new Message with a specific type and a single message string.
-     *
-     * @param type    the type of the message.
-     * @param message the message string.
-     */
-    Message(MessageType type, String message) {
-        this.message = message;
-        this.type = type;
+    public List<CraftEngineConverterMessage> getCraftMessages() {
+        return this.loaded != null ? this.loaded : this.defaults;
     }
 
-    /**
-     * Constructs a new Message with a single message string and a use flag.
-     *
-     * @param message the message string.
-     * @param use     the use flag.
-     */
-    Message(String message, boolean use) {
-        this.message = message;
-        this.use = use;
+    public List<CraftEngineConverterMessage> getDefaults() {
+        return this.defaults;
     }
 
-    /**
-     * Gets the message string.
-     *
-     * @return the message string.
-     */
+    public void setCraftMessages(List<CraftEngineConverterMessage> messages) {
+        this.loaded = messages;
+    }
+
     public String getMessage() {
-        return this.message;
-    }
-
-    /**
-     * Converts the message to a string.
-     *
-     * @return the message string.
-     */
-    public String toMsg() {
-        return this.message;
-    }
-
-
-    /**
-     * Gets the message string.
-     *
-     * @return the message string.
-     */
-    public String msg() {
-        return this.message;
-    }
-
-    /**
-     * Checks if the message is in use.
-     *
-     * @return true if the message is in use, false otherwise.
-     */
-    public boolean isUse() {
-        return this.use;
-    }
-
-    /**
-     * Gets the list of messages.
-     *
-     * @return the list of messages.
-     */
-    public List<String> getMessages() {
-        return this.messages == null ? Collections.singletonList(this.message) : this.messages;
-    }
-
-    /**
-     * Sets the list of messages.
-     *
-     * @param messages the list of messages.
-     */
-    public void setMessages(List<String> messages) {
-        this.messages = messages;
-    }
-
-    /**
-     * Checks if the message contains multiple parts.
-     *
-     * @return true if the message contains multiple parts, false otherwise.
-     */
-    public boolean isMessage() {
-        return this.messages != null && this.messages.size() > 1;
-    }
-
-    /**
-     * Sets the message string.
-     *
-     * @param message the message string.
-     */
-    public void setMessage(String message) {
-        this.message = message;
-    }
-
-    /**
-     * Gets the title string.
-     *
-     * @return the title string.
-     */
-    public String getTitle() {
-        return (String) this.titles.get("title");
-    }
-
-    /**
-     * Gets the map of titles.
-     *
-     * @return the map of titles.
-     */
-    public Map<String, Object> getTitles() {
-        return this.titles;
-    }
-
-    /**
-     * Sets the map of titles and changes the message type to TITLE.
-     *
-     * @param titles the map of titles.
-     */
-    public void setTitles(Map<String, Object> titles) {
-        this.titles = titles;
-        this.type = MessageType.TITLE;
-    }
-
-    /**
-     * Gets the subtitle string.
-     *
-     * @return the subtitle string.
-     */
-    public String getSubTitle() {
-        return (String) this.titles.get("subtitle");
-    }
-
-    /**
-     * Checks if the message has a title.
-     *
-     * @return true if the message has a title, false otherwise.
-     */
-    public boolean isTitle() {
-        return this.titles.containsKey("title");
-    }
-
-    /**
-     * Gets the start time in ticks.
-     *
-     * @return the start time in ticks.
-     */
-    public int getStart() {
-        return ((Number) this.titles.get("start")).intValue();
-    }
-
-    /**
-     * Gets the end time in ticks.
-     *
-     * @return the end time in ticks.
-     */
-    public int getEnd() {
-        return ((Number) this.titles.get("end")).intValue();
-    }
-
-    /**
-     * Gets the display time in ticks.
-     *
-     * @return the display time in ticks.
-     */
-    public int getTime() {
-        return ((Number) this.titles.get("time")).intValue();
-    }
-
-    /**
-     * Checks if the title is in use.
-     *
-     * @return true if the title is in use, false otherwise.
-     */
-    public boolean isUseTitle() {
-        return (boolean) this.titles.getOrDefault("isUse", "true");
-    }
-
-    /**
-     * Replaces a substring in the message with another string.
-     *
-     * @param a the substring to replace.
-     * @param b the replacement string.
-     * @return the modified message string.
-     */
-    public String replace(String a, String b) {
-        return this.message.replace(a, b);
-    }
-
-    /**
-     * Gets the type of the message.
-     *
-     * @return the type of the message.
-     */
-    public MessageType getType() {
-        return this.type;
-    }
-
-    /**
-     * Sets the type of the message.
-     *
-     * @param type the type of the message.
-     */
-    public void setType(MessageType type) {
-        this.type = type;
-    }
-
-    /**
-     * Gets the item stack associated with the message.
-     *
-     * @return the item stack.
-     */
-    public ItemStack getItemStack() {
-        return this.itemStack;
-    }
-
-    /**
-     * Sets the item stack associated with the message.
-     *
-     * @param itemStack the item stack.
-     */
-    public void setItemStack(ItemStack itemStack) {
-        this.itemStack = itemStack;
+        for (CraftEngineConverterMessage msg : this.getCraftMessages()) {
+            if (msg instanceof ClassicMessage classic) {
+                List<String> lines = classic.messages();
+                if (lines != null && !lines.isEmpty()) {
+                    return lines.getFirst();
+                }
+            }
+        }
+        return "";
     }
 }

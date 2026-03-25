@@ -107,8 +107,8 @@ public final class CraftEngineConverter extends CraftEngineConverterPlugin {
             this.getServer().getPluginManager().disablePlugin(this);
             return;
         }
-        if (this.foliaCompatibilityManager.isPaper()) {
-            this.messageFormatter = new ComponentMeta();
+        if (this.foliaCompatibilityManager.isPaperOrFolia()) {
+            this.messageFormatter = new ComponentMeta(this);
         }
 
         this.reloadMessages();

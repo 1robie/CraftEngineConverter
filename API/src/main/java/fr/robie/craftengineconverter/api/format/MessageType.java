@@ -2,13 +2,13 @@ package fr.robie.craftengineconverter.api.format;
 
 
 public enum MessageType {
+    BOSS_BAR,
 
-    ACTION,
+    ACTION_BAR,
     TCHAT,
     TITLE,
-    CENTER,
     NONE,
-    TCHAT_AND_ACTION,
+    TCHAT_AND_ACTION_BAR,
     WITHOUT_PREFIX,
 
 }

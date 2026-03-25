@@ -17,7 +17,7 @@ public class PaperProgressBar extends BukkitProgressBar {
         if (plugin.getMessageFormatter() instanceof ComponentMeta meta) {
             this.componentMeta = meta;
         } else {
-            this.componentMeta = new ComponentMeta();
+            this.componentMeta = new ComponentMeta(plugin);
         }
         if (isNotNull(builder.player)) {
             BossBar.Color color = BossBar.Color.BLUE;

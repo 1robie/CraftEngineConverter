@@ -138,7 +138,7 @@ itemsadder:
   # Require this permission to allow ItemsAdder furniture interaction conversion : craftengineconverter.itemsadder.furniture.interact.conversion
   enable-furniture-interaction-conversion: true # When enabled, when you interact with an ItemsAdder furniture, it will convert the furniture to their CE equivalent
   enable-chunk-load-conversion: false # When enabled, when a chunk is loaded, it will convert all ItemsAdder blocks and furnitures to CE equivalents
-  blacklisted-content-folders-namespaces: [] # List of content folders or namespaces to ignore during conversion
+  blacklisted-content-folders-namespaces: [ ] # List of content folders or namespaces to ignore during conversion
 
 world-converter:
   enable: false # Enable world conversion feature (Requires server restart to take effect)

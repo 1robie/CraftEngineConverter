@@ -10,7 +10,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
-public class Logger extends TextFormatter {
+public class Logger implements TextFormatter {
     private final String prefix;
     private static Logger logger;
 
@@ -125,7 +125,7 @@ public class Logger extends TextFormatter {
                 : "§8[§e" + this.prefix + "§8] ";
         Bukkit.getConsoleSender().sendMessage(prefixPart + logType.getColor() + this.parseText(message, args));
     }
-    
+
     public void log(String message, LogType logType, Object... args) {
         this.log(null, message, logType, args);
     }
