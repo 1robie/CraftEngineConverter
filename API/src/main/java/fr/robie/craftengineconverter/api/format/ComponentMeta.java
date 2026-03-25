@@ -30,7 +30,7 @@ import java.util.regex.Pattern;
 
 public class ComponentMeta implements MessageFormatter {
     private static final Pattern LEGACY_HEX_PATTERN = Pattern.compile("§x(§[0-9a-fA-F]){6}");
-    private static final Pattern HEX_SHORT_PATTERN = Pattern.compile("(?<!<)(?<!:)(?<!</)(&?)#([a-fA-F0-9]{6})");
+    private static final Pattern HEX_SHORT_PATTERN = Pattern.compile("(?<!<)(?<!:)(?<!</)&#([a-fA-F0-9]{6})");
     private final SimpleCache<String, Component> cache = new SimpleCache<>();
 
     private final MiniMessage MINI_MESSAGE = MiniMessage.builder()
