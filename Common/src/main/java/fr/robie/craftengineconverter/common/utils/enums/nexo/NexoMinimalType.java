@@ -2,6 +2,7 @@ package fr.robie.craftengineconverter.common.utils.enums.nexo;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public enum NexoMinimalType {
     WOODEN,
@@ -9,13 +10,22 @@ public enum NexoMinimalType {
     IRON,
     GOLDEN,
     DIAMOND,
-    NETHERITE
-    ;
+    NETHERITE,
+    WOOD(WOODEN);
+    private final NexoMinimalType parent;
 
-    public List<String> getCorrectTools(){
+    NexoMinimalType() {
+        this.parent = null;
+    }
+
+    NexoMinimalType(NexoMinimalType parent) {
+        this.parent = parent;
+    }
+
+    public List<String> getCorrectTools() {
         List<String> tools = new ArrayList<>();
         for (String tool : new String[]{"axe", "pickaxe", "shovel", "hoe", "sword"}) {
-            tools.add("minecraft:"+this.name().toLowerCase()+"_"+tool);
+            tools.add("minecraft:" + Objects.requireNonNullElse(this.parent, this).name().toLowerCase() + "_" + tool);
         }
         return tools;
     }
