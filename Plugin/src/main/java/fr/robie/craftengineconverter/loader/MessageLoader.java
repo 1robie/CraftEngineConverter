@@ -219,18 +219,17 @@ public class MessageLoader extends ObjectUtils implements Manageable {
         YamlConfiguration config = YamlConfiguration.loadConfiguration(file);
         List<Message> loadedMessages = new ArrayList<>();
 
-        for (String key : config.getKeys(false)) {
-            if (VERSION_KEY.equals(key)) {
-                continue;
-            }
+        for (Message message : Message.values()) {
             try {
-                Message message = Message.valueOf(this.keyToEnumName(key));
-                message.setCraftMessages(this.parseMessageList(config, key));
-                loadedMessages.add(message);
-            } catch (IllegalArgumentException e) {
-                Logger.info("Unknown message key: " + key, LogType.WARNING);
+                String key = this.enumNameToKey(message.name());
+                if (config.contains(key)) {
+                    message.setCraftMessages(this.parseMessageList(config, key));
+                    loadedMessages.add(message);
+                } else {
+                    Logger.info("Missing message key in config: " + key, LogType.WARNING);
+                }
             } catch (Exception e) {
-                Logger.showException("Failed to load message: " + key, e);
+                Logger.showException("Failed to load message: " + message.name(), e);
             }
         }
 
@@ -238,24 +237,60 @@ public class MessageLoader extends ObjectUtils implements Manageable {
     }
 
     private List<CraftEngineConverterMessage> parseMessageList(YamlConfiguration config, String key) {
-        List<Map<?, ?>> mapList = config.getMapList(key);
-        if (mapList.isEmpty()) {
-            Logger.info("Message key '" + key + "' is empty or not a list — skipping.", LogType.WARNING);
-            return List.of();
+        Object raw = config.get(key);
+        switch (raw) {
+            case null -> {
+                Logger.info("Message key '" + key + "' is null — skipping.", LogType.WARNING);
+                return List.of();
+            }
+            case String str -> {
+                return List.of(new ClassicMessage(MessageType.TCHAT, List.of(str)));
+            }
+            case List<?> list -> {
+                if (list.isEmpty()) {
+                    return List.of();
+                }
+
+                if (list.getFirst() instanceof String) {
+                    List<String> lines = list.stream()
+                            .filter(e -> e instanceof String)
+                            .map(e -> (String) e)
+                            .toList();
+                    return List.of(new ClassicMessage(MessageType.TCHAT, lines));
+                }
+
+                if (list.getFirst() instanceof Map<?, ?>) {
+                    List<CraftEngineConverterMessage> result = new ArrayList<>();
+                    for (Object entry : list) {
+                        if (entry instanceof Map<?, ?> map) {
+                            YamlConfiguration section = new YamlConfiguration();
+                            for (Map.Entry<?, ?> e : map.entrySet()) {
+                                section.set(String.valueOf(e.getKey()), e.getValue());
+                            }
+                            CraftEngineConverterMessage craftMessage = this.parseCraftMessage(section, key);
+                            if (craftMessage != null) {
+                                result.add(craftMessage);
+                            }
+                        }
+                    }
+                    return result;
+                }
+            }
+            default -> {
+            }
         }
 
-        List<CraftEngineConverterMessage> result = new ArrayList<>();
-        for (Map<?, ?> map : mapList) {
+        if (raw instanceof Map<?, ?> map) {
             YamlConfiguration section = new YamlConfiguration();
-            for (Map.Entry<?, ?> entry : map.entrySet()) {
-                section.set(String.valueOf(entry.getKey()), entry.getValue());
+            for (Map.Entry<?, ?> e : map.entrySet()) {
+                section.set(String.valueOf(e.getKey()), e.getValue());
             }
             CraftEngineConverterMessage craftMessage = this.parseCraftMessage(section, key);
-            if (craftMessage != null) {
-                result.add(craftMessage);
-            }
+            return craftMessage != null ? List.of(craftMessage) : List.of();
         }
-        return result;
+
+        Logger.info("Message key '" + key + "' has unsupported format: " + raw.getClass().getSimpleName() + " — skipping.", LogType.WARNING);
+        return List.of();
     }
 
     @Nullable
