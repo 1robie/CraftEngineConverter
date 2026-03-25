@@ -79,6 +79,8 @@ To use a different type, wrap it in a map with a `type` key:
 - Reworked parent model conversion to support all parent model types.
 - Block/ furniture drops now converted
 - Directional blocks conversion (logs, furnace, dropper)
+- Support for `WOOD` minimal_type tool
+- Fix error log when item is a children for a directional block
 
 ## ItemsAdder
 

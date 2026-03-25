@@ -2044,75 +2044,77 @@ public class NexoItemConverter extends ItemConverter {
         ConfigurationSection directionalSection = nexoCustomBlockSection.getConfigurationSection("directional");
         if (this.isNotNull(directionalSection)) {
             try {
-                NexoDirectionBlock directionBlock = NexoDirectionBlock.valueOf(directionalSection.getString("type", "").toUpperCase());
-                switch (directionBlock) {
-                    case LOG -> {
-                        String xBlock = directionalSection.getString("x_block", "");
-                        String yBlock = directionalSection.getString("y_block", "");
-                        String zBlock = directionalSection.getString("z_block", "");
+                if (!this.isValidString(directionalSection.getString("parent_block"))) {
+                    NexoDirectionBlock directionBlock = NexoDirectionBlock.valueOf(directionalSection.getString("type", "").toUpperCase());
+                    switch (directionBlock) {
+                        case LOG -> {
+                            String xBlock = directionalSection.getString("x_block", "");
+                            String yBlock = directionalSection.getString("y_block", "");
+                            String zBlock = directionalSection.getString("z_block", "");
 
-                        ModelConfiguration xModel = this.resolveModelOrDefault(xBlock, modelConfiguration);
-                        ModelConfiguration yModel = this.resolveModelOrDefault(yBlock, modelConfiguration);
-                        ModelConfiguration zModel = this.resolveModelOrDefault(zBlock, modelConfiguration);
+                            ModelConfiguration xModel = this.resolveModelOrDefault(xBlock, modelConfiguration);
+                            ModelConfiguration yModel = this.resolveModelOrDefault(yBlock, modelConfiguration);
+                            ModelConfiguration zModel = this.resolveModelOrDefault(zBlock, modelConfiguration);
 
-                        blockConfiguration.setStateBlock(
-                                new PillarBlockState(
-                                        Plugins.NEXO,
-                                        this.itemId,
-                                        state, yModel,
-                                        state, xModel,
-                                        state, zModel
-                                )
-                        );
-                    }
-                    case FURNACE, DROPPER -> {
-                        String northBlock = directionalSection.getString("north_block", "");
-                        String eastBlock = directionalSection.getString("east_block", "");
-                        String southBlock = directionalSection.getString("south_block", "");
-                        String westBlock = directionalSection.getString("west_block", "");
+                            blockConfiguration.setStateBlock(
+                                    new PillarBlockState(
+                                            Plugins.NEXO,
+                                            this.itemId,
+                                            state, yModel,
+                                            state, xModel,
+                                            state, zModel
+                                    )
+                            );
+                        }
+                        case FURNACE, DROPPER -> {
+                            String northBlock = directionalSection.getString("north_block", "");
+                            String eastBlock = directionalSection.getString("east_block", "");
+                            String southBlock = directionalSection.getString("south_block", "");
+                            String westBlock = directionalSection.getString("west_block", "");
 
-                        ModelConfiguration northModel = this.resolveModelOrDefault(northBlock, modelConfiguration);
-                        ModelConfiguration eastModel = this.resolveModelOrDefault(eastBlock, modelConfiguration);
-                        ModelConfiguration southModel = this.resolveModelOrDefault(southBlock, modelConfiguration);
-                        ModelConfiguration westModel = this.resolveModelOrDefault(westBlock, modelConfiguration);
+                            ModelConfiguration northModel = this.resolveModelOrDefault(northBlock, modelConfiguration);
+                            ModelConfiguration eastModel = this.resolveModelOrDefault(eastBlock, modelConfiguration);
+                            ModelConfiguration southModel = this.resolveModelOrDefault(southBlock, modelConfiguration);
+                            ModelConfiguration westModel = this.resolveModelOrDefault(westBlock, modelConfiguration);
 
-                        if (directionBlock == NexoDirectionBlock.FURNACE) {
-                            blockConfiguration.setStateBlock(new HorizontalFacingBlockState(
-                                    Plugins.NEXO, this.itemId,
-                                    state, northModel,
-                                    state, eastModel,
-                                    state, southModel,
-                                    state, westModel
-                            ));
-                        } else {
-                            String upBlock = directionalSection.getString("up_block", "");
-                            String downBlock = directionalSection.getString("down_block", "");
-
-                            String upModelPath = directionalSection.getString("up_model");
-                            String downModelPath = directionalSection.getString("down_model");
-
-                            ModelConfiguration upModel, downModel;
-                            if (this.isValidString(upModelPath)) {
-                                upModel = new SimpleModelConfiguration(this.namespaced(upModelPath));
+                            if (directionBlock == NexoDirectionBlock.FURNACE) {
+                                blockConfiguration.setStateBlock(new HorizontalFacingBlockState(
+                                        Plugins.NEXO, this.itemId,
+                                        state, northModel,
+                                        state, eastModel,
+                                        state, southModel,
+                                        state, westModel
+                                ));
                             } else {
-                                upModel = this.resolveModelOrDefault(upBlock, modelConfiguration);
-                            }
+                                String upBlock = directionalSection.getString("up_block", "");
+                                String downBlock = directionalSection.getString("down_block", "");
 
-                            if (this.isValidString(downModelPath)) {
-                                downModel = new SimpleModelConfiguration(this.namespaced(downModelPath));
-                            } else {
-                                downModel = this.resolveModelOrDefault(downBlock, modelConfiguration);
-                            }
+                                String upModelPath = directionalSection.getString("up_model");
+                                String downModelPath = directionalSection.getString("down_model");
 
-                            blockConfiguration.setStateBlock(new DirectionalBlockState(
-                                    Plugins.NEXO, this.itemId,
-                                    state, northModel,
-                                    state, eastModel,
-                                    state, southModel,
-                                    state, westModel,
-                                    state, upModel,
-                                    state, downModel
-                            ));
+                                ModelConfiguration upModel, downModel;
+                                if (this.isValidString(upModelPath)) {
+                                    upModel = new SimpleModelConfiguration(this.namespaced(upModelPath));
+                                } else {
+                                    upModel = this.resolveModelOrDefault(upBlock, modelConfiguration);
+                                }
+
+                                if (this.isValidString(downModelPath)) {
+                                    downModel = new SimpleModelConfiguration(this.namespaced(downModelPath));
+                                } else {
+                                    downModel = this.resolveModelOrDefault(downBlock, modelConfiguration);
+                                }
+
+                                blockConfiguration.setStateBlock(new DirectionalBlockState(
+                                        Plugins.NEXO, this.itemId,
+                                        state, northModel,
+                                        state, eastModel,
+                                        state, southModel,
+                                        state, westModel,
+                                        state, upModel,
+                                        state, downModel
+                                ));
+                            }
                         }
                     }
                 }
