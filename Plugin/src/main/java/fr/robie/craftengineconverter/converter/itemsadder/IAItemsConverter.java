@@ -19,6 +19,7 @@ import fr.robie.craftengineconverter.api.configuration.item.behavior.furniture.e
 import fr.robie.craftengineconverter.api.configuration.item.behavior.furniture.element.ItemDisplayElement;
 import fr.robie.craftengineconverter.api.configuration.item.behavior.furniture.hitbox.Hitbox;
 import fr.robie.craftengineconverter.api.configuration.item.behavior.furniture.hitbox.ShulkerHitbox;
+import fr.robie.craftengineconverter.api.configuration.item.components.*;
 import fr.robie.craftengineconverter.api.configuration.item.data.*;
 import fr.robie.craftengineconverter.api.configuration.item.loottables.LootPool;
 import fr.robie.craftengineconverter.api.configuration.item.loottables.LootTable;
@@ -29,6 +30,9 @@ import fr.robie.craftengineconverter.api.configuration.item.models.model.SimpleM
 import fr.robie.craftengineconverter.api.configuration.item.models.range_dispatch.UseDurationRangeDispatchConfiguration;
 import fr.robie.craftengineconverter.api.configuration.item.models.select.ChargeTypeSelectConfiguration;
 import fr.robie.craftengineconverter.api.configuration.item.models.select.DisplayContentSelectConfiguration;
+import fr.robie.craftengineconverter.api.configuration.item.settings.DropDisplayConfiguration;
+import fr.robie.craftengineconverter.api.configuration.item.settings.EquippableConfiguration;
+import fr.robie.craftengineconverter.api.configuration.item.settings.FuelTimeSettingConfiguration;
 import fr.robie.craftengineconverter.api.configuration.item.settings.GlowDropColorConfiguration;
 import fr.robie.craftengineconverter.api.enums.ComponentFlag;
 import fr.robie.craftengineconverter.api.enums.CraftEngineBlockState;
@@ -282,7 +286,7 @@ public class IAItemsConverter extends ItemConverter {
     public void convertItemModel() {
         String itemModel = this.iaItemSection.getString("item_model");
         if (this.isValidString(itemModel)) {
-            this.craftEngineItemsConfiguration.addItemConfiguration(new fr.robie.craftengineconverter.api.configuration.item.components.ItemModelConfiguration(itemModel));
+            this.craftEngineItemsConfiguration.addItemConfiguration(new ItemModelConfiguration(itemModel));
         }
     }
 
@@ -290,14 +294,14 @@ public class IAItemsConverter extends ItemConverter {
     public void convertMaxStackSize() {
         int maxStackSize = this.iaItemSection.getInt("max_stack_size", -1);
         if (maxStackSize > 0 && maxStackSize <= 99) {
-            this.craftEngineItemsConfiguration.addItemConfiguration(new fr.robie.craftengineconverter.api.configuration.item.components.MaxStackSizeConfiguration(maxStackSize));
+            this.craftEngineItemsConfiguration.addItemConfiguration(new MaxStackSizeConfiguration(maxStackSize));
         }
     }
 
     @Override
     public void convertEnchantmentGlintOverride() {
         if (this.iaItemSection.getBoolean("glint", false)) {
-            this.craftEngineItemsConfiguration.addItemConfiguration(new fr.robie.craftengineconverter.api.configuration.item.components.EnchantmentGlintOverrideConfiguration(true));
+            this.craftEngineItemsConfiguration.addItemConfiguration(new EnchantmentGlintOverrideConfiguration(true));
         }
     }
 
@@ -342,7 +346,7 @@ public class IAItemsConverter extends ItemConverter {
         if (this.isNotNull(dropSection)) {
             boolean showName = dropSection.getBoolean("show_name", true);
             if (!showName) {
-                this.craftEngineItemsConfiguration.addItemConfiguration(new fr.robie.craftengineconverter.api.configuration.item.settings.DropDisplayConfiguration(false));
+                this.craftEngineItemsConfiguration.addItemConfiguration(new DropDisplayConfiguration(false));
             }
         }
     }
@@ -367,7 +371,7 @@ public class IAItemsConverter extends ItemConverter {
             int nutrition = consumableSection.getInt("nutrition", -1);
             float saturation = (float) consumableSection.getDouble("saturation", -1.0);
             if (nutrition >= 0 && saturation >= 0) {
-                this.craftEngineItemsConfiguration.addItemConfiguration(new fr.robie.craftengineconverter.api.configuration.item.components.FoodConfiguration(nutrition, saturation));
+                this.craftEngineItemsConfiguration.addItemConfiguration(new FoodConfiguration(nutrition, saturation));
             }
         }
     }
@@ -376,7 +380,7 @@ public class IAItemsConverter extends ItemConverter {
     public void convertJukeboxPlayable() {
         String song = this.iaItemSection.getString("jukebox_disc.song", this.iaItemSection.getString("behaviours.music_disc.song.name"));
         if (this.isValidString(song)) {
-            this.craftEngineItemsConfiguration.addItemConfiguration(new fr.robie.craftengineconverter.api.configuration.item.components.JukeboxPlayableConfiguration(song));
+            this.craftEngineItemsConfiguration.addItemConfiguration(new JukeboxPlayableConfiguration(song));
         }
     }
 
@@ -400,7 +404,7 @@ public class IAItemsConverter extends ItemConverter {
         assetId = this.namespaced(assetId, this.namespace);
         EquipmentSlot equipmentSlot = this.resolveEquipmentSlot(equipmentSection);
 
-        this.craftEngineItemsConfiguration.addItemConfiguration(new fr.robie.craftengineconverter.api.configuration.item.settings.EquippableConfiguration(assetId, equipmentSlot));
+        this.craftEngineItemsConfiguration.addItemConfiguration(new EquippableConfiguration(assetId, equipmentSlot));
         this.applySlotAttributeModifiers(equipmentSection, equipmentSlot);
     }
 
@@ -508,7 +512,7 @@ public class IAItemsConverter extends ItemConverter {
         this.setAssetId(assetId);
 
         EquipmentSlot equipmentSlot = this.parseEquipmentSlot(armorSection.getString("slot"));
-        this.craftEngineItemsConfiguration.addItemConfiguration(new fr.robie.craftengineconverter.api.configuration.item.settings.EquippableConfiguration(assetId, equipmentSlot));
+        this.craftEngineItemsConfiguration.addItemConfiguration(new EquippableConfiguration(assetId, equipmentSlot));
     }
 
     private EquipmentSlot parseEquipmentSlot(String slot) {
@@ -1169,7 +1173,7 @@ public class IAItemsConverter extends ItemConverter {
                         if (this.isNotNull(fuelSection)) {
                             int burnTicks = fuelSection.getInt("burn_ticks", -1);
                             if (burnTicks > 0) {
-                                this.craftEngineItemsConfiguration.addItemConfiguration(new fr.robie.craftengineconverter.api.configuration.item.settings.FuelTimeSettingConfiguration(burnTicks));
+                                this.craftEngineItemsConfiguration.addItemConfiguration(new FuelTimeSettingConfiguration(burnTicks));
                             }
                             // machines fuel type not supported
                         }
