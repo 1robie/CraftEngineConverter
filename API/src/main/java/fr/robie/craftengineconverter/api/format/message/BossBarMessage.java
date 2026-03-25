@@ -4,14 +4,14 @@ import fr.robie.craftengineconverter.api.format.CraftEngineConverterMessage;
 import fr.robie.craftengineconverter.api.format.MessageType;
 import net.kyori.adventure.bossbar.BossBar;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 public record BossBarMessage(@NotNull String title, @NotNull BossBar.Color color, @NotNull BossBar.Overlay overlay,
-                             @Nullable Set<BossBar.Flag> flags, long duration,
+                             @NotNull Set<BossBar.Flag> flags, long duration,
                              float progress) implements CraftEngineConverterMessage {
     @Override
     public @NotNull MessageType messageType() {
@@ -24,7 +24,7 @@ public record BossBarMessage(@NotNull String title, @NotNull BossBar.Color color
                 "title", this.title,
                 "color", this.color.name(),
                 "overlay", this.overlay.name(),
-                "flags", this.flags == null ? List.of() : this.flags.stream().map(BossBar.Flag::name).toList(),
+                "flags", this.flags.stream().map(BossBar.Flag::name).toList(),
                 "duration", this.duration,
                 "progress", this.progress
         );
@@ -47,7 +47,7 @@ public record BossBarMessage(@NotNull String title, @NotNull BossBar.Color color
             overlay = BossBar.Overlay.PROGRESS;
         }
 
-        Set<BossBar.Flag> flags = null;
+        Set<BossBar.Flag> flags;
         Object rawFlags = map.get("flags");
         if (rawFlags instanceof List<?> list && !list.isEmpty()) {
             flags = list.stream()
@@ -64,6 +64,8 @@ public record BossBarMessage(@NotNull String title, @NotNull BossBar.Color color
             if (flags.isEmpty()) {
                 flags = null;
             }
+        } else {
+            flags = Collections.emptySet();
         }
 
         long duration = ((Number) map.getOrDefault("duration", 100L)).longValue();

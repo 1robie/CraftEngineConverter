@@ -14,6 +14,7 @@ import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
 import net.kyori.adventure.text.minimessage.tag.standard.StandardTags;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import net.kyori.adventure.title.Title;
+import net.kyori.adventure.util.Ticks;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
@@ -180,7 +181,7 @@ public class ComponentMeta implements MessageFormatter {
                     Title title = Title.title(
                             this.getComponentWithPlaceholders(titleMessage.title(), placeholders),
                             this.getComponentWithPlaceholders(titleMessage.subtitle(), placeholders),
-                            titleMessage.fadeIn(), titleMessage.stay(), titleMessage.fadeOut()
+                            Title.Times.times(Ticks.duration(titleMessage.fadeIn()), Ticks.duration(titleMessage.stay()), Ticks.duration(titleMessage.fadeOut()))
                     );
                     this.sendTitle(audiences, title);
                 }
@@ -238,9 +239,10 @@ public class ComponentMeta implements MessageFormatter {
                 bossBarMessage.flags()
         );
         this.send(Audience::showBossBar, audiences, bossBar);
+        long durationInMillis = bossBarMessage.duration() * 50L;
         this.plugin.getFoliaCompatibilityManager()
                 .runLaterAsync(() -> this.send(Audience::hideBossBar, audiences, bossBar),
-                        bossBarMessage.duration(), TimeUnit.SECONDS);
+                        durationInMillis, TimeUnit.MILLISECONDS);
     }
 
 
