@@ -13,8 +13,8 @@ import java.util.Map;
 
 public class SmartConstructor extends SafeConstructor {
 
-    private static final String PREFIX    = "$$";
-    private static final String FALLBACK  = "$$fallback";
+    private static final String PREFIX = "$$";
+    private static final String FALLBACK = "$$fallback";
 
     public SmartConstructor(@NotNull LoaderOptions options) {
         super(options);
@@ -23,8 +23,8 @@ public class SmartConstructor extends SafeConstructor {
 
     @Override
     public Object constructObject(Node node) {
-        if (node instanceof MappingNode mn && isValueSelectorNode(mn)) {
-            return constructValueSelector(mn);
+        if (node instanceof MappingNode mn && this.isValueSelectorNode(mn)) {
+            return this.constructValueSelector(mn);
         }
         return super.constructObject(node);
     }
@@ -34,9 +34,11 @@ public class SmartConstructor extends SafeConstructor {
         Map<Object, Object> map = new LinkedHashMap<>();
 
         for (NodeTuple tuple : node.getValue()) {
-            if (!(tuple.getKeyNode() instanceof ScalarNode scalarNode)) continue;
+            if (!(tuple.getKeyNode() instanceof ScalarNode scalarNode)) {
+                continue;
+            }
 
-            String key = constructScalar(scalarNode);
+            String key = this.constructScalar(scalarNode);
             Node valueNode = tuple.getValueNode();
 
             if (key.startsWith(PREFIX)) {
@@ -45,10 +47,10 @@ public class SmartConstructor extends SafeConstructor {
                     directive.handleBlockMerge(map, key, valueNode, this);
                 }
             } else if (key.contains("::")) {
-                processDeepKey(map, key, valueNode);
+                this.processDeepKey(map, key, valueNode);
             } else {
-                Object value = constructObjectPublic(valueNode);
-                setWithMerge(map, key, value, key);
+                Object value = this.constructObjectPublic(valueNode);
+                this.setWithMerge(map, key, value, key);
             }
         }
 
@@ -56,10 +58,16 @@ public class SmartConstructor extends SafeConstructor {
     }
 
     private boolean isValueSelectorNode(MappingNode node) {
-        if (node.getValue().isEmpty()) return false;
+        if (node.getValue().isEmpty()) {
+            return false;
+        }
         for (NodeTuple t : node.getValue()) {
-            if (!(t.getKeyNode() instanceof ScalarNode sn)) return false;
-            if (!sn.getValue().startsWith(PREFIX)) return false;
+            if (!(t.getKeyNode() instanceof ScalarNode sn)) {
+                return false;
+            }
+            if (!sn.getValue().startsWith(PREFIX)) {
+                return false;
+            }
         }
         return true;
     }
@@ -81,26 +89,28 @@ public class SmartConstructor extends SafeConstructor {
         }
 
         String finalKey = parts[parts.length - 1];
-        Object value = constructObjectPublic(valueNode);
-        setWithMerge(current, finalKey, value, fullKey);
+        Object value = this.constructObjectPublic(valueNode);
+        this.setWithMerge(current, finalKey, value, fullKey);
     }
 
     private Object constructValueSelector(MappingNode node) {
         Object fallback = null;
-        Object matched  = null;
+        Object matched = null;
 
         for (NodeTuple tuple : node.getValue()) {
-            String key = constructScalar((ScalarNode) tuple.getKeyNode());
+            String key = this.constructScalar((ScalarNode) tuple.getKeyNode());
 
             if (FALLBACK.equals(key)) {
-                fallback = constructObjectPublic(tuple.getValueNode());
+                fallback = this.constructObjectPublic(tuple.getValueNode());
                 continue;
             }
 
             KeyDirective directive = KeyDirectiveRegistry.findMatch(key);
             if (directive != null) {
                 Object candidate = directive.handleValueSelect(key, tuple.getValueNode(), this);
-                if (candidate != null) matched = candidate;
+                if (candidate != null) {
+                    matched = candidate;
+                }
             }
         }
 
@@ -108,13 +118,13 @@ public class SmartConstructor extends SafeConstructor {
     }
 
     public Object constructObjectPublic(@NotNull Node node) {
-        return constructObject(node);
+        return this.constructObject(node);
     }
 
     @SuppressWarnings("unchecked")
     public void mergeInto(@NotNull Map<Object, Object> target, @NotNull Map<Object, Object> source, @NotNull String parentPath) {
         for (Map.Entry<Object, Object> e : source.entrySet()) {
-            String key    = e.getKey().toString();
+            String key = e.getKey().toString();
             Object srcVal = e.getValue();
             Object tgtVal = target.get(key);
 
@@ -123,7 +133,7 @@ public class SmartConstructor extends SafeConstructor {
             if (tgtVal == null) {
                 target.put(key, srcVal);
             } else if (tgtVal instanceof Map && srcVal instanceof Map) {
-                mergeInto((Map<Object, Object>) tgtVal, (Map<Object, Object>) srcVal, path);
+                this.mergeInto((Map<Object, Object>) tgtVal, (Map<Object, Object>) srcVal, path);
             } else {
                 target.put(key, srcVal);
             }
@@ -134,7 +144,7 @@ public class SmartConstructor extends SafeConstructor {
     private void setWithMerge(Map<Object, Object> map, String key, Object value, String path) {
         Object existing = map.get(key);
         if (existing instanceof Map && value instanceof Map) {
-            mergeInto((Map<Object, Object>) existing, (Map<Object, Object>) value, path);
+            this.mergeInto((Map<Object, Object>) existing, (Map<Object, Object>) value, path);
         } else {
             map.put(key, value);
         }

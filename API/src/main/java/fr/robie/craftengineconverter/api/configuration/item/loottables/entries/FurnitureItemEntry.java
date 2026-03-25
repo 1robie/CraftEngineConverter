@@ -10,7 +10,7 @@ public class FurnitureItemEntry extends AbstractLootEntry {
 
     public FurnitureItemEntry(@NotNull String fallbackItem) {
         super("furniture_item");
-        this.item = namespaced(Objects.requireNonNull(fallbackItem, "fallbackItem cannot be null"));
+        this.item = this.namespaced(Objects.requireNonNull(fallbackItem, "fallbackItem cannot be null"));
     }
 
     @Override

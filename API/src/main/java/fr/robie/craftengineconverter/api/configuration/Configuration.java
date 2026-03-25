@@ -139,17 +139,19 @@ public class Configuration {
             }
         }
         for (ConverterOption options : ConverterOption.values()) {
-            if (options == ConverterOption.ALL) continue;
+            if (options == ConverterOption.ALL) {
+                continue;
+            }
             String path = "progress-bar-options." + options.name().toLowerCase().replace("_", "-");
-            loadProgressBarOption(config, options, path);
+            this.loadProgressBarOption(config, options, path);
         }
         ConfigurationSection worldConverterProgressBarSection = config.getConfigurationSection("world-converter.progress-bar-options");
         if (worldConverterProgressBarSection != null) {
-            loadProgressBarOption(config, worldConverterProgressBarOptions, "world-converter.progress-bar-options");
+            this.loadProgressBarOption(config, worldConverterProgressBarOptions, "world-converter.progress-bar-options");
         }
         for (CraftEngineBlockState blockStateLimit : CraftEngineBlockState.values()) {
             String path = "block-state-limit." + blockStateLimit.name().toLowerCase().replace("_", "-");
-            int startLimit = getOrAddInt(config, path + ".start-limit", blockStateLimit.getStart());
+            int startLimit = this.getOrAddInt(config, path + ".start-limit", blockStateLimit.getStart());
             try {
                 blockStateLimit.setStart(startLimit);
             } catch (Exception e) {
@@ -169,26 +171,26 @@ public class Configuration {
     }
 
     private void loadProgressBarOption(YamlConfiguration config, ProgressBarUtils options, String path) {
-        String progressColor = getOrAddString(config, path + ".progress-color", options.getProgressColor().name());
-        String emptyColor = getOrAddString(config, path + ".empty-color", options.getEmptyColor().name());
-        String percentColor = getOrAddString(config, path + ".percent-color", options.getPercentColor().name());
-        char progressChar = getOrAddString(config, path + ".progress-char", String.valueOf(options.getProgressChar())).charAt(0);
-        char emptyChar = getOrAddString(config, path + ".empty-char", String.valueOf(options.getEmptyChar())).charAt(0);
-        int barWidth = getOrAddInt(config, path + ".bar-width", options.getBarWidth());
+        String progressColor = this.getOrAddString(config, path + ".progress-color", options.getProgressColor().name());
+        String emptyColor = this.getOrAddString(config, path + ".empty-color", options.getEmptyColor().name());
+        String percentColor = this.getOrAddString(config, path + ".percent-color", options.getPercentColor().name());
+        char progressChar = this.getOrAddString(config, path + ".progress-char", String.valueOf(options.getProgressChar())).charAt(0);
+        char emptyChar = this.getOrAddString(config, path + ".empty-char", String.valueOf(options.getEmptyChar())).charAt(0);
+        int barWidth = this.getOrAddInt(config, path + ".bar-width", options.getBarWidth());
         try {
             options.setProgressColor(BukkitProgressBar.ProgressColor.valueOf(progressColor.toUpperCase()));
         } catch (Exception e) {
-            Logger.debug("Invalid progress color for " + options + " in configuration, valid values are: " + String.join(",", getAvailableColors()), LogType.WARNING);
+            Logger.debug("Invalid progress color for " + options + " in configuration, valid values are: " + String.join(",", this.getAvailableColors()), LogType.WARNING);
         }
         try {
             options.setEmptyColor(BukkitProgressBar.ProgressColor.valueOf(emptyColor.toUpperCase()));
         } catch (Exception e) {
-            Logger.debug("Invalid empty color for " + options + " in configuration, valid values are: " + String.join(",", getAvailableColors()), LogType.WARNING);
+            Logger.debug("Invalid empty color for " + options + " in configuration, valid values are: " + String.join(",", this.getAvailableColors()), LogType.WARNING);
         }
         try {
             options.setPercentColor(BukkitProgressBar.ProgressColor.valueOf(percentColor.toUpperCase()));
         } catch (Exception e) {
-            Logger.debug("Invalid percent color for " + options + " in configuration, valid values are: " + String.join(",", getAvailableColors()), LogType.WARNING);
+            Logger.debug("Invalid percent color for " + options + " in configuration, valid values are: " + String.join(",", this.getAvailableColors()), LogType.WARNING);
         }
         options.setProgressChar(progressChar);
         options.setEmptyChar(emptyChar);

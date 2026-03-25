@@ -40,10 +40,12 @@ public class BlockPredicateConfiguration implements ItemConfigurationSerializabl
 
     @Override
     public void serialize(@NotNull YamlConfiguration yamlConfiguration, @NotNull String path, @NotNull ConfigurationSection itemSection, @NotNull String itemId) {
-        if (this.predicates == null || this.predicates.isEmpty()) return;
+        if (this.predicates == null || this.predicates.isEmpty()) {
+            return;
+        }
 
-        ConfigurationSection components = getOrCreateSection(itemSection, "components");
-        ConfigurationSection predicateSection = getOrCreateSection(components, this.type.getComponentKey());
+        ConfigurationSection components = this.getOrCreateSection(itemSection, "components");
+        ConfigurationSection predicateSection = this.getOrCreateSection(components, this.type.getComponentKey());
 
         List<Map<String, Object>> serialized = new ArrayList<>();
         for (BlockPredicate predicate : this.predicates) {

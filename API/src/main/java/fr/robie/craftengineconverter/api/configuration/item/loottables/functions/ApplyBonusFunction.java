@@ -13,7 +13,7 @@ public class ApplyBonusFunction extends AbstractLootFunction {
 
     public ApplyBonusFunction(@NotNull String enchantment, @NotNull LootFormula formula) {
         super("apply_bonus");
-        this.enchantment = namespaced(Objects.requireNonNull(enchantment, "enchantment cannot be null"));
+        this.enchantment = this.namespaced(Objects.requireNonNull(enchantment, "enchantment cannot be null"));
         this.formula = Objects.requireNonNull(formula, "formula cannot be null");
     }
 
@@ -21,7 +21,7 @@ public class ApplyBonusFunction extends AbstractLootFunction {
     public void serialize(@NotNull ConfigurationSection section) {
         super.serialize(section);
         section.set("enchantment", this.enchantment);
-        
+
         YamlConfiguration temp = new YamlConfiguration();
         this.formula.serialize(temp);
         section.set("formula", temp.getValues(true));

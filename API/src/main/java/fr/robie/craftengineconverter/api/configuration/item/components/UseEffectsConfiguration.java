@@ -19,16 +19,19 @@ public class UseEffectsConfiguration implements ItemConfigurationSerializable {
 
     @Override
     public void serialize(@NotNull YamlConfiguration yamlConfiguration, @NotNull String path, @NotNull ConfigurationSection itemSection, @NotNull String itemId) {
-        ConfigurationSection components = getOrCreateSection(itemSection, "components");
-        ConfigurationSection useEffectsSection = getOrCreateSection(components, "minecraft:use_effects");
+        ConfigurationSection components = this.getOrCreateSection(itemSection, "components");
+        ConfigurationSection useEffectsSection = this.getOrCreateSection(components, "minecraft:use_effects");
 
-        if (this.canSprint)
+        if (this.canSprint) {
             useEffectsSection.set("can_sprint", true);
+        }
 
-        if (this.speedMultiplier != 0.2)
+        if (this.speedMultiplier != 0.2) {
             useEffectsSection.set("speed_multiplier", Math.max(0.0, Math.min(1.0, this.speedMultiplier)));
+        }
 
-        if (!this.interactVibrations)
+        if (!this.interactVibrations) {
             useEffectsSection.set("interact_vibrations", false);
+        }
     }
 }

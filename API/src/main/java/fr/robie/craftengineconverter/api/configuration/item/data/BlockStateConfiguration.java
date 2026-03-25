@@ -16,7 +16,7 @@ public class BlockStateConfiguration implements ItemConfigurationSerializable {
 
     @Override
     public void serialize(@NotNull YamlConfiguration yamlConfiguration, @NotNull String path, @NotNull ConfigurationSection itemSection, @NotNull String itemId) {
-        ConfigurationSection dataSection = getOrCreateSection(itemSection, "data");
+        ConfigurationSection dataSection = this.getOrCreateSection(itemSection, "data");
         this.blockStateEntry.serialize(dataSection);
 
     }

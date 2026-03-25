@@ -3,8 +3,8 @@ package fr.robie.craftengineconverter.api.configuration.item.behavior.block.stat
 import fr.robie.craftengineconverter.api.configuration.item.behavior.block.states.BlockVariant;
 import fr.robie.craftengineconverter.api.configuration.item.behavior.block.states.properties.BooleanBlockStateProperty;
 import fr.robie.craftengineconverter.api.configuration.item.behavior.block.states.properties.DoubleBlockHalfBlockStateProperty;
-import fr.robie.craftengineconverter.api.configuration.item.behavior.block.states.properties.HorizontalDirectionBlockStateProperty;
 import fr.robie.craftengineconverter.api.configuration.item.behavior.block.states.properties.HingeBlockStateProperty;
+import fr.robie.craftengineconverter.api.configuration.item.behavior.block.states.properties.HorizontalDirectionBlockStateProperty;
 import fr.robie.craftengineconverter.api.configuration.item.models.ModelConfiguration;
 import net.momirealms.craftengine.core.block.properties.type.DoubleBlockHalf;
 import net.momirealms.craftengine.core.util.HorizontalDirection;
@@ -85,7 +85,7 @@ public class DoorBlockState extends AbstractDefaultBlockState {
                             finalY = baseRotation;
                         }
 
-                        addRotatedAppearance(appearanceName, state, model, 0, finalY, false);
+                        this.addRotatedAppearance(appearanceName, state, model, 0, finalY, false);
 
                         this.addVariant(new BlockVariant(appearanceName)
                                 .addVariantCondition(facingProperty, facing)

@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class LeavesBlockState extends AbstractDefaultBlockState {
     public LeavesBlockState(@NotNull Plugins plugin, @NotNull String itemId, @NotNull ModelConfiguration defaultModel, @NotNull ModelConfiguration waterloggedModel) {
-        BooleanBlockStateProperty waterloggedProperty = addWaterloggedProperty();
+        BooleanBlockStateProperty waterloggedProperty = this.addWaterloggedProperty();
         BooleanBlockStateProperty persistentProperty = new BooleanBlockStateProperty("persistent", true);
         IntBlockStateProperty distanceProperty = new IntBlockStateProperty("distance", 7, 1, 7);
 
@@ -27,7 +27,7 @@ public class LeavesBlockState extends AbstractDefaultBlockState {
 
         BlockVariant waterloggedVariant = new BlockVariant("waterlogged");
         waterloggedVariant.addVariantCondition(waterloggedProperty, true);
-        applyWaterloggedSettings(waterloggedVariant);
+        this.applyWaterloggedSettings(waterloggedVariant);
         this.addVariant(waterloggedVariant);
 
         BlockVariant decayVariant = new BlockVariant(null);

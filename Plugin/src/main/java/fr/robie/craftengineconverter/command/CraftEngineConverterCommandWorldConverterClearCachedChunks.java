@@ -26,7 +26,7 @@ public class CraftEngineConverterCommandWorldConverterClearCachedChunks extends 
 
         long endTime = System.currentTimeMillis();
 
-        message(plugin, this.sender, Message.COMMAND__WORLD_CONVERTER__CLEAR_CACHED_CHUNKS__COMPLETE,
+        this.message(plugin, this.sender, Message.COMMAND__WORLD_CONVERTER__CLEAR_CACHED_CHUNKS__COMPLETE,
                 "chunks", clearedChunks,
                 "time", TimerBuilder.formatTimeAuto(endTime - startTime));
 

@@ -25,13 +25,15 @@ public class SwingAnimationConfiguration implements ItemConfigurationSerializabl
 
     @Override
     public void serialize(@NotNull YamlConfiguration yamlConfiguration, @NotNull String path, @NotNull ConfigurationSection itemSection, @NotNull String itemId) {
-        ConfigurationSection components = getOrCreateSection(itemSection, "components");
-        ConfigurationSection swingAnimationSection = getOrCreateSection(components, "minecraft:swing_animation");
+        ConfigurationSection components = this.getOrCreateSection(itemSection, "components");
+        ConfigurationSection swingAnimationSection = this.getOrCreateSection(components, "minecraft:swing_animation");
 
-        if (this.type != AnimationType.WHACK)
+        if (this.type != AnimationType.WHACK) {
             swingAnimationSection.set("type", this.type.toKey());
+        }
 
-        if (this.duration != 6)
+        if (this.duration != 6) {
             swingAnimationSection.set("duration", this.duration);
+        }
     }
 }

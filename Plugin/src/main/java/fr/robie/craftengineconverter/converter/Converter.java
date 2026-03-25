@@ -56,27 +56,27 @@ public abstract class Converter extends ObjectUtils {
             this.settings.setThreadCount(threadCount);
         }
         CompletableFuture<Void> conversionTask = switch (converterOption) {
-            case ALL -> convertAll(optionalPlayer);
-            case ITEMS -> convertItems(true, optionalPlayer);
-            case EMOJIS -> convertEmojis(true, optionalPlayer);
-            case IMAGES -> convertImages(true, optionalPlayer);
-            case LANGUAGES -> convertLanguages(true, optionalPlayer);
-            case SOUNDS -> convertSounds(true, optionalPlayer);
-            case RECIPES -> convertRecipes(true, optionalPlayer);
-            case PACKS -> convertPack(true, optionalPlayer);
+            case ALL -> this.convertAll(optionalPlayer);
+            case ITEMS -> this.convertItems(true, optionalPlayer);
+            case EMOJIS -> this.convertEmojis(true, optionalPlayer);
+            case IMAGES -> this.convertImages(true, optionalPlayer);
+            case LANGUAGES -> this.convertLanguages(true, optionalPlayer);
+            case SOUNDS -> this.convertSounds(true, optionalPlayer);
+            case RECIPES -> this.convertRecipes(true, optionalPlayer);
+            case PACKS -> this.convertPack(true, optionalPlayer);
         };
         return conversionTask.thenRun(this.settings::restoreBackup);
     }
 
     public CompletableFuture<Void> convertAll(Optional<Player> player) {
         return this.plugin.getFoliaCompatibilityManager().runAsyncComplatable(() -> {
-            convertItems(false, player);
-            convertEmojis(false, player);
-            convertImages(false, player);
-            convertLanguages(false, player);
-            convertSounds(false, player);
-            convertRecipes(false, player);
-            convertPack(false, player);
+            this.convertItems(false, player);
+            this.convertEmojis(false, player);
+            this.convertImages(false, player);
+            this.convertLanguages(false, player);
+            this.convertSounds(false, player);
+            this.convertRecipes(false, player);
+            this.convertPack(false, player);
         });
     }
 
@@ -131,7 +131,7 @@ public abstract class Converter extends ObjectUtils {
     }
 
     public void addPackMapping(@NotNull String namespaceSource, @NotNull String originalPath, @NotNull String namespaceTarget, @NotNull String targetPath) {
-        addPackMapping(namespaceSource, originalPath, namespaceTarget, targetPath, null);
+        this.addPackMapping(namespaceSource, originalPath, namespaceTarget, targetPath, null);
     }
 
     protected void populateQueue(File baseDir, File currentDir, Queue<ConfigFile> toConvert) {
@@ -142,7 +142,7 @@ public abstract class Converter extends ObjectUtils {
 
         for (File itemFile : files) {
             if (itemFile.isDirectory()) {
-                populateQueue(baseDir, itemFile, toConvert);
+                this.populateQueue(baseDir, itemFile, toConvert);
                 continue;
             }
 
@@ -184,7 +184,7 @@ public abstract class Converter extends ObjectUtils {
 
         for (File file : files) {
             if (file.isDirectory()) {
-                count += countFilesInDirectory(file);
+                count += this.countFilesInDirectory(file);
             } else if (file.isFile()) {
                 count++;
             }
@@ -203,7 +203,7 @@ public abstract class Converter extends ObjectUtils {
         }
 
         try {
-            copyDirectory(assetsFolder, outputAssetsFolder, assetsFolder, progress, executor, latch, errorRef, useMultiThread);
+            this.copyDirectory(assetsFolder, outputAssetsFolder, assetsFolder, progress, executor, latch, errorRef, useMultiThread);
         } catch (IOException e) {
             this.log(Message.ERROR__CONVERTER__FAILED_SAVE_FILE, LogType.ERROR, "type", "assets", "file", packName);
             errorRef.compareAndSet(null, e);
@@ -249,7 +249,7 @@ public abstract class Converter extends ObjectUtils {
                 }
             }
 
-            List<PackMapping> resolvedMappings = resolveAllPackMappings(namespace, pathInNamespace);
+            List<PackMapping> resolvedMappings = this.resolveAllPackMappings(namespace, pathInNamespace);
 
             if (!resolvedMappings.isEmpty()) {
                 for (PackMapping resolvedMapping : resolvedMappings) {
@@ -267,9 +267,9 @@ public abstract class Converter extends ObjectUtils {
                         if (!this.settings.dryRunEnabled() && !targetFile.exists() && !targetFile.mkdirs()) {
                             Logger.debug(Message.ERROR__MKDIR_FAILURE, LogType.ERROR, "directory", targetFile.getName(), "path", targetFile.getAbsolutePath());
                         }
-                        copyDirectoryContents(file, targetFile, progress, executor, latch, errorRef, useMultiThread);
+                        this.copyDirectoryContents(file, targetFile, progress, executor, latch, errorRef, useMultiThread);
                     } else {
-                        copyFileWithProgress(progress, executor, latch, errorRef, useMultiThread, file, targetFile);
+                        this.copyFileWithProgress(progress, executor, latch, errorRef, useMultiThread, file, targetFile);
                     }
                 }
             } else {
@@ -278,9 +278,9 @@ public abstract class Converter extends ObjectUtils {
                     if (!this.settings.dryRunEnabled() && !targetFile.exists() && !targetFile.mkdirs()) {
                         Logger.debug(Message.ERROR__MKDIR_FAILURE, LogType.ERROR, "directory", targetFile.getName(), "path", targetFile.getAbsolutePath());
                     }
-                    copyDirectory(file, destination, assetsRoot, progress, executor, latch, errorRef, useMultiThread);
+                    this.copyDirectory(file, destination, assetsRoot, progress, executor, latch, errorRef, useMultiThread);
                 } else {
-                    copyFileWithProgress(progress, executor, latch, errorRef, useMultiThread, file, targetFile);
+                    this.copyFileWithProgress(progress, executor, latch, errorRef, useMultiThread, file, targetFile);
                 }
             }
         }
@@ -330,9 +330,9 @@ public abstract class Converter extends ObjectUtils {
             File targetFile = new File(destination, file.getName());
 
             if (file.isDirectory()) {
-                copyDirectoryContents(file, targetFile, progress, executor, latch, errorRef, useMultiThread);
+                this.copyDirectoryContents(file, targetFile, progress, executor, latch, errorRef, useMultiThread);
             } else {
-                copyFileWithProgress(progress, executor, latch, errorRef, useMultiThread, file, targetFile);
+                this.copyFileWithProgress(progress, executor, latch, errorRef, useMultiThread, file, targetFile);
             }
         }
     }
@@ -346,7 +346,7 @@ public abstract class Converter extends ObjectUtils {
                             && !targetFile.getParentFile().mkdirs()) {
                         Logger.debug(Message.ERROR__MKDIR_FAILURE, LogType.ERROR, "directory", targetFile.getParentFile().getName(), "path", targetFile.getParentFile().getAbsolutePath());
                     }
-                    copyFile(file, targetFile);
+                    this.copyFile(file, targetFile);
                     progress.increment();
                 } catch (Exception e) {
                     Logger.debug(Message.ERROR__FILE__COPY_EXCEPTION, LogType.ERROR, "file", file.getAbsolutePath(), "message", e.getMessage());
@@ -358,7 +358,7 @@ public abstract class Converter extends ObjectUtils {
                     && !targetFile.getParentFile().mkdirs()) {
                 this.logDebug(Message.ERROR__MKDIR_FAILURE, LogType.ERROR, "directory", targetFile.getParentFile().getName(), "path", targetFile.getParentFile().getAbsolutePath());
             }
-            copyFile(file, targetFile);
+            this.copyFile(file, targetFile);
             progress.increment();
         }
     }
@@ -408,7 +408,7 @@ public abstract class Converter extends ObjectUtils {
         if (files != null) {
             for (File file : files) {
                 if (file.isDirectory()) {
-                    deleteDirectory(file);
+                    this.deleteDirectory(file);
                 } else if (!file.delete()) {
                     Logger.debug(Message.WARNING__FILE__DELETE_FAILURE, LogType.ERROR, "file", file.getName(), "path", file.getAbsolutePath());
                 }
@@ -522,21 +522,21 @@ public abstract class Converter extends ObjectUtils {
             if (this.fileList.isEmpty()) {
                 return;
             }
-            scanFile(this.fileList.getFirst());
+            this.scanFile(this.fileList.getFirst());
 
             boolean pendingDependenciesFound = true;
             while (pendingDependenciesFound) {
                 pendingDependenciesFound = false;
                 for (T converter : new ArrayList<>(this.convertersByRawId.values())) {
                     for (String depRawId : converter.getDependencies()) {
-                        if (!this.convertersByRawId.containsKey(depRawId) && scanFileContaining(depRawId)) {
+                        if (!this.convertersByRawId.containsKey(depRawId) && this.scanFileContaining(depRawId)) {
                             pendingDependenciesFound = true;
                         }
                     }
                 }
             }
 
-            for (ConfigFile file : this.fileList) scanFile(file);
+            for (ConfigFile file : this.fileList) this.scanFile(file);
         }
 
         private void scanFile(ConfigFile configFile) {
@@ -583,7 +583,7 @@ public abstract class Converter extends ObjectUtils {
                 if (this.scannedFiles.contains(file)) {
                     continue;
                 }
-                scanFile(file);
+                this.scanFile(file);
                 if (this.fileByRawId.containsKey(rawItemId)) {
                     return true;
                 }
@@ -669,7 +669,7 @@ public abstract class Converter extends ObjectUtils {
                     converter.getCraftEngineItemsConfiguration().serialize(
                             this.convertedConfigByFile.get(configFile),
                             "items." + finalItemId,
-                            getOrCreateSection(this.itemsSectionByFile.get(configFile), finalItemId)
+                            this.getOrCreateSection(this.itemsSectionByFile.get(configFile), finalItemId)
                     );
                     if (converter.isIncludeInsideInventory()) {
                         this.finalItemIdsByFile.get(configFile).add(finalItemId);

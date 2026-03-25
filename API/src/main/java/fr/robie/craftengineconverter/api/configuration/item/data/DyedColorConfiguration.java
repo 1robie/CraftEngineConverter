@@ -19,7 +19,8 @@ public class DyedColorConfiguration implements ItemConfigurationSerializable {
         try {
             DyeColor dyeColor = DyeColor.valueOf(colorStr.toUpperCase());
             return new DyedColorConfiguration(dyeColor.getColor().asRGB());
-        } catch (IllegalArgumentException ignored) {}
+        } catch (IllegalArgumentException ignored) {
+        }
 
         String hex = colorStr.startsWith("#") ? colorStr.substring(1) : colorStr;
         if (hex.matches("[0-9a-fA-F]{6}")) {
@@ -27,7 +28,9 @@ public class DyedColorConfiguration implements ItemConfigurationSerializable {
         }
 
         String[] parts = colorStr.split(",");
-        if (parts.length != 3) throw new IllegalArgumentException("Invalid color format: " + colorStr);
+        if (parts.length != 3) {
+            throw new IllegalArgumentException("Invalid color format: " + colorStr);
+        }
         int r = Integer.parseInt(parts[0].trim());
         int g = Integer.parseInt(parts[1].trim());
         int b = Integer.parseInt(parts[2].trim());
@@ -37,6 +40,6 @@ public class DyedColorConfiguration implements ItemConfigurationSerializable {
 
     @Override
     public void serialize(@NotNull YamlConfiguration yamlConfiguration, @NotNull String path, @NotNull ConfigurationSection itemSection, @NotNull String itemId) {
-        getOrCreateSection(itemSection, "data").set("dyed-color", String.format("%d,%d,%d", (this.rgb >> 16) & 0xFF, (this.rgb >> 8) & 0xFF, this.rgb & 0xFF));
+        this.getOrCreateSection(itemSection, "data").set("dyed-color", String.format("%d,%d,%d", (this.rgb >> 16) & 0xFF, (this.rgb >> 8) & 0xFF, this.rgb & 0xFF));
     }
 }

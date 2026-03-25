@@ -280,6 +280,11 @@ public class MessageLoader extends ObjectUtils implements Manageable {
             }
         }
 
+        if (raw instanceof ConfigurationSection section) {
+            CraftEngineConverterMessage craftMessage = this.parseCraftMessage(section, key);
+            return craftMessage != null ? List.of(craftMessage) : List.of();
+        }
+
         if (raw instanceof Map<?, ?> map) {
             YamlConfiguration section = new YamlConfiguration();
             for (Map.Entry<?, ?> e : map.entrySet()) {

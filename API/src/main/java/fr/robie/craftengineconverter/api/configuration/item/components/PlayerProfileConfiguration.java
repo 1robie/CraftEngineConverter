@@ -30,18 +30,21 @@ public class PlayerProfileConfiguration implements ItemConfigurationSerializable
         this.model = model;
     }
 
-    public record Property(String name, String value, String signature) {}
+    public record Property(String name, String value, String signature) {
+    }
 
     @Override
     public void serialize(@NotNull YamlConfiguration yamlConfiguration, @NotNull String path, @NotNull ConfigurationSection itemSection, @NotNull String itemId) {
-        ConfigurationSection components = getOrCreateSection(itemSection, "components");
-        ConfigurationSection profileSection = getOrCreateSection(components, "minecraft:profile");
+        ConfigurationSection components = this.getOrCreateSection(itemSection, "components");
+        ConfigurationSection profileSection = this.getOrCreateSection(components, "minecraft:profile");
 
-        if (this.name != null && !this.name.isBlank())
+        if (this.name != null && !this.name.isBlank()) {
             profileSection.set("name", this.name);
+        }
 
-        if (this.uuid != null && !this.uuid.isBlank())
+        if (this.uuid != null && !this.uuid.isBlank()) {
             profileSection.set("id", this.uuid);
+        }
 
         if (this.properties != null && !this.properties.isEmpty()) {
             List<Map<String, Object>> serializedProperties = new ArrayList<>();
@@ -49,23 +52,28 @@ public class PlayerProfileConfiguration implements ItemConfigurationSerializable
                 Map<String, Object> map = new HashMap<>();
                 map.put("name", property.name());
                 map.put("value", property.value());
-                if (property.signature() != null && !property.signature().isBlank())
+                if (property.signature() != null && !property.signature().isBlank()) {
                     map.put("signature", property.signature());
+                }
                 serializedProperties.add(map);
             }
             profileSection.set("properties", serializedProperties);
         }
 
-        if (this.texture != null && !this.texture.isBlank())
+        if (this.texture != null && !this.texture.isBlank()) {
             profileSection.set("texture", this.texture);
+        }
 
-        if (this.cape != null && !this.cape.isBlank())
+        if (this.cape != null && !this.cape.isBlank()) {
             profileSection.set("cape", this.cape);
+        }
 
-        if (this.elytra != null && !this.elytra.isBlank())
+        if (this.elytra != null && !this.elytra.isBlank()) {
             profileSection.set("elytra", this.elytra);
+        }
 
-        if (this.model != null && !this.model.isBlank())
+        if (this.model != null && !this.model.isBlank()) {
             profileSection.set("model", this.model);
+        }
     }
 }

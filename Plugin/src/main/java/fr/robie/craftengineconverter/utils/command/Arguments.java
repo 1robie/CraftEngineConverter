@@ -15,7 +15,7 @@ import java.util.Map;
 
 public abstract class Arguments extends CraftEngineConverterUtils {
     protected String[] args;
-    protected Map<String,Object> flags = new HashMap<>();
+    protected Map<String, Object> flags = new HashMap<>();
     protected int parentCount = 0;
 
     /**
@@ -52,7 +52,7 @@ public abstract class Arguments extends CraftEngineConverterUtils {
      * @return
      */
     protected boolean argAsBoolean(int index) {
-        return Boolean.valueOf(argAsString(index));
+        return Boolean.valueOf(this.argAsString(index));
     }
 
     /**
@@ -63,7 +63,7 @@ public abstract class Arguments extends CraftEngineConverterUtils {
      */
     protected boolean argAsBoolean(int index, boolean defaultValue) {
         try {
-            return Boolean.valueOf(argAsString(index));
+            return Boolean.valueOf(this.argAsString(index));
         } catch (Exception e) {
             return defaultValue;
         }
@@ -75,7 +75,7 @@ public abstract class Arguments extends CraftEngineConverterUtils {
      * @return
      */
     protected int argAsInteger(int index) {
-        return Integer.valueOf(argAsString(index));
+        return Integer.valueOf(this.argAsString(index));
     }
 
     /**
@@ -86,7 +86,7 @@ public abstract class Arguments extends CraftEngineConverterUtils {
      */
     protected int argAsInteger(int index, int defaultValue) {
         try {
-            return Integer.valueOf(argAsString(index));
+            return Integer.valueOf(this.argAsString(index));
         } catch (Exception e) {
             return defaultValue;
         }
@@ -98,7 +98,7 @@ public abstract class Arguments extends CraftEngineConverterUtils {
      * @return
      */
     protected long argAsLong(int index) {
-        return Long.valueOf(argAsString(index));
+        return Long.valueOf(this.argAsString(index));
     }
 
     /**
@@ -109,7 +109,7 @@ public abstract class Arguments extends CraftEngineConverterUtils {
      */
     protected long argAsLong(int index, long defaultValue) {
         try {
-            return Long.valueOf(argAsString(index));
+            return Long.valueOf(this.argAsString(index));
         } catch (Exception e) {
             return defaultValue;
         }
@@ -123,7 +123,7 @@ public abstract class Arguments extends CraftEngineConverterUtils {
      */
     protected double argAsDouble(int index, double defaultValue) {
         try {
-            return Double.valueOf(argAsString(index).replace(",", "."));
+            return Double.valueOf(this.argAsString(index).replace(",", "."));
         } catch (Exception e) {
             return defaultValue;
         }
@@ -135,7 +135,7 @@ public abstract class Arguments extends CraftEngineConverterUtils {
      * @return
      */
     protected double argAsDouble(int index) {
-        return Double.valueOf(argAsString(index).replace(",", "."));
+        return Double.valueOf(this.argAsString(index).replace(",", "."));
     }
 
     /**
@@ -144,7 +144,7 @@ public abstract class Arguments extends CraftEngineConverterUtils {
      * @return
      */
     protected Player argAsPlayer(int index) {
-        return Bukkit.getPlayer(argAsString(index));
+        return Bukkit.getPlayer(this.argAsString(index));
     }
 
     /**
@@ -154,7 +154,7 @@ public abstract class Arguments extends CraftEngineConverterUtils {
      */
     protected Material argAsMaterial(int index) {
         try {
-            return Material.valueOf(argAsString(index).toUpperCase());
+            return Material.valueOf(this.argAsString(index).toUpperCase());
         } catch (Exception e) {
             return null;
         }
@@ -168,7 +168,7 @@ public abstract class Arguments extends CraftEngineConverterUtils {
      */
     protected Player argAsPlayer(int index, Player defaultValue) {
         try {
-            return Bukkit.getPlayer(argAsString(index));
+            return Bukkit.getPlayer(this.argAsString(index));
         } catch (Exception e) {
             return defaultValue;
         }
@@ -180,7 +180,7 @@ public abstract class Arguments extends CraftEngineConverterUtils {
      * @return
      */
     protected OfflinePlayer argAsOfflinePlayer(int index) {
-        return Bukkit.getOfflinePlayer(argAsString(index));
+        return Bukkit.getOfflinePlayer(this.argAsString(index));
     }
 
     /**
@@ -191,7 +191,7 @@ public abstract class Arguments extends CraftEngineConverterUtils {
      */
     protected OfflinePlayer argAsOfflinePlayer(int index, OfflinePlayer defaultValue) {
         try {
-            return Bukkit.getOfflinePlayer(argAsString(index));
+            return Bukkit.getOfflinePlayer(this.argAsString(index));
         } catch (Exception e) {
             return defaultValue;
         }
@@ -203,7 +203,7 @@ public abstract class Arguments extends CraftEngineConverterUtils {
      * @return
      */
     protected EntityType argAsEntityType(int index) {
-        return EntityType.valueOf(argAsString(index).toUpperCase());
+        return EntityType.valueOf(this.argAsString(index).toUpperCase());
     }
 
     /**
@@ -214,7 +214,7 @@ public abstract class Arguments extends CraftEngineConverterUtils {
      */
     protected EntityType argAsEntityType(int index, EntityType defaultValue) {
         try {
-            return EntityType.valueOf(argAsString(index).toUpperCase());
+            return EntityType.valueOf(this.argAsString(index).toUpperCase());
         } catch (Exception e) {
             return defaultValue;
         }
@@ -227,7 +227,7 @@ public abstract class Arguments extends CraftEngineConverterUtils {
      */
     protected World argAsWorld(int index) {
         try {
-            return Bukkit.getWorld(argAsString(index));
+            return Bukkit.getWorld(this.argAsString(index));
         } catch (Exception e) {
             return null;
         }
@@ -240,7 +240,7 @@ public abstract class Arguments extends CraftEngineConverterUtils {
      */
     protected World argAsWorld(int index, World world) {
         try {
-            return Bukkit.getWorld(argAsString(index));
+            return Bukkit.getWorld(this.argAsString(index));
         } catch (Exception e) {
             return world;
         }
@@ -248,8 +248,10 @@ public abstract class Arguments extends CraftEngineConverterUtils {
 
     protected <T extends Enum<T>> T argAsEnum(int index, Class<T> enumClass) {
         try {
-            String s = argAsString(index);
-            if (s == null) return null;
+            String s = this.argAsString(index);
+            if (s == null) {
+                return null;
+            }
             return Enum.valueOf(enumClass, s.toUpperCase());
         } catch (Exception e) {
             return null;
@@ -258,8 +260,10 @@ public abstract class Arguments extends CraftEngineConverterUtils {
 
     protected <T extends Enum<T>> T argAsEnum(int index, Class<T> enumClass, T defaultValue) {
         try {
-            String s = argAsString(index);
-            if (s == null) return defaultValue;
+            String s = this.argAsString(index);
+            if (s == null) {
+                return defaultValue;
+            }
             return Enum.valueOf(enumClass, s.toUpperCase());
         } catch (Exception e) {
             return defaultValue;
@@ -296,7 +300,7 @@ public abstract class Arguments extends CraftEngineConverterUtils {
     }
 
     protected int getFlagValueAsInteger(@NotNull String flag) {
-        return getFlagValueAsInteger(flag, 0);
+        return this.getFlagValueAsInteger(flag, 0);
     }
 
 }

@@ -25,8 +25,8 @@ public class ToolConfiguration implements ItemConfigurationSerializable {
 
     @Override
     public void serialize(@NotNull YamlConfiguration yamlConfiguration, @NotNull String path, @NotNull ConfigurationSection itemSection, @NotNull String itemId) {
-        ConfigurationSection components = getOrCreateSection(itemSection, "components");
-        ConfigurationSection toolComponent = getOrCreateSection(components, "minecraft:tool");
+        ConfigurationSection components = this.getOrCreateSection(itemSection, "components");
+        ConfigurationSection toolComponent = this.getOrCreateSection(components, "minecraft:tool");
 
         if (this.defaultMiningSpeed != 1.0f) {
             toolComponent.set("default_mining_speed", this.defaultMiningSpeed);

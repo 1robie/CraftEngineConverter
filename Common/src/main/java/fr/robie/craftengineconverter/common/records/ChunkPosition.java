@@ -3,8 +3,12 @@ package fr.robie.craftengineconverter.common.records;
 public record ChunkPosition(String worldName, int x, int z) {
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || this.getClass() != o.getClass()) {
+            return false;
+        }
         ChunkPosition that = (ChunkPosition) o;
         return this.x == that.x && this.z == that.z && this.worldName.equals(that.worldName);
     }

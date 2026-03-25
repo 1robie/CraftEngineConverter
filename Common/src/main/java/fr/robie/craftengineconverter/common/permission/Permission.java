@@ -35,11 +35,11 @@ public enum Permission {
      * @return The permission string.
      */
     public String asPermission() {
-        return "craftengineconverter." + name().toLowerCase().replace("_", ".");
+        return "craftengineconverter." + this.name().toLowerCase().replace("_", ".");
     }
 
     public String toPermission() {
-        StringBuilder builder = new StringBuilder(asPermission());
+        StringBuilder builder = new StringBuilder(this.asPermission());
         for (int i = 0; i < this.args.length; i++) {
             builder.append("<");
             builder.append(this.args[i]);
@@ -59,7 +59,7 @@ public enum Permission {
      * @return The permission string with the suffix.
      */
     public String asPermission(String with) {
-        return asPermission() + with;
+        return this.asPermission() + with;
     }
 
     public String getDescription() {

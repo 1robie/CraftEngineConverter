@@ -204,7 +204,7 @@ public enum CraftEngineBlockState {
             }
         }
 
-        CraftEngineBlockState target = getCountTarget();
+        CraftEngineBlockState target = this.getCountTarget();
 
         if (target == this) {
             return false;
@@ -251,9 +251,9 @@ public enum CraftEngineBlockState {
      */
     private int getCurrentCount(Plugins plugin) {
         if (Configuration.<LimitType>get(ConfigurationKey.BLOCK_STATE_LIMIT_TYPE) == fr.robie.craftengineconverter.api.enums.LimitType.PLUGIN) {
-            return getMaxIndexRecursive(this, plugin);
+            return this.getMaxIndexRecursive(this, plugin);
         } else {
-            return getTotalMaxIndexRecursive(this);
+            return this.getTotalMaxIndexRecursive(this);
         }
     }
 
@@ -270,7 +270,7 @@ public enum CraftEngineBlockState {
         }
 
         for (CraftEngineBlockState child : node.contains) {
-            int childMax = getMaxIndexRecursive(child, plugin);
+            int childMax = this.getMaxIndexRecursive(child, plugin);
             maxIndex = Math.max(maxIndex, childMax);
         }
 
@@ -291,7 +291,7 @@ public enum CraftEngineBlockState {
         }
 
         for (CraftEngineBlockState child : node.contains) {
-            int childMax = getTotalMaxIndexRecursive(child);
+            int childMax = this.getTotalMaxIndexRecursive(child);
             maxIndex = Math.max(maxIndex, childMax);
         }
 
@@ -344,9 +344,10 @@ public enum CraftEngineBlockState {
      * @return A {@link BlockStateResult}, or null if none available
      */
     public BlockStateResult getAvailable(Plugins plugin) {
-        CraftEngineBlockState available = getAvailableCraftEngineBlockState(plugin, new ArrayList<>());
-        if (available == null)
+        CraftEngineBlockState available = this.getAvailableCraftEngineBlockState(plugin, new ArrayList<>());
+        if (available == null) {
             return null;
+        }
         return new BlockStateResult(available, available.isLastSlot(plugin));
     }
 
@@ -358,18 +359,20 @@ public enum CraftEngineBlockState {
      * @return A {@link BlockStateResult}, or null if none available
      */
     public BlockStateResult getAvailableAndIncrement(Plugins plugin) {
-        CraftEngineBlockState available = getAvailableCraftEngineBlockState(plugin, new ArrayList<>());
-        if (available == null)
+        CraftEngineBlockState available = this.getAvailableCraftEngineBlockState(plugin, new ArrayList<>());
+        if (available == null) {
             return null;
+        }
         boolean last = available.isLastSlot(plugin);
         available.increment(plugin);
         return new BlockStateResult(available, last);
     }
 
     public BlockStateResult getAvailableAndIncrementNotLast(Plugins plugin) {
-        CraftEngineBlockState available = getAvailableCraftEngineBlockState(plugin, new ArrayList<>());
-        if (available == null)
+        CraftEngineBlockState available = this.getAvailableCraftEngineBlockState(plugin, new ArrayList<>());
+        if (available == null) {
             return null;
+        }
         boolean last = available.isLastSlot(plugin);
         if (!last) {
             available.increment(plugin);
@@ -390,7 +393,7 @@ public enum CraftEngineBlockState {
         }
         visited.add(this);
 
-        if (!hasReachLimit(plugin)) {
+        if (!this.hasReachLimit(plugin)) {
             return this;
         }
 

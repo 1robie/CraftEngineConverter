@@ -37,115 +37,214 @@ public abstract class ItemConverter extends ObjectUtils {
         this.craftEngineItemsConfiguration = new CraftEngineItemsConfiguration(itemId, Configuration.get(ConfigurationKey.DEFAULT_MATERIAL));
     }
 
-    public void convertItem(){
-        convertMaterial();
-        convertItemName();
-        convertLore();
-        convertDyedColor();
-        convertUnbreakable();
-        convertItemFlags();
-        convertExcludeFromInventory();
-        convertAttributeModifiers();
-        convertEnchantments();
-        convertCustomModelData();
-        convertItemModel();
-        convertMaxStackSize();
-        convertEnchantmentGlintOverride();
-        convertFireResistance();
-        convertMaxDamage();
-        convertGlowDropColor();
-        convertDropShowName();
-        convertHideTooltip();
-        convertFood();
-        convertTool();
-        convertCustomData();
-        convertJukeboxPlayable();
-        convertConsumable();
-        convertEquippable();
-        convertDamageResistance();
-        convertEnchantableComponent();
-        convertGliderComponent();
-        convertToolTipStyle();
-        convertUseCooldown();
-        convertUseRemainderComponent();
-        convertAnvilRepairable();
-        convertDeathProtection();
-        convertToolTipDisplay();
-        convertBreakSound();
-        convertWeaponComponent();
-        convertBlocksAttackComponent();
-        convertCanPlaceOnComponent();
-        convertCanBreakComponent();
-        convertOversizedInGui();
-        convertPaintingVariant();
-        convertKineticComponent();
-        convertPiercingWeaponComponent();
-        convertAttackRangeComponent();
-        convertSwingAnimationComponent();
-        convertUseEffectsComponent();
-        convertDamageTypeComponent();
-        convertMinimumAttackChargeComponent();
-        convertProfileComponent();
-        convertItemTexture();
-        convertOther();
+    public void convertItem() {
+        this.convertMaterial();
+        this.convertItemName();
+        this.convertLore();
+        this.convertDyedColor();
+        this.convertUnbreakable();
+        this.convertItemFlags();
+        this.convertExcludeFromInventory();
+        this.convertAttributeModifiers();
+        this.convertEnchantments();
+        this.convertCustomModelData();
+        this.convertItemModel();
+        this.convertMaxStackSize();
+        this.convertEnchantmentGlintOverride();
+        this.convertFireResistance();
+        this.convertMaxDamage();
+        this.convertGlowDropColor();
+        this.convertDropShowName();
+        this.convertHideTooltip();
+        this.convertFood();
+        this.convertTool();
+        this.convertCustomData();
+        this.convertJukeboxPlayable();
+        this.convertConsumable();
+        this.convertEquippable();
+        this.convertDamageResistance();
+        this.convertEnchantableComponent();
+        this.convertGliderComponent();
+        this.convertToolTipStyle();
+        this.convertUseCooldown();
+        this.convertUseRemainderComponent();
+        this.convertAnvilRepairable();
+        this.convertDeathProtection();
+        this.convertToolTipDisplay();
+        this.convertBreakSound();
+        this.convertWeaponComponent();
+        this.convertBlocksAttackComponent();
+        this.convertCanPlaceOnComponent();
+        this.convertCanBreakComponent();
+        this.convertOversizedInGui();
+        this.convertPaintingVariant();
+        this.convertKineticComponent();
+        this.convertPiercingWeaponComponent();
+        this.convertAttackRangeComponent();
+        this.convertSwingAnimationComponent();
+        this.convertUseEffectsComponent();
+        this.convertDamageTypeComponent();
+        this.convertMinimumAttackChargeComponent();
+        this.convertProfileComponent();
+        this.convertItemTexture();
+        this.convertOther();
     }
 
-    public void convertMaterial(){}
-    public void convertItemName(){}
-    public void convertLore(){}
-    public void convertDyedColor(){}
-    public void convertUnbreakable(){}
-    public void convertGlowDropColor(){}
-    public void convertDropShowName(){}
-    public void convertItemFlags(){}
-    public void convertAttributeModifiers(){}
-    public void convertEnchantments(){}
-    public void convertCustomModelData(){}
-    public void convertItemModel(){}
-    public void convertMaxStackSize(){}
-    public void convertEnchantmentGlintOverride(){}
-    public void convertFireResistance(){}
-    public void convertMaxDamage(){}
-    public void convertHideTooltip(){}
-    public void convertFood(){}
-    public void convertTool(){}
-    public void convertCustomData(){}
-    public void convertJukeboxPlayable(){}
-    public void convertConsumable(){}
-    public void convertEquippable(){}
-    public void convertDamageResistance(){}
-    public void convertEnchantableComponent(){}
-    public void convertGliderComponent(){}
-    public void convertToolTipStyle(){}
-    public void convertUseCooldown(){}
-    public void convertUseRemainderComponent(){}
-    public void convertAnvilRepairable(){}
-    public void convertDeathProtection(){}
-    public void convertToolTipDisplay(){}
-    public void convertBreakSound(){}
-    public void convertWeaponComponent(){}
-    public void convertBlocksAttackComponent(){}
-    public void convertCanPlaceOnComponent(){}
-    public void convertCanBreakComponent(){}
-    public void convertOversizedInGui(){}
-    public void convertPaintingVariant(){}
-    public void convertKineticComponent(){}
-    public void convertPiercingWeaponComponent(){}
-    public void convertAttackRangeComponent(){}
-    public void convertSwingAnimationComponent(){}
-    public void convertUseEffectsComponent(){}
-    public void convertDamageTypeComponent(){}
-    public void convertMinimumAttackChargeComponent(){}
-    public void convertProfileComponent(){}
-    public void convertItemTexture(){}
-    public void convertExcludeFromInventory(){}
-    public void convertOther(){}
+    public void convertMaterial() {
+    }
+
+    public void convertItemName() {
+    }
+
+    public void convertLore() {
+    }
+
+    public void convertDyedColor() {
+    }
+
+    public void convertUnbreakable() {
+    }
+
+    public void convertGlowDropColor() {
+    }
+
+    public void convertDropShowName() {
+    }
+
+    public void convertItemFlags() {
+    }
+
+    public void convertAttributeModifiers() {
+    }
+
+    public void convertEnchantments() {
+    }
+
+    public void convertCustomModelData() {
+    }
+
+    public void convertItemModel() {
+    }
+
+    public void convertMaxStackSize() {
+    }
+
+    public void convertEnchantmentGlintOverride() {
+    }
+
+    public void convertFireResistance() {
+    }
+
+    public void convertMaxDamage() {
+    }
+
+    public void convertHideTooltip() {
+    }
+
+    public void convertFood() {
+    }
+
+    public void convertTool() {
+    }
+
+    public void convertCustomData() {
+    }
+
+    public void convertJukeboxPlayable() {
+    }
+
+    public void convertConsumable() {
+    }
+
+    public void convertEquippable() {
+    }
+
+    public void convertDamageResistance() {
+    }
+
+    public void convertEnchantableComponent() {
+    }
+
+    public void convertGliderComponent() {
+    }
+
+    public void convertToolTipStyle() {
+    }
+
+    public void convertUseCooldown() {
+    }
+
+    public void convertUseRemainderComponent() {
+    }
+
+    public void convertAnvilRepairable() {
+    }
+
+    public void convertDeathProtection() {
+    }
+
+    public void convertToolTipDisplay() {
+    }
+
+    public void convertBreakSound() {
+    }
+
+    public void convertWeaponComponent() {
+    }
+
+    public void convertBlocksAttackComponent() {
+    }
+
+    public void convertCanPlaceOnComponent() {
+    }
+
+    public void convertCanBreakComponent() {
+    }
+
+    public void convertOversizedInGui() {
+    }
+
+    public void convertPaintingVariant() {
+    }
+
+    public void convertKineticComponent() {
+    }
+
+    public void convertPiercingWeaponComponent() {
+    }
+
+    public void convertAttackRangeComponent() {
+    }
+
+    public void convertSwingAnimationComponent() {
+    }
+
+    public void convertUseEffectsComponent() {
+    }
+
+    public void convertDamageTypeComponent() {
+    }
+
+    public void convertMinimumAttackChargeComponent() {
+    }
+
+    public void convertProfileComponent() {
+    }
+
+    public void convertItemTexture() {
+    }
+
+    public void convertExcludeFromInventory() {
+    }
+
+    public void convertOther() {
+    }
 
     protected boolean notEmptyOrNull(List<String> list, int index) {
         return list != null && list.size() > index && list.get(index) != null && !list.get(index).isEmpty();
     }
 
-    public void setAssetId(String assetId){
+    public void setAssetId(String assetId) {
         this.assetId = assetId;
     }
 
@@ -157,10 +256,10 @@ public abstract class ItemConverter extends ObjectUtils {
         }
         String string = packSection.getString("textures");
 
-        return isValidString(string) ? string : packSection.getString("texture");
+        return this.isValidString(string) ? string : packSection.getString("texture");
     }
 
-    protected ConfigurationSection getEquipmentsSection(){
+    protected ConfigurationSection getEquipmentsSection() {
         ConfigurationSection equipementsSection = this.fileConfig.getConfigurationSection("equipments");
         if (equipementsSection == null) {
             return this.fileConfig.createSection("equipments");

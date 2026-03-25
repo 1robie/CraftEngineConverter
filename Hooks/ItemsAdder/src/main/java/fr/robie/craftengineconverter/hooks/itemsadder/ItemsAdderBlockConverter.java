@@ -17,25 +17,27 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class ItemsAdderBlockConverter extends BlockConverter implements Listener {
-    public ItemsAdderBlockConverter(CraftEngineConverterPlugin plugin){
+    public ItemsAdderBlockConverter(CraftEngineConverterPlugin plugin) {
         super(plugin, Plugins.ITEMS_ADDER);
     }
 
     @EventHandler
-    public void onItemsAdderBlockInteract(CustomBlockInteractEvent event){
-        if (!Configuration.<Boolean>get(ConfigurationKey.ITEMS_ADDER_BLOCK_INTERACTION_CONVERSION) || !event.getPlayer().hasPermission(Permission.ITEMSADDER_BLOCK_INTERACT_CONVERSION.asPermission())) return;
+    public void onItemsAdderBlockInteract(CustomBlockInteractEvent event) {
+        if (!Configuration.<Boolean>get(ConfigurationKey.ITEMS_ADDER_BLOCK_INTERACTION_CONVERSION) || !event.getPlayer().hasPermission(Permission.ITEMSADDER_BLOCK_INTERACT_CONVERSION.asPermission())) {
+            return;
+        }
 
         String namespacedID = event.getNamespacedID();
         String newName = this.getNewName(namespacedID);
 
-        if (newName == null || !isRegistered(newName)){
+        if (newName == null || !this.isRegistered(newName)) {
             return;
         }
 
         Block block = event.getBlockClicked();
         Location location = block.getLocation();
 
-        if (!removeBlockAt(location)){
+        if (!this.removeBlockAt(location)) {
             return;
         }
 
@@ -45,7 +47,7 @@ public class ItemsAdderBlockConverter extends BlockConverter implements Listener
             Set<Location> processed = new HashSet<>();
             processed.add(location);
             ConversionCounter counter = new ConversionCounter(Configuration.<Integer>get(ConfigurationKey.MAX_BLOCK_CONVERSION_PROPAGATION_DEPTH) - 1);
-            executeBlockConversion(block.getLocation(), processed, counter);
+            this.executeBlockConversion(block.getLocation(), processed, counter);
         }
 
     }
@@ -59,7 +61,7 @@ public class ItemsAdderBlockConverter extends BlockConverter implements Listener
     @Override
     public String getNewNameForCustomBlock(Location location) {
         CustomBlock customBlock = CustomBlock.byAlreadyPlaced(location.getBlock());
-        if (customBlock == null){
+        if (customBlock == null) {
             return null;
         }
         return this.getNewName(customBlock.getNamespacedID());

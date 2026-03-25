@@ -14,8 +14,8 @@ public class EnchantableConfiguration implements ItemConfigurationSerializable {
 
     @Override
     public void serialize(@NotNull YamlConfiguration yamlConfiguration, @NotNull String path, @NotNull ConfigurationSection itemSection, @NotNull String itemId) {
-        ConfigurationSection components = getOrCreateSection(itemSection, "components");
-        ConfigurationSection enchantableComponent = getOrCreateSection(components, "minecraft:enchantable");
+        ConfigurationSection components = this.getOrCreateSection(itemSection, "components");
+        ConfigurationSection enchantableComponent = this.getOrCreateSection(components, "minecraft:enchantable");
         enchantableComponent.set("value", this.enchantability);
     }
 }

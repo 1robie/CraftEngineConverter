@@ -40,14 +40,14 @@ public class DataBaseManager implements StorageManager {
         // Initialize caches for different types
 
         this.caches.put(BlockHistory.class, new TypedCache<>(BlockHistory.class,
-            batch -> this.requestHelper.insertMultiple("world_block_converter_historical", BlockHistory.class, batch),
-            MAX_BATCH_SIZE,
-            history -> history.getWorldName() + ":" +
-                       history.getChunkX() + ":" +
-                       history.getChunkZ() + ":" +
-                       history.getBlockX() + ":" +
-                       history.getBlockY() + ":" +
-                       history.getBlockZ()
+                batch -> this.requestHelper.insertMultiple("world_block_converter_historical", BlockHistory.class, batch),
+                MAX_BATCH_SIZE,
+                history -> history.getWorldName() + ":" +
+                        history.getChunkX() + ":" +
+                        history.getChunkZ() + ":" +
+                        history.getBlockX() + ":" +
+                        history.getBlockY() + ":" +
+                        history.getBlockZ()
         ));
         this.caches.put(EntityHistory.class, new TypedCache<>(EntityHistory.class,
                 batch -> this.requestHelper.insertMultiple("world_entity_converter_historical", EntityHistory.class, batch),
@@ -61,7 +61,7 @@ public class DataBaseManager implements StorageManager {
      * Gets a TypedCache for a specific type.
      *
      * @param clazz The class type
-     * @param <T> The type parameter
+     * @param <T>   The type parameter
      * @return The TypedCache instance
      */
     @SuppressWarnings("unchecked")
@@ -109,9 +109,9 @@ public class DataBaseManager implements StorageManager {
         }
         Logger logger = JULogger.from(this.plugin.getLogger());
         DatabaseConnection databaseConnection;
-        switch (type){
+        switch (type) {
             case MYSQL -> {
-                databaseConnection = new MySqlConnection(new DatabaseConfiguration(prefix, user, password, port, host, dataBase, enableDebug, DatabaseType.MYSQL),logger);
+                databaseConnection = new MySqlConnection(new DatabaseConfiguration(prefix, user, password, port, host, dataBase, enableDebug, DatabaseType.MYSQL), logger);
             }
             case MARIADB -> {
                 databaseConnection = new MariaDbConnection(new DatabaseConfiguration(prefix, user, password, port, host, dataBase, enableDebug, DatabaseType.MARIADB), logger);
@@ -133,7 +133,7 @@ public class DataBaseManager implements StorageManager {
             this.isEnabled = false;
             return;
         } else {
-            fr.robie.craftengineconverter.api.logger.Logger.info("The database connection is valid ! ("+ (type == StorageType.SQLITE ? "SQLITE" : databaseConnection.getDatabaseConfiguration().getHost()) +")");
+            fr.robie.craftengineconverter.api.logger.Logger.info("The database connection is valid ! (" + (type == StorageType.SQLITE ? "SQLITE" : databaseConnection.getDatabaseConfiguration().getHost()) + ")");
         }
 
         MigrationManager.setDatabaseConfiguration(databaseConnection.getDatabaseConfiguration());
@@ -146,8 +146,10 @@ public class DataBaseManager implements StorageManager {
      * Saves all cached objects to database in batches.
      * Processes up to MAX_BATCH_SIZE objects per type per execution.
      */
-    private void saveAll(){
-        if (!this.isEnabled) return;
+    private void saveAll() {
+        if (!this.isEnabled) {
+            return;
+        }
 
         for (TypedCache<?> cache : this.caches.values()) {
             cache.processBatch();
@@ -160,15 +162,19 @@ public class DataBaseManager implements StorageManager {
      * @param blockHistory The BlockHistory to cache
      */
     @Override
-    public void upsertBlockHistory(@NonNull BlockHistory blockHistory){
-        if (!this.isEnabled) return;
-        getCache(BlockHistory.class).add(blockHistory);
+    public void upsertBlockHistory(@NonNull BlockHistory blockHistory) {
+        if (!this.isEnabled) {
+            return;
+        }
+        this.getCache(BlockHistory.class).add(blockHistory);
     }
 
     @Override
     public void upsertEntityHistory(@NotNull EntityHistory entityHistory) {
-        if (!this.isEnabled) return;
-        getCache(EntityHistory.class).add(entityHistory);
+        if (!this.isEnabled) {
+            return;
+        }
+        this.getCache(EntityHistory.class).add(entityHistory);
     }
 
     /**
@@ -177,7 +183,9 @@ public class DataBaseManager implements StorageManager {
      */
     @Override
     public void close() {
-        if (!this.isEnabled) return;
+        if (!this.isEnabled) {
+            return;
+        }
 
         for (TypedCache<?> cache : this.caches.values()) {
             cache.flush();
@@ -186,7 +194,9 @@ public class DataBaseManager implements StorageManager {
 
     @Override
     public void markBlockAsReverted(@NonNull BlockHistory blockHistory) {
-        if (!this.isEnabled) return;
+        if (!this.isEnabled) {
+            return;
+        }
 
         this.requestHelper.update("world_block_converter_historical", schema -> {
             schema.bool("reverted", true);
@@ -203,7 +213,9 @@ public class DataBaseManager implements StorageManager {
 
     @Override
     public void markEntityAsReverted(@NotNull EntityHistory entityHistory) {
-        if (!this.isEnabled) return;
+        if (!this.isEnabled) {
+            return;
+        }
 
         this.requestHelper.update("world_entity_converter_historical", schema -> {
             schema.bool("reverted", true);
@@ -220,15 +232,17 @@ public class DataBaseManager implements StorageManager {
      * Gets the history of a specific block.
      *
      * @param worldName The world name
-     * @param blockX The block X coordinate
-     * @param blockY The block Y coordinate
-     * @param blockZ The block Z coordinate
+     * @param blockX    The block X coordinate
+     * @param blockY    The block Y coordinate
+     * @param blockZ    The block Z coordinate
      * @return Optional containing the most recent BlockHistory if found
      */
     @Override
     public @NonNull Optional<BlockHistory> getBlockHistory(@NonNull String worldName, int blockX, int blockY, int blockZ) {
-        if (!this.isEnabled) return Optional.empty();
-        
+        if (!this.isEnabled) {
+            return Optional.empty();
+        }
+
         var results = this.requestHelper.select("world_block_converter_historical", BlockHistory.class, table -> {
             table.where("world_name", worldName);
             table.where("block_x", blockX);
@@ -236,7 +250,7 @@ public class DataBaseManager implements StorageManager {
             table.where("block_z", blockZ);
             table.orderByDesc("created_at");
         });
-        
+
         return results.isEmpty() ? Optional.empty() : Optional.of(results.getFirst());
     }
 
@@ -244,15 +258,17 @@ public class DataBaseManager implements StorageManager {
      * Checks if a block has been converted but not reverted.
      *
      * @param worldName The world name
-     * @param blockX The block X coordinate
-     * @param blockY The block Y coordinate
-     * @param blockZ The block Z coordinate
+     * @param blockX    The block X coordinate
+     * @param blockY    The block Y coordinate
+     * @param blockZ    The block Z coordinate
      * @return true if the block is converted and not reverted
      */
     @Override
     public boolean isBlockConverted(@NonNull String worldName, int blockX, int blockY, int blockZ) {
-        if (!this.isEnabled) return false;
-        
+        if (!this.isEnabled) {
+            return false;
+        }
+
         var results = this.requestHelper.select("world_block_converter_historical", BlockHistory.class, table -> {
             table.where("world_name", worldName);
             table.where("block_x", blockX);
@@ -261,7 +277,7 @@ public class DataBaseManager implements StorageManager {
             table.where("reverted", false);
             table.orderByDesc("created_at");
         });
-        
+
         return !results.isEmpty();
     }
 
@@ -269,14 +285,16 @@ public class DataBaseManager implements StorageManager {
      * Gets all non-reverted block conversions for a specific chunk.
      *
      * @param worldName The world name
-     * @param chunkX The chunk X coordinate
-     * @param chunkZ The chunk Z coordinate
+     * @param chunkX    The chunk X coordinate
+     * @param chunkZ    The chunk Z coordinate
      * @return List of BlockHistory records for the chunk
      */
     @Override
     public java.util.@NonNull List<BlockHistory> getChunkHistory(@NonNull String worldName, int chunkX, int chunkZ) {
-        if (!this.isEnabled) return java.util.Collections.emptyList();
-        
+        if (!this.isEnabled) {
+            return java.util.Collections.emptyList();
+        }
+
         return this.requestHelper.select("world_block_converter_historical", BlockHistory.class, table -> {
             table.where("world_name", worldName);
             table.where("chunk_x", chunkX);
@@ -292,8 +310,10 @@ public class DataBaseManager implements StorageManager {
      */
     @Override
     public java.util.@NonNull List<BlockHistory> getAllActiveConversions() {
-        if (!this.isEnabled) return java.util.Collections.emptyList();
-        
+        if (!this.isEnabled) {
+            return java.util.Collections.emptyList();
+        }
+
         return this.requestHelper.select("world_block_converter_historical", BlockHistory.class, table -> {
             table.where("reverted", false);
         });
@@ -301,7 +321,9 @@ public class DataBaseManager implements StorageManager {
 
     @Override
     public @NonNull List<EntityHistory> getAllActiveEntityConversions() {
-        if (!this.isEnabled) return java.util.Collections.emptyList();
+        if (!this.isEnabled) {
+            return java.util.Collections.emptyList();
+        }
 
         return this.requestHelper.select("world_entity_converter_historical", EntityHistory.class, table -> {
             table.where("reverted", false);
@@ -315,9 +337,12 @@ public class DataBaseManager implements StorageManager {
      */
     @Override
     public long getTotalConversions() {
-        if (!this.isEnabled) return 0;
-        
-        return this.requestHelper.count("world_block_converter_historical", table -> {});
+        if (!this.isEnabled) {
+            return 0;
+        }
+
+        return this.requestHelper.count("world_block_converter_historical", table -> {
+        });
     }
 
     /**
@@ -327,8 +352,10 @@ public class DataBaseManager implements StorageManager {
      */
     @Override
     public long getActiveConversions() {
-        if (!this.isEnabled) return 0;
-        
+        if (!this.isEnabled) {
+            return 0;
+        }
+
         return this.requestHelper.count("world_block_converter_historical", table -> {
             table.where("reverted", false);
         });

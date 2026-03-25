@@ -35,32 +35,40 @@ public class BlocksAttacksConfiguration implements ItemConfigurationSerializable
 
     @Override
     public void serialize(@NotNull YamlConfiguration yamlConfiguration, @NotNull String path, @NotNull ConfigurationSection itemSection, @NotNull String itemId) {
-        ConfigurationSection components = getOrCreateSection(itemSection, "components");
-        ConfigurationSection blocksAttacksSection = getOrCreateSection(components, "minecraft:blocks_attacks");
+        ConfigurationSection components = this.getOrCreateSection(itemSection, "components");
+        ConfigurationSection blocksAttacksSection = this.getOrCreateSection(components, "minecraft:blocks_attacks");
 
-        if (this.blockDelaySeconds != 0)
+        if (this.blockDelaySeconds != 0) {
             blocksAttacksSection.set("block_delay_seconds", this.blockDelaySeconds);
+        }
 
-        if (this.disableCooldownScale != 1)
+        if (this.disableCooldownScale != 1) {
             blocksAttacksSection.set("disable_cooldown_scale", this.disableCooldownScale);
+        }
 
-        if (this.blockSound != null && !this.blockSound.isBlank())
+        if (this.blockSound != null && !this.blockSound.isBlank()) {
             blocksAttacksSection.set("block_sound", this.blockSound);
+        }
 
-        if (this.disabledSound != null && !this.disabledSound.isBlank())
+        if (this.disabledSound != null && !this.disabledSound.isBlank()) {
             blocksAttacksSection.set("disabled_sound", this.disabledSound);
+        }
 
-        if (this.bypassedBy != null && !this.bypassedBy.isBlank())
+        if (this.bypassedBy != null && !this.bypassedBy.isBlank()) {
             blocksAttacksSection.set("bypassed_by", this.bypassedBy);
+        }
 
         if (this.itemDamage != null) {
-            ConfigurationSection itemDamageSection = getOrCreateSection(blocksAttacksSection, "item_damage");
-            if (this.itemDamage.threshold() != 0)
+            ConfigurationSection itemDamageSection = this.getOrCreateSection(blocksAttacksSection, "item_damage");
+            if (this.itemDamage.threshold() != 0) {
                 itemDamageSection.set("threshold", this.itemDamage.threshold());
-            if (this.itemDamage.base() != 0)
+            }
+            if (this.itemDamage.base() != 0) {
                 itemDamageSection.set("base", this.itemDamage.base());
-            if (this.itemDamage.factor() != 1.5)
+            }
+            if (this.itemDamage.factor() != 1.5) {
                 itemDamageSection.set("factor", this.itemDamage.factor());
+            }
         }
 
         if (this.damageReductions != null && !this.damageReductions.isEmpty()) {
@@ -68,10 +76,12 @@ public class BlocksAttacksConfiguration implements ItemConfigurationSerializable
                 Map<String, Object> map = new java.util.HashMap<>();
                 map.put("base", dr.base());
                 map.put("factor", dr.factor());
-                if (dr.horizontalBlockingAngle() != 90)
+                if (dr.horizontalBlockingAngle() != 90) {
                     map.put("horizontal_blocking_angle", dr.horizontalBlockingAngle());
-                if (dr.types() != null && !dr.types().isEmpty())
+                }
+                if (dr.types() != null && !dr.types().isEmpty()) {
                     map.put("type", dr.types().size() == 1 ? dr.types().getFirst() : dr.types());
+                }
                 return map;
             }).toList();
             blocksAttacksSection.set("damage_reductions", serialized);

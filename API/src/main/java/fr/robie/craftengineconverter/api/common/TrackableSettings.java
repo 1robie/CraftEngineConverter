@@ -5,13 +5,15 @@ public abstract class TrackableSettings {
     private boolean initialized = false;
 
     protected void markInitialized() {
-        this.constructionHashCode = computeHashCode();
+        this.constructionHashCode = this.computeHashCode();
         this.initialized = true;
     }
 
     public boolean isUpdated() {
-        if (!this.initialized) return false;
-        return this.constructionHashCode != computeHashCode();
+        if (!this.initialized) {
+            return false;
+        }
+        return this.constructionHashCode != this.computeHashCode();
     }
 
     protected abstract int computeHashCode();

@@ -14,7 +14,7 @@ public class TrapdoorBlockState extends AbstractDefaultBlockState {
         HorizontalDirectionBlockStateProperty facingProperty = new HorizontalDirectionBlockStateProperty("facing", HorizontalDirection.NORTH);
         SingleBlockHalfBlockStateProperty halfProperty = new SingleBlockHalfBlockStateProperty("half", SingleBlockHalf.BOTTOM);
         BooleanBlockStateProperty openProperty = new BooleanBlockStateProperty("open", false);
-        BooleanBlockStateProperty waterloggedProperty = addWaterloggedProperty();
+        BooleanBlockStateProperty waterloggedProperty = this.addWaterloggedProperty();
         BooleanBlockStateProperty poweredProperty = new BooleanBlockStateProperty("powered", false);
 
         this.addProperty(facingProperty);
@@ -53,7 +53,7 @@ public class TrapdoorBlockState extends AbstractDefaultBlockState {
                             y = (y + 180) % 360;
                         }
 
-                        addRotatedAppearance(appearanceName, state, model, x, y, false);
+                        this.addRotatedAppearance(appearanceName, state, model, x, y, false);
 
                         BlockVariant variant = new BlockVariant(appearanceName)
                                 .addVariantCondition(facingProperty, facing)
@@ -65,7 +65,7 @@ public class TrapdoorBlockState extends AbstractDefaultBlockState {
                             if (facing == HorizontalDirection.WEST && half == SingleBlockHalf.TOP && open) {
                                 variant.getBlockSettings().setFluidState("water");
                             } else {
-                                applyWaterloggedSettings(variant);
+                                this.applyWaterloggedSettings(variant);
                             }
                         }
                         this.addVariant(variant);

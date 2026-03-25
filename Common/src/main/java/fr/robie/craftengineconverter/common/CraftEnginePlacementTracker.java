@@ -70,12 +70,12 @@ public class CraftEnginePlacementTracker {
     }
 
     public int getGrandTotal() {
-        return getTotalConverted() + getTotalFailed();
+        return this.getTotalConverted() + this.getTotalFailed();
     }
 
     public double getOverallSuccessRate() {
-        int total = getGrandTotal();
-        return total > 0 ? (getTotalConverted() * 100.0) / total : 0.0;
+        int total = this.getGrandTotal();
+        return total > 0 ? (this.getTotalConverted() * 100.0) / total : 0.0;
     }
 
     public void reset() {
@@ -92,7 +92,7 @@ public class CraftEnginePlacementTracker {
                         "  Total: %d converted, %d failed (%.1f%% success)",
                 this.blocks.getConverted(), this.blocks.getFailed(), this.blocks.getSuccessRate(),
                 this.furniture.getConverted(), this.furniture.getFailed(), this.furniture.getSuccessRate(),
-                getTotalConverted(), getTotalFailed(), getOverallSuccessRate()
+                this.getTotalConverted(), this.getTotalFailed(), this.getOverallSuccessRate()
         );
     }
 }

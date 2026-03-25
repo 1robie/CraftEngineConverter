@@ -15,26 +15,34 @@ public abstract class FurnitureConverter extends ObjectConverter {
         super(plugin, pluginType);
     }
 
-    protected void executeFurnitureConversion(Location entityLoc, Set<Location> processed, ConversionCounter counter){
-        for (int[] offset : ADJACENT_OFFSETS){
-            if (counter.hasReachedLimit()) return;
+    protected void executeFurnitureConversion(Location entityLoc, Set<Location> processed, ConversionCounter counter) {
+        for (int[] offset : ADJACENT_OFFSETS) {
+            if (counter.hasReachedLimit()) {
+                return;
+            }
             Entity furnitureEntityAt = this.getFurnitureEntityAt(entityLoc.clone().add(offset[0], offset[1], offset[2]));
             Location adjacentLoc = (furnitureEntityAt == null ? entityLoc.clone().add(offset[0], offset[1], offset[2]) : furnitureEntityAt.getLocation()).add(0, -0.5, 0);
-            if (!adjacentLoc.isChunkLoaded() || !processed.add(adjacentLoc)) continue;
-            if (!this.isFurnitureAt(adjacentLoc)) continue;
+            if (!adjacentLoc.isChunkLoaded() || !processed.add(adjacentLoc)) {
+                continue;
+            }
+            if (!this.isFurnitureAt(adjacentLoc)) {
+                continue;
+            }
             String newName = this.getNewNameForFurniture(adjacentLoc);
-            if (newName == null || !isRegistered(newName)) continue;
+            if (newName == null || !this.isRegistered(newName)) {
+                continue;
+            }
             String entityNBT = furnitureEntityAt.getAsString();
-            if (this.removeFurnitureAt(adjacentLoc)){
+            if (this.removeFurnitureAt(adjacentLoc)) {
                 this.placeFurniture(newName, adjacentLoc, entityNBT);
                 counter.increment();
-                executeFurnitureConversion(adjacentLoc, processed, counter);
+                this.executeFurnitureConversion(adjacentLoc, processed, counter);
             }
         }
     }
 
     @Override
-    public boolean isRegistered(String itemId){
+    public boolean isRegistered(String itemId) {
         return CraftEngineFurniture.byId(Key.from(itemId)) != null;
     }
 
@@ -46,11 +54,11 @@ public abstract class FurnitureConverter extends ObjectConverter {
 
     public abstract boolean removeFurnitureAt(Location location);
 
-    public void placeFurniture(String itemId, Location location,@Nullable String entityNBT) {
+    public void placeFurniture(String itemId, Location location, @Nullable String entityNBT) {
         this.plugin.getPlacementTracker().placeFurniture(itemId, location);
     }
 
-    public static boolean isRegisteredStatic(String itemId){
+    public static boolean isRegisteredStatic(String itemId) {
         return CraftEngineFurniture.byId(Key.from(itemId)) != null;
     }
 }

@@ -15,7 +15,7 @@ public class SlabBlockState extends AbstractDefaultBlockState {
             @NotNull ModelConfiguration modelDouble
     ) {
         SlabTypeBlockStateProperty typeProperty = new SlabTypeBlockStateProperty("type", SlabType.BOTTOM);
-        BooleanBlockStateProperty waterloggedProperty = addWaterloggedProperty();
+        BooleanBlockStateProperty waterloggedProperty = this.addWaterloggedProperty();
 
         this.addProperty(typeProperty);
 
@@ -31,14 +31,14 @@ public class SlabBlockState extends AbstractDefaultBlockState {
                     case DOUBLE -> modelDouble;
                 };
 
-                this.addAppearance(appearanceName, buildAppearance(state, model));
+                this.addAppearance(appearanceName, this.buildAppearance(state, model));
 
                 BlockVariant variant = new BlockVariant(appearanceName)
                         .addVariantCondition(typeProperty, type)
                         .addVariantCondition(waterloggedProperty, waterlogged);
 
                 if (waterlogged) {
-                    applyWaterloggedSettings(variant);
+                    this.applyWaterloggedSettings(variant);
                 }
                 this.addVariant(variant);
             }

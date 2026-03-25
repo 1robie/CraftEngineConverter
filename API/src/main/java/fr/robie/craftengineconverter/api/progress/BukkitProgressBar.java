@@ -65,7 +65,7 @@ public class BukkitProgressBar extends ObjectUtils {
      * The progress bar will be logged at regular intervals.
      */
     public void start() {
-        if (isNotNull(this.task)) {
+        if (this.isNotNull(this.task)) {
             Logger.info("BukkitProgressBar is already started!", LogType.WARNING);
             return;
         }
@@ -78,11 +78,11 @@ public class BukkitProgressBar extends ObjectUtils {
      * Stops the automatic progress logging task.
      */
     public void stop() {
-        if (isNotNull(this.task)) {
+        if (this.isNotNull(this.task)) {
             this.task.cancel();
             this.task = null;
             if (this.current < this.total) {
-                Logger.info("Progress tracking stopped at " + String.format("%.1f%%", getPercentage()));
+                Logger.info("Progress tracking stopped at " + String.format("%.1f%%", this.getPercentage()));
             }
         }
     }
@@ -93,10 +93,10 @@ public class BukkitProgressBar extends ObjectUtils {
      */
     public void printProgress() {
         long currentTime = System.currentTimeMillis();
-        if (currentTime - this.lastUpdateTime < this.MIN_LOG_INTERVAL_MS && !isComplete()) {
+        if (currentTime - this.lastUpdateTime < this.MIN_LOG_INTERVAL_MS && !this.isComplete()) {
             return;
         }
-        displayProgress();
+        this.displayProgress();
         this.lastUpdateTime = currentTime;
     }
 
@@ -105,13 +105,13 @@ public class BukkitProgressBar extends ObjectUtils {
      * Useful for important milestones.
      */
     public void printProgressForced() {
-        displayProgress();
+        this.displayProgress();
         this.lastUpdateTime = System.currentTimeMillis();
     }
 
     public void displayProgress() {
-        String progressMessage = getProgress();
-        if (isNotNull(this.player)) {
+        String progressMessage = this.getProgress();
+        if (this.isNotNull(this.player)) {
             this.plugin.getMessageFormatter().sendMessage(this.player, progressMessage);
         } else {
             Logger.info(progressMessage);
@@ -132,21 +132,31 @@ public class BukkitProgressBar extends ObjectUtils {
             sb.append("[");
             int filled = (int) ((double) this.current / this.total * this.barWidth);
 
-            if (!this.progressColor.isEmpty()) sb.append(this.progressColor);
+            if (!this.progressColor.isEmpty()) {
+                sb.append(this.progressColor);
+            }
             sb.append(String.valueOf(this.progressChar).repeat(Math.max(0, filled)));
 
-            if (!this.emptyColor.isEmpty()) sb.append(this.emptyColor);
+            if (!this.emptyColor.isEmpty()) {
+                sb.append(this.emptyColor);
+            }
             sb.append(String.valueOf(this.emptyChar).repeat(Math.max(0, this.barWidth - filled)));
 
-            if (!this.normalColor.isEmpty()) sb.append(this.normalColor);
+            if (!this.normalColor.isEmpty()) {
+                sb.append(this.normalColor);
+            }
             sb.append("] ");
         }
 
         if (this.showPercentage) {
             double percentage = (double) this.current / this.total * 100;
-            if (!this.percentColor.isEmpty()) sb.append(this.percentColor);
+            if (!this.percentColor.isEmpty()) {
+                sb.append(this.percentColor);
+            }
             sb.append(String.format("%6.2f%%", percentage));
-            if (!this.normalColor.isEmpty()) sb.append(this.normalColor);
+            if (!this.normalColor.isEmpty()) {
+                sb.append(this.normalColor);
+            }
             sb.append(" ");
         }
 
@@ -162,10 +172,10 @@ public class BukkitProgressBar extends ObjectUtils {
             sb.append(" | ").append(TimerBuilder.formatTimeAuto(System.currentTimeMillis() - this.startTimeMillis)).append(" elapsed");
         }
 
-        if (isComplete()) {
+        if (this.isComplete()) {
             sb.append(" ").append(ProgressColor.GREEN.getCode()).append("✔").append(this.normalColor);
             if (this.autoStop) {
-                stop();
+                this.stop();
             }
         }
 
@@ -176,7 +186,7 @@ public class BukkitProgressBar extends ObjectUtils {
      * Increments the progress by 1.
      */
     public void increment() {
-        increment(1);
+        this.increment(1);
     }
 
     /**
@@ -185,7 +195,7 @@ public class BukkitProgressBar extends ObjectUtils {
      * @param amount the amount to increment
      */
     public void increment(int amount) {
-        setCurrent(this.current + amount);
+        this.setCurrent(this.current + amount);
     }
 
     /**
@@ -197,13 +207,15 @@ public class BukkitProgressBar extends ObjectUtils {
         int oldCurrent = this.current;
         this.current = Math.max(0, Math.min(current, this.total));
 
-        if (shouldLogMilestone(oldCurrent, this.current)) {
-            printProgressForced();
+        if (this.shouldLogMilestone(oldCurrent, this.current)) {
+            this.printProgressForced();
         }
     }
 
     private boolean shouldLogMilestone(int oldValue, int newValue) {
-        if (this.total < 5) return false;
+        if (this.total < 5) {
+            return false;
+        }
 
         int oldMilestone = (oldValue * 5) / this.total;
         int newMilestone = (newValue * 5) / this.total;
@@ -228,7 +240,9 @@ public class BukkitProgressBar extends ObjectUtils {
     }
 
     public long getEstimatedTimeRemaining(long startTimeMillis) {
-        if (this.current == 0) return -1;
+        if (this.current == 0) {
+            return -1;
+        }
 
         long elapsed = System.currentTimeMillis() - startTimeMillis;
         long totalEstimated = (elapsed * this.total) / this.current;
@@ -236,7 +250,9 @@ public class BukkitProgressBar extends ObjectUtils {
     }
 
     public static String formatDuration(long millis) {
-        if (millis < 0) return "calculating...";
+        if (millis < 0) {
+            return "calculating...";
+        }
 
         long seconds = millis / 1000;
         long minutes = seconds / 60;

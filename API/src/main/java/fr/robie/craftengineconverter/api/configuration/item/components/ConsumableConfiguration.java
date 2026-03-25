@@ -33,19 +33,24 @@ public class ConsumableConfiguration extends AbstractEffectsConfiguration {
 
     @Override
     public void serialize(@NotNull YamlConfiguration yamlConfiguration, @NotNull String path, @NotNull ConfigurationSection itemSection, @NotNull String itemId) {
-        ConfigurationSection components = getOrCreateSection(itemSection, "components");
-        ConfigurationSection consumableSection = getOrCreateSection(components, "minecraft:consumable");
+        ConfigurationSection components = this.getOrCreateSection(itemSection, "components");
+        ConfigurationSection consumableSection = this.getOrCreateSection(components, "minecraft:consumable");
 
-        if (!sound.equals("entity.generic.eat"))
+        if (!sound.equals("entity.generic.eat")) {
             consumableSection.set("sound", sound);
-        if (!hasConsumeParticles)
+        }
+        if (!hasConsumeParticles) {
             consumableSection.set("has_consume_particles", false);
-        if (consumeSeconds != 1.6)
+        }
+        if (consumeSeconds != 1.6) {
             consumableSection.set("consume_seconds", consumeSeconds);
-        if (animation != Animation.EAT)
+        }
+        if (animation != Animation.EAT) {
             consumableSection.set("animation", animation.toKey());
+        }
 
-        if (onConsumeEffects != null && !onConsumeEffects.isEmpty())
-            consumableSection.set("on_consume_effects", serializeEffects(onConsumeEffects));
+        if (onConsumeEffects != null && !onConsumeEffects.isEmpty()) {
+            consumableSection.set("on_consume_effects", this.serializeEffects(onConsumeEffects));
+        }
     }
 }

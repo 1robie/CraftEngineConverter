@@ -29,7 +29,7 @@ public class MultiStateBlock implements StateBlock {
      * @throws IllegalArgumentException if any condition property or appearance is unknown
      */
     public void addVariant(@NotNull BlockVariant variant) throws IllegalArgumentException {
-        validateVariant(variant);
+        this.validateVariant(variant);
         this.variants.add(variant);
     }
 
@@ -39,38 +39,41 @@ public class MultiStateBlock implements StateBlock {
                 .toList();
 
         for (String propertyName : variant.getVariantConditions().keySet()) {
-            if (!registeredPropertyNames.contains(propertyName))
+            if (!registeredPropertyNames.contains(propertyName)) {
                 throw new IllegalArgumentException("Variant condition references unknown property '" + propertyName + "'. Registered properties: " + registeredPropertyNames);
+            }
         }
 
         String appearanceName = variant.getAppearanceName();
-        if (appearanceName != null && !this.appearanceMap.containsKey(appearanceName))
+        if (appearanceName != null && !this.appearanceMap.containsKey(appearanceName)) {
             throw new IllegalArgumentException("Variant references unknown appearance '" + appearanceName + "'. Registered appearances: " + this.appearanceMap.keySet());
+        }
     }
 
     @Override
     public void serialize(@NotNull ConfigurationSection blockBehaviorSection) {
-        ConfigurationSection statesConfigurationSection = getOrCreateSection(blockBehaviorSection, "states");
+        ConfigurationSection statesConfigurationSection = this.getOrCreateSection(blockBehaviorSection, "states");
 
-        ConfigurationSection propertiesSection = getOrCreateSection(statesConfigurationSection, "properties");
+        ConfigurationSection propertiesSection = this.getOrCreateSection(statesConfigurationSection, "properties");
         for (BlockStateProperty<?> property : this.properties) {
             property.serialize(propertiesSection);
         }
 
-        ConfigurationSection appearancesSection = getOrCreateSection(statesConfigurationSection, "appearances");
+        ConfigurationSection appearancesSection = this.getOrCreateSection(statesConfigurationSection, "appearances");
         for (var entry : this.appearanceMap.entrySet()) {
-            ConfigurationSection appearanceSection = getOrCreateSection(appearancesSection, entry.getKey());
+            ConfigurationSection appearanceSection = this.getOrCreateSection(appearancesSection, entry.getKey());
             entry.getValue().serialize(appearanceSection);
         }
 
         if (!this.variants.isEmpty()) {
-            ConfigurationSection variantsSection = getOrCreateSection(statesConfigurationSection, "variants");
+            ConfigurationSection variantsSection = this.getOrCreateSection(statesConfigurationSection, "variants");
             for (BlockVariant blockVariant : this.variants) {
-                ConfigurationSection variant = getOrCreateSection(variantsSection, blockVariant.getVariantKey());
-                if (blockVariant.getAppearanceName() != null)
+                ConfigurationSection variant = this.getOrCreateSection(variantsSection, blockVariant.getVariantKey());
+                if (blockVariant.getAppearanceName() != null) {
                     variant.set("appearance", blockVariant.getAppearanceName());
+                }
                 if (blockVariant.getBlockSettings().isUpdated()) {
-                    ConfigurationSection variantSettings = getOrCreateSection(variant, "settings");
+                    ConfigurationSection variantSettings = this.getOrCreateSection(variant, "settings");
                     blockVariant.getBlockSettings().serialize(variantSettings);
                 }
             }

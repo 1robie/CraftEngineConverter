@@ -32,17 +32,17 @@ public class EnchantmentConfiguration implements ItemConfigurationSerializable {
 
     @Override
     public void serialize(@NotNull YamlConfiguration yamlConfiguration, @NotNull String path, @NotNull ConfigurationSection itemSection, @NotNull String itemId) {
-        ConfigurationSection data = getOrCreateSection(itemSection, "data");
-        ConfigurationSection enchantment = getOrCreateSection(data, "enchantment");
+        ConfigurationSection data = this.getOrCreateSection(itemSection, "data");
+        ConfigurationSection enchantment = this.getOrCreateSection(data, "enchantment");
         if (this.merge) {
             enchantment.set("merge", true);
-            ConfigurationSection enchantmentsSection = getOrCreateSection(enchantment, "enchantments");
+            ConfigurationSection enchantmentsSection = this.getOrCreateSection(enchantment, "enchantments");
             for (Map.Entry<String, Integer> entry : this.enchantments.entrySet()) {
-                enchantmentsSection.set(getEnchantmentName(entry.getKey().toLowerCase()), entry.getValue());
+                enchantmentsSection.set(this.getEnchantmentName(entry.getKey().toLowerCase()), entry.getValue());
             }
         } else {
             for (Map.Entry<String, Integer> entry : this.enchantments.entrySet()) {
-                enchantment.set(getEnchantmentName(entry.getKey().toLowerCase()), entry.getValue());
+                enchantment.set(this.getEnchantmentName(entry.getKey().toLowerCase()), entry.getValue());
             }
         }
     }

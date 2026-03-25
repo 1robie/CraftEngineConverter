@@ -35,7 +35,7 @@ public class JsonFileValidator {
 
     public void validateAllJsonFiles() {
         try {
-            List<FileValidationEntry> queue = collectModelJsonFiles(this.outputPackFile);
+            List<FileValidationEntry> queue = this.collectModelJsonFiles(this.outputPackFile);
 
             BukkitProgressBar.Builder builder = new BukkitProgressBar.Builder(queue.size());
             if (this.optionalPlayer.isPresent()) {
@@ -47,7 +47,7 @@ public class JsonFileValidator {
 
             for (FileValidationEntry entry : queue) {
                 try {
-                    validateJsonFile(entry.namespaceDir(), entry.jsonFile());
+                    this.validateJsonFile(entry.namespaceDir(), entry.jsonFile());
                 } catch (Exception e) {
                     Logger.debug("An error occurred while validating " + entry.jsonFile().getName() + ": " + e.getMessage(), LogType.ERROR);
                 } finally {
@@ -85,7 +85,7 @@ public class JsonFileValidator {
                 continue;
             }
 
-            collectJsonFilesRecursive(namespaceDir, modelsDir, queue);
+            this.collectJsonFilesRecursive(namespaceDir, modelsDir, queue);
         }
 
         return queue;
@@ -99,7 +99,7 @@ public class JsonFileValidator {
 
         for (File child : children) {
             if (child.isDirectory()) {
-                collectJsonFilesRecursive(namespaceDir, child, queue);
+                this.collectJsonFilesRecursive(namespaceDir, child, queue);
             } else if (child.isFile() && child.getName().toLowerCase().endsWith(".json")) {
                 queue.add(new FileValidationEntry(namespaceDir, child));
             }

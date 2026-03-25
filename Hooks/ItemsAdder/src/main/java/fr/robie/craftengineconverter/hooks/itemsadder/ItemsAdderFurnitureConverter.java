@@ -23,20 +23,22 @@ import java.util.Set;
 
 public class ItemsAdderFurnitureConverter extends FurnitureConverter implements Listener {
 
-    public ItemsAdderFurnitureConverter(CraftEngineConverterPlugin plugin){
+    public ItemsAdderFurnitureConverter(CraftEngineConverterPlugin plugin) {
         super(plugin, Plugins.ITEMS_ADDER);
     }
 
     @EventHandler
-    public void onItemsAdderFurnitureInteract(FurnitureInteractEvent event){
-        if (!Configuration.<Boolean>get(ConfigurationKey.ITEMS_ADDER_FURNITURE_INTERACTION_CONVERSION) || !event.getPlayer().hasPermission(Permission.ITEMSADDER_FURNITURE_INTERACT_CONVERSION.asPermission())) return;
+    public void onItemsAdderFurnitureInteract(FurnitureInteractEvent event) {
+        if (!Configuration.<Boolean>get(ConfigurationKey.ITEMS_ADDER_FURNITURE_INTERACTION_CONVERSION) || !event.getPlayer().hasPermission(Permission.ITEMSADDER_FURNITURE_INTERACT_CONVERSION.asPermission())) {
+            return;
+        }
         String namespacedID = event.getNamespacedID();
         String newName = this.getNewName(namespacedID);
-        if (newName == null || !isRegistered(newName)){
+        if (newName == null || !this.isRegistered(newName)) {
             return;
         }
         Entity bukkitEntity = event.getBukkitEntity();
-        CustomFurniture.remove(bukkitEntity,false);
+        CustomFurniture.remove(bukkitEntity, false);
         Location location = bukkitEntity.getLocation();
         this.placeFurniture(newName, location.add(0, -0.5, 0), null);
         event.setCancelled(true);
@@ -45,21 +47,21 @@ public class ItemsAdderFurnitureConverter extends FurnitureConverter implements 
             Set<Location> processed = new HashSet<>();
             processed.add(location);
             ConversionCounter counter = new ConversionCounter(Configuration.<Integer>get(ConfigurationKey.MAX_BLOCK_CONVERSION_PROPAGATION_DEPTH) - 1);
-            executeFurnitureConversion(location, processed, counter);
+            this.executeFurnitureConversion(location, processed, counter);
         }
     }
 
     @Override
     public boolean isFurnitureAt(Location location) {
-        return getFurnitureEntityAt(location) != null;
+        return this.getFurnitureEntityAt(location) != null;
     }
 
     @Override
     public String getNewNameForFurniture(Location location) {
-        Entity furnitureEntity = getFurnitureEntityAt(location);
-        if (furnitureEntity != null){
+        Entity furnitureEntity = this.getFurnitureEntityAt(location);
+        if (furnitureEntity != null) {
             CustomFurniture customFurniture = CustomFurniture.byAlreadySpawned(furnitureEntity);
-            if (customFurniture != null){
+            if (customFurniture != null) {
                 return customFurniture.getNamespacedID();
             }
         }
@@ -67,7 +69,7 @@ public class ItemsAdderFurnitureConverter extends FurnitureConverter implements 
     }
 
     @Nullable
-    public Entity getFurnitureEntityAt(Location location){
+    public Entity getFurnitureEntityAt(Location location) {
         Collection<Entity> entities = location.getNearbyEntities(1, 1, 1);
         for (Entity entity : entities) {
             if (entity instanceof ItemFrame || entity instanceof ItemDisplay || entity instanceof ArmorStand) {
@@ -81,9 +83,9 @@ public class ItemsAdderFurnitureConverter extends FurnitureConverter implements 
 
     @Override
     public boolean removeFurnitureAt(Location location) {
-        Entity furnitureEntity = getFurnitureEntityAt(location);
-        if (furnitureEntity != null){
-            CustomFurniture.remove(furnitureEntity,false);
+        Entity furnitureEntity = this.getFurnitureEntityAt(location);
+        if (furnitureEntity != null) {
+            CustomFurniture.remove(furnitureEntity, false);
             return true;
         }
         return false;

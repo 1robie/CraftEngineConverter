@@ -178,7 +178,7 @@ public abstract class VCommand extends Arguments {
      */
     public String getSyntax() {
         if (this.syntax == null) {
-            this.syntax = generateDefaultSyntax("");
+            this.syntax = this.generateDefaultSyntax("");
         }
         return this.syntax;
     }
@@ -315,15 +315,15 @@ public abstract class VCommand extends Arguments {
     }
 
     protected void addFlag(@NotNull String flag) {
-        addFlag(flag, false, String.class, null);
+        this.addFlag(flag, false, String.class, null);
     }
 
     protected void addFlag(@NotNull String flag, boolean hasValue) {
-        addFlag(flag, hasValue, String.class, null);
+        this.addFlag(flag, hasValue, String.class, null);
     }
 
     protected <T> void addFlag(@NotNull String flag, @NotNull Class<T> type, @Nullable T defaultValue) {
-        addFlag(flag, true, type, defaultValue);
+        this.addFlag(flag, true, type, defaultValue);
     }
 
     private <T> void addFlag(@NotNull String flag, boolean hasValue, @NotNull Class<T> type, @Nullable T defaultValue) {
@@ -414,9 +414,9 @@ public abstract class VCommand extends Arguments {
 
         StringBuilder syntaxBuilder = new StringBuilder();
         if (update) {
-            appendRequiredArguments(syntaxBuilder);
-            appendOptionalArguments(syntaxBuilder);
-            appendFlags(syntaxBuilder);
+            this.appendRequiredArguments(syntaxBuilder);
+            this.appendOptionalArguments(syntaxBuilder);
+            this.appendFlags(syntaxBuilder);
             syntax = syntaxBuilder.toString().trim();
         }
 
@@ -436,17 +436,25 @@ public abstract class VCommand extends Arguments {
         this.flagsArgs.forEach(flag -> {
             syntaxBuilder.append(" [").append(flag.flag);
             if (flag.hasValue) {
-                syntaxBuilder.append("=<").append(getSimpleTypeName(flag.type)).append(">");
+                syntaxBuilder.append("=<").append(this.getSimpleTypeName(flag.type)).append(">");
             }
             syntaxBuilder.append("]");
         });
     }
 
     private String getSimpleTypeName(Class<?> type) {
-        if (type == Boolean.class) return "bool";
-        if (type == Integer.class) return "int";
-        if (type == Double.class) return "double";
-        if (type == String.class) return "string";
+        if (type == Boolean.class) {
+            return "bool";
+        }
+        if (type == Integer.class) {
+            return "int";
+        }
+        if (type == Double.class) {
+            return "double";
+        }
+        if (type == String.class) {
+            return "string";
+        }
         return type.getSimpleName().toLowerCase();
     }
 
@@ -473,13 +481,13 @@ public abstract class VCommand extends Arguments {
 
         this.parentCount = this.parentCount(0);
 
-        String[] cleanedArgs = parseFlags(args);
+        String[] cleanedArgs = this.parseFlags(args);
 
         this.argsMaxLength = this.requireArgs.size() + this.optionalArgs.size() + this.parentCount;
         this.argsMinLength = this.requireArgs.size() + this.parentCount;
 
         if (this.syntax == null) {
-            this.syntax = generateDefaultSyntax("");
+            this.syntax = this.generateDefaultSyntax("");
         }
 
         this.args = cleanedArgs;
@@ -488,8 +496,9 @@ public abstract class VCommand extends Arguments {
 
         if (defaultString != null) {
             for (VCommand subCommand : this.subVCommands) {
-                if (subCommand.getSubCommands().contains(defaultString.toLowerCase()))
+                if (subCommand.getSubCommands().contains(defaultString.toLowerCase())) {
                     return CommandType.CONTINUE;
+                }
             }
         }
 
@@ -508,7 +517,7 @@ public abstract class VCommand extends Arguments {
         }
 
         try {
-            return perform(plugin);
+            return this.perform(plugin);
         } catch (Exception e) {
             Logger.showException("An error occurred while executing command: " + this.getSyntax(), e);
             return CommandType.SYNTAX_ERROR;
@@ -578,8 +587,9 @@ public abstract class VCommand extends Arguments {
             return false;
         }
         for (String command : this.subCommands) {
-            if (this.parent.getSubCommands().contains(command))
+            if (this.parent.getSubCommands().contains(command)) {
                 return true;
+            }
         }
         return false;
     }
@@ -602,7 +612,7 @@ public abstract class VCommand extends Arguments {
 
         this.parentCount = this.parentCount(0);
 
-        TabParseResult parseResult = parseArgsForTab(args);
+        TabParseResult parseResult = this.parseArgsForTab(args);
 
         int currentIndex = (parseResult.cleanedArgs.size() - this.parentCount) - 1;
         String lastArg = args[args.length - 1];
@@ -612,9 +622,9 @@ public abstract class VCommand extends Arguments {
                 this.generateList(consumer.accept(sender, args), lastArg)
         ).orElse(null);
 
-        List<String> availableFlags = getAvailableFlags(parseResult.usedFlags, lastArg);
+        List<String> availableFlags = this.getAvailableFlags(parseResult.usedFlags, lastArg);
 
-        return combineCompletions(completions, availableFlags, currentIndex);
+        return this.combineCompletions(completions, availableFlags, currentIndex);
     }
 
     private TabParseResult parseArgsForTab(String[] args) {
@@ -631,7 +641,7 @@ public abstract class VCommand extends Arguments {
             if (flagSet.contains(arg)) {
                 usedFlags.add(arg);
 
-                FlagValue<?> flagValue = findFlag(arg);
+                FlagValue<?> flagValue = this.findFlag(arg);
                 if (flagValue != null && flagValue.hasValue &&
                         i + 1 < args.length && !args[i + 1].startsWith("--")) {
                     i++;
@@ -709,7 +719,7 @@ public abstract class VCommand extends Arguments {
      * @return
      */
     protected List<String> generateList(String startWith, String... strings) {
-        return generateList(Arrays.asList(strings), startWith);
+        return this.generateList(Arrays.asList(strings), startWith);
     }
 
     /**
@@ -720,7 +730,7 @@ public abstract class VCommand extends Arguments {
      * @return
      */
     protected List<String> generateList(Tab tab, String startWith, String... strings) {
-        return generateList(Arrays.asList(strings), startWith, tab);
+        return this.generateList(Arrays.asList(strings), startWith, tab);
     }
 
     /**
@@ -731,7 +741,7 @@ public abstract class VCommand extends Arguments {
      * @return
      */
     protected List<String> generateList(Collection<String> defaultList, String startWith) {
-        return generateList(defaultList, startWith, Tab.CONTAINS);
+        return this.generateList(defaultList, startWith, Tab.CONTAINS);
     }
 
     /**
@@ -811,8 +821,8 @@ public abstract class VCommand extends Arguments {
      */
     public void syntaxMessage() {
         this.subVCommands.forEach(command -> {
-            if (command.getPermission() == null || hasPermission(this.sender, command.getPermission())) {
-                message(this.plugin, this.sender, Message.COMMAND__SYNTAX__HELP, "syntax", command.getSyntax(), "description",
+            if (command.getPermission() == null || this.hasPermission(this.sender, command.getPermission())) {
+                this.message(this.plugin, this.sender, Message.COMMAND__SYNTAX__HELP, "syntax", command.getSyntax(), "description",
                         command.getDescription());
             }
         });

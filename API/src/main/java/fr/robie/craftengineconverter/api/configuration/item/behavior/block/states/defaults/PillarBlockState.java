@@ -19,13 +19,13 @@ public class PillarBlockState extends MultiStateBlock {
         this.addProperty(axisProperty);
 
         this.addAppearance("axisX", BlockAppearance.autoState(plugin, axisXBlockStateType, itemId, axisXModel).postProcessor(section -> {
-            ConfigurationSection model = getOrCreateSection(section, "model");
+            ConfigurationSection model = this.getOrCreateSection(section, "model");
             model.set("x", 90);
             model.set("y", 90);
         }).build());
         this.addAppearance("axisY", BlockAppearance.autoState(plugin, axisYBlockStateType, itemId, axisYModel).build());
         this.addAppearance("axisZ", BlockAppearance.autoState(plugin, axisZBlockStateType, itemId, axisZModel).postProcessor(section -> {
-            ConfigurationSection model = getOrCreateSection(section, "model");
+            ConfigurationSection model = this.getOrCreateSection(section, "model");
             model.set("x", 90);
         }).build());
 

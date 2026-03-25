@@ -26,12 +26,12 @@ public class CraftEngineItemsConfiguration {
         this.defaultMaterial = defaultMaterial;
     }
 
-    public void setMaterial(@Nullable Material material){
+    public void setMaterial(@Nullable Material material) {
         this.material = material;
     }
 
     @NotNull
-    public Material getMaterial(){
+    public Material getMaterial() {
         return (this.material == null ? this.defaultMaterial : this.material);
     }
 
@@ -40,7 +40,7 @@ public class CraftEngineItemsConfiguration {
         return this.material;
     }
 
-    public void addItemConfiguration(@NotNull ItemConfigurationSerializable itemConfiguration){
+    public void addItemConfiguration(@NotNull ItemConfigurationSerializable itemConfiguration) {
         this.itemsConfigurations.add(itemConfiguration);
     }
 
@@ -55,7 +55,7 @@ public class CraftEngineItemsConfiguration {
     public void serialize(@NotNull File file, @NotNull String path) {
         YamlConfiguration yamlConfiguration = new YamlConfiguration();
         ConfigurationSection itemSection = yamlConfiguration.createSection(path);
-        serialize(yamlConfiguration, path, itemSection);
+        this.serialize(yamlConfiguration, path, itemSection);
         try {
             yamlConfiguration.save(file);
         } catch (Exception e) {

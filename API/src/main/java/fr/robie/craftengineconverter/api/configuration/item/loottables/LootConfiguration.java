@@ -11,12 +11,14 @@ public interface LootConfiguration {
 
     @Contract("!null -> !null; null -> null")
     default @Nullable String namespaced(String path) {
-        return namespaced(path, "minecraft");
+        return this.namespaced(path, "minecraft");
     }
 
     @Contract("null, _ -> null")
     default @Nullable String namespaced(String path, @NotNull String defaultNamespace) {
-        if (path == null || path.isEmpty()) return null;
+        if (path == null || path.isEmpty()) {
+            return null;
+        }
         return path.contains(":") ? path : defaultNamespace + ":" + path;
     }
 }

@@ -35,8 +35,9 @@ public class BlockAppearance implements SectionProvider {
     }
 
     public void serialize(@NotNull ConfigurationSection section) {
-        if (this.preSerializationConsumer != null)
+        if (this.preSerializationConsumer != null) {
             this.preSerializationConsumer.accept(section);
+        }
 
         boolean blockEntityAdded = false;
 
@@ -60,15 +61,16 @@ public class BlockAppearance implements SectionProvider {
         } else if (this.visualState != null) {
             section.set("state", this.visualState);
         }
-        ConfigurationSection modelSection = getOrCreateSection(section, "model");
+        ConfigurationSection modelSection = this.getOrCreateSection(section, "model");
         this.model.serialize(modelSection);
 
         if (!blockEntityAdded && this.blockEntity != null) {
             this.blockEntity.serialize(section);
         }
 
-        if (this.postSerializationConsumer != null)
+        if (this.postSerializationConsumer != null) {
             this.postSerializationConsumer.accept(section);
+        }
     }
 
     public static Builder autoState(@NotNull Plugins requiredPlugin, @NotNull CraftEngineBlockState autoState, @NotNull String itemId, @NotNull ModelConfiguration model) {

@@ -10,7 +10,7 @@ public class ItemEntry extends AbstractLootEntry {
 
     public ItemEntry(@NotNull String item) {
         super("item");
-        this.item = namespaced(Objects.requireNonNull(item, "item cannot be null"));
+        this.item = this.namespaced(Objects.requireNonNull(item, "item cannot be null"));
     }
 
     @Override

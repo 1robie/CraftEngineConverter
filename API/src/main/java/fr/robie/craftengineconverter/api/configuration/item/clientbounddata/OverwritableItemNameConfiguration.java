@@ -14,7 +14,7 @@ public class OverwritableItemNameConfiguration implements ItemConfigurationSeria
 
     @Override
     public void serialize(@NotNull YamlConfiguration yamlConfiguration, @NotNull String path, @NotNull ConfigurationSection itemSection, @NotNull String itemId) {
-        ConfigurationSection clientBoundDataSection = getOrCreateSection(itemSection, "client-bound-data");
+        ConfigurationSection clientBoundDataSection = this.getOrCreateSection(itemSection, "client-bound-data");
         clientBoundDataSection.set("overwritable-item-name", this.itemName);
     }
 }

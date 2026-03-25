@@ -33,12 +33,12 @@ public class CraftEngineConverterCommandWorldConverterStart extends VCommand {
         boolean forceConversion = this.containFlag("--force");
 
         if (this.currentConversion != null && !this.currentConversion.isDone() && !forceConversion) {
-            message(plugin, this.sender, Message.COMMAND__WORLD_CONVERTER__ALREADY_RUNNING);
+            this.message(plugin, this.sender, Message.COMMAND__WORLD_CONVERTER__ALREADY_RUNNING);
             return CommandType.SUCCESS;
         }
 
         if (forceConversion && this.currentConversion != null && !this.currentConversion.isDone()) {
-            message(plugin, this.sender, Message.COMMAND__WORLD_CONVERTER__FORCE_STOPPING);
+            this.message(plugin, this.sender, Message.COMMAND__WORLD_CONVERTER__FORCE_STOPPING);
             worldConverterManager.cancelAllConversions();
             this.currentConversion.cancel(true);
         }
@@ -63,7 +63,7 @@ public class CraftEngineConverterCommandWorldConverterStart extends VCommand {
         }
         BukkitProgressBar progressBar = builder.build(this.plugin);
 
-        message(plugin, this.sender, Message.COMMAND__WORLD_CONVERTER__START, "chunks", totalChunks);
+        this.message(plugin, this.sender, Message.COMMAND__WORLD_CONVERTER__START, "chunks", totalChunks);
 
         int oldConvertedBlocks = worldConverterManager.getPlacementTracker().getBlocksConverted();
         int oldConvertedFurniture = worldConverterManager.getPlacementTracker().getFurnitureConverted();
@@ -83,7 +83,7 @@ public class CraftEngineConverterCommandWorldConverterStart extends VCommand {
             int convertedBlocks = worldConverterManager.getPlacementTracker().getBlocksConverted();
             int convertedFurniture = worldConverterManager.getPlacementTracker().getFurnitureConverted();
 
-            message(plugin, this.sender, Message.COMMAND__WORLD_CONVERTER__COMPLETE,
+            this.message(plugin, this.sender, Message.COMMAND__WORLD_CONVERTER__COMPLETE,
                     "chunks", processedChunks,
                     "blocks", convertedBlocks - oldConvertedBlocks,
                     "furniture", convertedFurniture - oldConvertedFurniture,

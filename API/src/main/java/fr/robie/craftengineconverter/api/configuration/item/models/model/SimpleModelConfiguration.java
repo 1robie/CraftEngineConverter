@@ -17,7 +17,7 @@ public class SimpleModelConfiguration implements ModelConfiguration {
     private GenerationConfiguration generation;
 
     public SimpleModelConfiguration(@NotNull String modelPath) {
-        this.model = namespaced(Objects.requireNonNull(modelPath, "modelPath cannot be null"));
+        this.model = this.namespaced(Objects.requireNonNull(modelPath, "modelPath cannot be null"));
     }
 
     public void addTint(@NotNull TintConfiguration tint) {

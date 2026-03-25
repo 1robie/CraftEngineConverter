@@ -14,8 +14,8 @@ public class DamageResistantConfiguration implements ItemConfigurationSerializab
 
     @Override
     public void serialize(@NotNull YamlConfiguration yamlConfiguration, @NotNull String path, @NotNull ConfigurationSection itemSection, @NotNull String itemId) {
-        ConfigurationSection components = getOrCreateSection(itemSection, "components");
-        ConfigurationSection damageResistantComponent = getOrCreateSection(components, "minecraft:damage_resistant");
+        ConfigurationSection components = this.getOrCreateSection(itemSection, "components");
+        ConfigurationSection damageResistantComponent = this.getOrCreateSection(components, "minecraft:damage_resistant");
         damageResistantComponent.set("types", this.damageResistantType);
     }
 }

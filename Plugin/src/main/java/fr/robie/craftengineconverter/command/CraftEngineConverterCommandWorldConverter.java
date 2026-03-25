@@ -20,7 +20,7 @@ public class CraftEngineConverterCommandWorldConverter extends VCommand {
 
     @Override
     protected CommandType perform(CraftEngineConverter plugin) {
-        syntaxMessage();
+        this.syntaxMessage();
         return CommandType.SUCCESS;
     }
 }

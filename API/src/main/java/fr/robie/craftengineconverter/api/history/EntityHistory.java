@@ -46,7 +46,7 @@ public class EntityHistory {
     @Nullable
     public Location getLocation() {
         try {
-            return Location.deserialize(deserializeLocation());
+            return Location.deserialize(this.deserializeLocation());
         } catch (Exception e) {
             return null;
         }

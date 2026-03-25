@@ -15,23 +15,49 @@ public abstract class CollidableHitbox extends BaseHitbox {
         this.blocksBuilding = blocksBuildingDefault;
     }
 
-    public void setCanUseItemOn(boolean canUseItemOn) { this.canUseItemOn = canUseItemOn; }
-    public void setCanBeHitByProjectile(boolean canBeHitByProjectile) { this.canBeHitByProjectile = canBeHitByProjectile; }
-    public void setBlocksBuilding(boolean blocksBuilding) { this.blocksBuilding = blocksBuilding; }
-    public void setInteractive(boolean interactive) { this.interactive = interactive; }
-    public void setInvisible(boolean invisible) { this.invisible = invisible; }
+    public void setCanUseItemOn(boolean canUseItemOn) {
+        this.canUseItemOn = canUseItemOn;
+    }
+
+    public void setCanBeHitByProjectile(boolean canBeHitByProjectile) {
+        this.canBeHitByProjectile = canBeHitByProjectile;
+    }
+
+    public void setBlocksBuilding(boolean blocksBuilding) {
+        this.blocksBuilding = blocksBuilding;
+    }
+
+    public void setInteractive(boolean interactive) {
+        this.interactive = interactive;
+    }
+
+    public void setInvisible(boolean invisible) {
+        this.invisible = invisible;
+    }
 
     @Override
     protected void serialize(Map<String, Object> data) {
         super.serialize(data);
-        if (this.canUseItemOn != getDefaultCanUseItemOn()) data.put("can-use-item-on", this.canUseItemOn);
-        if (this.canBeHitByProjectile != getDefaultCanBeHitByProjectile()) data.put("can-be-hit-by-projectile", this.canBeHitByProjectile);
-        if (this.blocksBuilding != getDefaultBlocksBuilding()) data.put("blocks-building", this.blocksBuilding);
-        if (!this.interactive) data.put("interactive", false);
-        if (this.invisible) data.put("invisible", true);
+        if (this.canUseItemOn != this.getDefaultCanUseItemOn()) {
+            data.put("can-use-item-on", this.canUseItemOn);
+        }
+        if (this.canBeHitByProjectile != this.getDefaultCanBeHitByProjectile()) {
+            data.put("can-be-hit-by-projectile", this.canBeHitByProjectile);
+        }
+        if (this.blocksBuilding != this.getDefaultBlocksBuilding()) {
+            data.put("blocks-building", this.blocksBuilding);
+        }
+        if (!this.interactive) {
+            data.put("interactive", false);
+        }
+        if (this.invisible) {
+            data.put("invisible", true);
+        }
     }
 
     protected abstract boolean getDefaultCanUseItemOn();
+
     protected abstract boolean getDefaultCanBeHitByProjectile();
+
     protected abstract boolean getDefaultBlocksBuilding();
 }

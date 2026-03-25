@@ -53,7 +53,7 @@ public class FenceGateBlockState extends AbstractDefaultBlockState {
                         default -> 0; // SOUTH
                     };
 
-                    addRotatedAppearance(appearanceName, state, model, 0, y, true);
+                    this.addRotatedAppearance(appearanceName, state, model, 0, y, true);
 
                     this.addVariant(new BlockVariant(appearanceName)
                             .addVariantCondition(facingProperty, facing)

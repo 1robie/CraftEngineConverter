@@ -40,7 +40,7 @@ public class CraftEngineConverterCommandWorldConverterRestore extends VCommand {
         ServerProfile serverProfile = this.plugin.getServerProfile();
 
         if (!dataBaseManager.isEnabled()) {
-            message(plugin, this.sender, Message.COMMAND__WORLD_CONVERTER__RESTORE__DATABASE_DISABLED);
+            this.message(plugin, this.sender, Message.COMMAND__WORLD_CONVERTER__RESTORE__DATABASE_DISABLED);
             return CommandType.SUCCESS;
         }
 
@@ -51,19 +51,19 @@ public class CraftEngineConverterCommandWorldConverterRestore extends VCommand {
         int totalActiveConversions = activeBlockConversions + activeEntityConversions;
 
         if (totalActiveConversions == 0) {
-            message(plugin, this.sender, Message.COMMAND__WORLD_CONVERTER__RESTORE__ALL__NONE);
+            this.message(plugin, this.sender, Message.COMMAND__WORLD_CONVERTER__RESTORE__ALL__NONE);
             return CommandType.SUCCESS;
         }
 
         if (!confirm) {
-            message(plugin, this.sender, Message.COMMAND__WORLD_CONVERTER__RESTORE__ALL__CONFIRM,
+            this.message(plugin, this.sender, Message.COMMAND__WORLD_CONVERTER__RESTORE__ALL__CONFIRM,
                     "count", totalActiveConversions,
                     "blocks", activeBlockConversions,
                     "entities", activeEntityConversions);
             return CommandType.SUCCESS;
         }
 
-        message(plugin, this.sender, Message.COMMAND__WORLD_CONVERTER__RESTORE__ALL__START,
+        this.message(plugin, this.sender, Message.COMMAND__WORLD_CONVERTER__RESTORE__ALL__START,
                 "count", totalActiveConversions,
                 "blocks", activeBlockConversions,
                 "entities", activeEntityConversions);
@@ -106,7 +106,7 @@ public class CraftEngineConverterCommandWorldConverterRestore extends VCommand {
                     );
 
                     try {
-                        restoreBlock(location, history);
+                        this.restoreBlock(location, history);
                         serverProfile.markBlockAsReverted(history);
                         restoredBlockCount.incrementAndGet();
                     } catch (Exception e) {
@@ -162,7 +162,7 @@ public class CraftEngineConverterCommandWorldConverterRestore extends VCommand {
 
             long endTime = System.currentTimeMillis();
 
-            message(plugin, this.sender, Message.COMMAND__WORLD_CONVERTER__RESTORE__ALL__COMPLETE,
+            this.message(plugin, this.sender, Message.COMMAND__WORLD_CONVERTER__RESTORE__ALL__COMPLETE,
                     "restored", restoredBlockCount.get() + restoredEntityCount.get(),
                     "restored_blocks", restoredBlockCount.get(),
                     "restored_entities", restoredEntityCount.get(),

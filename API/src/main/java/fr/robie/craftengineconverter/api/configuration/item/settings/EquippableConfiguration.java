@@ -68,43 +68,55 @@ public class EquippableConfiguration implements ItemConfigurationSerializable {
     @Override
     public void serialize(@NotNull YamlConfiguration yamlConfiguration, @NotNull String path, @NotNull ConfigurationSection itemSection, @NotNull String itemId) {
         ConfigurationSection ceEquippableSection = this.assetId != null && !this.assetId.isBlank()
-                ? getOrCreateSection(getOrCreateSection(itemSection, "settings"), "equippable")
-                : getOrCreateSection(getOrCreateSection(itemSection, "data"), "equippable");
+                ? this.getOrCreateSection(this.getOrCreateSection(itemSection, "settings"), "equippable")
+                : this.getOrCreateSection(this.getOrCreateSection(itemSection, "data"), "equippable");
 
-        if (this.equipmentSlot != null)
+        if (this.equipmentSlot != null) {
             ceEquippableSection.set("slot", this.equipmentSlot.name().toLowerCase());
+        }
 
-        if (this.equipSound != null && !this.equipSound.isBlank() && !this.equipSound.equals("item.armor.equip_generic"))
+        if (this.equipSound != null && !this.equipSound.isBlank() && !this.equipSound.equals("item.armor.equip_generic")) {
             ceEquippableSection.set("equip-sound", this.equipSound);
+        }
 
-        if (this.assetId != null && !this.assetId.isBlank())
+        if (this.assetId != null && !this.assetId.isBlank()) {
             ceEquippableSection.set("asset-id", this.assetId);
+        }
 
-        if (this.allowedEntities != null)
+        if (this.allowedEntities != null) {
             ceEquippableSection.set("allowed-entities", this.allowedEntities);
+        }
 
-        if (!this.dispensable)
+        if (!this.dispensable) {
             ceEquippableSection.set("dispensable", false);
+        }
 
-        if (!this.swappable)
+        if (!this.swappable) {
             ceEquippableSection.set("swappable", false);
+        }
 
-        if (!this.damageOnHurt)
+        if (!this.damageOnHurt) {
             ceEquippableSection.set("damage-on-hurt", false);
+        }
 
-        if (this.equipOnInteract)
+        if (this.equipOnInteract) {
             ceEquippableSection.set("equip-on-interact", true);
+        }
 
-        if (this.cameraOverlay != null && !this.cameraOverlay.isBlank())
+        if (this.cameraOverlay != null && !this.cameraOverlay.isBlank()) {
             ceEquippableSection.set("camera-overlay", this.cameraOverlay);
+        }
 
-        if (this.canBeSheared)
+        if (this.canBeSheared) {
             ceEquippableSection.set("can-be-sheared", true);
+        }
 
-        if (this.shearingSound != null && !this.shearingSound.isBlank() && !this.shearingSound.equals("item.shears.snip"))
+        if (this.shearingSound != null && !this.shearingSound.isBlank() && !this.shearingSound.equals("item.shears.snip")) {
             ceEquippableSection.set("shearing-sound", this.shearingSound);
+        }
 
-        if (this.wings != null && !this.wings.isBlank())
+        if (this.wings != null && !this.wings.isBlank()) {
             ceEquippableSection.set("wings", this.wings);
+        }
     }
 }

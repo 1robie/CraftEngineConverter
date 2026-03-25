@@ -28,7 +28,7 @@ public class CraftEngineConverterCommandClearFilesCache extends VCommand {
         } else {
             clearedFiles = FileCacheManager.cleanStaleEntries();
         }
-        message(this.plugin, this.sender, Message.COMMAND__CLEAR_FILES_CACHE__COMPLETE, "cleared_files", clearedFiles, "time", TimerBuilder.formatTimeAuto(System.currentTimeMillis() - startTime));
+        this.message(this.plugin, this.sender, Message.COMMAND__CLEAR_FILES_CACHE__COMPLETE, "cleared_files", clearedFiles, "time", TimerBuilder.formatTimeAuto(System.currentTimeMillis() - startTime));
         return CommandType.SUCCESS;
     }
 }

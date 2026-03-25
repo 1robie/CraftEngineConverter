@@ -21,7 +21,7 @@ public class StairsBlockState extends AbstractDefaultBlockState {
         HorizontalDirectionBlockStateProperty facingProperty = new HorizontalDirectionBlockStateProperty("facing", HorizontalDirection.NORTH);
         SingleBlockHalfBlockStateProperty halfProperty = new SingleBlockHalfBlockStateProperty("half", SingleBlockHalf.BOTTOM);
         StairsShapeBlockStateProperty shapeProperty = new StairsShapeBlockStateProperty("shape", StairsShape.STRAIGHT);
-        BooleanBlockStateProperty waterloggedProperty = addWaterloggedProperty();
+        BooleanBlockStateProperty waterloggedProperty = this.addWaterloggedProperty();
 
         this.addProperty(facingProperty);
         this.addProperty(halfProperty);
@@ -70,7 +70,7 @@ public class StairsBlockState extends AbstractDefaultBlockState {
                             }
                         }
 
-                        addRotatedAppearance(appearanceName, state, model, x, y, true);
+                        this.addRotatedAppearance(appearanceName, state, model, x, y, true);
 
                         BlockVariant variant = new BlockVariant(appearanceName)
                                 .addVariantCondition(facingProperty, facing)
@@ -79,7 +79,7 @@ public class StairsBlockState extends AbstractDefaultBlockState {
                                 .addVariantCondition(waterloggedProperty, waterlogged);
 
                         if (waterlogged) {
-                            applyWaterloggedSettings(variant);
+                            this.applyWaterloggedSettings(variant);
                         }
 
                         this.addVariant(variant);

@@ -15,7 +15,7 @@ public class RangeDispatchModelConfiguration implements ModelConfiguration {
     private ModelConfiguration fallback;
 
     public RangeDispatchModelConfiguration(@NotNull String property) {
-        this.property = namespaced(property);
+        this.property = this.namespaced(property);
     }
 
     public void setScale(@Nullable Double scale) {

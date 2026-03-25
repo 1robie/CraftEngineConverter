@@ -14,8 +14,10 @@ public class DamageTypeConfiguration implements ItemConfigurationSerializable {
 
     @Override
     public void serialize(@NotNull YamlConfiguration yamlConfiguration, @NotNull String path, @NotNull ConfigurationSection itemSection, @NotNull String itemId) {
-        if (this.damageType.isEmpty()) return;
-        ConfigurationSection components = getOrCreateSection(itemSection, "components");
+        if (this.damageType.isEmpty()) {
+            return;
+        }
+        ConfigurationSection components = this.getOrCreateSection(itemSection, "components");
         components.set("minecraft:damage_type", this.damageType);
     }
 }

@@ -23,8 +23,8 @@ public class FoodConfiguration implements ItemConfigurationSerializable {
 
     @Override
     public void serialize(@NotNull YamlConfiguration yamlConfiguration, @NotNull String path, @NotNull ConfigurationSection itemSection, @NotNull String itemId) {
-        ConfigurationSection components = getOrCreateSection(itemSection, "components");
-        ConfigurationSection foodComponent = getOrCreateSection(components, "minecraft:food");
+        ConfigurationSection components = this.getOrCreateSection(itemSection, "components");
+        ConfigurationSection foodComponent = this.getOrCreateSection(components, "minecraft:food");
         foodComponent.set("nutrition", this.nutrition);
         foodComponent.set("saturation", this.saturation);
         if (this.canAlwaysEat) {

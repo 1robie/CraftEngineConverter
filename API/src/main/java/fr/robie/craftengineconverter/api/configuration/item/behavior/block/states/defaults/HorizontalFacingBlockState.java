@@ -32,7 +32,7 @@ public class HorizontalFacingBlockState extends AbstractDefaultBlockState {
 
             this.addAppearance(facingName, BlockAppearance.autoState(plugin, blockState, itemId, model).postProcessor(section -> {
                 if (y != 0) {
-                    ConfigurationSection modelSection = getOrCreateSection(section, "model");
+                    ConfigurationSection modelSection = this.getOrCreateSection(section, "model");
                     modelSection.set("y", y);
                 }
             }).build());

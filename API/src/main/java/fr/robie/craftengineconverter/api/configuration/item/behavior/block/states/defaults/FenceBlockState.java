@@ -18,7 +18,7 @@ public class FenceBlockState extends AbstractDefaultBlockState {
         BooleanBlockStateProperty eastProperty = new BooleanBlockStateProperty("east", false);
         BooleanBlockStateProperty southProperty = new BooleanBlockStateProperty("south", false);
         BooleanBlockStateProperty westProperty = new BooleanBlockStateProperty("west", false);
-        BooleanBlockStateProperty waterloggedProperty = addWaterloggedProperty();
+        BooleanBlockStateProperty waterloggedProperty = this.addWaterloggedProperty();
 
         this.addProperty(northProperty);
         this.addProperty(eastProperty);
@@ -37,7 +37,7 @@ public class FenceBlockState extends AbstractDefaultBlockState {
                                     baseBlock, east, north, south, waterlogged, west);
 
                             BlockEntityConfiguration blockEntity = new BlockEntityConfiguration();
-                            
+
                             // Post
                             blockEntity.addEntityRenderer(new ItemDisplayRenderer()
                                     .setItem(fencePostItem)
@@ -67,7 +67,7 @@ public class FenceBlockState extends AbstractDefaultBlockState {
                                         .setRotation("90"));
                             }
 
-                            addAppearanceWithEntity(appearanceName, state, model, blockEntity);
+                            this.addAppearanceWithEntity(appearanceName, state, model, blockEntity);
 
                             BlockVariant variant = new BlockVariant(appearanceName)
                                     .addVariantCondition(northProperty, north)
@@ -77,7 +77,7 @@ public class FenceBlockState extends AbstractDefaultBlockState {
                                     .addVariantCondition(waterloggedProperty, waterlogged);
 
                             if (waterlogged) {
-                                applyWaterloggedSettings(variant);
+                                this.applyWaterloggedSettings(variant);
                             }
 
                             this.addVariant(variant);

@@ -23,9 +23,11 @@ public class InvulnerableSettingConfiguration implements ItemConfigurationSerial
 
     @Override
     public void serialize(@NotNull YamlConfiguration yamlConfiguration, @NotNull String path, @NotNull ConfigurationSection itemSection, @NotNull String itemId) {
-        if (this.invulnerableTypes == null || this.invulnerableTypes.isEmpty()) return;
+        if (this.invulnerableTypes == null || this.invulnerableTypes.isEmpty()) {
+            return;
+        }
 
-        ConfigurationSection settings = getOrCreateSection(itemSection, "settings");
+        ConfigurationSection settings = this.getOrCreateSection(itemSection, "settings");
         if (this.mergeInvulnerableTypes) {
             List<String> invulnerable = settings.getStringList("invulnerable");
             for (InvulnerableType type : this.invulnerableTypes) {

@@ -21,8 +21,10 @@ public class LoreConfiguration extends AbstractItemConfiguration {
 
     @Override
     public void serialize(@NotNull YamlConfiguration yamlConfiguration, @NotNull String path, @NotNull ConfigurationSection itemSection, @NotNull String itemId) {
-        if (this.lore == null || this.lore.isEmpty()) return;
-        ConfigurationSection data = getOrCreateSection(itemSection, "data");
-        data.set("lore", applyNoItalic(this.lore));
+        if (this.lore == null || this.lore.isEmpty()) {
+            return;
+        }
+        ConfigurationSection data = this.getOrCreateSection(itemSection, "data");
+        data.set("lore", this.applyNoItalic(this.lore));
     }
 }

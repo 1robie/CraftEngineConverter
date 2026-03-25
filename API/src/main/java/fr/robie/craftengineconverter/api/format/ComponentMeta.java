@@ -165,7 +165,7 @@ public class ComponentMeta implements MessageFormatter {
 
     @Override
     public void sendMessage(@NotNull CommandSender sender, @NotNull Message message, boolean prefix, @NotNull Object[] placeholders) {
-        this.sendMessage(Collections.singleton(sender), message, prefix);
+        this.sendMessage(Collections.singleton(sender), message, prefix, placeholders);
     }
 
     public void sendMessage(@NotNull Collection<Audience> audiences, @NotNull Message message, boolean prefix, @NotNull Object... placeholders) {

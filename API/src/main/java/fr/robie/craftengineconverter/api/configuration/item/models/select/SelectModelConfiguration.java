@@ -17,7 +17,7 @@ public class SelectModelConfiguration<T> implements ModelConfiguration {
     private ModelConfiguration fallback;
 
     public SelectModelConfiguration(@NotNull String property) {
-        this.property = namespaced(property);
+        this.property = this.namespaced(property);
     }
 
     public void setFallback(@Nullable ModelConfiguration fallback) {
@@ -55,7 +55,7 @@ public class SelectModelConfiguration<T> implements ModelConfiguration {
         }
     }
 
-    public record Case(@NotNull Object when,@NotNull ModelConfiguration model) {
+    public record Case(@NotNull Object when, @NotNull ModelConfiguration model) {
         public Object getWhenAsString() {
             if (this.when instanceof List<?> list) {
                 List<String> stringList = new ArrayList<>();

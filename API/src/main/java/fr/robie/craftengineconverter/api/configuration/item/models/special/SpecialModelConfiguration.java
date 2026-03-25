@@ -9,7 +9,7 @@ public class SpecialModelConfiguration implements ModelConfiguration {
     private final SpecialModel model;
 
     public SpecialModelConfiguration(@NotNull String path, @NotNull SpecialModel model) {
-        this.path = namespaced(path);
+        this.path = this.namespaced(path);
         this.model = model;
     }
 

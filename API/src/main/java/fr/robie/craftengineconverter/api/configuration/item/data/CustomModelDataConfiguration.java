@@ -14,6 +14,6 @@ public class CustomModelDataConfiguration implements ItemConfigurationSerializab
 
     @Override
     public void serialize(@NotNull YamlConfiguration yamlConfiguration, @NotNull String path, @NotNull ConfigurationSection itemSection, @NotNull String itemId) {
-        getOrCreateSection(itemSection, "data").set("custom-model-data", this.customModelData);
+        this.getOrCreateSection(itemSection, "data").set("custom-model-data", this.customModelData);
     }
 }

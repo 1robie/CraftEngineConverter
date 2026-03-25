@@ -27,7 +27,7 @@ public class ProjectileSettingConfiguration implements ItemConfigurationSerializ
 
     @Override
     public void serialize(@NotNull YamlConfiguration yamlConfiguration, @NotNull String path, @NotNull ConfigurationSection itemSection, @NotNull String itemId) {
-        ConfigurationSection projectile = getOrCreateSection(getOrCreateSection(itemSection, "settings"), "projectile");
+        ConfigurationSection projectile = this.getOrCreateSection(this.getOrCreateSection(itemSection, "settings"), "projectile");
         projectile.set("item", this.itemId);
         projectile.set("translation", this.translation);
         projectile.set("rotation", this.rotation);

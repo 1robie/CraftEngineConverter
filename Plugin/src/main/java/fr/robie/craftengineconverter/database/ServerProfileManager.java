@@ -41,7 +41,7 @@ public class ServerProfileManager implements ServerProfile {
 
         for (BlockHistory history : allBlockHistories) {
             if (Boolean.FALSE.equals(history.isReverted())) {
-                String key = createCacheKey(
+                String key = this.createCacheKey(
                         history.getWorldName(),
                         history.getChunkX(),
                         history.getChunkZ(),
@@ -86,7 +86,7 @@ public class ServerProfileManager implements ServerProfile {
     @Override
     public void addBlockHistory(@NotNull BlockHistory blockHistory) {
         if (Boolean.FALSE.equals(blockHistory.isReverted())) {
-            String key = createCacheKey(
+            String key = this.createCacheKey(
                     blockHistory.getWorldName(),
                     blockHistory.getChunkX(),
                     blockHistory.getChunkZ(),
@@ -121,7 +121,7 @@ public class ServerProfileManager implements ServerProfile {
     public boolean isBlockConverted(@NotNull String worldName, int blockX, int blockY, int blockZ) {
         int chunkX = blockX >> 4; // Equivalent to blockX / 16
         int chunkZ = blockZ >> 4; // Equivalent to blockZ / 16
-        String key = createCacheKey(worldName, chunkX, chunkZ, blockX, blockY, blockZ);
+        String key = this.createCacheKey(worldName, chunkX, chunkZ, blockX, blockY, blockZ);
         return this.activeBlockCache.containsKey(key);
     }
 
@@ -163,7 +163,7 @@ public class ServerProfileManager implements ServerProfile {
 
     @Override
     public void markBlockAsReverted(@NonNull BlockHistory history) {
-        String key = createCacheKey(
+        String key = this.createCacheKey(
                 history.getWorldName(),
                 history.getChunkX(),
                 history.getChunkZ(),

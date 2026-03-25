@@ -27,11 +27,13 @@ public class NexoBlockConverter extends BlockConverter implements Listener {
 
     @EventHandler
     public void onNexoBlockInteract(NexoBlockInteractEvent event) {
-        if (!Configuration.<Boolean>get(ConfigurationKey.NEXO_BLOCK_INTERACTION_CONVERSION) || !event.getPlayer().hasPermission(Permission.NEXO_BLOCK_INTERACT_CONVERSION.asPermission())) return;
+        if (!Configuration.<Boolean>get(ConfigurationKey.NEXO_BLOCK_INTERACTION_CONVERSION) || !event.getPlayer().hasPermission(Permission.NEXO_BLOCK_INTERACT_CONVERSION.asPermission())) {
+            return;
+        }
         String itemID = event.getMechanic().getItemID();
         String newName = this.getNewName(itemID);
 
-        if (newName == null || !isRegistered(newName)) {
+        if (newName == null || !this.isRegistered(newName)) {
             return;
         }
 
@@ -39,7 +41,7 @@ public class NexoBlockConverter extends BlockConverter implements Listener {
         String blockState = block.getBlockData().getAsString();
         Location location = block.getLocation();
 
-        if (!removeBlockAt(location)) {
+        if (!this.removeBlockAt(location)) {
             return;
         }
 
@@ -50,7 +52,7 @@ public class NexoBlockConverter extends BlockConverter implements Listener {
             Set<Location> processed = new HashSet<>();
             processed.add(location);
             ConversionCounter counter = new ConversionCounter(Configuration.<Integer>get(ConfigurationKey.MAX_BLOCK_CONVERSION_PROPAGATION_DEPTH) - 1);
-            executeBlockConversion(block.getLocation(), processed, counter);
+            this.executeBlockConversion(block.getLocation(), processed, counter);
         }
     }
 
@@ -70,7 +72,7 @@ public class NexoBlockConverter extends BlockConverter implements Listener {
     }
 
     @Override
-    public void placeBlock(String itemId, Location location, String oldBlockState){
+    public void placeBlock(String itemId, Location location, String oldBlockState) {
         BlockHistory blockHistory = new BlockHistory(null,
                 location.getWorld().getName(),
                 location.getBlockX() >> 4,

@@ -16,10 +16,10 @@ import java.util.regex.Pattern;
 
 /**
  * SnakeUtils - A utility class for managing YAML files with convenient access methods.
- *
+ * <p>
  * This class provides a fluent API for reading, writing, and manipulating YAML data
  * with support for nested keys using dot notation (e.g., "section.subsection.key").
- *
+ * <p>
  * Features:
  * - Load and save YAML files
  * - Navigate nested structures with dot notation
@@ -28,7 +28,7 @@ import java.util.regex.Pattern;
  * - Data manipulation (add, remove, merge, clone)
  * - Auto-save capability
  * - Implements AutoCloseable for try-with-resources support
- *
+ * <p>
  * Example usage:
  * <pre>
  * try (SnakeUtils yaml = new SnakeUtils(new File("config.yml"), true)) {
@@ -52,15 +52,15 @@ public class SnakeUtils implements AutoCloseable {
      *
      * @param targetFile The YAML file to load. If the file doesn't exist or is empty,
      *                   an empty data structure will be initialized
-     * @param autoSave If true, changes will be automatically saved when close() is called.
-     *                 Useful with try-with-resources pattern
+     * @param autoSave   If true, changes will be automatically saved when close() is called.
+     *                   Useful with try-with-resources pattern
      * @throws IOException If the file cannot be read
      */
     public SnakeUtils(@NotNull File targetFile, boolean autoSave) throws IOException {
         this.targetFile = targetFile;
         Yaml yaml = new Yaml();
         Map<String, Object> loadedData;
-        try (FileInputStream fis = new FileInputStream(targetFile)){
+        try (FileInputStream fis = new FileInputStream(targetFile)) {
             loadedData = yaml.load(fis);
         }
         this.data = (loadedData != null) ? loadedData : new LinkedHashMap<>();
@@ -82,7 +82,7 @@ public class SnakeUtils implements AutoCloseable {
         Yaml yaml = new Yaml();
         Map<String, Object> loadedData = yaml.load(inputStream);
         this.data = (loadedData != null) ? loadedData : new LinkedHashMap<>();
-        this.targetFile = File.createTempFile("snakeutils_temp_"+System.currentTimeMillis(), ".yml");
+        this.targetFile = File.createTempFile("snakeutils_temp_" + System.currentTimeMillis(), ".yml");
         this.autoSave = false;
     }
 
@@ -105,7 +105,9 @@ public class SnakeUtils implements AutoCloseable {
                 Map<String, Object> data = yaml.load(fis);
                 SnakeUtils su = SnakeUtils.createEmpty(file);
                 su.getData().clear();
-                if (data != null) su.getData().putAll(data);
+                if (data != null) {
+                    su.getData().putAll(data);
+                }
                 return su;
             }
         } catch (IOException e) {
@@ -117,17 +119,17 @@ public class SnakeUtils implements AutoCloseable {
     /**
      * Adds or updates data at the specified key path using dot notation.
      * Creates nested sections as needed.
-     *
+     * <p>
      * Example:
      * <pre>
      * addData("server.database.host", "localhost");
      * // Creates: server -> database -> host: "localhost"
      * </pre>
      *
-     * @param key The key path with dot notation (e.g., "section.subsection.key")
+     * @param key   The key path with dot notation (e.g., "section.subsection.key")
      * @param value The value to store (can be any object, Map, List, etc.)
      */
-    public void addData(@NotNull String key, @NotNull Object value){
+    public void addData(@NotNull String key, @NotNull Object value) {
         this.addData(key, value, ".");
     }
 
@@ -135,25 +137,25 @@ public class SnakeUtils implements AutoCloseable {
      * Adds or updates data at the specified key path using a custom delimiter.
      * Creates nested sections as needed.
      *
-     * @param key The key path with custom delimiter
-     * @param value The value to store (can be any object, Map, List, etc.)
+     * @param key       The key path with custom delimiter
+     * @param value     The value to store (can be any object, Map, List, etc.)
      * @param delimiter The delimiter to use for splitting the key path (e.g., ".", "/", ":")
      */
-    public void addData(@NotNull String key, @NotNull Object value, @NotNull String delimiter){
-        if (key.isEmpty()){
+    public void addData(@NotNull String key, @NotNull Object value, @NotNull String delimiter) {
+        if (key.isEmpty()) {
             return;
         }
 
         String[] keys = key.split(Pattern.quote(delimiter));
 
-        if (keys.length == 0){
+        if (keys.length == 0) {
             return;
         }
 
         Map<String, Object> currentMap = this.data;
-        for (int i = 0; i < keys.length - 1; i++){
+        for (int i = 0; i < keys.length - 1; i++) {
             String k = keys[i];
-            if (!currentMap.containsKey(k) || !(currentMap.get(k) instanceof Map)){
+            if (!currentMap.containsKey(k) || !(currentMap.get(k) instanceof Map)) {
                 currentMap.put(k, new java.util.LinkedHashMap<String, Object>());
             }
             //noinspection unchecked
@@ -168,7 +170,7 @@ public class SnakeUtils implements AutoCloseable {
      *
      * @return The data Map (never null, but may be empty)
      */
-    public Map<String, Object> getData(){
+    public Map<String, Object> getData() {
         return this.data;
     }
 
@@ -177,7 +179,7 @@ public class SnakeUtils implements AutoCloseable {
      *
      * @return The target file for save operations
      */
-    public File getTargetFile(){
+    public File getTargetFile() {
         return this.targetFile;
     }
 
@@ -185,27 +187,27 @@ public class SnakeUtils implements AutoCloseable {
      * Retrieves a value from the data using a delimited key path.
      * Internal method supporting custom delimiters.
      *
-     * @param key The key path with delimiter (e.g., "section.subsection.key")
+     * @param key       The key path with delimiter (e.g., "section.subsection.key")
      * @param delimiter The delimiter to use for splitting the key path
      * @return The value found, or null if absent or path is invalid
      */
     @Nullable
-    private Object getValue(@NotNull String key, @NotNull String delimiter){
-        if (key.isEmpty() || this.data == null){
+    private Object getValue(@NotNull String key, @NotNull String delimiter) {
+        if (key.isEmpty() || this.data == null) {
             return null;
         }
 
         String[] keys = key.split(Pattern.quote(delimiter));
 
-        if (keys.length == 0){
+        if (keys.length == 0) {
             return null;
         }
 
         Map<String, Object> currentMap = this.data;
 
-        for (int i = 0; i < keys.length - 1; i++){
+        for (int i = 0; i < keys.length - 1; i++) {
             String k = keys[i];
-            if (!currentMap.containsKey(k) || !(currentMap.get(k) instanceof Map)){
+            if (!currentMap.containsKey(k) || !(currentMap.get(k) instanceof Map)) {
                 return null;
             }
             //noinspection unchecked
@@ -222,13 +224,13 @@ public class SnakeUtils implements AutoCloseable {
      * @return The value found, or null if absent or path is invalid
      */
     @Nullable
-    private Object getValue(@NotNull String key){
-        return getValue(key, ".");
+    private Object getValue(@NotNull String key) {
+        return this.getValue(key, ".");
     }
 
     @NotNull
-    public Object getObject(@NotNull String key){
-        return getValue(key);
+    public Object getObject(@NotNull String key) {
+        return this.getValue(key);
     }
 
     /**
@@ -238,29 +240,31 @@ public class SnakeUtils implements AutoCloseable {
      * @param key The key path with dot notation
      * @return The integer value, or 0 if absent/invalid
      */
-    public int getInt(@NotNull String key){
-        return getInt(key, 0);
+    public int getInt(@NotNull String key) {
+        return this.getInt(key, 0);
     }
 
     /**
      * Retrieves an integer value from the specified key path with a default value.
      * Attempts to parse the value as an integer if it's not a Number type.
      *
-     * @param key The key path with dot notation
+     * @param key          The key path with dot notation
      * @param defaultValue The value to return if the key doesn't exist or cannot be parsed
      * @return The integer value, or defaultValue if absent/invalid
      */
-    public int getInt(@NotNull String key, int defaultValue){
-        Object value = getValue(key);
-        if (value == null) return defaultValue;
+    public int getInt(@NotNull String key, int defaultValue) {
+        Object value = this.getValue(key);
+        if (value == null) {
+            return defaultValue;
+        }
 
-        if (value instanceof Number){
+        if (value instanceof Number) {
             return ((Number) value).intValue();
         }
 
         try {
             return Integer.parseInt(value.toString());
-        } catch (NumberFormatException e){
+        } catch (NumberFormatException e) {
             return defaultValue;
         }
     }
@@ -272,29 +276,31 @@ public class SnakeUtils implements AutoCloseable {
      * @param key The key path with dot notation
      * @return The double value, or 0.0 if absent/invalid
      */
-    public double getDouble(@NotNull String key){
-        return getDouble(key, 0.0);
+    public double getDouble(@NotNull String key) {
+        return this.getDouble(key, 0.0);
     }
 
     /**
      * Retrieves a double value from the specified key path with a default value.
      * Attempts to parse the value as a double if it's not a Number type.
      *
-     * @param key The key path with dot notation
+     * @param key          The key path with dot notation
      * @param defaultValue The value to return if the key doesn't exist or cannot be parsed
      * @return The double value, or defaultValue if absent/invalid
      */
-    public double getDouble(@NotNull String key, double defaultValue){
-        Object value = getValue(key);
-        if (value == null) return defaultValue;
+    public double getDouble(@NotNull String key, double defaultValue) {
+        Object value = this.getValue(key);
+        if (value == null) {
+            return defaultValue;
+        }
 
-        if (value instanceof Number){
+        if (value instanceof Number) {
             return ((Number) value).doubleValue();
         }
 
         try {
             return Double.parseDouble(value.toString());
-        } catch (NumberFormatException e){
+        } catch (NumberFormatException e) {
             return defaultValue;
         }
     }
@@ -307,21 +313,21 @@ public class SnakeUtils implements AutoCloseable {
      * @return The String value, or null if absent
      */
     @Nullable
-    public String getString(@NotNull String key){
-        return getString(key, null);
+    public String getString(@NotNull String key) {
+        return this.getString(key, null);
     }
 
     /**
      * Retrieves a String value from the specified key path with a default value.
      * Converts any non-null value to String using toString().
      *
-     * @param key The key path with dot notation
+     * @param key          The key path with dot notation
      * @param defaultValue The value to return if the key doesn't exist
      * @return The String value, or defaultValue if absent
      */
     @Nullable
-    public String getString(@NotNull String key, @Nullable String defaultValue){
-        Object value = getValue(key);
+    public String getString(@NotNull String key, @Nullable String defaultValue) {
+        Object value = this.getValue(key);
         return (value != null) ? value.toString() : defaultValue;
     }
 
@@ -332,23 +338,25 @@ public class SnakeUtils implements AutoCloseable {
      * @param key The key path with dot notation
      * @return The boolean value, or false if absent/invalid
      */
-    public boolean getBoolean(@NotNull String key){
-        return getBoolean(key, false);
+    public boolean getBoolean(@NotNull String key) {
+        return this.getBoolean(key, false);
     }
 
     /**
      * Retrieves a boolean value from the specified key path with a default value.
      * Attempts to parse the value as a boolean using Boolean.parseBoolean() if not a Boolean type.
      *
-     * @param key The key path with dot notation
+     * @param key          The key path with dot notation
      * @param defaultValue The value to return if the key doesn't exist
      * @return The boolean value, or defaultValue if absent
      */
-    public boolean getBoolean(@NotNull String key, boolean defaultValue){
-        Object value = getValue(key);
-        if (value == null) return defaultValue;
+    public boolean getBoolean(@NotNull String key, boolean defaultValue) {
+        Object value = this.getValue(key);
+        if (value == null) {
+            return defaultValue;
+        }
 
-        if (value instanceof Boolean){
+        if (value instanceof Boolean) {
             return (Boolean) value;
         }
 
@@ -364,15 +372,15 @@ public class SnakeUtils implements AutoCloseable {
      */
     @SuppressWarnings("unchecked")
     @Nullable
-    public Map<String, Object> getMap(@NotNull String key){
-        Object value = getValue(key);
+    public Map<String, Object> getMap(@NotNull String key) {
+        Object value = this.getValue(key);
         return (value instanceof Map) ? (Map<String, Object>) value : null;
     }
 
     /**
      * Retrieves a List of Maps from the specified key path.
      * This is useful for accessing lists of complex objects stored as maps.
-     *
+     * <p>
      * Example YAML:
      * <pre>
      * players:
@@ -381,7 +389,7 @@ public class SnakeUtils implements AutoCloseable {
      *   - name: Jane
      *     score: 200
      * </pre>
-     *
+     * <p>
      * Usage:
      * <pre>
      * List&lt;Map&lt;String, Object&gt;&gt; players = config.getListMap("players");
@@ -398,9 +406,11 @@ public class SnakeUtils implements AutoCloseable {
      */
     @SuppressWarnings("unchecked")
     @NotNull
-    public List<Map<String, Object>> getListMap(@NotNull String key){
-        Object value = getValue(key);
-        if (!(value instanceof List<?> list)) return new ArrayList<>();
+    public List<Map<String, Object>> getListMap(@NotNull String key) {
+        Object value = this.getValue(key);
+        if (!(value instanceof List<?> list)) {
+            return new ArrayList<>();
+        }
 
         List<Map<String, Object>> result = new ArrayList<>();
 
@@ -418,7 +428,7 @@ public class SnakeUtils implements AutoCloseable {
      * Retrieves a subsection as a new SnakeUtils instance.
      * This allows you to work directly with a nested section as if it were a separate YAML file.
      * The returned SnakeUtils is independent and backed by a temporary file.
-     *
+     * <p>
      * Example:
      * <pre>
      * SnakeUtils config = new SnakeUtils(new File("config.yml"));
@@ -432,9 +442,9 @@ public class SnakeUtils implements AutoCloseable {
      * @return A new SnakeUtils instance for the section, or null if the section doesn't exist or isn't a Map
      */
     @Nullable
-    public SnakeUtils getSection(@NotNull String key){
-        Map<String, Object> sectionData = getMap(key);
-        if (sectionData == null){
+    public SnakeUtils getSection(@NotNull String key) {
+        Map<String, Object> sectionData = this.getMap(key);
+        if (sectionData == null) {
             return null;
         }
 
@@ -445,7 +455,7 @@ public class SnakeUtils implements AutoCloseable {
             options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
             Yaml yaml = new Yaml(options);
 
-            try (FileWriter writer = new FileWriter(tempFile)){
+            try (FileWriter writer = new FileWriter(tempFile)) {
                 yaml.dump(sectionData, writer);
             }
 
@@ -454,7 +464,7 @@ public class SnakeUtils implements AutoCloseable {
             tempFile.deleteOnExit();
 
             return sectionUtils;
-        } catch (IOException e){
+        } catch (IOException e) {
             Logger.showException("Failed to create section SnakeUtils for key: " + key, e);
             return null;
         }
@@ -463,7 +473,7 @@ public class SnakeUtils implements AutoCloseable {
     /**
      * Retrieves a subsection as a SnakeUtils instance, creating it if it doesn't exist.
      * This is useful when you want to ensure a section exists before working with it.
-     *
+     * <p>
      * Example:
      * <pre>
      * SnakeUtils config = new SnakeUtils(new File("config.yml"));
@@ -478,16 +488,16 @@ public class SnakeUtils implements AutoCloseable {
      * @throws RuntimeException if the section cannot be created
      */
     @NotNull
-    public SnakeUtils getOrCreateSection(@NotNull String key){
-        SnakeUtils section = getSection(key);
-        if (section != null){
+    public SnakeUtils getOrCreateSection(@NotNull String key) {
+        SnakeUtils section = this.getSection(key);
+        if (section != null) {
             return section;
         }
 
-        addData(key, new java.util.LinkedHashMap<String, Object>());
+        this.addData(key, new java.util.LinkedHashMap<String, Object>());
 
-        section = getSection(key);
-        if (section == null){
+        section = this.getSection(key);
+        if (section == null) {
             throw new RuntimeException("Failed to create section: " + key);
         }
 
@@ -497,9 +507,9 @@ public class SnakeUtils implements AutoCloseable {
     /**
      * Updates a section with data from another SnakeUtils instance.
      * This completely replaces the existing section with the new data.
-     *
+     * <p>
      * Use this to sync changes made to a section obtained via getSection() or getOrCreateSection().
-     *
+     * <p>
      * Example:
      * <pre>
      * SnakeUtils section = config.getOrCreateSection("player");
@@ -507,28 +517,28 @@ public class SnakeUtils implements AutoCloseable {
      * config.setSection("player", section); // Apply changes to parent
      * </pre>
      *
-     * @param key The key path to the section (e.g., "database" or "config.database")
+     * @param key     The key path to the section (e.g., "database" or "config.database")
      * @param section The SnakeUtils instance containing the new data
      */
-    public void setSection(@NotNull String key, @NotNull SnakeUtils section){
-        addData(key, section.getData());
+    public void setSection(@NotNull String key, @NotNull SnakeUtils section) {
+        this.addData(key, section.getData());
     }
 
     /**
      * Updates a section with data from a Map.
      * This completely replaces the existing section with the new data.
      *
-     * @param key The key path to the section (e.g., "database" or "config.database")
+     * @param key         The key path to the section (e.g., "database" or "config.database")
      * @param sectionData The Map containing the new data
      */
-    public void setSection(@NotNull String key, @NotNull Map<String, Object> sectionData){
-        addData(key, sectionData);
+    public void setSection(@NotNull String key, @NotNull Map<String, Object> sectionData) {
+        this.addData(key, sectionData);
     }
 
     /**
      * Retrieves a List value from the specified key path.
      * Useful for accessing YAML arrays/lists.
-     *
+     * <p>
      * Example:
      * <pre>
      * List&lt;Object&gt; items = yaml.getList("server.allowed-ips");
@@ -544,18 +554,18 @@ public class SnakeUtils implements AutoCloseable {
      */
     @SuppressWarnings("unchecked")
     @Nullable
-    public List<Object> getList(@NotNull String key){
-        Object value = getValue(key);
+    public List<Object> getList(@NotNull String key) {
+        Object value = this.getValue(key);
         return (value instanceof List) ? (List<Object>) value : null;
     }
 
     @NotNull
-    public List<String> getStringList(@NotNull String key){
-        List<Object> rawList = getList(key);
+    public List<String> getStringList(@NotNull String key) {
+        List<Object> rawList = this.getList(key);
         List<String> stringList = new ArrayList<>();
-        if (rawList != null){
-            for (Object item : rawList){
-                if (item != null){
+        if (rawList != null) {
+            for (Object item : rawList) {
+                if (item != null) {
                     stringList.add(item.toString());
                 }
             }
@@ -570,8 +580,8 @@ public class SnakeUtils implements AutoCloseable {
      * @param key The key path with dot notation (e.g., "section.subsection.key")
      * @return true if the key exists, false otherwise
      */
-    public boolean contains(@NotNull String key){
-        return getValue(key) != null;
+    public boolean contains(@NotNull String key) {
+        return this.getValue(key) != null;
     }
 
     /**
@@ -581,8 +591,8 @@ public class SnakeUtils implements AutoCloseable {
      * @param key The key path with dot notation (e.g., "section.subsection.key")
      * @return true if the key exists, false otherwise
      */
-    public boolean containsKey(@NotNull String key){
-        return contains(key);
+    public boolean containsKey(@NotNull String key) {
+        return this.contains(key);
     }
 
     /**
@@ -590,7 +600,7 @@ public class SnakeUtils implements AutoCloseable {
      *
      * @return true if no data is present, false otherwise
      */
-    public boolean isEmpty(){
+    public boolean isEmpty() {
         return this.data == null || this.data.isEmpty();
     }
 
@@ -600,7 +610,7 @@ public class SnakeUtils implements AutoCloseable {
      *
      * @return The number of root-level keys
      */
-    public int size(){
+    public int size() {
         return (this.data != null) ? this.data.size() : 0;
     }
 
@@ -608,15 +618,15 @@ public class SnakeUtils implements AutoCloseable {
      * Clears all data from this SnakeUtils instance.
      * After calling this, the data structure will be empty.
      */
-    public void clear(){
-        if (this.data != null){
+    public void clear() {
+        if (this.data != null) {
             this.data.clear();
         }
     }
 
     /**
      * Retrieves all keys at the root level.
-     *
+     * <p>
      * Example:
      * <pre>
      * Set&lt;String&gt; keys = yaml.getKeys();
@@ -628,14 +638,14 @@ public class SnakeUtils implements AutoCloseable {
      * @return Set of root-level keys (never null, but may be empty)
      */
     @NotNull
-    public Set<String> getKeys(){
+    public Set<String> getKeys() {
         return (this.data != null) ? this.data.keySet() : Collections.emptySet();
     }
 
     /**
      * Retrieves all keys from a specific section.
      * Useful for iterating over nested sections.
-     *
+     * <p>
      * Example:
      * <pre>
      * Set&lt;String&gt; dbKeys = yaml.getKeys("database");
@@ -648,15 +658,15 @@ public class SnakeUtils implements AutoCloseable {
      * @return Set of keys in the section (never null, but may be empty if section doesn't exist)
      */
     @NotNull
-    public Set<String> getKeys(@NotNull String key){
-        Map<String, Object> section = getMap(key);
+    public Set<String> getKeys(@NotNull String key) {
+        Map<String, Object> section = this.getMap(key);
         return (section != null) ? section.keySet() : Collections.emptySet();
     }
 
     /**
      * Removes a key and its value from the data.
      * Supports nested keys with dot notation.
-     *
+     * <p>
      * Example:
      * <pre>
      * yaml.removeData("database.password"); // Removes only the password key
@@ -666,33 +676,33 @@ public class SnakeUtils implements AutoCloseable {
      * @param key The key path with dot notation (e.g., "section.subsection.key")
      * @return true if the key was removed, false if it didn't exist
      */
-    public boolean removeData(@NotNull String key){
-        return removeData(key, ".");
+    public boolean removeData(@NotNull String key) {
+        return this.removeData(key, ".");
     }
 
     /**
      * Removes a key and its value from the data using a custom delimiter.
      *
-     * @param key The key path with custom delimiter
+     * @param key       The key path with custom delimiter
      * @param delimiter The delimiter to use for splitting the key path
      * @return true if the key was removed, false if it didn't exist
      */
-    public boolean removeData(@NotNull String key, @NotNull String delimiter){
-        if (key.isEmpty() || this.data == null){
+    public boolean removeData(@NotNull String key, @NotNull String delimiter) {
+        if (key.isEmpty() || this.data == null) {
             return false;
         }
 
         String[] keys = key.split(Pattern.quote(delimiter));
 
-        if (keys.length == 0){
+        if (keys.length == 0) {
             return false;
         }
 
         Map<String, Object> currentMap = this.data;
 
-        for (int i = 0; i < keys.length - 1; i++){
+        for (int i = 0; i < keys.length - 1; i++) {
             String k = keys[i];
-            if (!currentMap.containsKey(k) || !(currentMap.get(k) instanceof Map)){
+            if (!currentMap.containsKey(k) || !(currentMap.get(k) instanceof Map)) {
                 return false;
             }
             //noinspection unchecked
@@ -709,7 +719,7 @@ public class SnakeUtils implements AutoCloseable {
      * @throws IOException If the file cannot be written
      */
     public void save() throws IOException {
-        save(this.targetFile);
+        this.save(this.targetFile);
     }
 
     /**
@@ -722,7 +732,7 @@ public class SnakeUtils implements AutoCloseable {
      */
     public void save(@NotNull File file) throws IOException {
         File parentDir = file.getParentFile();
-        if (parentDir != null && !parentDir.exists() && !parentDir.mkdirs()){
+        if (parentDir != null && !parentDir.exists() && !parentDir.mkdirs()) {
             throw new IOException("Failed to create parent directories for file: " + file);
         }
 
@@ -730,7 +740,7 @@ public class SnakeUtils implements AutoCloseable {
         options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
         Yaml yaml = new Yaml(options);
 
-        try (FileWriter writer = new FileWriter(file)){
+        try (FileWriter writer = new FileWriter(file)) {
             yaml.dump(this.data, writer);
         }
     }
@@ -744,10 +754,10 @@ public class SnakeUtils implements AutoCloseable {
      */
     public void reload() throws IOException {
         Yaml yaml = new Yaml();
-        try (FileInputStream fis = new FileInputStream(this.targetFile)){
+        try (FileInputStream fis = new FileInputStream(this.targetFile)) {
             Map<String, Object> newData = yaml.load(fis);
             this.data.clear();
-            if (newData != null){
+            if (newData != null) {
                 this.data.putAll(newData);
             }
         }
@@ -757,7 +767,7 @@ public class SnakeUtils implements AutoCloseable {
      * Merges data from another SnakeUtils instance into this one.
      * Existing values are overwritten by the new values.
      * Nested Maps are merged recursively.
-     *
+     * <p>
      * Example:
      * <pre>
      * SnakeUtils defaults = SnakeUtils.load("defaults.yml");
@@ -767,9 +777,9 @@ public class SnakeUtils implements AutoCloseable {
      *
      * @param other The SnakeUtils instance to merge from
      */
-    public void merge(@NotNull SnakeUtils other){
-        if (other.data != null){
-            mergeMap(this.data, other.data);
+    public void merge(@NotNull SnakeUtils other) {
+        if (other.data != null) {
+            this.mergeMap(this.data, other.data);
         }
     }
 
@@ -780,8 +790,8 @@ public class SnakeUtils implements AutoCloseable {
      *
      * @param dataToMerge The Map to merge into the current data
      */
-    public void merge(@NotNull Map<String, Object> dataToMerge){
-        mergeMap(this.data, dataToMerge);
+    public void merge(@NotNull Map<String, Object> dataToMerge) {
+        this.mergeMap(this.data, dataToMerge);
     }
 
     /**
@@ -793,13 +803,13 @@ public class SnakeUtils implements AutoCloseable {
      * @param source The source Map to merge from
      */
     @SuppressWarnings("unchecked")
-    private void mergeMap(Map<String, Object> target, Map<String, Object> source){
-        for (Map.Entry<String, Object> entry : source.entrySet()){
+    private void mergeMap(Map<String, Object> target, Map<String, Object> source) {
+        for (Map.Entry<String, Object> entry : source.entrySet()) {
             String key = entry.getKey();
             Object value = entry.getValue();
 
-            if (value instanceof Map && target.get(key) instanceof Map){
-                mergeMap((Map<String, Object>) target.get(key), (Map<String, Object>) value);
+            if (value instanceof Map && target.get(key) instanceof Map) {
+                this.mergeMap((Map<String, Object>) target.get(key), (Map<String, Object>) value);
             } else {
                 target.put(key, value);
             }
@@ -812,7 +822,7 @@ public class SnakeUtils implements AutoCloseable {
      *
      * @param target The destination SnakeUtils instance
      */
-    public void copyTo(@NotNull SnakeUtils target){
+    public void copyTo(@NotNull SnakeUtils target) {
         target.data.clear();
         target.data.putAll(this.data);
     }
@@ -825,8 +835,8 @@ public class SnakeUtils implements AutoCloseable {
      * @return A new Map containing a deep copy of all data
      */
     @NotNull
-    public Map<String, Object> clone(){
-        return deepClone(this.data);
+    public Map<String, Object> clone() {
+        return this.deepClone(this.data);
     }
 
     /**
@@ -837,13 +847,13 @@ public class SnakeUtils implements AutoCloseable {
      * @return A deep copy of the original Map
      */
     @SuppressWarnings("unchecked")
-    private Map<String, Object> deepClone(Map<String, Object> original){
+    private Map<String, Object> deepClone(Map<String, Object> original) {
         Map<String, Object> copy = new java.util.LinkedHashMap<>();
-        for (Map.Entry<String, Object> entry : original.entrySet()){
+        for (Map.Entry<String, Object> entry : original.entrySet()) {
             Object value = entry.getValue();
-            if (value instanceof Map){
-                copy.put(entry.getKey(), deepClone((Map<String, Object>) value));
-            } else if (value instanceof List){
+            if (value instanceof Map) {
+                copy.put(entry.getKey(), this.deepClone((Map<String, Object>) value));
+            } else if (value instanceof List) {
                 copy.put(entry.getKey(), new java.util.ArrayList<>((List<?>) value));
             } else {
                 copy.put(entry.getKey(), value);
@@ -855,7 +865,7 @@ public class SnakeUtils implements AutoCloseable {
     /**
      * Converts the current data to a YAML-formatted string.
      * Useful for debugging or displaying the data without writing to a file.
-     *
+     * <p>
      * Example:
      * <pre>
      * SnakeUtils yaml = new SnakeUtils(new File("config.yml"));
@@ -865,7 +875,7 @@ public class SnakeUtils implements AutoCloseable {
      * @return A YAML-formatted string representation of the data
      */
     @NotNull
-    public String toYamlString(){
+    public String toYamlString() {
         DumperOptions options = new DumperOptions();
         options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
         Yaml yaml = new Yaml(options);
@@ -877,7 +887,7 @@ public class SnakeUtils implements AutoCloseable {
     /**
      * Creates a new SnakeUtils instance from a YAML file.
      * This is a convenient static factory method that handles IOExceptions gracefully.
-     *
+     * <p>
      * Example:
      * <pre>
      * SnakeUtils yaml = SnakeUtils.load(new File("config.yml"));
@@ -890,10 +900,10 @@ public class SnakeUtils implements AutoCloseable {
      * @return A new SnakeUtils instance, or null if an IOException occurs
      */
     @Nullable
-    public static SnakeUtils load(@NotNull File file){
+    public static SnakeUtils load(@NotNull File file) {
         try {
             return new SnakeUtils(file);
-        } catch (IOException e){
+        } catch (IOException e) {
             Logger.showException("Failed to load YAML file: " + file, e);
             return null;
         }
@@ -902,7 +912,7 @@ public class SnakeUtils implements AutoCloseable {
     /**
      * Creates a new SnakeUtils instance from a file path string.
      * Convenient overload that accepts a String path instead of a File object.
-     *
+     * <p>
      * Example:
      * <pre>
      * SnakeUtils yaml = SnakeUtils.load("config.yml");
@@ -913,22 +923,22 @@ public class SnakeUtils implements AutoCloseable {
      * @return A new SnakeUtils instance, or null if an IOException occurs
      */
     @Nullable
-    public static SnakeUtils load(@NotNull String filePath){
+    public static SnakeUtils load(@NotNull String filePath) {
         return load(new File(filePath));
     }
 
     @NotNull
-    public static SnakeUtils createEmpty(){
+    public static SnakeUtils createEmpty() {
         try {
             File tempFile = File.createTempFile("snakeutils_empty_", ".yml");
-            try (FileWriter writer = new FileWriter(tempFile)){
+            try (FileWriter writer = new FileWriter(tempFile)) {
                 writer.write("{}");
             }
             SnakeUtils utils = new SnakeUtils(tempFile);
             utils.clear();
             tempFile.deleteOnExit();
             return utils;
-        } catch (IOException e){
+        } catch (IOException e) {
             throw new RuntimeException("Failed to create empty SnakeUtils", e);
         }
     }
@@ -936,7 +946,7 @@ public class SnakeUtils implements AutoCloseable {
     /**
      * Creates an empty SnakeUtils instance with a target file.
      * The instance starts with no data, but has a file associated for future saves.
-     *
+     * <p>
      * Example:
      * <pre>
      * SnakeUtils yaml = SnakeUtils.createEmpty(new File("new-config.yml"));
@@ -949,17 +959,17 @@ public class SnakeUtils implements AutoCloseable {
      * @throws RuntimeException if the empty instance cannot be created
      */
     @NotNull
-    public static SnakeUtils createEmpty(@NotNull File targetFile){
+    public static SnakeUtils createEmpty(@NotNull File targetFile) {
         try {
             File parentDir = targetFile.getParentFile();
-            if (parentDir != null && !parentDir.exists()){
+            if (parentDir != null && !parentDir.exists()) {
                 if (!parentDir.mkdirs()) {
                     throw new IOException("Failed to create parent directories for: " + targetFile);
                 }
             }
 
             if (!targetFile.exists()) {
-                try (FileWriter writer = new FileWriter(targetFile)){
+                try (FileWriter writer = new FileWriter(targetFile)) {
                     writer.write("{}");
                 }
             }
@@ -967,7 +977,7 @@ public class SnakeUtils implements AutoCloseable {
             SnakeUtils utils = new SnakeUtils(targetFile);
             utils.clear();
             return utils;
-        } catch (IOException e){
+        } catch (IOException e) {
             throw new RuntimeException("Failed to create empty SnakeUtils for file: " + targetFile, e);
         }
     }
@@ -976,7 +986,7 @@ public class SnakeUtils implements AutoCloseable {
      * Saves a Map directly to a YAML file without creating a SnakeUtils instance.
      * Useful for one-off saves when you already have a Map of data.
      * Creates parent directories if they don't exist.
-     *
+     * <p>
      * Example:
      * <pre>
      * Map&lt;String, Object&gt; data = new LinkedHashMap&lt;&gt;();
@@ -988,10 +998,10 @@ public class SnakeUtils implements AutoCloseable {
      * @param file The destination file
      * @return true if the save was successful, false if an IOException occurred
      */
-    public static boolean saveToFile(@NotNull Map<String, Object> data, @NotNull File file){
+    public static boolean saveToFile(@NotNull Map<String, Object> data, @NotNull File file) {
         try {
             File parentDir = file.getParentFile();
-            if (parentDir != null && !parentDir.exists() && !parentDir.mkdirs()){
+            if (parentDir != null && !parentDir.exists() && !parentDir.mkdirs()) {
                 Logger.debug("Failed to create parent directories for file: " + file, LogType.ERROR);
                 return false;
             }
@@ -1000,11 +1010,11 @@ public class SnakeUtils implements AutoCloseable {
             options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
             Yaml yaml = new Yaml(options);
 
-            try (FileWriter writer = new FileWriter(file)){
+            try (FileWriter writer = new FileWriter(file)) {
                 yaml.dump(data, writer);
             }
             return true;
-        } catch (IOException e){
+        } catch (IOException e) {
             Logger.showException("Failed to save YAML file: " + file, e);
             return false;
         }
@@ -1013,7 +1023,7 @@ public class SnakeUtils implements AutoCloseable {
     /**
      * Loads a Map directly from a YAML file without creating a SnakeUtils instance.
      * Useful for quick reads when you don't need the full SnakeUtils functionality.
-     *
+     * <p>
      * Example:
      * <pre>
      * Map&lt;String, Object&gt; data = SnakeUtils.loadFromFile(new File("config.yml"));
@@ -1026,15 +1036,15 @@ public class SnakeUtils implements AutoCloseable {
      * @return A Map containing the YAML data, or null if the file doesn't exist or an error occurs
      */
     @Nullable
-    public static Map<String, Object> loadFromFile(@NotNull File file){
-        if (!file.exists() || !file.isFile()){
+    public static Map<String, Object> loadFromFile(@NotNull File file) {
+        if (!file.exists() || !file.isFile()) {
             return null;
         }
 
-        try (FileInputStream fis = new FileInputStream(file)){
+        try (FileInputStream fis = new FileInputStream(file)) {
             Yaml yaml = new Yaml();
             return yaml.load(fis);
-        } catch (IOException e){
+        } catch (IOException e) {
             Logger.showException("Failed to load YAML file: " + file, e);
             return null;
         }
@@ -1043,7 +1053,7 @@ public class SnakeUtils implements AutoCloseable {
     /**
      * Closes this SnakeUtils instance and automatically saves if auto-save is enabled.
      * This method is called automatically when used with try-with-resources.
-     *
+     * <p>
      * Example:
      * <pre>
      * try (SnakeUtils yaml = new SnakeUtils(new File("config.yml"), true)) {
@@ -1058,8 +1068,8 @@ public class SnakeUtils implements AutoCloseable {
      */
     @Override
     public void close() throws Exception {
-        if (this.autoSave){
-            save();
+        if (this.autoSave) {
+            this.save();
         }
     }
 }

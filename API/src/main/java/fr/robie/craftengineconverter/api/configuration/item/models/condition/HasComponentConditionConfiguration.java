@@ -9,7 +9,7 @@ public class HasComponentConditionConfiguration extends ConditionModelConfigurat
 
     public HasComponentConditionConfiguration(@NotNull String component, boolean ignoreDefault) {
         super("minecraft:has_component");
-        this.component = namespaced(component);
+        this.component = this.namespaced(component);
         this.ignoreDefault = ignoreDefault;
     }
 

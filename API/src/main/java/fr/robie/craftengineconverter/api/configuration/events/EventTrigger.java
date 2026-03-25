@@ -13,6 +13,6 @@ public enum EventTrigger {
 
 
     public String getKey() {
-        return name();
+        return this.name();
     }
 }

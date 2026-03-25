@@ -51,50 +51,64 @@ public class BlockStateMappingScanner {
 
 
     public void scan() {
-        if (!this.resourcesFolder.exists() || !this.resourcesFolder.isDirectory()) return;
+        if (!this.resourcesFolder.exists() || !this.resourcesFolder.isDirectory()) {
+            return;
+        }
 
         for (CraftEngineBlockState state : CraftEngineBlockState.values()) {
             state.resetLimit();
         }
 
         File[] namespaces = this.resourcesFolder.listFiles(File::isDirectory);
-        if (namespaces == null) return;
+        if (namespaces == null) {
+            return;
+        }
 
         for (File namespace : namespaces) {
             File configDir = new File(namespace, "configuration");
-            if (!configDir.exists() || !configDir.isDirectory()) continue;
-            scanDirectory(configDir);
+            if (!configDir.exists() || !configDir.isDirectory()) {
+                continue;
+            }
+            this.scanDirectory(configDir);
         }
     }
 
 
     private void scanDirectory(File dir) {
         File[] files = dir.listFiles();
-        if (files == null) return;
+        if (files == null) {
+            return;
+        }
         for (File file : files) {
             if (file.isDirectory()) {
-                scanDirectory(file);
+                this.scanDirectory(file);
             } else if (file.isFile() && file.getName().endsWith(".yml")) {
-                processFile(file);
+                this.processFile(file);
             }
         }
     }
 
     private void processFile(File file) {
         SnakeUtils yaml = SnakeUtils.loadSmart(file);
-        if (yaml == null) return;
+        if (yaml == null) {
+            return;
+        }
 
         for (String mappingKey : MAPPING_KEYS) {
             Map<String, Object> mappings = yaml.getMap(mappingKey);
-            if (mappings == null) continue;
-            processMappings(mappings);
+            if (mappings == null) {
+                continue;
+            }
+            this.processMappings(mappings);
         }
     }
 
     private void processMappings(Map<String, Object> mappings) {
         for (String blockState : mappings.keySet()) {
             BlockData blockData = parseBlockData(blockState);
-            if (blockData == null) continue;
+            if (blockData == null) {
+                continue;
+            }
 
             CraftEngineBlockState resolved = resolve(blockData, blockState);
             if (resolved != null) {

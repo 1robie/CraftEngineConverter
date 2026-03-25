@@ -34,10 +34,16 @@ public abstract class AbstractDefaultBlockState extends MultiStateBlock {
     ) {
         this.addAppearance(appearanceName, BlockAppearance.visualState(state, model).postProcessor(section -> {
             if (x != 0 || y != 0 || uvlock) {
-                ConfigurationSection modelSection = getOrCreateSection(section, "model");
-                if (x != 0) modelSection.set("x", x);
-                if (y != 0) modelSection.set("y", y);
-                if (uvlock) modelSection.set("uvlock", true);
+                ConfigurationSection modelSection = this.getOrCreateSection(section, "model");
+                if (x != 0) {
+                    modelSection.set("x", x);
+                }
+                if (y != 0) {
+                    modelSection.set("y", y);
+                }
+                if (uvlock) {
+                    modelSection.set("uvlock", true);
+                }
             }
         }).build());
     }

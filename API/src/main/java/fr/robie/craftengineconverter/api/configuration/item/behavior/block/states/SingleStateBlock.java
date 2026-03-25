@@ -19,7 +19,7 @@ public class SingleStateBlock implements StateBlock {
 
     @Override
     public void serialize(@NotNull ConfigurationSection blockBehaviorSection) {
-        ConfigurationSection state = getOrCreateSection(blockBehaviorSection, "state");
+        ConfigurationSection state = this.getOrCreateSection(blockBehaviorSection, "state");
         this.blockAppearance.serialize(state);
     }
 }

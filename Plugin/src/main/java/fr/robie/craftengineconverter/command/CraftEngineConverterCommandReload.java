@@ -24,10 +24,10 @@ public class CraftEngineConverterCommandReload extends VCommand {
             plugin.reloadConfig();
             plugin.reloadMessages();
             long endTime = System.currentTimeMillis();
-            message(plugin, this.sender, Message.COMMAND__RELOAD__SUCCESS, "time", TimerBuilder.formatTimeAuto(endTime - startTime));
+            this.message(plugin, this.sender, Message.COMMAND__RELOAD__SUCCESS, "time", TimerBuilder.formatTimeAuto(endTime - startTime));
         } catch (Exception e) {
             Logger.showException("An error occurred while reloading the plugin.", e);
-            message(plugin, this.sender, Message.COMMAND__RELOAD__FAILURE);
+            this.message(plugin, this.sender, Message.COMMAND__RELOAD__FAILURE);
         }
         return CommandType.SUCCESS;
     }

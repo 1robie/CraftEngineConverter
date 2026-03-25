@@ -21,6 +21,6 @@ public class HideTooltipConfiguration implements ItemConfigurationSerializable {
         for (ComponentFlag flag : this.flags) {
             flagNames.add(flag.getKey());
         }
-        getOrCreateSection(itemSection, "data").set("hide-tooltip", flagNames);
+        this.getOrCreateSection(itemSection, "data").set("hide-tooltip", flagNames);
     }
 }

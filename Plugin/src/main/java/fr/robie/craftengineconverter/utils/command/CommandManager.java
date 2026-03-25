@@ -49,7 +49,7 @@ public class CommandManager extends CraftEngineConverterUtils implements Command
      * This method should be called when the plugin is being loaded.
      */
     public void loadCommands() {
-        applyToCommands(VCommand::onLoad);
+        this.applyToCommands(VCommand::onLoad);
     }
 
     /**
@@ -57,7 +57,7 @@ public class CommandManager extends CraftEngineConverterUtils implements Command
      * This method should be called when the plugin is being enabled.
      */
     public void enableCommands() {
-        applyToCommands(VCommand::onEnable);
+        this.applyToCommands(VCommand::onEnable);
     }
 
     /**
@@ -65,7 +65,7 @@ public class CommandManager extends CraftEngineConverterUtils implements Command
      * This method is called when the plugin is being disabled.
      */
     public void disableCommands() {
-        applyToCommands(VCommand::onDisable);
+        this.applyToCommands(VCommand::onDisable);
     }
 
 
@@ -77,12 +77,14 @@ public class CommandManager extends CraftEngineConverterUtils implements Command
      */
     private void applyToCommands(Consumer<VCommand> action) {
         for (VCommand command : this.commands) {
-            applyRecursive(command, action);
+            this.applyRecursive(command, action);
         }
     }
 
     private void applyRecursive(VCommand command, Consumer<VCommand> action) {
-        if (command == null) return;
+        if (command == null) {
+            return;
+        }
         try {
             action.accept(command);
         } catch (Exception e) {
@@ -91,7 +93,7 @@ public class CommandManager extends CraftEngineConverterUtils implements Command
         List<VCommand> children = command.getSubVCommands();
         if (children != null && !children.isEmpty()) {
             for (VCommand child : children) {
-                applyRecursive(child, action);
+                this.applyRecursive(child, action);
             }
         }
     }
@@ -101,7 +103,7 @@ public class CommandManager extends CraftEngineConverterUtils implements Command
      */
     @Override
     public void validCommands() {
-        Logger.info("Loading " + getUniqueCommand() + " commands", LogType.SUCCESS);
+        Logger.info("Loading " + this.getUniqueCommand() + " commands", LogType.SUCCESS);
         this.commandChecking();
     }
 
@@ -118,7 +120,7 @@ public class CommandManager extends CraftEngineConverterUtils implements Command
 
     @Override
     public void registerCommand(String string, VCommand command) {
-        registerCommand(this.plugin, string, command, new ArrayList<>());
+        this.registerCommand(this.plugin, string, command, new ArrayList<>());
     }
 
 
@@ -127,18 +129,20 @@ public class CommandManager extends CraftEngineConverterUtils implements Command
         for (VCommand command : this.commands) {
             if (command.getSubCommands().contains(cmd.getName().toLowerCase())) {
                 if ((args.length == 0 || command.isIgnoreParent()) && command.getParent() == null) {
-                    CommandType type = processRequirements(command, sender, args);
-                    if (!type.equals(CommandType.CONTINUE))
+                    CommandType type = this.processRequirements(command, sender, args);
+                    if (!type.equals(CommandType.CONTINUE)) {
                         return true;
+                    }
                 }
             } else if (args.length >= 1 && command.getParent() != null
-                    && canExecute(args, cmd.getName().toLowerCase(), command)) {
-                CommandType type = processRequirements(command, sender, args);
-                if (!type.equals(CommandType.CONTINUE))
+                    && this.canExecute(args, cmd.getName().toLowerCase(), command)) {
+                CommandType type = this.processRequirements(command, sender, args);
+                if (!type.equals(CommandType.CONTINUE)) {
                     return true;
+                }
             }
         }
-        message(this.plugin, sender, Message.COMMAND__NO_ARGS);
+        this.message(this.plugin, sender, Message.COMMAND__NO_ARGS);
         return true;
     }
 
@@ -152,11 +156,13 @@ public class CommandManager extends CraftEngineConverterUtils implements Command
         for (int index = args.length - 1; index > -1; index--) {
             if (command.getSubCommands().contains(args[index].toLowerCase())) {
                 if (command.isIgnoreArgs()
-                        && (command.getParent() == null || canExecute(args, cmd, command.getParent(), index - 1)))
+                        && (command.getParent() == null || this.canExecute(args, cmd, command.getParent(), index - 1))) {
                     return true;
-                if (index < args.length - 1)
+                }
+                if (index < args.length - 1) {
                     return false;
-                return canExecute(args, cmd, command.getParent(), index - 1);
+                }
+                return this.canExecute(args, cmd, command.getParent(), index - 1);
             }
         }
         return false;
@@ -175,7 +181,7 @@ public class CommandManager extends CraftEngineConverterUtils implements Command
         } else if (index < 0) {
             return false;
         } else if (command.getSubCommands().contains(args[index].toLowerCase())) {
-            return canExecute(args, cmd, command.getParent(), index - 1);
+            return this.canExecute(args, cmd, command.getParent(), index - 1);
         }
         return false;
     }
@@ -193,17 +199,17 @@ public class CommandManager extends CraftEngineConverterUtils implements Command
     private CommandType processRequirements(VCommand command, CommandSender sender, String[] strings) {
 
         if (!(sender instanceof Player) && !command.isConsoleCanUse()) {
-            message(this.plugin, sender, Message.COMMAND__PLAYER_ONLY);
+            this.message(this.plugin, sender, Message.COMMAND__PLAYER_ONLY);
             return CommandType.DEFAULT;
         }
 
-        if (command.getPermission() == null || hasPermission(sender, command.getPermission())) {
+        if (command.getPermission() == null || this.hasPermission(sender, command.getPermission())) {
 
             if (command.runAsync) {
                 super.runAsync(this.plugin, () -> {
                     CommandType returnType = command.prePerform(this.plugin, sender, strings);
                     if (returnType == CommandType.SYNTAX_ERROR) {
-                        message(this.plugin, sender, Message.COMMAND__SYNTAX__ERROR, "syntax", command.getSyntax());
+                        this.message(this.plugin, sender, Message.COMMAND__SYNTAX__ERROR, "syntax", command.getSyntax());
                     }
                 });
                 return CommandType.DEFAULT;
@@ -211,11 +217,11 @@ public class CommandManager extends CraftEngineConverterUtils implements Command
 
             CommandType returnType = command.prePerform(this.plugin, sender, strings);
             if (returnType == CommandType.SYNTAX_ERROR) {
-                message(this.plugin, sender, Message.COMMAND__SYNTAX__ERROR, "syntax", command.getSyntax());
+                this.message(this.plugin, sender, Message.COMMAND__SYNTAX__ERROR, "syntax", command.getSyntax());
             }
             return returnType;
         }
-        message(this.plugin, sender, Message.COMMAND__NO_PERMISSION);
+        this.message(this.plugin, sender, Message.COMMAND__NO_PERMISSION);
         return CommandType.DEFAULT;
     }
 
@@ -233,7 +239,7 @@ public class CommandManager extends CraftEngineConverterUtils implements Command
      * @return
      */
     public boolean isValid(VCommand command, String commandString) {
-        return command.getParent() != null ? isValid(command.getParent(), commandString)
+        return command.getParent() != null ? this.isValid(command.getParent(), commandString)
                 : command.getSubCommands().contains(commandString.toLowerCase());
     }
 
@@ -258,13 +264,13 @@ public class CommandManager extends CraftEngineConverterUtils implements Command
 
             if (command.getSubCommands().contains(cmd.getName().toLowerCase())) {
                 if (args.length == 1 && command.getParent() == null) {
-                    return proccessTab(sender, command, args);
+                    return this.proccessTab(sender, command, args);
                 }
             } else {
                 String[] newArgs = Arrays.copyOf(args, args.length - 1);
                 if (newArgs.length >= 1 && command.getParent() != null
-                        && canExecute(newArgs, cmd.getName().toLowerCase(), command)) {
-                    return proccessTab(sender, command, args);
+                        && this.canExecute(newArgs, cmd.getName().toLowerCase(), command)) {
+                    return this.proccessTab(sender, command, args);
                 }
             }
         }
@@ -309,7 +315,7 @@ public class CommandManager extends CraftEngineConverterUtils implements Command
 
     @Override
     public void registerCommand(String command, VCommand vCommand, String... aliases) {
-        registerCommand(this.plugin, command, vCommand, Arrays.asList(aliases));
+        this.registerCommand(this.plugin, command, vCommand, Arrays.asList(aliases));
     }
 
     /**

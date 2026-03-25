@@ -82,13 +82,17 @@ public class ButtonBlockState extends AbstractDefaultBlockState {
                     ItemDisplayRenderer renderer = new ItemDisplayRenderer()
                             .setItem(item)
                             .setScale("1.0005");
-                    if (rotation != null) renderer.setRotation(rotation);
-                    if (translation != null) renderer.setTranslation(translation);
+                    if (rotation != null) {
+                        renderer.setRotation(rotation);
+                    }
+                    if (translation != null) {
+                        renderer.setTranslation(translation);
+                    }
 
                     BlockEntityConfiguration blockEntity = new BlockEntityConfiguration();
                     blockEntity.addEntityRenderer(renderer);
 
-                    addAppearanceWithEntity(appearanceName, state, model, blockEntity);
+                    this.addAppearanceWithEntity(appearanceName, state, model, blockEntity);
 
                     this.addVariant(new BlockVariant(appearanceName)
                             .addVariantCondition(faceProperty, face)

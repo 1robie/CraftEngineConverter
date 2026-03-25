@@ -20,8 +20,10 @@ public class ItemNameConfiguration extends AbstractItemConfiguration {
 
     @Override
     public void serialize(@NotNull YamlConfiguration yamlConfiguration, @NotNull String path, @NotNull ConfigurationSection itemSection, @NotNull String itemId) {
-        if (this.itemName == null || this.itemName.isEmpty()) return;
-        ConfigurationSection data = getOrCreateSection(itemSection, "data");
-        data.set("item-name", applyNoItalic(this.itemName));
+        if (this.itemName == null || this.itemName.isEmpty()) {
+            return;
+        }
+        ConfigurationSection data = this.getOrCreateSection(itemSection, "data");
+        data.set("item-name", this.applyNoItalic(this.itemName));
     }
 }

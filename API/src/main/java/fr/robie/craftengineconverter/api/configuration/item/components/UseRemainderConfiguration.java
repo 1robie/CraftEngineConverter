@@ -16,10 +16,12 @@ public class UseRemainderConfiguration implements ItemConfigurationSerializable 
 
     @Override
     public void serialize(@NotNull YamlConfiguration yamlConfiguration, @NotNull String path, @NotNull ConfigurationSection itemSection, @NotNull String itemId) {
-        if (remainderItemId == null || remainderItemId.isEmpty() || remainderCount <= 0) return;
+        if (remainderItemId == null || remainderItemId.isEmpty() || remainderCount <= 0) {
+            return;
+        }
 
-        ConfigurationSection components = getOrCreateSection(itemSection, "components");
-        ConfigurationSection useRemainderSection = getOrCreateSection(components, "minecraft:use_remainder");
+        ConfigurationSection components = this.getOrCreateSection(itemSection, "components");
+        ConfigurationSection useRemainderSection = this.getOrCreateSection(components, "minecraft:use_remainder");
         useRemainderSection.set("item", this.remainderItemId);
         if (remainderCount > 1) {
             useRemainderSection.set("count", this.remainderCount);

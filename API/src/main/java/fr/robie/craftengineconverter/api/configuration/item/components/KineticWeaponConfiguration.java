@@ -29,42 +29,53 @@ public class KineticWeaponConfiguration implements ItemConfigurationSerializable
     public record KineticConditions(long maxDurationTicks, double minSpeed, double minRelativeSpeed) {
 
         public void serialize(@NotNull ConfigurationSection section) {
-            if (this.maxDurationTicks > 0)
+            if (this.maxDurationTicks > 0) {
                 section.set("max_duration_ticks", this.maxDurationTicks);
-            if (this.minSpeed > 0.0)
+            }
+            if (this.minSpeed > 0.0) {
                 section.set("min_speed", this.minSpeed);
-            if (this.minRelativeSpeed > 0.0)
+            }
+            if (this.minRelativeSpeed > 0.0) {
                 section.set("min_relative_speed", this.minRelativeSpeed);
+            }
         }
     }
 
     @Override
     public void serialize(@NotNull YamlConfiguration yamlConfiguration, @NotNull String path, @NotNull ConfigurationSection itemSection, @NotNull String itemId) {
-        ConfigurationSection components = getOrCreateSection(itemSection, "components");
-        ConfigurationSection kineticSection = getOrCreateSection(components, "minecraft:kinetic_weapon");
+        ConfigurationSection components = this.getOrCreateSection(itemSection, "components");
+        ConfigurationSection kineticSection = this.getOrCreateSection(components, "minecraft:kinetic_weapon");
 
-        if (this.delayTicks > 0)
+        if (this.delayTicks > 0) {
             kineticSection.set("delay_ticks", this.delayTicks);
+        }
 
-        if (this.damageMultiplier != 1.0)
+        if (this.damageMultiplier != 1.0) {
             kineticSection.set("damage_multiplier", this.damageMultiplier);
+        }
 
-        if (this.forwardMovement != 0.0)
+        if (this.forwardMovement != 0.0) {
             kineticSection.set("forward_movement", this.forwardMovement);
+        }
 
-        if (this.sound != null && !this.sound.isBlank())
+        if (this.sound != null && !this.sound.isBlank()) {
             kineticSection.set("sound", this.sound);
+        }
 
-        if (this.hitSound != null && !this.hitSound.isBlank())
+        if (this.hitSound != null && !this.hitSound.isBlank()) {
             kineticSection.set("hit_sound", this.hitSound);
+        }
 
-        if (this.dismountConditions != null)
-            this.dismountConditions.serialize(getOrCreateSection(kineticSection, "dismount_conditions"));
+        if (this.dismountConditions != null) {
+            this.dismountConditions.serialize(this.getOrCreateSection(kineticSection, "dismount_conditions"));
+        }
 
-        if (this.knockbackConditions != null)
-            this.knockbackConditions.serialize(getOrCreateSection(kineticSection, "knockback_conditions"));
+        if (this.knockbackConditions != null) {
+            this.knockbackConditions.serialize(this.getOrCreateSection(kineticSection, "knockback_conditions"));
+        }
 
-        if (this.damageConditions != null)
-            this.damageConditions.serialize(getOrCreateSection(kineticSection, "damage_conditions"));
+        if (this.damageConditions != null) {
+            this.damageConditions.serialize(this.getOrCreateSection(kineticSection, "damage_conditions"));
+        }
     }
 }

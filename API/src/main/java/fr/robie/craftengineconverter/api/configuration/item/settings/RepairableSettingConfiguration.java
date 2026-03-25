@@ -18,11 +18,11 @@ public class RepairableSettingConfiguration implements ItemConfigurationSerializ
 
     @Override
     public void serialize(@NotNull YamlConfiguration yamlConfiguration, @NotNull String path, @NotNull ConfigurationSection itemSection, @NotNull String itemId) {
-        ConfigurationSection settings = getOrCreateSection(itemSection, "settings");
+        ConfigurationSection settings = this.getOrCreateSection(itemSection, "settings");
         if (this.allowAnvilCombining && this.allowAnvilRepairing && this.allowCraftingTableRepairing) {
             settings.set("repairable", true);
         } else {
-            ConfigurationSection repairableSettings = getOrCreateSection(settings, "repairable");
+            ConfigurationSection repairableSettings = this.getOrCreateSection(settings, "repairable");
             repairableSettings.set("crafting-table", this.allowCraftingTableRepairing);
             repairableSettings.set("anvil-repair", this.allowAnvilRepairing);
             repairableSettings.set("anvil-combine", this.allowAnvilCombining);

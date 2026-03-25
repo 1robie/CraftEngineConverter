@@ -11,19 +11,23 @@ public interface ModelConfiguration {
 
     @Contract("!null -> !null; null -> null")
     default @Nullable String namespaced(String path) {
-        return namespaced(path, "minecraft");
+        return this.namespaced(path, "minecraft");
     }
 
     @Contract("null, _ -> null")
     default @Nullable String namespaced(String path, @NotNull String defaultNamespace) {
-        path = cleanPath(path);
-        if (path == null || path.isEmpty()) return null;
+        path = this.cleanPath(path);
+        if (path == null || path.isEmpty()) {
+            return null;
+        }
         return path.contains(":") ? path : defaultNamespace + ":" + path;
     }
 
     @Contract("null -> null")
     default String cleanPath(@Nullable String path) {
-        if (path == null) return null;
+        if (path == null) {
+            return null;
+        }
         if (path.endsWith(".png")) {
             path = path.substring(0, path.length() - 4);
         }

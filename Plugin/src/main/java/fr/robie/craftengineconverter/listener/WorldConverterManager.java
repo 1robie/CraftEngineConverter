@@ -49,9 +49,9 @@ public class WorldConverterManager implements Listener {
     }
 
     @EventHandler
-    public void onChunkLoad(ChunkLoadEvent event){
+    public void onChunkLoad(ChunkLoadEvent event) {
         Chunk chunk = event.getChunk();
-        processChunk(chunk, null);
+        this.processChunk(chunk, null);
     }
 
     private void processChunk(@NotNull Chunk chunk, @Nullable BukkitProgressBar progressBar) {
@@ -75,16 +75,16 @@ public class WorldConverterManager implements Listener {
                 Location loc = entity.getLocation();
                 String locationJson = new com.google.gson.Gson().toJson(loc.serialize());
                 String entityNbt = entity.getAsString();
-                for (WorldConverter converter : this.converters){
+                for (WorldConverter converter : this.converters) {
 
-                    if (converter.convertEntity(entity)){
+                    if (converter.convertEntity(entity)) {
 
                         if (!this.serverProfile.isEntityConverted(locationJson) && entityNbt != null) {
                             EntityHistory entityHistory = new EntityHistory(
-                                null,
-                                locationJson,
-                                entityNbt,
-                                false
+                                    null,
+                                    locationJson,
+                                    entityNbt,
+                                    false
                             );
                             entityHistories.add(entityHistory);
                         }
@@ -100,23 +100,27 @@ public class WorldConverterManager implements Listener {
             }
         }
 
-        record BlockData(Location location, org.bukkit.block.data.BlockData blockData) {}
-        record BlockConversion(Location location, String ceEquivalent, String originalBlock) {}
+        record BlockData(Location location, org.bukkit.block.data.BlockData blockData) {
+        }
+        record BlockConversion(Location location, String ceEquivalent, String originalBlock) {
+        }
 
         List<BlockData> blocksToCheck = new ArrayList<>();
         World world = chunk.getWorld();
         int minHeight = world.getMinHeight();
         int maxHeight = world.getMaxHeight();
 
-        for (int cx = 0; cx < 16; cx++){
-            for (int cy = minHeight; cy < maxHeight; cy++){
-                for (int cz = 0; cz < 16; cz++){
+        for (int cx = 0; cx < 16; cx++) {
+            for (int cy = minHeight; cy < maxHeight; cy++) {
+                for (int cz = 0; cz < 16; cz++) {
                     Block block = chunk.getBlock(cx, cy, cz);
-                    if (CraftEngineBlocks.isCustomBlock(block)) continue;
+                    if (CraftEngineBlocks.isCustomBlock(block)) {
+                        continue;
+                    }
 
                     blocksToCheck.add(new BlockData(
-                        block.getLocation().clone(),
-                        block.getBlockData().clone()
+                            block.getLocation().clone(),
+                            block.getBlockData().clone()
                     ));
                 }
             }
@@ -136,17 +140,17 @@ public class WorldConverterManager implements Listener {
             for (BlockData blockData : blocksToCheck) {
                 Location loc = blockData.location();
                 boolean alreadyConverted = this.serverProfile.isBlockConverted(
-                    loc.getWorld().getName(),
-                    loc.getBlockX(),
-                    loc.getBlockY(),
-                    loc.getBlockZ()
+                        loc.getWorld().getName(),
+                        loc.getBlockX(),
+                        loc.getBlockY(),
+                        loc.getBlockZ()
                 );
 
                 if (alreadyConverted) {
                     continue;
                 }
 
-                for (var worldConverter : this.converters){
+                for (var worldConverter : this.converters) {
                     Plugins plugin = worldConverter.getPlugin();
                     String ceEquivalent = blockStatesMapper.getCeEquivalent(plugin, blockData.blockData());
                     if (ceEquivalent != null) {
@@ -169,7 +173,7 @@ public class WorldConverterManager implements Listener {
                         for (BlockConversion conversion : batch) {
                             try {
                                 this.placementTracker.placeBlock(conversion.ceEquivalent(), conversion.location());
-                                
+
                                 if (this.storageManager.isEnabled()) {
                                     Location loc = conversion.location();
                                     BlockHistory history = new BlockHistory(
@@ -210,14 +214,14 @@ public class WorldConverterManager implements Listener {
      * Execute chunk conversion with custom throttling.
      *
      * @param chunksPerTick Number of chunks to process per tick (recommended: 5-20)
-     * @param progressBar Progress bar to update
+     * @param progressBar   Progress bar to update
      * @return CompletableFuture that completes when all chunks are scheduled for processing
      */
     public CompletableFuture<Void> executeChunckWithThrottling(int chunksPerTick, BukkitProgressBar progressBar) {
         List<World> worlds = Bukkit.getServer().getWorlds();
         List<Chunk> allChunks = new ArrayList<>();
 
-        for (var world : worlds){
+        for (var world : worlds) {
             allChunks.addAll(List.of(world.getLoadedChunks()));
         }
 
@@ -231,7 +235,7 @@ public class WorldConverterManager implements Listener {
 
             CompletableFuture<Void> scheduledTask = this.foliaCompatibilityManager.runLaterComplatable(() -> {
                 for (Chunk chunk : batch) {
-                    processChunk(chunk, progressBar);
+                    this.processChunk(chunk, progressBar);
                 }
             }, tickDelay);
 
@@ -241,7 +245,7 @@ public class WorldConverterManager implements Listener {
         return CompletableFuture.allOf(schedulingFutures.toArray(new CompletableFuture[0]));
     }
 
-    public void registerConverter(WorldConverter converter){
+    public void registerConverter(WorldConverter converter) {
         this.converters.add(converter);
     }
 
@@ -265,6 +269,7 @@ public class WorldConverterManager implements Listener {
 
     /**
      * Wait for all conversion tasks to complete
+     *
      * @return CompletableFuture that completes when all tasks are done
      */
     public CompletableFuture<Void> awaitAllConversions() {

@@ -225,7 +225,7 @@ public class FoliaCompatibilityManager {
      * @return CompletableFuture<Boolean> indicating success
      */
     public CompletableFuture<Boolean> teleportPlayerSafely(Player player, Location location) {
-        return teleportAsync(player, location, PlayerTeleportEvent.TeleportCause.PLUGIN);
+        return this.teleportAsync(player, location, PlayerTeleportEvent.TeleportCause.PLUGIN);
     }
 
     /**

@@ -14,8 +14,8 @@ public class HideTooltipDisplayConfiguration implements ItemConfigurationSeriali
 
     @Override
     public void serialize(@NotNull YamlConfiguration yamlConfiguration, @NotNull String path, @NotNull ConfigurationSection itemSection, @NotNull String itemId) {
-        ConfigurationSection components = getOrCreateSection(itemSection, "components");
-        ConfigurationSection tooltipDisplay = getOrCreateSection(components, "minecraft:tooltip_display");
+        ConfigurationSection components = this.getOrCreateSection(itemSection, "components");
+        ConfigurationSection tooltipDisplay = this.getOrCreateSection(components, "minecraft:tooltip_display");
         tooltipDisplay.set("hide_tooltip", this.hideTooltip);
     }
 }

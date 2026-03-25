@@ -56,7 +56,7 @@ public class FileCache<T> {
     }
 
     public Optional<T> getData(@NotNull Path path) {
-        return getEntryFile(path).map(FileCacheEntry::getData);
+        return this.getEntryFile(path).map(FileCacheEntry::getData);
     }
 
     public void invalidateCache(@NotNull Path path) {

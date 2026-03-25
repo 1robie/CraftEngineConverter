@@ -20,7 +20,7 @@ public class AnvilRepairItemConfiguration implements ItemConfigurationSerializab
 
     @Override
     public void serialize(@NotNull YamlConfiguration yamlConfiguration, @NotNull String path, @NotNull ConfigurationSection itemSection, @NotNull String itemId) {
-        ConfigurationSection settings = getOrCreateSection(itemSection, "settings");
+        ConfigurationSection settings = this.getOrCreateSection(itemSection, "settings");
         List<Map<String, Object>> repairItemsList = new ArrayList<>();
         for (AnvilRepairItem repairItem : this.repairItems) {
             Map<String, Object> repairItemMap = new HashMap<>();

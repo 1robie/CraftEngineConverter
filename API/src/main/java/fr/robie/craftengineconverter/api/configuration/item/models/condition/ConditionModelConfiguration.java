@@ -12,7 +12,7 @@ public class ConditionModelConfiguration implements ModelConfiguration {
     private ModelConfiguration onFalse;
 
     public ConditionModelConfiguration(@NotNull String property) {
-        this.property = namespaced(property);
+        this.property = this.namespaced(property);
     }
 
     public void setOnTrue(@Nullable ModelConfiguration onTrue) {

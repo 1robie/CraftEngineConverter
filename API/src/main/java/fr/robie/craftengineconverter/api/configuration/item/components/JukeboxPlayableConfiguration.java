@@ -14,8 +14,8 @@ public class JukeboxPlayableConfiguration implements ItemConfigurationSerializab
 
     @Override
     public void serialize(@NotNull YamlConfiguration yamlConfiguration, @NotNull String path, @NotNull ConfigurationSection itemSection, @NotNull String itemId) {
-        ConfigurationSection components = getOrCreateSection(itemSection, "components");
-        ConfigurationSection jukeboxPlayableComponent = getOrCreateSection(components, "minecraft:jukebox_playable");
+        ConfigurationSection components = this.getOrCreateSection(itemSection, "components");
+        ConfigurationSection jukeboxPlayableComponent = this.getOrCreateSection(components, "minecraft:jukebox_playable");
         jukeboxPlayableComponent.set("song", this.song);
     }
 }

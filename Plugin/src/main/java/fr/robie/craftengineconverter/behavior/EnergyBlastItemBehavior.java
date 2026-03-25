@@ -90,8 +90,9 @@ public class EnergyBlastItemBehavior extends ItemBehavior {
             double z = eyePosition.z() + (dirZ * distance);
             Position pos = new Vec3d(x, y, z);
             ExistingBlock block = world.getBlock((int) pos.x(), (int) pos.y(), (int) pos.z());
-            if (!block.blockState().isAir())
+            if (!block.blockState().isAir()) {
                 break;
+            }
 
             for (org.bukkit.entity.Entity entity : bukkitWorld.getNearbyEntities(
                     new Location(bukkitWorld, x, y, z),
@@ -130,7 +131,7 @@ public class EnergyBlastItemBehavior extends ItemBehavior {
         Player player = context.getPlayer();
         World world = context.getWorld();
         InteractionHand hand = context.getHand();
-        return use(world, player, hand);
+        return this.use(world, player, hand);
     }
 
     public static class Factory implements ItemBehaviorFactory<EnergyBlastItemBehavior> {

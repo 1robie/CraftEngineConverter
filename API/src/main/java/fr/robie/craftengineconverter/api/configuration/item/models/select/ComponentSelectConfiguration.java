@@ -10,7 +10,7 @@ public class ComponentSelectConfiguration extends SelectModelConfiguration<Objec
 
     public ComponentSelectConfiguration(@NotNull String component) {
         super("minecraft:component");
-        this.component = namespaced(Objects.requireNonNull(component, "component cannot be null"));
+        this.component = this.namespaced(Objects.requireNonNull(component, "component cannot be null"));
     }
 
     @Override
