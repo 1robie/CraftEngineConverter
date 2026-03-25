@@ -81,6 +81,7 @@ To use a different type, wrap it in a map with a `type` key:
 - Directional blocks conversion (logs, furnace, dropper)
 - Support for `WOOD` minimal_type tool
 - Fix error log when item is a children for a directional block
+- Add support for `disabled_recipes` file
 
 ## ItemsAdder
 

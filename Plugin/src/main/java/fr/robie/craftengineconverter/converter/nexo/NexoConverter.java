@@ -298,6 +298,28 @@ public class NexoConverter extends Converter {
         File recipeFile = configFile.sourceFile();
         YamlConfiguration config = configFile.config();
 
+        if (recipeFile.getName().equalsIgnoreCase("disabled_recipes.yml")) {
+            List<String> disabledRecipes = config.getStringList("disabled_recipes");
+
+            if (!disabledRecipes.isEmpty()) {
+                YamlConfiguration convertedConfig = new YamlConfiguration();
+                ConfigurationSection disableRecipeSection = this.getOrCreateSection(this.getOrCreateSection(convertedConfig, "recipe"), "disable-vanilla-recipes");
+                disableRecipeSection.set("list", disabledRecipes);
+                convertedConfig.setComments("recipe", List.of("Please Merge this file with the config.yml already inside CraftEngine"));
+                try {
+                    convertedConfig.save(new File(this.plugin.getDataFolder(), "converted/" + this.converterName + "/CraftEngine/config.yml"));
+                } catch (IOException e) {
+                    Logger.showException(Message.ERROR__CONVERTER__FAILED_SAVE_FILE, e, "file", recipeFile.getAbsolutePath());
+                }
+            }
+            progress.increment();
+            return;
+        } else if (recipeFile.getName().equalsIgnoreCase("smithing.yml")) {
+            //TODO: Convert smithing recipes
+            progress.increment();
+            return;
+        }
+
         Set<String> keys = config.getKeys(false);
         YamlConfiguration convertedConfig = new YamlConfiguration();
         ConfigurationSection recipesSection = convertedConfig.createSection("recipes");
@@ -403,9 +425,8 @@ public class NexoConverter extends Converter {
                     convertedCount++;
                 }
 
-                default -> {
-                    this.logDebug(Message.ERROR__CONVERTER__NEXO__UNSUPPORTED_RECIPE_TYPE, LogType.WARNING, "type", recipeType, "recipe", finalRecipeId, "file", recipeFile.getAbsolutePath());
-                }
+                default ->
+                        this.logDebug(Message.ERROR__CONVERTER__NEXO__UNSUPPORTED_RECIPE_TYPE, LogType.WARNING, "type", recipeType, "recipe", finalRecipeId, "file", recipeFile.getAbsolutePath());
             }
             progress.increment();
         }
@@ -575,7 +596,7 @@ public class NexoConverter extends Converter {
                 Optional<FileCacheEntry<YamlConfiguration>> entry = FileCacheManager.getYamlCache().getEntryFile(file.toPath());
                 if (entry.isPresent()) {
                     RecipeType recipeType = this.determineRecipeType(file, baseDir);
-                    if (recipeType != null) {
+                    if (recipeType != null || file.getName().equalsIgnoreCase("disabled_recipes.yml") || file.getName().equalsIgnoreCase("smithing.yml")) {
                         ConfigFile configFile = new ConfigFile(file, baseDir, entry.get().getData());
                         toConvert.computeIfAbsent(recipeType, k -> new ArrayList<>()).add(configFile);
                     } else {
@@ -601,7 +622,6 @@ public class NexoConverter extends Converter {
         try {
             return RecipeType.valueOf(recipeTypeName);
         } catch (IllegalArgumentException e) {
-            this.logDebug(Message.WARNING__CONVERTER__NEXO__RECIPE__ERROR__UNKNOWN_RECIPE_TYPE_FOLDER, LogType.WARNING, "type", recipeTypeName, "file", file.getAbsolutePath());
             return null;
         }
     }
