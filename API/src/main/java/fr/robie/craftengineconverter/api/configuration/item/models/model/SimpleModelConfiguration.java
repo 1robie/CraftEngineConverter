@@ -2,12 +2,12 @@ package fr.robie.craftengineconverter.api.configuration.item.models.model;
 
 import fr.robie.craftengineconverter.api.configuration.item.models.ModelConfiguration;
 import fr.robie.craftengineconverter.api.configuration.item.models.tints.TintConfiguration;
+import fr.robie.craftengineconverter.api.utils.ConfigurationSerializationUtils;
 import org.bukkit.configuration.ConfigurationSection;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 
 public class SimpleModelConfiguration implements ModelConfiguration {
@@ -35,11 +35,7 @@ public class SimpleModelConfiguration implements ModelConfiguration {
             section.set("generation", this.generation.serialize());
         }
         if (!this.tints.isEmpty()) {
-            List<Map<String, Object>> serializedTints = new ArrayList<>();
-            for (TintConfiguration tint : this.tints) {
-                serializedTints.add(tint.serialize());
-            }
-            section.set("tints", serializedTints);
+            section.set("tints", ConfigurationSerializationUtils.serializeCollection(this.tints, TintConfiguration::serialize));
         }
     }
 }

@@ -28,7 +28,8 @@ public class SelectModelConfiguration<T> implements ModelConfiguration {
         this.cases.add(new Case(when, model));
     }
 
-    public void addCase(@NotNull ModelConfiguration model, @NotNull T... when) {
+    @SafeVarargs
+    public final void addCase(@NotNull ModelConfiguration model, @NotNull T... when) {
         this.cases.add(new Case(List.of(when), model));
     }
 
@@ -50,7 +51,6 @@ public class SelectModelConfiguration<T> implements ModelConfiguration {
             section.set("cases", serializedCases);
         }
     }
-...
 
     public record Case(@NotNull Object when, @NotNull ModelConfiguration model) {
         public Object getWhenAsString() {
