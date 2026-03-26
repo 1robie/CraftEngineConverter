@@ -294,7 +294,7 @@ registerTagProcessor(new TagProcessor() {
 ```java
 ITagResolver tagResolver = ...; // Get from services
 Optional<String> resolved = tagResolver.resolveTags("<glyph:heart> Hello!", player);
-String output = resolved.orElse("<glyph:heart> Hello!");
+String output = this.resolved.orElse("<glyph:heart> Hello!");
 ```
 
 ### Using SnakeUtils for YAML Manipulation
@@ -308,7 +308,7 @@ utils.
 
 setValue("items.my_item.display_name","My Item");
 
-String name = utils.getString("items.my_item.display_name");
+String name = this.utils.getString("items.my_item.display_name");
 
 // Work with sections
 SnakeUtils section = this.utils.getSection("items.my_item");

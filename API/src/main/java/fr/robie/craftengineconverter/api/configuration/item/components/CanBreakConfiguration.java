@@ -1,6 +1,6 @@
 package fr.robie.craftengineconverter.api.configuration.item.components;
 
-import fr.robie.craftengineconverter.api.configuration.ItemConfigurationSerializable;
+import fr.robie.craftengineconverter.api.configuration.item.ItemConfigurationSerializable;
 import fr.robie.craftengineconverter.api.configuration.utils.BlockPredicateConfiguration;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;

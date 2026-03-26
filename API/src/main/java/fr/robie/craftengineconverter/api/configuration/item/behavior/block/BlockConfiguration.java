@@ -1,7 +1,7 @@
 package fr.robie.craftengineconverter.api.configuration.item.behavior.block;
 
-import fr.robie.craftengineconverter.api.configuration.ItemConfigurationSerializable;
 import fr.robie.craftengineconverter.api.configuration.events.Event;
+import fr.robie.craftengineconverter.api.configuration.item.ItemConfigurationSerializable;
 import fr.robie.craftengineconverter.api.configuration.item.behavior.block.states.StateBlock;
 import fr.robie.craftengineconverter.api.configuration.item.loottables.LootConfiguration;
 import org.bukkit.configuration.ConfigurationSection;

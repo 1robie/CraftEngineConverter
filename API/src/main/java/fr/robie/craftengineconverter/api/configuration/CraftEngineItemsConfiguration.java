@@ -1,5 +1,6 @@
 package fr.robie.craftengineconverter.api.configuration;
 
+import fr.robie.craftengineconverter.api.configuration.item.ItemConfigurationSerializable;
 import fr.robie.craftengineconverter.api.configuration.item.models.ModelConfiguration;
 import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;

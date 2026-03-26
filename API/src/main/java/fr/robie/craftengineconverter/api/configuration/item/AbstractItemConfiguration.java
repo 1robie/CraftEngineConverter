@@ -1,7 +1,5 @@
 package fr.robie.craftengineconverter.api.configuration.item;
 
-import fr.robie.craftengineconverter.api.configuration.ItemConfigurationSerializable;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -18,7 +16,9 @@ public abstract class AbstractItemConfiguration implements ItemConfigurationSeri
     }
 
     protected List<String> applyNoItalic(List<String> lines) {
-        if (!this.disableDefaultConfiguration) return lines;
+        if (!this.disableDefaultConfiguration) {
+            return lines;
+        }
         List<String> result = new ArrayList<>(lines.size());
         for (String line : lines) {
             result.add("<!i>" + line);

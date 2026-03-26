@@ -1,13 +1,11 @@
 package fr.robie.craftengineconverter.api.configuration.item.loottables;
 
-import org.bukkit.configuration.ConfigurationSection;
+import fr.robie.craftengineconverter.api.configuration.SectionSerializable;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public interface LootConfiguration {
-
-    void serialize(@NotNull ConfigurationSection section);
+public interface LootConfiguration extends SectionSerializable {
 
     @Contract("!null -> !null; null -> null")
     default @Nullable String namespaced(String path) {

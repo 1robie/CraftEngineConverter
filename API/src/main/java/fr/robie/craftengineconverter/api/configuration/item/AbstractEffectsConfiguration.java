@@ -1,8 +1,6 @@
 package fr.robie.craftengineconverter.api.configuration.item;
 
 
-import fr.robie.craftengineconverter.api.configuration.ItemConfigurationSerializable;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -24,7 +22,8 @@ public abstract class AbstractEffectsConfiguration implements ItemConfigurationS
                 boolean showParticles,
                 boolean showIcon,
                 double probability
-        ) {}
+        ) {
+        }
 
         @Override
         public Map<String, Object> serialize() {
