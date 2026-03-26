@@ -1,8 +1,8 @@
 package fr.robie.craftengineconverter.api.configuration.item.loottables.functions;
 
 import fr.robie.craftengineconverter.api.configuration.item.loottables.formulas.LootFormula;
+import fr.robie.craftengineconverter.api.utils.ConfigurationSerializationUtils;
 import org.bukkit.configuration.ConfigurationSection;
-import org.bukkit.configuration.file.YamlConfiguration;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
@@ -21,9 +21,6 @@ public class ApplyBonusFunction extends AbstractLootFunction {
     public void serialize(@NotNull ConfigurationSection section) {
         super.serialize(section);
         section.set("enchantment", this.enchantment);
-
-        YamlConfiguration temp = new YamlConfiguration();
-        this.formula.serialize(temp);
-        section.set("formula", temp.getValues(true));
+        section.set("formula", ConfigurationSerializationUtils.toMap(this.formula));
     }
 }

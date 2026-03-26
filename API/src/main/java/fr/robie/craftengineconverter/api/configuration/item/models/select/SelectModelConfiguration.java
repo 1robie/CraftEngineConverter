@@ -1,8 +1,8 @@
 package fr.robie.craftengineconverter.api.configuration.item.models.select;
 
 import fr.robie.craftengineconverter.api.configuration.item.models.ModelConfiguration;
+import fr.robie.craftengineconverter.api.utils.ConfigurationSerializationUtils;
 import org.bukkit.configuration.ConfigurationSection;
-import org.bukkit.configuration.file.YamlConfiguration;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,23 +37,20 @@ public class SelectModelConfiguration<T> implements ModelConfiguration {
         section.set("type", "minecraft:select");
         section.set("property", this.property);
         if (this.fallback != null) {
-            YamlConfiguration temp = new YamlConfiguration();
-            this.fallback.serialize(temp);
-            section.set("fallback", temp.getValues(false));
+            section.set("fallback", ConfigurationSerializationUtils.toMap(this.fallback, false));
         }
         if (!this.cases.isEmpty()) {
             List<Map<String, Object>> serializedCases = new ArrayList<>();
             for (Case c : this.cases) {
                 Map<String, Object> map = new LinkedHashMap<>();
                 map.put("when", c.getWhenAsString());
-                YamlConfiguration temp = new YamlConfiguration();
-                c.model().serialize(temp);
-                map.put("model", temp.getValues(false));
+                map.put("model", ConfigurationSerializationUtils.toMap(c.model(), false));
                 serializedCases.add(map);
             }
             section.set("cases", serializedCases);
         }
     }
+...
 
     public record Case(@NotNull Object when, @NotNull ModelConfiguration model) {
         public Object getWhenAsString() {

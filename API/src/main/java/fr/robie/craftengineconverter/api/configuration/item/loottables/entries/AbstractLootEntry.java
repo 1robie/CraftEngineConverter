@@ -2,13 +2,12 @@ package fr.robie.craftengineconverter.api.configuration.item.loottables.entries;
 
 import fr.robie.craftengineconverter.api.configuration.conditions.Condition;
 import fr.robie.craftengineconverter.api.configuration.item.loottables.functions.LootFunction;
+import fr.robie.craftengineconverter.api.utils.ConfigurationSerializationUtils;
 import org.bukkit.configuration.ConfigurationSection;
-import org.bukkit.configuration.file.YamlConfiguration;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 
 public abstract class AbstractLootEntry implements LootEntry {
@@ -53,23 +52,11 @@ public abstract class AbstractLootEntry implements LootEntry {
         }
 
         if (!this.conditions.isEmpty()) {
-            List<Map<String, Object>> serializedConditions = new ArrayList<>();
-            for (Condition condition : this.conditions) {
-                YamlConfiguration temp = new YamlConfiguration();
-                condition.serialize(temp);
-                serializedConditions.add(temp.getValues(true));
-            }
-            section.set("conditions", serializedConditions);
+            section.set("conditions", ConfigurationSerializationUtils.serializeCollection(this.conditions, ConfigurationSerializationUtils::toMap));
         }
 
         if (!this.functions.isEmpty()) {
-            List<Map<String, Object>> serializedFunctions = new ArrayList<>();
-            for (LootFunction function : this.functions) {
-                YamlConfiguration temp = new YamlConfiguration();
-                function.serialize(temp);
-                serializedFunctions.add(temp.getValues(true));
-            }
-            section.set("functions", serializedFunctions);
+            section.set("functions", ConfigurationSerializationUtils.serializeCollection(this.functions, ConfigurationSerializationUtils::toMap));
         }
     }
 }

@@ -1,13 +1,12 @@
 package fr.robie.craftengineconverter.api.configuration.item.loottables.functions;
 
 import fr.robie.craftengineconverter.api.configuration.conditions.Condition;
+import fr.robie.craftengineconverter.api.utils.ConfigurationSerializationUtils;
 import org.bukkit.configuration.ConfigurationSection;
-import org.bukkit.configuration.file.YamlConfiguration;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 
 public abstract class AbstractLootFunction implements LootFunction {
@@ -32,13 +31,7 @@ public abstract class AbstractLootFunction implements LootFunction {
     public void serialize(@NotNull ConfigurationSection section) {
         section.set("type", this.type);
         if (!this.conditions.isEmpty()) {
-            List<Map<String, Object>> serializedConditions = new ArrayList<>();
-            for (Condition condition : this.conditions) {
-                YamlConfiguration temp = new YamlConfiguration();
-                condition.serialize(temp);
-                serializedConditions.add(temp.getValues(true));
-            }
-            section.set("conditions", serializedConditions);
+            section.set("conditions", ConfigurationSerializationUtils.serializeCollection(this.conditions, ConfigurationSerializationUtils::toMap));
         }
     }
 }

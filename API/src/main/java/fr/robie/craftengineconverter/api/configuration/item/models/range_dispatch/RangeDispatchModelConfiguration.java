@@ -1,8 +1,8 @@
 package fr.robie.craftengineconverter.api.configuration.item.models.range_dispatch;
 
 import fr.robie.craftengineconverter.api.configuration.item.models.ModelConfiguration;
+import fr.robie.craftengineconverter.api.utils.ConfigurationSerializationUtils;
 import org.bukkit.configuration.ConfigurationSection;
-import org.bukkit.configuration.file.YamlConfiguration;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,18 +38,14 @@ public class RangeDispatchModelConfiguration implements ModelConfiguration {
             section.set("scale", this.scale);
         }
         if (this.fallback != null) {
-            YamlConfiguration temp = new YamlConfiguration();
-            this.fallback.serialize(temp);
-            section.set("fallback", temp.getValues(true));
+            section.set("fallback", ConfigurationSerializationUtils.toMap(this.fallback));
         }
         if (!this.entries.isEmpty()) {
             List<Map<String, Object>> serializedEntries = new ArrayList<>();
             for (Entry entry : this.entries) {
                 Map<String, Object> map = new LinkedHashMap<>();
                 map.put("threshold", entry.getThreshold());
-                YamlConfiguration temp = new YamlConfiguration();
-                entry.getModel().serialize(temp);
-                map.put("model", temp.getValues(true));
+                map.put("model", ConfigurationSerializationUtils.toMap(entry.getModel()));
                 serializedEntries.add(map);
             }
             section.set("entries", serializedEntries);
