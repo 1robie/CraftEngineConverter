@@ -54,7 +54,7 @@ public class StairsBlockState extends AbstractDefaultBlockState {
                             case NORTH -> 270;
                             case SOUTH -> 90;
                             case WEST -> 180;
-                            default -> 0; // EAST
+                            default -> 0;
                         };
 
                         int x = (half == SingleBlockHalf.TOP) ? 180 : 0;

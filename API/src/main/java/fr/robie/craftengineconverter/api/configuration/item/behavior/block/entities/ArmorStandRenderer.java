@@ -11,7 +11,6 @@ public class ArmorStandRenderer implements EntityRenderer {
     private Boolean small;
     private String glowColor;
 
-    // Setters
     public ArmorStandRenderer setItem(String item) {
         this.item = item;
         return this;
@@ -41,11 +40,21 @@ public class ArmorStandRenderer implements EntityRenderer {
     public Map<String, Object> serialize() {
         Map<String, Object> map = new LinkedHashMap<>();
         map.put("type", this.type);
-        if (this.item != null) map.put("item", this.item);
-        if (this.position != null) map.put("position", this.position);
-        if (this.scale != null) map.put("scale", this.scale);
-        if (this.small != null) map.put("small", this.small);
-        if (this.glowColor != null) map.put("glow-color", this.glowColor);
+        if (this.item != null) {
+            map.put("item", this.item);
+        }
+        if (this.position != null) {
+            map.put("position", this.position);
+        }
+        if (this.scale != null) {
+            map.put("scale", this.scale);
+        }
+        if (this.small != null) {
+            map.put("small", this.small);
+        }
+        if (this.glowColor != null) {
+            map.put("glow-color", this.glowColor);
+        }
         return map;
     }
 }

@@ -12,12 +12,7 @@ import net.momirealms.craftengine.core.util.HorizontalDirection;
 import org.jetbrains.annotations.NotNull;
 
 public class ButtonBlockState extends AbstractDefaultBlockState {
-    public ButtonBlockState(
-            @NotNull String baseBlock,
-            @NotNull String pressedItem,
-            @NotNull String notPressedItem,
-            @NotNull ModelConfiguration model
-    ) {
+    public ButtonBlockState(@NotNull String baseBlock, @NotNull String pressedItem, @NotNull String notPressedItem, @NotNull ModelConfiguration model) {
         BooleanBlockStateProperty poweredProperty = new BooleanBlockStateProperty("powered", false);
         AnchorTypeBlockStateProperty faceProperty = new AnchorTypeBlockStateProperty("face", AnchorType.FLOOR);
         HorizontalDirectionBlockStateProperty facingProperty = new HorizontalDirectionBlockStateProperty("facing", HorizontalDirection.NORTH);

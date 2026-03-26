@@ -11,12 +11,7 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.jetbrains.annotations.NotNull;
 
 public class DirectionalBlockState extends AbstractDefaultBlockState {
-    public DirectionalBlockState(
-            @NotNull Plugins plugin,
-            @NotNull String itemId,
-            @NotNull CraftEngineBlockState blockState,
-            @NotNull ModelConfiguration model
-    ) {
+    public DirectionalBlockState(@NotNull Plugins plugin, @NotNull String itemId, @NotNull CraftEngineBlockState blockState, @NotNull ModelConfiguration model) {
         DirectionBlockStateProperty facingProperty = new DirectionBlockStateProperty("facing", Direction.NORTH);
         this.addProperty(facingProperty);
 

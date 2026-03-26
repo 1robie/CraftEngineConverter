@@ -1,5 +1,6 @@
 package fr.robie.craftengineconverter.api.configuration.item.behavior.block.states.defaults;
 
+import fr.robie.craftengineconverter.api.configuration.item.behavior.block.entities.BlockEntity;
 import fr.robie.craftengineconverter.api.configuration.item.behavior.block.states.BlockAppearance;
 import fr.robie.craftengineconverter.api.configuration.item.behavior.block.states.BlockVariant;
 import fr.robie.craftengineconverter.api.configuration.item.behavior.block.states.MultiStateBlock;
@@ -24,14 +25,7 @@ public abstract class AbstractDefaultBlockState extends MultiStateBlock {
                 .setFluidState("water");
     }
 
-    protected void addRotatedAppearance(
-            @NotNull String appearanceName,
-            @NotNull String state,
-            @NotNull ModelConfiguration model,
-            int x,
-            int y,
-            boolean uvlock
-    ) {
+    protected void addRotatedAppearance(@NotNull String appearanceName, @NotNull String state, @NotNull ModelConfiguration model, int x, int y, boolean uvlock) {
         this.addAppearance(appearanceName, BlockAppearance.visualState(state, model).postProcessor(section -> {
             if (x != 0 || y != 0 || uvlock) {
                 ConfigurationSection modelSection = this.getOrCreateSection(section, "model");
@@ -48,12 +42,7 @@ public abstract class AbstractDefaultBlockState extends MultiStateBlock {
         }).build());
     }
 
-    protected void addAppearanceWithEntity(
-            @NotNull String appearanceName,
-            @NotNull String state,
-            @NotNull ModelConfiguration model,
-            @Nullable fr.robie.craftengineconverter.api.configuration.item.behavior.block.entities.BlockEntity blockEntity
-    ) {
+    protected void addAppearanceWithEntity(@NotNull String appearanceName, @NotNull String state, @NotNull ModelConfiguration model, @Nullable BlockEntity blockEntity) {
         BlockAppearance.Builder builder = BlockAppearance.visualState(state, model);
         if (blockEntity != null) {
             builder.blockEntity(blockEntity);

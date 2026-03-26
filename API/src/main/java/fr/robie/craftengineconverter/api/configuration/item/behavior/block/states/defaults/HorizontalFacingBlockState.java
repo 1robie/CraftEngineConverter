@@ -27,7 +27,7 @@ public class HorizontalFacingBlockState extends AbstractDefaultBlockState {
                 case SOUTH -> 180;
                 case WEST -> 270;
                 case EAST -> 90;
-                default -> 0; // NORTH
+                default -> 0;
             };
 
             this.addAppearance(facingName, BlockAppearance.autoState(plugin, blockState, itemId, model).postProcessor(section -> {

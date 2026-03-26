@@ -38,14 +38,12 @@ public class FenceBlockState extends AbstractDefaultBlockState {
 
                             BlockEntityConfiguration blockEntity = new BlockEntityConfiguration();
 
-                            // Post
                             blockEntity.addEntityRenderer(new ItemDisplayRenderer()
                                     .setItem(fencePostItem)
                                     .setRotation("180")
                                     .setScale("1.0003")
                                     .setTranslation("0,0.0001,0"));
 
-                            // Sides
                             if (north) {
                                 blockEntity.addEntityRenderer(new ItemDisplayRenderer()
                                         .setItem(fenceSideItem)

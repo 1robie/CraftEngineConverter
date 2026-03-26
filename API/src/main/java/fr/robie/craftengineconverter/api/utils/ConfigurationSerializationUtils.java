@@ -7,6 +7,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -50,7 +51,7 @@ public final class ConfigurationSerializationUtils {
      * @param <R>        The type of the serialized form.
      * @return A list of serialized objects.
      */
-    public static <T, R> @NotNull List<R> serializeCollection(@NotNull Collection<T> collection, java.util.function.Function<T, R> mapper) {
+    public static <T, R> @NotNull List<R> serializeCollection(@NotNull Collection<T> collection, Function<T, R> mapper) {
         return collection.stream()
                 .map(mapper)
                 .collect(Collectors.toList());

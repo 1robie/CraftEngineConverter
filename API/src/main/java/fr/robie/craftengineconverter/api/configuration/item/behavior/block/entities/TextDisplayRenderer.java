@@ -24,7 +24,6 @@ public class TextDisplayRenderer implements EntityRenderer {
     private Boolean useDefaultBackgroundColor;
     private String alignment;
 
-    // Setters
     public TextDisplayRenderer setText(String text) {
         this.text = text;
         return this;
@@ -119,25 +118,60 @@ public class TextDisplayRenderer implements EntityRenderer {
     public Map<String, Object> serialize() {
         Map<String, Object> map = new LinkedHashMap<>();
         map.put("type", this.type);
-        if (this.text != null) map.put("text", this.text);
-        if (this.billboard != null) map.put("billboard", this.billboard);
-        if (this.translation != null) map.put("translation", this.translation);
-        if (this.rotation != null) map.put("rotation", this.rotation);
-        if (this.position != null) map.put("position", this.position);
-        if (this.yaw != null) map.put("yaw", this.yaw);
-        if (this.pitch != null) map.put("pitch", this.pitch);
-        if (this.scale != null) map.put("scale", this.scale);
-        if (this.glowColor != null) map.put("glow-color", this.glowColor);
-        if (this.brightness != null) map.put("brightness", this.brightness);
-        if (this.viewRange != null) map.put("view-range", this.viewRange);
-        if (this.lineWidth != null) map.put("line-width", this.lineWidth);
-        if (this.backgroundColor != null) map.put("background-color", this.backgroundColor);
-        if (this.textOpacity != null) map.put("text-opacity", this.textOpacity);
-        if (this.hasShadow != null) map.put("has-shadow", this.hasShadow);
-        if (this.isSeeThrough != null) map.put("is-see-through", this.isSeeThrough);
-        if (this.useDefaultBackgroundColor != null)
+        if (this.text != null) {
+            map.put("text", this.text);
+        }
+        if (this.billboard != null) {
+            map.put("billboard", this.billboard);
+        }
+        if (this.translation != null) {
+            map.put("translation", this.translation);
+        }
+        if (this.rotation != null) {
+            map.put("rotation", this.rotation);
+        }
+        if (this.position != null) {
+            map.put("position", this.position);
+        }
+        if (this.yaw != null) {
+            map.put("yaw", this.yaw);
+        }
+        if (this.pitch != null) {
+            map.put("pitch", this.pitch);
+        }
+        if (this.scale != null) {
+            map.put("scale", this.scale);
+        }
+        if (this.glowColor != null) {
+            map.put("glow-color", this.glowColor);
+        }
+        if (this.brightness != null) {
+            map.put("brightness", this.brightness);
+        }
+        if (this.viewRange != null) {
+            map.put("view-range", this.viewRange);
+        }
+        if (this.lineWidth != null) {
+            map.put("line-width", this.lineWidth);
+        }
+        if (this.backgroundColor != null) {
+            map.put("background-color", this.backgroundColor);
+        }
+        if (this.textOpacity != null) {
+            map.put("text-opacity", this.textOpacity);
+        }
+        if (this.hasShadow != null) {
+            map.put("has-shadow", this.hasShadow);
+        }
+        if (this.isSeeThrough != null) {
+            map.put("is-see-through", this.isSeeThrough);
+        }
+        if (this.useDefaultBackgroundColor != null) {
             map.put("use-default-background-color", this.useDefaultBackgroundColor);
-        if (this.alignment != null) map.put("alignment", this.alignment);
+        }
+        if (this.alignment != null) {
+            map.put("alignment", this.alignment);
+        }
         return map;
     }
 }
