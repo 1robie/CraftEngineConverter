@@ -6,7 +6,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.Objects;
 
-public class TableBonusCondition extends AbstractLootCondition {
+public class TableBonusCondition extends AbstractCondition {
     private final String enchantment;
     private final List<Double> chances;
 

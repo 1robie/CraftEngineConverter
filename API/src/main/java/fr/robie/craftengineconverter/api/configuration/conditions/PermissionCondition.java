@@ -5,7 +5,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
-public class PermissionCondition extends AbstractLootCondition {
+public class PermissionCondition extends AbstractCondition {
     private final String permission;
 
     public PermissionCondition(@NotNull String permission) {

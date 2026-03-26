@@ -3,7 +3,7 @@ package fr.robie.craftengineconverter.api.configuration.conditions;
 import org.bukkit.configuration.ConfigurationSection;
 import org.jetbrains.annotations.NotNull;
 
-public class DistanceCondition extends AbstractLootCondition {
+public class DistanceCondition extends AbstractCondition {
     private final double min;
     private final double max;
 

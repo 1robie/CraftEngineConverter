@@ -3,7 +3,7 @@ package fr.robie.craftengineconverter.api.configuration.conditions;
 import org.bukkit.configuration.ConfigurationSection;
 import org.jetbrains.annotations.NotNull;
 
-public class RandomCondition extends AbstractLootCondition {
+public class RandomCondition extends AbstractCondition {
     private final double value;
 
     public RandomCondition(double value) {

@@ -5,7 +5,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
-public class RegexCondition extends AbstractLootCondition {
+public class RegexCondition extends AbstractCondition {
     private final String value;
     private final String regex;
 

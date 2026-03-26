@@ -4,7 +4,7 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.jetbrains.annotations.NotNull;
 
-public class InvertedCondition extends AbstractLootCondition {
+public class InvertedCondition extends AbstractCondition {
     private final Condition term;
 
     public InvertedCondition(@NotNull Condition term) {

@@ -5,7 +5,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
-public class MatchBlockCondition extends AbstractLootCondition {
+public class MatchBlockCondition extends AbstractCondition {
     private final String x;
     private final String y;
     private final String z;

@@ -5,7 +5,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
-public class InventoryHasItemCondition extends AbstractLootCondition {
+public class InventoryHasItemCondition extends AbstractCondition {
     private final String id;
     private final int count;
 

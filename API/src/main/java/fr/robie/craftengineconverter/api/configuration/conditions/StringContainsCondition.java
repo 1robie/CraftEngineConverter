@@ -5,7 +5,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
-public class StringContainsCondition extends AbstractLootCondition {
+public class StringContainsCondition extends AbstractCondition {
     private final String value1;
     private final String value2;
 

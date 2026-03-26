@@ -5,7 +5,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
-public class IsNullCondition extends AbstractLootCondition {
+public class IsNullCondition extends AbstractCondition {
     private final String argument;
 
     public IsNullCondition(@NotNull String argument) {

@@ -5,7 +5,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
-public class EnchantmentCondition extends AbstractLootCondition {
+public class EnchantmentCondition extends AbstractCondition {
     private final String predicate;
 
     public EnchantmentCondition(@NotNull String predicate) {

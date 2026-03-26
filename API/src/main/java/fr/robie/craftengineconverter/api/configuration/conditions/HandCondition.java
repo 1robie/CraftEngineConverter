@@ -6,7 +6,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
-public class HandCondition extends AbstractLootCondition {
+public class HandCondition extends AbstractCondition {
     private final Hand hand;
 
     public HandCondition(@NotNull Hand hand) {

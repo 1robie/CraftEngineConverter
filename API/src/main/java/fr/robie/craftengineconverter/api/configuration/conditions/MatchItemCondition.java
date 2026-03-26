@@ -6,7 +6,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.Objects;
 
-public class MatchItemCondition extends AbstractLootCondition {
+public class MatchItemCondition extends AbstractCondition {
     private final Object id;
     private final boolean regex;
 

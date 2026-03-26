@@ -6,7 +6,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.Objects;
 
-public class MatchFurnitureVariantCondition extends AbstractLootCondition {
+public class MatchFurnitureVariantCondition extends AbstractCondition {
     private final List<String> variants;
 
     public MatchFurnitureVariantCondition(@NotNull List<String> variants) {

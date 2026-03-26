@@ -5,7 +5,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
-public class ExpressionCondition extends AbstractLootCondition {
+public class ExpressionCondition extends AbstractCondition {
     private final String expression;
 
     public ExpressionCondition(@NotNull String expression) {

@@ -6,7 +6,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Map;
 import java.util.Objects;
 
-public class MatchBlockPropertyCondition extends AbstractLootCondition {
+public class MatchBlockPropertyCondition extends AbstractCondition {
     private final Map<String, Object> properties;
 
     public MatchBlockPropertyCondition(@NotNull Map<String, Object> properties) {

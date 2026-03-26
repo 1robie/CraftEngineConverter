@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-public class AnyOfCondition extends AbstractLootCondition {
+public class AnyOfCondition extends AbstractCondition {
     private final List<Condition> terms;
 
     public AnyOfCondition(@NotNull List<Condition> terms) {

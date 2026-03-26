@@ -5,7 +5,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
-public class OnCooldownCondition extends AbstractLootCondition {
+public class OnCooldownCondition extends AbstractCondition {
     private final String id;
 
     public OnCooldownCondition(@NotNull String id) {
