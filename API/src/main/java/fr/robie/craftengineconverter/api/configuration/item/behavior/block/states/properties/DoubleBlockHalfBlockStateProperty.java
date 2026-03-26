@@ -16,12 +16,12 @@ public class DoubleBlockHalfBlockStateProperty implements BlockStateProperty<Dou
     }
 
     @Override
-    public @NotNull String getName() {
+    public @NotNull String name() {
         return this.name;
     }
 
     @Override
-    public @NonNull DoubleBlockHalf getValue() {
+    public @NonNull DoubleBlockHalf value() {
         return this.value;
     }
 

@@ -4,10 +4,10 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.jetbrains.annotations.NotNull;
 
 public interface BlockStateProperty<T> extends SectionProvider {
-    @NotNull String getName();
+    @NotNull String name();
 
     @NotNull
-    T getValue();
+    T value();
 
     void serialize(@NotNull ConfigurationSection propertiesSection);
 }

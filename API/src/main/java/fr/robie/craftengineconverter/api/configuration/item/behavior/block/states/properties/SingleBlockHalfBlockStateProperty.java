@@ -16,12 +16,12 @@ public class SingleBlockHalfBlockStateProperty implements BlockStateProperty<Sin
     }
 
     @Override
-    public @NotNull String getName() {
+    public @NotNull String name() {
         return this.name;
     }
 
     @Override
-    public @NonNull SingleBlockHalf getValue() {
+    public @NonNull SingleBlockHalf value() {
         return this.value;
     }
 

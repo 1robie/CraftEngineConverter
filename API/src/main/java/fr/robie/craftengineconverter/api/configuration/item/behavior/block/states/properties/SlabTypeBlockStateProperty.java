@@ -16,12 +16,12 @@ public class SlabTypeBlockStateProperty implements BlockStateProperty<SlabType> 
     }
 
     @Override
-    public @NotNull String getName() {
+    public @NotNull String name() {
         return this.name;
     }
 
     @Override
-    public @NonNull SlabType getValue() {
+    public @NonNull SlabType value() {
         return this.value;
     }
 

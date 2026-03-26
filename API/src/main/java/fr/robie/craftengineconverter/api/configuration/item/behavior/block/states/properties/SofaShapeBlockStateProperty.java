@@ -16,12 +16,12 @@ public class SofaShapeBlockStateProperty implements BlockStateProperty<SofaShape
     }
 
     @Override
-    public @NotNull String getName() {
+    public @NotNull String name() {
         return this.name;
     }
 
     @Override
-    public @NonNull SofaShape getValue() {
+    public @NonNull SofaShape value() {
         return this.value;
     }
 

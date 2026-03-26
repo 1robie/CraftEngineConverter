@@ -19,12 +19,12 @@ public class StringBlockStateProperty implements BlockStateProperty<String> {
     }
 
     @Override
-    public @NotNull String getName() {
+    public @NotNull String name() {
         return this.name;
     }
 
     @Override
-    public @NonNull String getValue() {
+    public @NonNull String value() {
         return this.value;
     }
 

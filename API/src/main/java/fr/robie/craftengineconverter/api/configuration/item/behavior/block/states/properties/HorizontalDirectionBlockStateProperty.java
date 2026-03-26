@@ -16,12 +16,12 @@ public class HorizontalDirectionBlockStateProperty implements BlockStateProperty
     }
 
     @Override
-    public @NotNull String getName() {
+    public @NotNull String name() {
         return this.name;
     }
 
     @Override
-    public @NonNull HorizontalDirection getValue() {
+    public @NonNull HorizontalDirection value() {
         return this.value;
     }
 

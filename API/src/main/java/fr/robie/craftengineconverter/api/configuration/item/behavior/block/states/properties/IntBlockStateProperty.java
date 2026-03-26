@@ -20,12 +20,12 @@ public class IntBlockStateProperty implements BlockStateProperty<Integer> {
     }
 
     @Override
-    public @NotNull String getName() {
+    public @NotNull String name() {
         return this.name;
     }
 
     @Override
-    public @NonNull Integer getValue() {
+    public @NonNull Integer value() {
         return this.value;
     }
 

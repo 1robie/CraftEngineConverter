@@ -16,12 +16,12 @@ public class AxisBlockStateProperty implements BlockStateProperty<Direction.Axis
     }
 
     @Override
-    public @NotNull String getName() {
+    public @NotNull String name() {
         return this.name;
     }
 
     @Override
-    public Direction.@NonNull Axis getValue() {
+    public Direction.@NonNull Axis value() {
         return this.value;
     }
 

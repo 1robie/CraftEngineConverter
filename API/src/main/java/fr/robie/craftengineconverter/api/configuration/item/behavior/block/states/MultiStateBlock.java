@@ -35,7 +35,7 @@ public class MultiStateBlock implements StateBlock {
 
     private void validateVariant(@NotNull BlockVariant variant) {
         List<String> registeredPropertyNames = this.properties.stream()
-                .map(BlockStateProperty::getName)
+                .map(BlockStateProperty::name)
                 .toList();
 
         for (String propertyName : variant.getVariantConditions().keySet()) {

@@ -17,7 +17,7 @@ public class BlockVariant {
     }
 
     public <T> BlockVariant addVariantCondition(@NotNull BlockStateProperty<T> property, @NotNull T value) {
-        this.variantConditions.put(property.getName(), property.getName() + "=" + value.toString().toLowerCase());
+        this.variantConditions.put(property.name(), property.name() + "=" + value.toString().toLowerCase());
         return this;
     }
 

@@ -4,25 +4,16 @@ import fr.robie.craftengineconverter.api.configuration.item.behavior.block.state
 import net.momirealms.craftengine.core.util.Direction;
 import org.bukkit.configuration.ConfigurationSection;
 import org.jetbrains.annotations.NotNull;
-import org.jspecify.annotations.NonNull;
 
-public class DirectionBlockStateProperty implements BlockStateProperty<Direction> {
-    private final String name;
-    private final Direction value;
-
+public record DirectionBlockStateProperty(String name, Direction value) implements BlockStateProperty<Direction> {
     public DirectionBlockStateProperty(@NotNull String name, @NotNull Direction value) {
         this.name = name;
         this.value = value;
     }
 
     @Override
-    public @NotNull String getName() {
+    public @NotNull String name() {
         return this.name;
-    }
-
-    @Override
-    public @NonNull Direction getValue() {
-        return this.value;
     }
 
     @Override

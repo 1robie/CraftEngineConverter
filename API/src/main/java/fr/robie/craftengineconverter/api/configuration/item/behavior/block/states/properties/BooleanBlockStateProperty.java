@@ -14,12 +14,12 @@ public class BooleanBlockStateProperty implements BlockStateProperty<Boolean> {
     }
 
     @Override
-    public @NotNull String getName() {
+    public @NotNull String name() {
         return this.name;
     }
 
     @Override
-    public @NotNull Boolean getValue() {
+    public @NotNull Boolean value() {
         return this.value;
     }
 

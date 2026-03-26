@@ -16,12 +16,12 @@ public class AnchorTypeBlockStateProperty implements BlockStateProperty<AnchorTy
     }
 
     @Override
-    public @NotNull String getName() {
+    public @NotNull String name() {
         return this.name;
     }
 
     @Override
-    public @NonNull AnchorType getValue() {
+    public @NonNull AnchorType value() {
         return this.value;
     }
 

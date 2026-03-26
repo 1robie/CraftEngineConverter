@@ -16,12 +16,12 @@ public class StairsShapeBlockStateProperty implements BlockStateProperty<StairsS
     }
 
     @Override
-    public @NotNull String getName() {
+    public @NotNull String name() {
         return this.name;
     }
 
     @Override
-    public @NonNull StairsShape getValue() {
+    public @NonNull StairsShape value() {
         return this.value;
     }
 

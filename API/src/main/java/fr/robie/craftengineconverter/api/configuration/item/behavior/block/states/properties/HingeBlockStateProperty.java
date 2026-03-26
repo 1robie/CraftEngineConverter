@@ -16,12 +16,12 @@ public class HingeBlockStateProperty implements BlockStateProperty<Door.Hinge> {
     }
 
     @Override
-    public @NotNull String getName() {
+    public @NotNull String name() {
         return this.name;
     }
 
     @Override
-    public Door.@NonNull Hinge getValue() {
+    public Door.@NonNull Hinge value() {
         return this.value;
     }
 
