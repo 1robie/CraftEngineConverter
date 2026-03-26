@@ -2,7 +2,7 @@ package fr.robie.craftengineconverter.api.configuration.functions.internal;
 
 import fr.robie.craftengineconverter.api.configuration.conditions.Condition;
 import fr.robie.craftengineconverter.api.configuration.functions.Function;
-import org.bukkit.configuration.file.YamlConfiguration;
+import fr.robie.craftengineconverter.api.utils.ConfigurationSerializationUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -25,19 +25,9 @@ public class IfElseFunction extends AbstractEventFunction {
         public Map<String, Object> serialize() {
             Map<String, Object> map = new HashMap<>();
             if (this.conditions != null && !this.conditions.isEmpty()) {
-                List<Map<String, Object>> serializedConditions = new ArrayList<>();
-                for (Condition condition : this.conditions) {
-                    YamlConfiguration temp = new YamlConfiguration();
-                    condition.serialize(temp);
-                    serializedConditions.add(temp.getValues(true));
-                }
-                map.put("conditions", serializedConditions);
+                map.put("conditions", ConfigurationSerializationUtils.serializeCollection(this.conditions, ConfigurationSerializationUtils::toMap));
             }
-            List<Map<String, Object>> serializedFunctions = new ArrayList<>();
-            for (Function function : this.functions) {
-                serializedFunctions.add(function.serialize());
-            }
-            map.put("functions", serializedFunctions);
+            map.put("functions", ConfigurationSerializationUtils.serializeCollection(this.functions, Function::serialize));
             return map;
         }
     }
@@ -45,10 +35,7 @@ public class IfElseFunction extends AbstractEventFunction {
     @Override
     public Map<String, Object> serialize() {
         Map<String, Object> map = super.serialize();
-        List<Map<String, Object>> serializedRules = new ArrayList<>();
-        for (Rule rule : this.rules)
-            serializedRules.add(rule.serialize());
-        map.put("rules", serializedRules);
+        map.put("rules", ConfigurationSerializationUtils.serializeCollection(this.rules, Rule::serialize));
         return map;
     }
 }

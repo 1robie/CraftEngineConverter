@@ -1,8 +1,8 @@
 package fr.robie.craftengineconverter.api.configuration.item.models.condition;
 
 import fr.robie.craftengineconverter.api.configuration.item.models.ModelConfiguration;
+import fr.robie.craftengineconverter.api.utils.ConfigurationSerializationUtils;
 import org.bukkit.configuration.ConfigurationSection;
-import org.bukkit.configuration.file.YamlConfiguration;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,15 +29,11 @@ public class ConditionModelConfiguration implements ModelConfiguration {
         section.set("property", this.property);
 
         if (this.onTrue != null) {
-            YamlConfiguration temp = new YamlConfiguration();
-            this.onTrue.serialize(temp);
-            section.set("on-true", temp.getValues(true));
+            section.set("on-true", ConfigurationSerializationUtils.toMap(this.onTrue));
         }
 
         if (this.onFalse != null) {
-            YamlConfiguration temp = new YamlConfiguration();
-            this.onFalse.serialize(temp);
-            section.set("on-false", temp.getValues(true));
+            section.set("on-false", ConfigurationSerializationUtils.toMap(this.onFalse));
         }
     }
 }

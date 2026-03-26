@@ -1,6 +1,7 @@
 package fr.robie.craftengineconverter.api.configuration.functions.internal;
 
 import fr.robie.craftengineconverter.api.configuration.item.loottables.LootTable;
+import fr.robie.craftengineconverter.api.utils.ConfigurationSerializationUtils;
 import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.util.Map;
@@ -44,9 +45,7 @@ public class DropLootFunction extends AbstractEventFunction {
             map.put("to-inventory", this.toInventory);
         }
         if (this.loot != null) {
-            YamlConfiguration temp = new YamlConfiguration();
-            this.loot.serialize(temp);
-            map.putAll(temp.getValues(true));
+            map.putAll(ConfigurationSerializationUtils.toMap(this.loot));
         }
         return map;
     }

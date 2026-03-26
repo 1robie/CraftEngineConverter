@@ -3,13 +3,12 @@ package fr.robie.craftengineconverter.api.configuration.item.loottables;
 import fr.robie.craftengineconverter.api.configuration.conditions.Condition;
 import fr.robie.craftengineconverter.api.configuration.item.loottables.entries.LootEntry;
 import fr.robie.craftengineconverter.api.configuration.item.loottables.functions.LootFunction;
+import fr.robie.craftengineconverter.api.utils.ConfigurationSerializationUtils;
 import org.bukkit.configuration.ConfigurationSection;
-import org.bukkit.configuration.file.YamlConfiguration;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 
 public class LootPool implements LootConfiguration {
@@ -39,33 +38,15 @@ public class LootPool implements LootConfiguration {
         section.set("rolls", this.rolls);
 
         if (!this.conditions.isEmpty()) {
-            List<Map<String, Object>> serializedConditions = new ArrayList<>();
-            for (Condition condition : this.conditions) {
-                YamlConfiguration temp = new YamlConfiguration();
-                condition.serialize(temp);
-                serializedConditions.add(temp.getValues(true));
-            }
-            section.set("conditions", serializedConditions);
+            section.set("conditions", ConfigurationSerializationUtils.serializeCollection(this.conditions, ConfigurationSerializationUtils::toMap));
         }
 
         if (!this.entries.isEmpty()) {
-            List<Map<String, Object>> serializedEntries = new ArrayList<>();
-            for (LootEntry entry : this.entries) {
-                YamlConfiguration temp = new YamlConfiguration();
-                entry.serialize(temp);
-                serializedEntries.add(temp.getValues(true));
-            }
-            section.set("entries", serializedEntries);
+            section.set("entries", ConfigurationSerializationUtils.serializeCollection(this.entries, ConfigurationSerializationUtils::toMap));
         }
 
         if (!this.functions.isEmpty()) {
-            List<Map<String, Object>> serializedFunctions = new ArrayList<>();
-            for (LootFunction function : this.functions) {
-                YamlConfiguration temp = new YamlConfiguration();
-                function.serialize(temp);
-                serializedFunctions.add(temp.getValues(true));
-            }
-            section.set("functions", serializedFunctions);
+            section.set("functions", ConfigurationSerializationUtils.serializeCollection(this.functions, ConfigurationSerializationUtils::toMap));
         }
     }
 }

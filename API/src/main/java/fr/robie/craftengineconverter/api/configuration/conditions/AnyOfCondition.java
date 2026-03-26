@@ -1,12 +1,10 @@
 package fr.robie.craftengineconverter.api.configuration.conditions;
 
+import fr.robie.craftengineconverter.api.utils.ConfigurationSerializationUtils;
 import org.bukkit.configuration.ConfigurationSection;
-import org.bukkit.configuration.file.YamlConfiguration;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 
 public class AnyOfCondition extends AbstractCondition {
@@ -20,12 +18,6 @@ public class AnyOfCondition extends AbstractCondition {
     @Override
     public void serialize(@NotNull ConfigurationSection section) {
         super.serialize(section);
-        List<Map<String, Object>> serializedTerms = new ArrayList<>();
-        for (Condition term : this.terms) {
-            YamlConfiguration temp = new YamlConfiguration();
-            term.serialize(temp);
-            serializedTerms.add(temp.getValues(true));
-        }
-        section.set("terms", serializedTerms);
+        section.set("terms", ConfigurationSerializationUtils.serializeCollection(this.terms, ConfigurationSerializationUtils::toMap));
     }
 }

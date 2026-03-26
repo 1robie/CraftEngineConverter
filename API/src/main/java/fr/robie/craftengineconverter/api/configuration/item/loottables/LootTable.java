@@ -1,13 +1,12 @@
 package fr.robie.craftengineconverter.api.configuration.item.loottables;
 
 import fr.robie.craftengineconverter.api.configuration.item.loottables.functions.LootFunction;
+import fr.robie.craftengineconverter.api.utils.ConfigurationSerializationUtils;
 import org.bukkit.configuration.ConfigurationSection;
-import org.bukkit.configuration.file.YamlConfiguration;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 
 public class LootTable implements LootConfiguration {
@@ -30,23 +29,11 @@ public class LootTable implements LootConfiguration {
         ConfigurationSection lootSection = section.createSection("loot");
 
         if (!this.functions.isEmpty()) {
-            List<Map<String, Object>> serializedFunctions = new ArrayList<>();
-            for (LootFunction function : this.functions) {
-                YamlConfiguration temp = new YamlConfiguration();
-                function.serialize(temp);
-                serializedFunctions.add(temp.getValues(true));
-            }
-            lootSection.set("functions", serializedFunctions);
+            lootSection.set("functions", ConfigurationSerializationUtils.serializeCollection(this.functions, ConfigurationSerializationUtils::toMap));
         }
 
         if (!this.pools.isEmpty()) {
-            List<Map<String, Object>> serializedPools = new ArrayList<>();
-            for (LootPool pool : this.pools) {
-                YamlConfiguration temp = new YamlConfiguration();
-                pool.serialize(temp);
-                serializedPools.add(temp.getValues(true));
-            }
-            lootSection.set("pools", serializedPools);
+            lootSection.set("pools", ConfigurationSerializationUtils.serializeCollection(this.pools, ConfigurationSerializationUtils::toMap));
         }
     }
 }

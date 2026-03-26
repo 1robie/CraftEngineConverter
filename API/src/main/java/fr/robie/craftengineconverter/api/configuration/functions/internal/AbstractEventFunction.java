@@ -2,7 +2,7 @@ package fr.robie.craftengineconverter.api.configuration.functions.internal;
 
 import fr.robie.craftengineconverter.api.configuration.conditions.Condition;
 import fr.robie.craftengineconverter.api.configuration.functions.Function;
-import org.bukkit.configuration.file.YamlConfiguration;
+import fr.robie.craftengineconverter.api.utils.ConfigurationSerializationUtils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -24,15 +24,9 @@ public abstract class AbstractEventFunction implements Function {
     @Override
     public Map<String, Object> serialize() {
         Map<String, Object> map = new HashMap<>();
-        map.put("type", type);
+        map.put("type", this.type);
         if (!this.conditions.isEmpty()) {
-            List<Map<String, Object>> serializedConditions = new ArrayList<>();
-            for (Condition condition : this.conditions) {
-                YamlConfiguration temp = new YamlConfiguration();
-                condition.serialize(temp);
-                serializedConditions.add(temp.getValues(true));
-            }
-            map.put("conditions", serializedConditions);
+            map.put("conditions", ConfigurationSerializationUtils.serializeCollection(this.conditions, ConfigurationSerializationUtils::toMap));
         }
         return map;
     }

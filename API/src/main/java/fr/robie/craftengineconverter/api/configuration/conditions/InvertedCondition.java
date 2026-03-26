@@ -1,7 +1,7 @@
 package fr.robie.craftengineconverter.api.configuration.conditions;
 
+import fr.robie.craftengineconverter.api.utils.ConfigurationSerializationUtils;
 import org.bukkit.configuration.ConfigurationSection;
-import org.bukkit.configuration.file.YamlConfiguration;
 import org.jetbrains.annotations.NotNull;
 
 public class InvertedCondition extends AbstractCondition {
@@ -15,8 +15,6 @@ public class InvertedCondition extends AbstractCondition {
     @Override
     public void serialize(@NotNull ConfigurationSection section) {
         super.serialize(section);
-        YamlConfiguration temp = new YamlConfiguration();
-        this.term.serialize(temp);
-        section.set("term", temp.getValues(true));
+        section.set("term", ConfigurationSerializationUtils.toMap(this.term));
     }
 }

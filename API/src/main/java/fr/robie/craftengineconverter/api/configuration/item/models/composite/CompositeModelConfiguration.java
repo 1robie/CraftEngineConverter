@@ -1,13 +1,12 @@
 package fr.robie.craftengineconverter.api.configuration.item.models.composite;
 
 import fr.robie.craftengineconverter.api.configuration.item.models.ModelConfiguration;
+import fr.robie.craftengineconverter.api.utils.ConfigurationSerializationUtils;
 import org.bukkit.configuration.ConfigurationSection;
-import org.bukkit.configuration.file.YamlConfiguration;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 
 public class CompositeModelConfiguration implements ModelConfiguration {
@@ -27,12 +26,6 @@ public class CompositeModelConfiguration implements ModelConfiguration {
     @Override
     public void serialize(@NotNull ConfigurationSection section) {
         section.set("type", "minecraft:composite");
-        List<Map<String, Object>> serializedModels = new ArrayList<>();
-        for (ModelConfiguration model : this.models) {
-            YamlConfiguration temp = new YamlConfiguration();
-            model.serialize(temp);
-            serializedModels.add(temp.getValues(true));
-        }
-        section.set("models", serializedModels);
+        section.set("models", ConfigurationSerializationUtils.serializeCollection(this.models, ConfigurationSerializationUtils::toMap));
     }
 }
