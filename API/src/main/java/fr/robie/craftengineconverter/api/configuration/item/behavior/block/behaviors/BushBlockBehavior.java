@@ -12,8 +12,8 @@ public class BushBlockBehavior implements BlockBehavior {
     private Boolean stackable;
     private Integer maxHeight;
     private Integer delay;
-    private List<String> bottomBlocks;
-    private List<String> bottomBlockTags;
+    private final List<String> bottomBlocks;
+    private final List<String> bottomBlockTags;
 
     public BushBlockBehavior() {
         this.bottomBlocks = new ArrayList<>();

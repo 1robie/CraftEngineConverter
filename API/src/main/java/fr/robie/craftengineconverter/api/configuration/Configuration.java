@@ -14,7 +14,10 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.EnumMap;
+import java.util.List;
+import java.util.Map;
 
 public class Configuration {
     private static final Map<ConfigurationKey, Object> configValues = new EnumMap<>(ConfigurationKey.class);
@@ -36,17 +39,6 @@ public class Configuration {
             }
         }
         return instance;
-    }
-
-    /**
-     * Gets the auto-convert on startup options for a specific converter.
-     *
-     * @param converterName The name of the converter (e.g., "nexo", "ia")
-     * @return A list of converter options, or an empty list if none are specified
-     */
-    public static List<ConverterOption> getAutoConvertOnStartupOptions(String converterName) {
-        Map<String, List<ConverterOption>> options = get(ConfigurationKey.AUTO_CONVERT_ON_STARTUP_TYPES);
-        return options.getOrDefault(converterName.toLowerCase(), Collections.emptyList());
     }
 
     /**
