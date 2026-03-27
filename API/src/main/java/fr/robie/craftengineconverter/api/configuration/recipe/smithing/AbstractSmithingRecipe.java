@@ -1,7 +1,7 @@
 package fr.robie.craftengineconverter.api.configuration.recipe.smithing;
 
 import fr.robie.craftengineconverter.api.configuration.recipe.AbstractRecipe;
-import net.momirealms.craftengine.core.item.recipe.RecipeType;
+import fr.robie.craftengineconverter.api.enums.RecipeType;
 import org.bukkit.configuration.ConfigurationSection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

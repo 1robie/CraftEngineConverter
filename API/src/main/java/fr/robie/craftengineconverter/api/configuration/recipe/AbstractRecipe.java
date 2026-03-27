@@ -5,16 +5,14 @@ import fr.robie.craftengineconverter.api.configuration.conditions.Condition;
 import fr.robie.craftengineconverter.api.configuration.functions.Function;
 import fr.robie.craftengineconverter.api.configuration.item.behavior.block.states.SectionProvider;
 import fr.robie.craftengineconverter.api.configuration.recipe.ingredient.RecipeResult;
+import fr.robie.craftengineconverter.api.enums.RecipeType;
 import fr.robie.craftengineconverter.api.utils.ConfigurationSerializationUtils;
-import net.momirealms.craftengine.core.item.recipe.RecipeType;
 import org.bukkit.configuration.ConfigurationSection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 public abstract class AbstractRecipe implements SectionSerializable, SectionProvider {
     protected final RecipeType type;
@@ -49,12 +47,16 @@ public abstract class AbstractRecipe implements SectionSerializable, SectionProv
     }
 
     public void addFunction(@NotNull Function function) {
-        if (this.functions == null) this.functions = new ArrayList<>();
+        if (this.functions == null) {
+            this.functions = new ArrayList<>();
+        }
         this.functions.add(function);
     }
 
     public void addCondition(@NotNull Condition condition) {
-        if (this.conditions == null) this.conditions = new ArrayList<>();
+        if (this.conditions == null) {
+            this.conditions = new ArrayList<>();
+        }
         this.conditions.add(condition);
     }
 
@@ -62,7 +64,9 @@ public abstract class AbstractRecipe implements SectionSerializable, SectionProv
     public void serialize(@NotNull ConfigurationSection section) {
         section.set("type", this.type.id());
 
-        this.result.serialize(section.createSection("result"));
+        if (this.result != null) {
+            this.result.serialize(section.createSection("result"));
+        }
 
         if (this.visualResult != null) {
             this.visualResult.serialize(section.createSection("visual-result"));

@@ -1,8 +1,8 @@
 package fr.robie.craftengineconverter.api.configuration.recipe;
 
 import fr.robie.craftengineconverter.api.configuration.recipe.ingredient.CraftingIngredient;
+import fr.robie.craftengineconverter.api.enums.RecipeType;
 import net.momirealms.craftengine.core.item.recipe.CraftingRecipeCategory;
-import net.momirealms.craftengine.core.item.recipe.RecipeType;
 import org.bukkit.configuration.ConfigurationSection;
 import org.jetbrains.annotations.NotNull;
 
@@ -12,8 +12,8 @@ public class ShapedRecipe extends CraftingAbstractRecipe<CraftingRecipeCategory>
     private final List<String> pattern = new ArrayList<>();
     private final Map<String, CraftingIngredient> ingredients = new HashMap<>();
 
-    protected ShapedRecipe(@NotNull RecipeType type) {
-        super(type);
+    public ShapedRecipe() {
+        super(RecipeType.SHAPED);
     }
 
     public void addPatternLine(@NotNull String line) {

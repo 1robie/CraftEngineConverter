@@ -1,6 +1,6 @@
 package fr.robie.craftengineconverter.api.configuration.recipe.smithing;
 
-import net.momirealms.craftengine.core.item.recipe.RecipeType;
+import fr.robie.craftengineconverter.api.enums.RecipeType;
 import org.bukkit.configuration.ConfigurationSection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -8,8 +8,8 @@ import org.jetbrains.annotations.Nullable;
 public class SmithingTrimRecipe extends AbstractSmithingRecipe {
     private String pattern;
 
-    protected SmithingTrimRecipe(@NotNull RecipeType type) {
-        super(type);
+    public SmithingTrimRecipe() {
+        super(RecipeType.SMITHING_TRIM);
     }
 
     public void setPattern(@Nullable String pattern) {

@@ -1,8 +1,17 @@
 package fr.robie.craftengineconverter.converter.nexo;
 
 import fr.robie.craftengineconverter.CraftEngineConverter;
+import fr.robie.craftengineconverter.api.configuration.recipe.*;
+import fr.robie.craftengineconverter.api.configuration.recipe.ingredient.CraftingIngredient;
+import fr.robie.craftengineconverter.api.configuration.recipe.ingredient.RecipeResult;
+import fr.robie.craftengineconverter.api.configuration.recipe.postprocessor.KeepComponentsProcessor;
+import fr.robie.craftengineconverter.api.configuration.recipe.postprocessor.KeepCustomDataProcessor;
+import fr.robie.craftengineconverter.api.configuration.recipe.postprocessor.MergeEnchantmentsProcessor;
+import fr.robie.craftengineconverter.api.configuration.recipe.smithing.SmithingTransformRecipe;
+import fr.robie.craftengineconverter.api.configuration.recipe.smithing.SmithingTrimRecipe;
 import fr.robie.craftengineconverter.api.enums.ConverterOption;
 import fr.robie.craftengineconverter.api.enums.Plugins;
+import fr.robie.craftengineconverter.api.enums.RecipeType;
 import fr.robie.craftengineconverter.api.format.Message;
 import fr.robie.craftengineconverter.api.logger.LogType;
 import fr.robie.craftengineconverter.api.logger.Logger;
@@ -14,16 +23,19 @@ import fr.robie.craftengineconverter.common.manager.FileCacheManager;
 import fr.robie.craftengineconverter.common.records.ImageConversion;
 import fr.robie.craftengineconverter.common.utils.CraftEngineImageUtils;
 import fr.robie.craftengineconverter.common.utils.SnakeUtils;
-import fr.robie.craftengineconverter.common.utils.enums.RecipeType;
 import fr.robie.craftengineconverter.converter.Converter;
 import fr.robie.craftengineconverter.utils.ConfigFile;
 import fr.robie.craftengineconverter.utils.JsonFileValidator;
+import net.momirealms.craftengine.core.item.recipe.CookingRecipeCategory;
+import net.momirealms.craftengine.core.item.recipe.CraftingRecipeCategory;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
@@ -314,10 +326,6 @@ public class NexoConverter extends Converter {
             }
             progress.increment();
             return;
-        } else if (recipeFile.getName().equalsIgnoreCase("smithing.yml")) {
-            //TODO: Convert smithing recipes
-            progress.increment();
-            return;
         }
 
         Set<String> keys = config.getKeys(false);
@@ -334,99 +342,170 @@ public class NexoConverter extends Converter {
 
             String finalRecipeId = recipeType.name().toLowerCase() + ":" + key;
             ConfigurationSection ceRecipeSection = recipesSection.createSection(finalRecipeId);
+            AbstractRecipe recipe = null;
 
             switch (recipeType) {
                 case SHAPELESS -> {
-                    ceRecipeSection.set("type", "shapeless");
-                    this.setCategory(recipeSection, ceRecipeSection);
-                    this.setGroup(recipeSection, ceRecipeSection);
-
-                    this.convertResult(recipeSection, ceRecipeSection, finalRecipeId);
+                    ShapelessRecipe shapeless = new ShapelessRecipe();
+                    this.setCategory(recipeSection, shapeless, CraftingRecipeCategory.class);
+                    this.setGroup(shapeless, recipeSection);
 
                     ConfigurationSection ingredientsSection = recipeSection.getConfigurationSection("ingredients");
                     if (this.isNotNull(ingredientsSection)) {
-                        List<String> ingredientsList = new ArrayList<>();
                         for (String letter : ingredientsSection.getKeys(false)) {
-                            String ingredient = this.convertItemOrTag(ingredientsSection, letter, finalRecipeId);
-                            if (this.isValidString(ingredient)) {
-                                ingredientsList.add(ingredient);
+                            String ingredientStr = this.convertItemOrTag(ingredientsSection, letter, finalRecipeId);
+                            if (this.isValidString(ingredientStr)) {
+                                shapeless.addIngredient(new CraftingIngredient(ingredientStr));
                             }
                         }
-                        if (!ingredientsList.isEmpty()) {
-                            ceRecipeSection.set("ingredients", ingredientsList);
-                            convertedCount++;
-                        } else {
-                            this.logDebug(Message.ERROR__CONVERTER__RECIPES__NO_VALID_INGREDIENTS, LogType.WARNING, "recipe", finalRecipeId, "file", recipeFile.getAbsolutePath());
-                        }
                     }
+                    recipe = shapeless;
                 }
 
                 case SHAPED -> {
-                    ceRecipeSection.set("type", "shaped");
-                    this.setCategory(recipeSection, ceRecipeSection);
-                    this.setGroup(recipeSection, ceRecipeSection);
-
-                    this.convertResult(recipeSection, ceRecipeSection, finalRecipeId);
+                    ShapedRecipe shaped = new ShapedRecipe();
+                    this.setCategory(recipeSection, shaped, CraftingRecipeCategory.class);
+                    this.setGroup(shaped, recipeSection);
 
                     List<String> pattern = recipeSection.getStringList("shape");
                     if (!pattern.isEmpty()) {
-                        ceRecipeSection.set("pattern", pattern);
+                        shaped.setPattern(pattern);
                     }
 
                     ConfigurationSection ingredientsSection = recipeSection.getConfigurationSection("ingredients");
                     if (this.isNotNull(ingredientsSection)) {
-                        ConfigurationSection ceIngredientsSection = ceRecipeSection.createSection("ingredients");
                         for (String letter : ingredientsSection.getKeys(false)) {
-                            String ingredient = this.convertItemOrTag(ingredientsSection, letter, finalRecipeId);
-                            if (this.isValidString(ingredient)) {
-                                ceIngredientsSection.set(letter, ingredient);
+                            String ingredientStr = this.convertItemOrTag(ingredientsSection, letter, finalRecipeId);
+                            if (this.isValidString(ingredientStr)) {
+                                shaped.addIngredient(letter, new CraftingIngredient(ingredientStr));
                             }
                         }
                     }
-                    convertedCount++;
+                    recipe = shaped;
                 }
 
-                case FURNACE, BLASTING, SMOKING -> {
-                    ceRecipeSection.set("type", recipeType.name().toLowerCase());
-                    this.setCategory(recipeSection, ceRecipeSection);
-                    this.setGroup(recipeSection, ceRecipeSection);
+                case SMELTING, BLASTING, SMOKING -> {
+                    CookingRecipe cooking = new CookingRecipe(recipeType);
+                    this.setCategory(recipeSection, cooking, CookingRecipeCategory.class);
+                    this.setGroup(cooking, recipeSection);
 
-                    double experience = recipeSection.getDouble("experience", 0.0);
-                    if (experience > 0) {
-                        ceRecipeSection.set("experience", experience);
+                    cooking.setExperience((float) recipeSection.getDouble("experience", 0.0));
+                    cooking.setTime(recipeSection.getInt("cookingTime", 200));
+
+                    String ingredient = this.getIngredient(recipeSection, "input", finalRecipeId);
+                    if (this.isValidString(ingredient)) {
+                        cooking.setIngredient(ingredient);
                     }
-
-                    int cookingTime = recipeSection.getInt("cookingTime", 200);
-                    ceRecipeSection.set("time", cookingTime);
-
-                    this.convertIngredient(recipeSection, ceRecipeSection, finalRecipeId);
-                    this.convertResult(recipeSection, ceRecipeSection, finalRecipeId);
-
-                    convertedCount++;
+                    recipe = cooking;
                 }
 
                 case STONECUTTING -> {
-                    ceRecipeSection.set("type", "stonecutting");
-                    this.setGroup(recipeSection, ceRecipeSection);
+                    StonecuttingRecipe stonecutting = new StonecuttingRecipe();
+                    this.setGroup(stonecutting, recipeSection);
 
-                    this.convertIngredient(recipeSection, ceRecipeSection, finalRecipeId);
-                    this.convertResult(recipeSection, ceRecipeSection, finalRecipeId);
-
-                    convertedCount++;
+                    String ingredient = this.getIngredient(recipeSection, "input", finalRecipeId);
+                    if (this.isValidString(ingredient)) {
+                        stonecutting.setIngredient(ingredient);
+                    }
+                    recipe = stonecutting;
                 }
 
                 case BREWING -> {
-                    ceRecipeSection.set("type", "brewing");
+                    BrewingRecipe brewing = new BrewingRecipe();
 
-                    this.convertContainer(recipeSection, ceRecipeSection, finalRecipeId);
-                    this.convertBrewingIngredient(recipeSection, ceRecipeSection, finalRecipeId);
-                    this.convertResult(recipeSection, ceRecipeSection, finalRecipeId);
+                    String container = this.getIngredient(recipeSection, "input", finalRecipeId);
+                    if (this.isValidString(container)) {
+                        brewing.setContainer(container);
+                    }
 
-                    convertedCount++;
+                    String ingredient = this.getIngredient(recipeSection, "ingredient", finalRecipeId);
+                    if (this.isValidString(ingredient)) {
+                        brewing.setIngredient(ingredient);
+                    }
+                    recipe = brewing;
+                }
+
+                case SMITHING_TRANSFORM -> {
+                    SmithingTransformRecipe transform = new SmithingTransformRecipe();
+
+                    String template = this.getIngredient(recipeSection, "template", finalRecipeId);
+                    if (this.isValidString(template)) {
+                        transform.setTemplateType(template);
+                    }
+
+                    String base = this.getIngredient(recipeSection, "base", finalRecipeId);
+                    if (this.isValidString(base)) {
+                        transform.setBase(base);
+                    }
+
+                    String addition = this.getIngredient(recipeSection, "addition", finalRecipeId);
+                    if (this.isValidString(addition)) {
+                        transform.setAddition(addition);
+                    }
+
+                    if (recipeSection.contains("copy_meta") && !recipeSection.getBoolean("copy_meta", true)) {
+                        transform.setMergeComponents(false);
+                    }
+
+                    if (recipeSection.getBoolean("keep_durability", false)) {
+                        KeepComponentsProcessor processor = new KeepComponentsProcessor();
+                        processor.addComponent("minecraft:damage");
+                        transform.addPostProcessor(processor);
+                    }
+
+                    if (recipeSection.getBoolean("copy_enchantments", false)) {
+                        transform.addPostProcessor(new MergeEnchantmentsProcessor());
+                    }
+
+                    if (recipeSection.getBoolean("copy_trim", true)) {
+                        KeepComponentsProcessor processor = new KeepComponentsProcessor();
+                        processor.addComponent("minecraft:trim");
+                        transform.addPostProcessor(processor);
+                    }
+
+                    if (recipeSection.getBoolean("copy_pdc", false)) {
+                        transform.addPostProcessor(new KeepCustomDataProcessor());
+                    }
+
+                    recipe = transform;
+                }
+
+                case SMITHING_TRIM -> {
+                    SmithingTrimRecipe trim = new SmithingTrimRecipe();
+
+                    String template = this.getIngredient(recipeSection, "template", finalRecipeId);
+                    if (this.isValidString(template)) {
+                        trim.setTemplateType(template);
+                    }
+
+                    String base = this.getIngredient(recipeSection, "base", finalRecipeId);
+                    if (this.isValidString(base)) {
+                        trim.setBase(base);
+                    }
+
+                    String addition = this.getIngredient(recipeSection, "addition", finalRecipeId);
+                    if (this.isValidString(addition)) {
+                        trim.setAddition(addition);
+                    }
+
+                    recipe = trim;
                 }
 
                 default ->
                         this.logDebug(Message.ERROR__CONVERTER__NEXO__UNSUPPORTED_RECIPE_TYPE, LogType.WARNING, "type", recipeType, "recipe", finalRecipeId, "file", recipeFile.getAbsolutePath());
+            }
+
+            if (recipe != null) {
+                RecipeResult result = this.convertResult(recipeSection, finalRecipeId);
+                if (result != null || recipeType == RecipeType.SMITHING_TRIM) {
+                    if (result != null) {
+                        recipe.setResult(result);
+                    }
+                    recipe.serialize(ceRecipeSection);
+                    convertedCount++;
+                } else {
+                    recipesSection.set(finalRecipeId, null);
+                }
             }
             progress.increment();
         }
@@ -440,18 +519,57 @@ public class NexoConverter extends Converter {
     }
 
 
-    private void setCategory(ConfigurationSection source, ConfigurationSection target) {
+    private <T extends Enum<T>> void setCategory(ConfigurationSection source, CraftingAbstractRecipe<T> target, Class<T> enumClass) {
         String category = source.getString("category");
         if (this.isValidString(category)) {
-            target.set("category", category);
+            try {
+                target.setCategory(Enum.valueOf(enumClass, category.toUpperCase()));
+            } catch (IllegalArgumentException ignored) {
+            }
         }
     }
 
-    private void setGroup(ConfigurationSection source, ConfigurationSection target) {
+    private void setGroup(AbstractRecipe target, ConfigurationSection source) {
         String group = source.getString("group");
-        if (this.isValidString(group)) {
-            target.set("group", group);
+        if (!this.isValidString(group)) {
+            return;
         }
+        if (target instanceof CraftingAbstractRecipe<?> craftingRecipe) {
+            craftingRecipe.setGroup(group);
+        } else if (target instanceof StonecuttingRecipe stonecuttingRecipe) {
+            stonecuttingRecipe.setGroup(group);
+        }
+    }
+
+    private @Nullable String getIngredient(ConfigurationSection parentSection, String key, String finalRecipeId) {
+        ConfigurationSection section = parentSection.getConfigurationSection(key);
+        if (this.isNotNull(section)) {
+            String tag = section.getString("tag");
+            if (this.isValidString(tag)) {
+                return "#" + tag;
+            }
+
+            String minecraftType = section.getString("minecraft_type");
+            if (this.isValidString(minecraftType)) {
+                return this.namespaced(minecraftType.toLowerCase());
+            }
+
+            String minecraftItem = section.getString("minecraft_item");
+            if (this.isValidString(minecraftItem)) {
+                return this.namespaced(minecraftItem.toLowerCase());
+            }
+
+            String nexoItem = section.getString("nexo_item");
+            if (this.isValidString(nexoItem)) {
+                String newName = PluginNameMapper.getInstance().getNewName(Plugins.NEXO, nexoItem);
+                if (this.isValidString(newName)) {
+                    return newName;
+                } else {
+                    this.logDebug(Message.WARNING__CONVERTER__NEXO__RECIPE__NO_MAPPING_INPUT, LogType.WARNING, "item", nexoItem, "recipe", finalRecipeId);
+                }
+            }
+        }
+        return null;
     }
 
     private String convertItemOrTag(ConfigurationSection section, String key, String recipeId) {
@@ -465,6 +583,11 @@ public class NexoConverter extends Converter {
             return this.namespaced(minecraftType.toLowerCase());
         }
 
+        String minecraftItem = section.getString(key + ".minecraft_item");
+        if (this.isValidString(minecraftItem)) {
+            return this.namespaced(minecraftItem.toLowerCase());
+        }
+
         String nexoItem = section.getString(key + ".nexo_item");
         if (this.isValidString(nexoItem)) {
             String newName = PluginNameMapper.getInstance().getNewName(Plugins.NEXO, nexoItem);
@@ -475,113 +598,50 @@ public class NexoConverter extends Converter {
             }
         }
 
+
         return null;
     }
 
-    private void convertResult(ConfigurationSection recipeSection, ConfigurationSection ceRecipeSection, String finalRecipeId) {
+    private RecipeResult convertResult(ConfigurationSection recipeSection, String finalRecipeId) {
         ConfigurationSection resultSection = recipeSection.getConfigurationSection("result");
         if (this.isNotNull(resultSection)) {
-            ConfigurationSection ceResultSection = ceRecipeSection.createSection("result");
+            String id = null;
 
             String minecraftType = resultSection.getString("minecraft_type");
             if (this.isValidString(minecraftType)) {
-                ceResultSection.set("id", this.namespaced(minecraftType.toLowerCase()));
+                id = this.namespaced(minecraftType.toLowerCase());
+            }
+
+            String minecraftItem = resultSection.getString("minecraft_item");
+            if (this.isValidString(minecraftItem)) {
+                id = this.namespaced(minecraftItem.toLowerCase());
             }
 
             String nexoItem = resultSection.getString("nexo_item");
             if (this.isValidString(nexoItem)) {
                 String newName = PluginNameMapper.getInstance().getNewName(Plugins.NEXO, nexoItem);
                 if (this.isValidString(newName)) {
-                    ceResultSection.set("id", newName);
+                    id = newName;
                 } else {
                     this.logDebug(Message.WARNING__CONVERTER__NEXO__RECIPE__NO_MAPPING_RESULT, LogType.WARNING, "item", nexoItem, "recipe", finalRecipeId);
                 }
             }
+            if (this.isValidString(id)) {
+                RecipeResult recipeResult = new RecipeResult(id);
 
-            int amount = resultSection.getInt("amount", 1);
-            if (amount != 1) {
-                ceResultSection.set("count", amount);
-            }
-        }
-    }
-
-    private void convertIngredient(ConfigurationSection recipeSection, ConfigurationSection ceRecipeSection, String finalRecipeId) {
-        ConfigurationSection inputSection = recipeSection.getConfigurationSection("input");
-        if (this.isNotNull(inputSection)) {
-            String tag = inputSection.getString("tag");
-            if (this.isValidString(tag)) {
-                ceRecipeSection.set("ingredient", "#" + tag);
-                return;
-            }
-
-            String minecraftType = inputSection.getString("minecraft_type");
-            if (this.isValidString(minecraftType)) {
-                ceRecipeSection.set("ingredient", this.namespaced(minecraftType.toLowerCase()));
-            }
-
-            String nexoItem = inputSection.getString("nexo_item");
-            if (this.isValidString(nexoItem)) {
-                String newName = PluginNameMapper.getInstance().getNewName(Plugins.NEXO, nexoItem);
-                if (this.isValidString(newName)) {
-                    ceRecipeSection.set("ingredient", newName);
-                } else {
-                    this.logDebug(Message.WARNING__CONVERTER__NEXO__RECIPE__NO_MAPPING_INPUT, LogType.WARNING, "item", nexoItem, "recipe", finalRecipeId);
+                int amount = resultSection.getInt("amount", 1);
+                if (amount != 1) {
+                    recipeResult.setCount(amount);
                 }
+
+                return recipeResult;
             }
+
+
         }
+        return null;
     }
 
-    private void convertContainer(ConfigurationSection recipeSection, ConfigurationSection ceRecipeSection, String finalRecipeId) {
-        ConfigurationSection inputSection = recipeSection.getConfigurationSection("input");
-        if (this.isNotNull(inputSection)) {
-            String tag = inputSection.getString("tag");
-            if (this.isValidString(tag)) {
-                ceRecipeSection.set("container", "#" + tag);
-                return;
-            }
-
-            String minecraftType = inputSection.getString("minecraft_type");
-            if (this.isValidString(minecraftType)) {
-                ceRecipeSection.set("container", this.namespaced(minecraftType.toLowerCase()));
-            }
-
-            String nexoItem = inputSection.getString("nexo_item");
-            if (this.isValidString(nexoItem)) {
-                String newName = PluginNameMapper.getInstance().getNewName(Plugins.NEXO, nexoItem);
-                if (this.isValidString(newName)) {
-                    ceRecipeSection.set("container", newName);
-                } else {
-                    this.logDebug(Message.WARNING__CONVERTER__NEXO__RECIPE__NO_MAPPING_CONTAINER, LogType.WARNING, "item", nexoItem, "recipe", finalRecipeId);
-                }
-            }
-        }
-    }
-
-    private void convertBrewingIngredient(ConfigurationSection recipeSection, ConfigurationSection ceRecipeSection, String finalRecipeId) {
-        ConfigurationSection ingredientSection = recipeSection.getConfigurationSection("ingredient");
-        if (this.isNotNull(ingredientSection)) {
-            String tag = ingredientSection.getString("tag");
-            if (this.isValidString(tag)) {
-                ceRecipeSection.set("ingredient", "#" + tag);
-                return;
-            }
-
-            String minecraftType = ingredientSection.getString("minecraft_type");
-            if (this.isValidString(minecraftType)) {
-                ceRecipeSection.set("ingredient", this.namespaced(minecraftType.toLowerCase()));
-            }
-
-            String nexoItem = ingredientSection.getString("nexo_item");
-            if (this.isValidString(nexoItem)) {
-                String newName = PluginNameMapper.getInstance().getNewName(Plugins.NEXO, nexoItem);
-                if (this.isValidString(newName)) {
-                    ceRecipeSection.set("ingredient", newName);
-                } else {
-                    this.logDebug(Message.WARNING__CONVERTER__NEXO__BREWING_INGREDIENT_NO_MAPPING, LogType.WARNING, "item", nexoItem, "recipe", finalRecipeId);
-                }
-            }
-        }
-    }
 
     private void populateRecipeQueue(File baseDir, File currentDir, Map<RecipeType, List<ConfigFile>> toConvert) {
         File[] files = currentDir.listFiles();
@@ -618,6 +678,10 @@ public class NexoConverter extends Converter {
         }
 
         String recipeTypeName = pathParts[0].toUpperCase();
+
+        if (recipeTypeName.equalsIgnoreCase("SMITHING")) {
+            return RecipeType.SMITHING_TRANSFORM;
+        }
 
         try {
             return RecipeType.valueOf(recipeTypeName);
@@ -1304,7 +1368,7 @@ public class NexoConverter extends Converter {
         // Decode URL encoding to catch obfuscated attacks like "..%2F..%2Fetc%2Fpasswd"
         String decoded;
         try {
-            decoded = java.net.URLDecoder.decode(entryName, java.nio.charset.StandardCharsets.UTF_8);
+            decoded = URLDecoder.decode(entryName, StandardCharsets.UTF_8);
         } catch (IllegalArgumentException e) {
             decoded = entryName; // Keep original if decoding fails
         }

@@ -1,7 +1,7 @@
 package fr.robie.craftengineconverter.api.configuration.recipe;
 
+import fr.robie.craftengineconverter.api.enums.RecipeType;
 import net.momirealms.craftengine.core.item.recipe.CookingRecipeCategory;
-import net.momirealms.craftengine.core.item.recipe.RecipeType;
 import org.bukkit.configuration.ConfigurationSection;
 import org.jetbrains.annotations.NotNull;
 
@@ -10,7 +10,7 @@ public class CookingRecipe extends CraftingAbstractRecipe<CookingRecipeCategory>
     private int time;
     private String ingredient;
 
-    protected CookingRecipe(@NotNull RecipeType type) {
+    public CookingRecipe(@NotNull RecipeType type) {
         super(type);
     }
 

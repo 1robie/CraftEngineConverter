@@ -1,8 +1,8 @@
 package fr.robie.craftengineconverter.api.configuration.recipe.smithing;
 
 import fr.robie.craftengineconverter.api.configuration.recipe.postprocessor.PostProcessor;
+import fr.robie.craftengineconverter.api.enums.RecipeType;
 import fr.robie.craftengineconverter.api.utils.ConfigurationSerializationUtils;
-import net.momirealms.craftengine.core.item.recipe.RecipeType;
 import org.bukkit.configuration.ConfigurationSection;
 import org.jetbrains.annotations.NotNull;
 
@@ -13,8 +13,8 @@ public class SmithingTransformRecipe extends AbstractSmithingRecipe {
     private boolean mergeComponents = true;
     private final List<PostProcessor> postProcessors = new ArrayList<>();
 
-    protected SmithingTransformRecipe(@NotNull RecipeType type) {
-        super(type);
+    public SmithingTransformRecipe() {
+        super(RecipeType.SMITHING_TRANSFORM);
     }
 
     public void setMergeComponents(boolean mergeComponents) {

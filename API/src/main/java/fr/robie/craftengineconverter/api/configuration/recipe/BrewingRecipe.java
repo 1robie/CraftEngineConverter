@@ -1,6 +1,6 @@
 package fr.robie.craftengineconverter.api.configuration.recipe;
 
-import net.momirealms.craftengine.core.item.recipe.RecipeType;
+import fr.robie.craftengineconverter.api.enums.RecipeType;
 import org.bukkit.configuration.ConfigurationSection;
 import org.jetbrains.annotations.NotNull;
 
@@ -8,8 +8,8 @@ public class BrewingRecipe extends AbstractRecipe {
     private String ingredient;
     private String container;
 
-    protected BrewingRecipe(@NotNull RecipeType type) {
-        super(type);
+    public BrewingRecipe() {
+        super(RecipeType.BREWING);
     }
 
     public void setIngredient(@NotNull String ingredient) {
