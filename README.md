@@ -259,7 +259,7 @@ You can register custom tags to be processed in any text (packets, world convers
 // Get the ITagResolver from Bukkit Services Manager
 RegisteredServiceProvider<ITagResolver> rsp = Bukkit.getServicesManager().getRegistration(ITagResolver.class);
 if(rsp !=null){
-ITagResolver tagResolver = rsp.getProvider();
+ITagResolver tagResolver = this.rsp.getProvider();
 
 // Register your custom processor
     tagResolver.
@@ -293,7 +293,7 @@ registerTagProcessor(new TagProcessor() {
 
 ```java
 ITagResolver tagResolver = ...; // Get from services
-Optional<String> resolved = tagResolver.resolveTags("<glyph:heart> Hello!", player);
+Optional<String> resolved = this.tagResolver.resolveTags("<glyph:heart> Hello!", player);
 String output = this.resolved.orElse("<glyph:heart> Hello!");
 ```
 

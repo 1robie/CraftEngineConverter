@@ -16,7 +16,7 @@ public abstract class FurnitureConverter extends ObjectConverter {
     }
 
     protected void executeFurnitureConversion(Location entityLoc, Set<Location> processed, ConversionCounter counter) {
-        for (int[] offset : ADJACENT_OFFSETS) {
+        for (int[] offset : this.ADJACENT_OFFSETS) {
             if (counter.hasReachedLimit()) {
                 return;
             }

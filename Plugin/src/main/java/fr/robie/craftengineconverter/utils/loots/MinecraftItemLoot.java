@@ -17,6 +17,6 @@ public class MinecraftItemLoot extends ItemLoot {
 
     @Override
     public String getItemName() {
-        return "minecraft:"+material.name().toLowerCase();
+        return "minecraft:" + this.material.name().toLowerCase();
     }
 }

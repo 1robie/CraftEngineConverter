@@ -14,7 +14,7 @@ public abstract class BlockConverter extends ObjectConverter {
     }
 
     protected void executeBlockConversion(Location blockLoc, Set<Location> processed, ConversionCounter counter) {
-        for (int[] offset : ADJACENT_OFFSETS) {
+        for (int[] offset : this.ADJACENT_OFFSETS) {
             if (counter.hasReachedLimit()) {
                 return;
             }

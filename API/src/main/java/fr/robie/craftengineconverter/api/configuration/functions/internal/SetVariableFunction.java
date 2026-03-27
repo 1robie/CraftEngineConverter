@@ -28,15 +28,15 @@ public class SetVariableFunction extends AbstractEventFunction {
     @Override
     public Map<String, Object> serialize() {
         Map<String, Object> map = super.serialize();
-        map.put("name", name);
-        if (number != null) {
-            map.put("number", number);
+        map.put("name", this.name);
+        if (this.number != null) {
+            map.put("number", this.number);
         }
-        if (asInt != null) {
-            map.put("as-int", asInt);
+        if (this.asInt != null) {
+            map.put("as-int", this.asInt);
         }
-        if (text != null) {
-            map.put("text", text);
+        if (this.text != null) {
+            map.put("text", this.text);
         }
         return map;
     }

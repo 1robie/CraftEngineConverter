@@ -20,10 +20,10 @@ public class SetCooldownFunction extends AbstractEventFunction {
     @Override
     public Map<String, Object> serialize() {
         Map<String, Object> map = super.serialize();
-        map.put("id", id);
-        map.put("time", time);
-        if (add != null) {
-            map.put("add", add);
+        map.put("id", this.id);
+        map.put("time", this.time);
+        if (this.add != null) {
+            map.put("add", this.add);
         }
         return map;
     }

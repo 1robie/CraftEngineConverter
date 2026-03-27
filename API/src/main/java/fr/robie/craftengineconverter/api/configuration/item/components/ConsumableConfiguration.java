@@ -36,21 +36,21 @@ public class ConsumableConfiguration extends AbstractEffectsConfiguration {
         ConfigurationSection components = this.getOrCreateSection(itemSection, "components");
         ConfigurationSection consumableSection = this.getOrCreateSection(components, "minecraft:consumable");
 
-        if (!sound.equals("entity.generic.eat")) {
-            consumableSection.set("sound", sound);
+        if (!this.sound.equals("entity.generic.eat")) {
+            consumableSection.set("sound", this.sound);
         }
-        if (!hasConsumeParticles) {
+        if (!this.hasConsumeParticles) {
             consumableSection.set("has_consume_particles", false);
         }
-        if (consumeSeconds != 1.6) {
-            consumableSection.set("consume_seconds", consumeSeconds);
+        if (this.consumeSeconds != 1.6) {
+            consumableSection.set("consume_seconds", this.consumeSeconds);
         }
-        if (animation != Animation.EAT) {
-            consumableSection.set("animation", animation.toKey());
+        if (this.animation != Animation.EAT) {
+            consumableSection.set("animation", this.animation.toKey());
         }
 
-        if (onConsumeEffects != null && !onConsumeEffects.isEmpty()) {
-            consumableSection.set("on_consume_effects", this.serializeEffects(onConsumeEffects));
+        if (this.onConsumeEffects != null && !this.onConsumeEffects.isEmpty()) {
+            consumableSection.set("on_consume_effects", this.serializeEffects(this.onConsumeEffects));
         }
     }
 }

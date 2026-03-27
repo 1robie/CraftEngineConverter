@@ -23,12 +23,12 @@ public class SetExpFunction extends AbstractEventFunction {
     @Override
     public Map<String, Object> serialize() {
         Map<String, Object> map = super.serialize();
-        map.put("count", count);
-        if (add) {
+        map.put("count", this.count);
+        if (this.add) {
             map.put("add", true);
         }
-        if (target != PlayerTarget.SELF) {
-            map.put("target", target.name().toLowerCase());
+        if (this.target != PlayerTarget.SELF) {
+            map.put("target", this.target.name().toLowerCase());
         }
         return map;
     }

@@ -20,18 +20,18 @@ public enum ArmorConverter {
     private final List<ArmorConverter> composition = new ArrayList<>();
     private final ArmorTexturePathProvider texturePathProvider;
 
-    ArmorConverter(ArmorTexturePathProvider texturePathProvider){
+    ArmorConverter(ArmorTexturePathProvider texturePathProvider) {
         this.composition.add(this);
         this.texturePathProvider = texturePathProvider;
     }
 
-    ArmorConverter(ArmorConverter... components){
+    ArmorConverter(ArmorConverter... components) {
         this.composition.addAll(Arrays.asList(components));
         this.texturePathProvider = null;
     }
 
     public List<ArmorConverter> getComposition() {
-        return composition;
+        return this.composition;
     }
 
     public @NotNull String getTexturePath(String namespace, String equipmentFolder, String fileName) {
@@ -46,7 +46,7 @@ public enum ArmorConverter {
      * Creates equipment sections according to the conversion type (COMPONENT, TRIM, or BOTH)
      *
      * @param fileEquipementsSection Parent section for equipment
-     * @param assetId Armor asset ID
+     * @param assetId                Armor asset ID
      * @return Map associating each converter type with its configuration section
      */
     public static Map<ArmorConverter, ConfigurationSection> createArmorConverterSections(
@@ -55,7 +55,7 @@ public enum ArmorConverter {
 
         Map<ArmorConverter, ConfigurationSection> converterSections = new HashMap<>();
 
-        if (Configuration.<ArmorConverter>get(ConfigurationKey.ARMOR_CONVERTER_TYPE) == ArmorConverter.BOTH){
+        if (Configuration.<ArmorConverter>get(ConfigurationKey.ARMOR_CONVERTER_TYPE) == ArmorConverter.BOTH) {
             ConfigurationSection componentSection = getOrCreateSection(fileEquipementsSection, "$$>=1.21.2");
             ConfigurationSection trimSection = getOrCreateSection(fileEquipementsSection, "$$<1.21.2");
             converterSections.put(ArmorConverter.COMPONENT, getOrCreateSection(componentSection, assetId));
@@ -75,7 +75,7 @@ public enum ArmorConverter {
     @SuppressWarnings("unchecked")
     public static void addEquipmentTextures(ConfigurationSection assetIdSection, String layerKey, Set<String> texturesToAdd) {
         Object existingObject = assetIdSection.get(layerKey);
-        Set<Map<String,Object>> textureList = new HashSet<>();
+        Set<Map<String, Object>> textureList = new HashSet<>();
         if (existingObject != null) {
             if (existingObject instanceof List<?>) {
                 List<Map<String, Object>> mapList = (List<Map<String, Object>>) (Object) assetIdSection.getMapList(layerKey);
@@ -84,10 +84,10 @@ public enum ArmorConverter {
                 textureList.add(Map.of("texture", existingObject.toString()));
             }
         }
-        for (String texture : texturesToAdd){
+        for (String texture : texturesToAdd) {
             textureList.add(Map.of("texture", texture));
         }
-        if (textureList.size() == 1){
+        if (textureList.size() == 1) {
             assetIdSection.set(layerKey, textureList.iterator().next().get("texture").toString());
         } else {
             assetIdSection.set(layerKey, new ArrayList<>(textureList));
