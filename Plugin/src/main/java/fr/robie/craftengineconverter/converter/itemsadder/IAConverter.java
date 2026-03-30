@@ -4,6 +4,9 @@ import fr.robie.craftengineconverter.CraftEngineConverter;
 import fr.robie.craftengineconverter.api.configuration.Configuration;
 import fr.robie.craftengineconverter.api.configuration.ConfigurationKey;
 import fr.robie.craftengineconverter.api.configuration.image.SingleCharacterBitmapConfiguration;
+import fr.robie.craftengineconverter.api.configuration.sound.JukeboxSongConfiguration;
+import fr.robie.craftengineconverter.api.configuration.sound.SimpleSound;
+import fr.robie.craftengineconverter.api.configuration.sound.SoundConfiguration;
 import fr.robie.craftengineconverter.api.enums.ArmorConverter;
 import fr.robie.craftengineconverter.api.enums.ConverterOption;
 import fr.robie.craftengineconverter.api.enums.Plugins;
@@ -504,13 +507,15 @@ public class IAConverter extends Converter {
         YamlConfiguration convertedConfig = new YamlConfiguration();
         String finalFileName = fileName.replace(".yml", "");
         String namespace = config.getString("info.namespace", finalFileName);
-        ConfigurationSection sounds = convertedConfig.createSection("sounds");
+        ConfigurationSection soundsSection = this.getOrCreateSection(convertedConfig, "sounds");
+
         ConfigurationSection originalSounds = config.getConfigurationSection("sounds");
         if (this.isNull(originalSounds)) {
             this.logDebug(Message.WARNING__CONVERTER__IA__SOUNDS__NO_SECTION, LogType.WARNING, "file", fileName);
             return;
         }
 
+        int convertedCount = 0;
         for (String soundId : originalSounds.getKeys(false)) {
             ConfigurationSection section = originalSounds.getConfigurationSection(soundId);
             if (this.isNull(section)) {
@@ -520,25 +525,34 @@ public class IAConverter extends Converter {
             }
             String finalSoundId = namespace + ":" + soundId;
             try {
-                ConfigurationSection ceSoundSection = sounds.createSection(finalSoundId);
+                SoundConfiguration soundConfig = new SoundConfiguration();
+
                 String path = section.getString("path");
                 if (this.isValidString(path)) {
-                    ceSoundSection.set("sounds", List.of(this.cleanPath(path)));
+                    soundConfig.addSound(new SimpleSound(this.cleanPath(path)));
                 }
+
                 String subtitle = section.getString("settings.subtitle");
                 if (this.isValidString(subtitle)) {
-                    ceSoundSection.set("subtitle", subtitle);
+                    soundConfig.setSubtitle(subtitle);
                 }
+
+                ConfigurationSection ceSoundSection = soundsSection.createSection(finalSoundId);
+                soundConfig.serialize(ceSoundSection);
+
                 ConfigurationSection jukeboxSection = section.getConfigurationSection("jukebox");
                 if (this.isNotNull(jukeboxSection)) {
-                    ConfigurationSection ceJukeBoxSection = this.getOrCreateSection(convertedConfig, "jukebox-songs");
-                    ConfigurationSection ceJukeBoxSoundSection = ceJukeBoxSection.createSection(finalSoundId);
-                    ceJukeBoxSoundSection.set("sound", finalSoundId);
+                    JukeboxSongConfiguration jukeboxConfig = new JukeboxSongConfiguration().setSound(finalSoundId);
+
                     String description = jukeboxSection.getString("description");
                     if (this.isValidString(description)) {
-                        ceJukeBoxSoundSection.set("description", description);
+                        jukeboxConfig.setDescription(description);
                     }
+
+                    ConfigurationSection ceJukeBoxSoundSection = this.getOrCreateSection(convertedConfig, "jukebox-songs").createSection(finalSoundId);
+                    jukeboxConfig.serialize(ceJukeBoxSoundSection);
                 }
+                convertedCount++;
             } catch (Exception e) {
                 Logger.showException(Message.ERROR__CONVERTER__IA__SOUNDS__CONVERSION_FAILURE, e, "sound", soundId, "file", fileName);
             }
@@ -547,7 +561,9 @@ public class IAConverter extends Converter {
         if (this.settings.dryRunEnabled()) {
             return;
         }
-        this.saveConvertedConfig(convertedConfig, configFile, soundFile, outputFolder, "sounds", "sound");
+        if (convertedCount > 0) {
+            this.saveConvertedConfig(convertedConfig, configFile, soundFile, outputFolder, "sounds", "sound");
+        }
     }
 
     @Override
