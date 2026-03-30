@@ -13,7 +13,7 @@ public class IAImageTagProcessor implements TagProcessor {
 
     @Override
     public String getTagName() {
-        return "ItemsAdder Image";
+        return "ItemsAdder Bitmap";
     }
 
     @Override
@@ -30,34 +30,35 @@ public class IAImageTagProcessor implements TagProcessor {
     public Optional<String> process(String input, Player player) {
         Matcher matcher = IA_GUI_PATTERN.matcher(input);
 
-        if (!matcher.find())
+        if (!matcher.find()) {
             return Optional.empty();
+        }
 
         StringBuilder result = new StringBuilder();
         int lastEnd = 0;
 
         matcher.reset();
 
-        while (matcher.find()){
+        while (matcher.find()) {
             String imageName = matcher.group(1);
             String fullMatch = matcher.group(0);
 
             result.append(input, lastEnd, matcher.start());
-            if (imageName.startsWith("offset_")){
+            if (imageName.startsWith("offset_")) {
                 String substring = imageName.substring("offset_".length());
                 int finalOffset;
                 try {
                     finalOffset = Integer.parseInt(substring);
                     String offsetImage = CraftEngineImageUtils.createOffsetImage(finalOffset);
                     result.append(offsetImage);
-                } catch (NumberFormatException e){
+                } catch (NumberFormatException e) {
                     result.append(fullMatch);
                     lastEnd = matcher.end();
                     continue;
                 }
             } else {
                 Optional<String> converted = CraftEngineImageUtils.convert(imageName);
-                if (converted.isPresent()){
+                if (converted.isPresent()) {
                     result.append(converted.get());
                 } else {
                     result.append(fullMatch);

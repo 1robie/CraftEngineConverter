@@ -257,7 +257,7 @@ error:
         key-conversion-failure: "Konnte Key §e%key%§c für §e%lang%§c nicht konvertieren."
         file-conversion-failure: "Sprachdatei §e%file%§c konnte nicht konvertiert werden."
       images:
-        conversion-exception: Fehler bei der Font-Image-Konvertierung.
+        conversion-exception: Fehler bei der Font-Bitmap-Konvertierung.
       sounds:
         conversion-failure: "Konnte Sound §e%sound%§c nicht konvertieren."
         conversion-exception: Fehler bei der Sound-Konvertierung.

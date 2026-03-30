@@ -1,6 +1,9 @@
 package fr.robie.craftengineconverter.converter.nexo;
 
 import fr.robie.craftengineconverter.CraftEngineConverter;
+import fr.robie.craftengineconverter.api.configuration.image.Bitmap;
+import fr.robie.craftengineconverter.api.configuration.image.MultipleCharactersBitmapConfiguration;
+import fr.robie.craftengineconverter.api.configuration.image.SingleCharacterBitmapConfiguration;
 import fr.robie.craftengineconverter.api.configuration.recipe.*;
 import fr.robie.craftengineconverter.api.configuration.recipe.ingredient.CraftingIngredient;
 import fr.robie.craftengineconverter.api.configuration.recipe.ingredient.RecipeResult;
@@ -1025,31 +1028,40 @@ public class NexoConverter extends Converter {
 
             try {
                 String finalKey = "default:" + key;
-                ConfigurationSection section = imagesSection.createSection(finalKey);
-
-                String texture = imageSection.getString("texture");
-                if (this.isValidString(texture)) {
-                    section.set("file", this.namespaced(texture));
-                }
-
-                int ascent = imageSection.getInt("ascent", 0);
-                if (ascent != 0) {
-                    section.set("ascent", ascent);
-                }
-
-                int height = imageSection.getInt("height", 0);
-                section.set("height", height < ascent && height == 0 ? ascent : height);
-
-                String font = imageSection.getString("font");
-                if (this.isValidString(font)) {
-                    section.set("font", font);
-                }
 
                 int rows = imageSection.getInt("rows", 0);
                 int cols = imageSection.getInt("columns", 0);
+
+                Bitmap<?> bitmap;
                 if (rows > 0 && cols > 0) {
-                    section.set("grid-size", rows + "," + cols);
+                    bitmap = new MultipleCharactersBitmapConfiguration(finalKey)
+                            .setGridSizeRow(rows)
+                            .setGridSizeColumn(cols);
+                } else {
+                    SingleCharacterBitmapConfiguration single = new SingleCharacterBitmapConfiguration(finalKey);
+                    String charStr = imageSection.getString("char");
+                    if (this.isValidString(charStr)) {
+                        single.setCharacter(charStr.charAt(0));
+                    }
+                    bitmap = single;
                 }
+
+                String texture = imageSection.getString("texture");
+                if (this.isValidString(texture)) {
+                    bitmap.setFile(this.namespaced(texture));
+                }
+
+                int ascent = imageSection.getInt("ascent", 0);
+                int height = imageSection.getInt("height", 0);
+
+                bitmap.setAscent(ascent).setHeight(height < ascent && height == 0 ? ascent : height);
+
+                String font = imageSection.getString("font");
+                if (this.isValidString(font)) {
+                    bitmap.setFont(font);
+                }
+
+                bitmap.serialize(imagesSection);
 
                 CraftEngineImageUtils.register(key, new ImageConversion(finalKey, rows, cols));
                 convertedCount++;
