@@ -3,6 +3,7 @@ package fr.robie.craftengineconverter.converter.itemsadder;
 import fr.robie.craftengineconverter.CraftEngineConverter;
 import fr.robie.craftengineconverter.api.configuration.Configuration;
 import fr.robie.craftengineconverter.api.configuration.ConfigurationKey;
+import fr.robie.craftengineconverter.api.configuration.image.SingleCharacterBitmapConfiguration;
 import fr.robie.craftengineconverter.api.enums.ArmorConverter;
 import fr.robie.craftengineconverter.api.enums.ConverterOption;
 import fr.robie.craftengineconverter.api.enums.Plugins;
@@ -293,19 +294,19 @@ public class IAConverter extends Converter {
             }
 
             String finalImageId = namespace + ":" + imageId;
-            ConfigurationSection ceImageSection = ceImagesSection.createSection(finalImageId);
+            SingleCharacterBitmapConfiguration bitmap = new SingleCharacterBitmapConfiguration(finalImageId);
+
             String path = imageSection.getString("path");
             if (this.isValidString(path)) {
-                ceImageSection.set("file", this.namespaced(path, namespace));
+                bitmap.setFile(this.namespaced(path, namespace));
             }
 
             int scaleRatio = imageSection.getInt("scale_ratio", 0);
             int yPosition = imageSection.getInt("y_position", 0);
 
-            ceImageSection.set("height", scaleRatio < yPosition && scaleRatio == 0 ? yPosition : scaleRatio);
-            if (yPosition != 0) {
-                ceImageSection.set("ascent", yPosition);
-            }
+            bitmap.setAscent(yPosition).setHeight(scaleRatio < yPosition && scaleRatio == 0 ? yPosition : scaleRatio);
+
+            bitmap.serialize(ceImagesSection);
 
             CraftEngineImageUtils.register(imageId, new ImageConversion(finalImageId, 0, 0));
             convertedImages++;
