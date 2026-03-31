@@ -4,12 +4,20 @@ import fr.robie.craftengineconverter.CraftEngineConverter;
 import fr.robie.craftengineconverter.api.configuration.Configuration;
 import fr.robie.craftengineconverter.api.configuration.ConfigurationKey;
 import fr.robie.craftengineconverter.api.configuration.image.SingleCharacterBitmapConfiguration;
+import fr.robie.craftengineconverter.api.configuration.recipe.AbstractRecipe;
+import fr.robie.craftengineconverter.api.configuration.recipe.CookingRecipe;
+import fr.robie.craftengineconverter.api.configuration.recipe.ShapedRecipe;
+import fr.robie.craftengineconverter.api.configuration.recipe.ShapelessRecipe;
+import fr.robie.craftengineconverter.api.configuration.recipe.ingredient.CraftingIngredient;
+import fr.robie.craftengineconverter.api.configuration.recipe.ingredient.RecipeResult;
+import fr.robie.craftengineconverter.api.configuration.recipe.smithing.SmithingTransformRecipe;
 import fr.robie.craftengineconverter.api.configuration.sound.JukeboxSongConfiguration;
 import fr.robie.craftengineconverter.api.configuration.sound.SimpleSound;
 import fr.robie.craftengineconverter.api.configuration.sound.SoundConfiguration;
 import fr.robie.craftengineconverter.api.enums.ArmorConverter;
 import fr.robie.craftengineconverter.api.enums.ConverterOption;
 import fr.robie.craftengineconverter.api.enums.Plugins;
+import fr.robie.craftengineconverter.api.enums.RecipeType;
 import fr.robie.craftengineconverter.api.format.Message;
 import fr.robie.craftengineconverter.api.logger.LogType;
 import fr.robie.craftengineconverter.api.logger.Logger;
@@ -27,6 +35,7 @@ import fr.robie.craftengineconverter.common.utils.enums.ia.IARecipesTypes;
 import fr.robie.craftengineconverter.converter.Converter;
 import fr.robie.craftengineconverter.utils.ConfigFile;
 import fr.robie.craftengineconverter.utils.JsonFileValidator;
+import net.momirealms.craftengine.core.item.recipe.CookingRecipeCategory;
 import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -678,59 +687,57 @@ public class IAConverter extends Converter {
         this.saveConvertedConfig(convertedConfig, configFile, recipeFile, outputFolder, "recipes", "recipe");
     }
 
-    private void convertRecipe(IARecipesTypes type, ConfigurationSection iaRecipe,
-                               ConfigurationSection recipesSection, String baseRecipeId,
-                               String recipeId, String fileName) {
+    private void convertRecipe(IARecipesTypes type, ConfigurationSection iaRecipe, ConfigurationSection recipesSection, String baseRecipeId, String recipeId, String fileName) {
+        AbstractRecipe recipe = null;
         switch (type) {
-            case CRAFTING_TABLE -> {
-                ConfigurationSection ceRecipe = recipesSection.createSection(baseRecipeId);
-                this.convertCraftingTableRecipe(iaRecipe, ceRecipe, recipeId, fileName);
+            case CRAFTING_TABLE -> recipe = this.convertCraftingTableRecipe(iaRecipe, recipeId, fileName);
+            case COOKING -> {
+                this.convertCookingRecipes(iaRecipe, recipesSection, baseRecipeId, recipeId, fileName);
+                return;
             }
-            case COOKING -> this.convertCookingRecipes(iaRecipe, recipesSection, baseRecipeId, recipeId, fileName);
             case ANVIL_REPAIR -> //TODO: Implement Anvil Repair conversion
                     this.logDebug(Message.WARNING__CONVERTER__IA__RECIPES__ANVIL_REPAIR_NOT_IMPLEMENTED, LogType.WARNING, "recipe", recipeId);
-            case SMITHING -> {
-                ConfigurationSection ceRecipe = recipesSection.createSection(baseRecipeId);
-                this.convertSmithingRecipe(iaRecipe, ceRecipe, recipeId, fileName);
-            }
+            case SMITHING -> recipe = this.convertSmithingRecipe(iaRecipe, recipeId, fileName);
             default ->
                     this.logDebug(Message.WARNING__CONVERTER__IA__RECIPES__UNSUPPORTED_TYPE, LogType.WARNING, "type", type, "recipe", recipeId);
         }
+
+        if (recipe != null) {
+            ConfigurationSection ceRecipe = recipesSection.createSection(baseRecipeId);
+            recipe.serialize(ceRecipe);
+        }
     }
 
-    private void convertCraftingTableRecipe(ConfigurationSection iaRecipe, ConfigurationSection ceRecipe,
-                                            String recipeId, String fileName) {
+    private AbstractRecipe convertCraftingTableRecipe(ConfigurationSection iaRecipe,
+                                                      String recipeId, String fileName) {
         boolean shapeless = iaRecipe.getBoolean("shapeless", false);
+        AbstractRecipe recipe;
 
         if (shapeless) {
-            ceRecipe.set("type", "shapeless");
-
+            ShapelessRecipe shapelessRecipe = new ShapelessRecipe();
             ConfigurationSection ingredients = iaRecipe.getConfigurationSection("ingredients");
             if (this.isNotNull(ingredients)) {
-                List<String> ceIngredients = new ArrayList<>();
                 for (String key : ingredients.getKeys(false)) {
                     String ingredientName = ingredients.getString(key);
                     String convertedIngredient = this.convertItemReference(ingredientName, recipeId, fileName);
                     if (this.isValidString(convertedIngredient)) {
-                        ceIngredients.add(convertedIngredient);
+                        shapelessRecipe.addIngredient(new CraftingIngredient(convertedIngredient));
                     }
                 }
-                ceRecipe.set("ingredients", ceIngredients);
             }
+            recipe = shapelessRecipe;
         } else {
-            ceRecipe.set("type", "shaped");
+            ShapedRecipe shapedRecipe = new ShapedRecipe();
             List<String> pattern = iaRecipe.getStringList("pattern");
 
             ConfigurationSection ingredients = iaRecipe.getConfigurationSection("ingredients");
-            Map<String, String> ceIngredients = new HashMap<>();
-
             Set<String> definedKeys = new HashSet<>();
             if (this.isNotNull(ingredients)) {
                 for (String key : ingredients.getKeys(false)) {
                     String ingredientName = ingredients.getString(key);
                     String convertedIngredient = this.convertItemReference(ingredientName, recipeId, fileName);
                     if (this.isValidString(convertedIngredient)) {
-                        ceIngredients.put(key, convertedIngredient);
+                        shapedRecipe.addIngredient(key, new CraftingIngredient(convertedIngredient));
                         definedKeys.add(key);
                     }
                 }
@@ -748,11 +755,16 @@ public class IAConverter extends Converter {
                 cleanedPattern.add(cleanedRow.toString());
             }
 
-            ceRecipe.set("pattern", cleanedPattern);
-            ceRecipe.set("ingredients", ceIngredients);
+            shapedRecipe.setPattern(cleanedPattern);
+            recipe = shapedRecipe;
         }
 
-        this.convertRecipeResult(iaRecipe, ceRecipe, recipeId, fileName);
+        RecipeResult result = this.convertRecipeResult(iaRecipe, recipeId, fileName);
+        if (result != null) {
+            recipe.setResult(result);
+        }
+
+        return recipe;
     }
 
     private void convertCookingRecipes(ConfigurationSection iaRecipe, ConfigurationSection recipesSection,
@@ -765,9 +777,9 @@ public class IAConverter extends Converter {
 
         for (int i = 0; i < machines.size(); i++) {
             String machine = machines.get(i);
-            String cookingType = this.getCookingTypeFromMachine(machine);
+            RecipeType recipeType = this.getCookingTypeFromMachine(machine);
 
-            if (cookingType == null) {
+            if (recipeType == null) {
                 Logger.debug(Message.WARNING__CONVERTER__IA__RECIPES__UNKNOWN_MACHINE_TYPE, "machine", machine, "recipe", recipeId);
                 continue;
             }
@@ -775,57 +787,48 @@ public class IAConverter extends Converter {
             String finalRecipeId = machines.size() > 1 ? baseRecipeId + "_" + (i + 1) : baseRecipeId;
 
             ConfigurationSection ceRecipe = recipesSection.createSection(finalRecipeId);
-            this.convertSingleCookingRecipe(iaRecipe, ceRecipe, cookingType, recipeId, fileName);
+            this.convertSingleCookingRecipe(iaRecipe, ceRecipe, recipeType, recipeId, fileName);
         }
     }
 
     private void convertSingleCookingRecipe(ConfigurationSection iaRecipe, ConfigurationSection ceRecipe,
-                                            String cookingType, String recipeId, String fileName) {
-        ceRecipe.set("type", cookingType);
+                                            RecipeType recipeType, String recipeId, String fileName) {
+        CookingRecipe cookingRecipe = new CookingRecipe(recipeType);
 
         ConfigurationSection ingredientSection = iaRecipe.getConfigurationSection("ingredient");
         if (this.isNotNull(ingredientSection)) {
             String ingredientItem = ingredientSection.getString("item");
             String convertedIngredient = this.convertItemReference(ingredientItem, recipeId, fileName);
             if (this.isValidString(convertedIngredient)) {
-                ceRecipe.set("ingredient", convertedIngredient);
+                cookingRecipe.setIngredient(convertedIngredient);
             }
         }
 
         double exp = iaRecipe.getDouble("exp", 0.0);
         if (exp > 0) {
-            ceRecipe.set("experience", exp);
+            cookingRecipe.setExperience((float) exp);
         }
 
         int cookTime = iaRecipe.getInt("cook_time", 200);
-        ceRecipe.set("time", cookTime);
+        cookingRecipe.setTime(cookTime);
 
-        ConfigurationSection resultSection = iaRecipe.getConfigurationSection("result");
-        if (this.isNotNull(resultSection)) {
-            ConfigurationSection ceResultSection = ceRecipe.createSection("result");
-
-            String resultItem = resultSection.getString("item");
-            String convertedResult = this.convertItemReference(resultItem, recipeId, fileName);
-            if (this.isValidString(convertedResult)) {
-                ceResultSection.set("id", convertedResult);
-            }
-
-            int amount = resultSection.getInt("amount", 1);
-            ceResultSection.set("count", amount);
+        RecipeResult result = this.convertRecipeResult(iaRecipe, recipeId, fileName);
+        if (result != null) {
+            cookingRecipe.setResult(result);
         }
 
-        ceRecipe.set("category", "misc");
+        cookingRecipe.setCategory(CookingRecipeCategory.MISC);
+        cookingRecipe.serialize(ceRecipe);
     }
 
-    private void convertSmithingRecipe(ConfigurationSection iaRecipe, ConfigurationSection ceRecipe,
-                                       String recipeId, String fileName) {
-        ceRecipe.set("type", "smithing_transform");
+    private AbstractRecipe convertSmithingRecipe(ConfigurationSection iaRecipe, String recipeId, String fileName) {
+        SmithingTransformRecipe smithingRecipe = new SmithingTransformRecipe();
 
         String template = iaRecipe.getString("template");
         if (this.isValidString(template)) {
             String convertedTemplate = this.convertItemReference(template, recipeId, fileName);
             if (this.isValidString(convertedTemplate)) {
-                ceRecipe.set("template-type", convertedTemplate);
+                smithingRecipe.setTemplateType(convertedTemplate);
             }
         }
 
@@ -833,7 +836,7 @@ public class IAConverter extends Converter {
         if (this.isValidString(base)) {
             String convertedBase = this.convertItemReference(base, recipeId, fileName);
             if (this.isValidString(convertedBase)) {
-                ceRecipe.set("base", convertedBase);
+                smithingRecipe.setBase(convertedBase);
             }
         } else {
             this.logDebug(Message.WARNING__CONVERTER__IA__RECIPES__SMITHING_MISSING_BASE, LogType.WARNING, "recipe", recipeId, "file", fileName);
@@ -843,31 +846,24 @@ public class IAConverter extends Converter {
         if (this.isValidString(addition)) {
             String convertedAddition = this.convertItemReference(addition, recipeId, fileName);
             if (this.isValidString(convertedAddition)) {
-                ceRecipe.set("addition", convertedAddition);
+                smithingRecipe.setAddition(convertedAddition);
             }
         }
 
-        ConfigurationSection resultSection = iaRecipe.getConfigurationSection("result");
-        if (this.isNotNull(resultSection)) {
-            ConfigurationSection ceResultSection = ceRecipe.createSection("result");
-
-            String resultItem = resultSection.getString("item");
-            String convertedResult = this.convertItemReference(resultItem, recipeId, fileName);
-            if (this.isValidString(convertedResult)) {
-                ceResultSection.set("id", convertedResult);
-            }
-
-            int amount = resultSection.getInt("amount", 1);
-            ceResultSection.set("count", amount);
+        RecipeResult result = this.convertRecipeResult(iaRecipe, recipeId, fileName);
+        if (result != null) {
+            smithingRecipe.setResult(result);
         }
+
+        return smithingRecipe;
     }
 
-    private String getCookingTypeFromMachine(String machine) {
+    private RecipeType getCookingTypeFromMachine(String machine) {
         return switch (machine.toUpperCase()) {
-            case "FURNACE" -> "smelting";
-            case "BLAST_FURNACE" -> "blasting";
-            case "SMOKER" -> "smoking";
-            case "CAMPFIRE" -> "campfire_cooking";
+            case "FURNACE" -> RecipeType.SMELTING;
+            case "BLAST_FURNACE" -> RecipeType.BLASTING;
+            case "SMOKER" -> RecipeType.SMOKING;
+            case "CAMPFIRE" -> RecipeType.CAMPFIRE_COOKING;
             default -> null;
         };
     }
@@ -908,23 +904,21 @@ public class IAConverter extends Converter {
         return itemReferenceLowerCase;
     }
 
-    private void convertRecipeResult(ConfigurationSection iaRecipe, ConfigurationSection ceRecipe,
-                                     String recipeId, String fileName) {
+    private RecipeResult convertRecipeResult(ConfigurationSection iaRecipe, String recipeId, String fileName) {
         ConfigurationSection resultSection = iaRecipe.getConfigurationSection("result");
         if (this.isNotNull(resultSection)) {
-            ConfigurationSection ceResultSection = ceRecipe.createSection("result");
-
             String resultItem = resultSection.getString("item");
             String convertedResult = this.convertItemReference(resultItem, recipeId, fileName);
             if (this.isValidString(convertedResult)) {
-                ceResultSection.set("id", convertedResult);
-            }
-
-            int amount = resultSection.getInt("amount", 1);
-            if (amount > 1) {
-                ceResultSection.set("amount", amount);
+                RecipeResult recipeResult = new RecipeResult(convertedResult);
+                int amount = resultSection.getInt("amount", 1);
+                if (amount > 1) {
+                    recipeResult.setCount(amount);
+                }
+                return recipeResult;
             }
         }
+        return null;
     }
 
     @Override
