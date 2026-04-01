@@ -9,6 +9,8 @@ import fr.robie.craftengineconverter.api.enums.Plugins;
 import fr.robie.craftengineconverter.api.format.ComponentMeta;
 import fr.robie.craftengineconverter.api.format.Message;
 import fr.robie.craftengineconverter.api.format.MessageFormatter;
+import fr.robie.craftengineconverter.api.logger.BukkitLogger;
+import fr.robie.craftengineconverter.api.logger.ComponentLogger;
 import fr.robie.craftengineconverter.api.logger.LogType;
 import fr.robie.craftengineconverter.api.logger.Logger;
 import fr.robie.craftengineconverter.api.manager.FoliaCompatibilityManager;
@@ -63,12 +65,18 @@ public final class CraftEngineConverter extends CraftEngineConverterPlugin {
     private final WorldConverterManager worldConverterManager = new WorldConverterManager(this);
     private final ITagResolver tagResolver = new TagResolver();
     private final MessageLoader messageLoader = new MessageLoader(this);
-    private MessageFormatter messageFormatter = new ClassicMeta();
+    private final MessageFormatter messageFormatter;
     private Metrics metrics;
     private PacketLoader packetLoader;
 
     public CraftEngineConverter() {
-        new Logger(this.foliaCompatibilityManager.isPaper() ? this.getPluginMeta().getName() + " " + this.getPluginMeta().getVersion() : this.getDescription().getFullName());
+        if (this.foliaCompatibilityManager.isPaperOrFolia()) {
+            this.messageFormatter = new ComponentMeta(this);
+            new ComponentLogger(this.getPluginMeta().getName() + " " + this.getPluginMeta().getVersion(), (ComponentMeta) this.messageFormatter);
+        } else {
+            this.messageFormatter = new ClassicMeta();
+            new BukkitLogger(this.getDescription().getFullName());
+        }
     }
 
     @Override
@@ -106,9 +114,6 @@ public final class CraftEngineConverter extends CraftEngineConverterPlugin {
             Logger.info("Unable to create plugin folder ! Disabling CraftEngineConverter ...", LogType.ERROR);
             this.getServer().getPluginManager().disablePlugin(this);
             return;
-        }
-        if (this.foliaCompatibilityManager.isPaperOrFolia()) {
-            this.messageFormatter = new ComponentMeta(this);
         }
 
         this.reloadMessages();

@@ -73,6 +73,7 @@ To use a different type, wrap it in a map with a `type` key:
 ```
 
 - Some internal refractor to remove code duplication to write CraftEngine item syntax
+- New logger support minimessage syntax is your server is running Paper or Folia
 
 ## Nexo
 

@@ -4,14 +4,13 @@ import fr.robie.craftengineconverter.api.configuration.Configuration;
 import fr.robie.craftengineconverter.api.configuration.ConfigurationKey;
 import fr.robie.craftengineconverter.api.format.Message;
 import fr.robie.craftengineconverter.api.format.TextFormatter;
-import org.bukkit.Bukkit;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
-public class Logger implements TextFormatter {
-    private final String prefix;
+public abstract class Logger implements TextFormatter {
+    protected final String prefix;
     private static Logger logger;
 
     public Logger(String prefix) {
@@ -119,12 +118,7 @@ public class Logger implements TextFormatter {
         return this.prefix;
     }
 
-    public void log(@Nullable String subPrefix, String message, LogType logType, Object... args) {
-        String prefixPart = subPrefix != null
-                ? "§8[§e" + this.prefix + "§8] §8[" + subPrefix + "§8] "
-                : "§8[§e" + this.prefix + "§8] ";
-        Bukkit.getConsoleSender().sendMessage(prefixPart + logType.getColor() + this.parseText(message, args));
-    }
+    public abstract void log(@Nullable String subPrefix, String message, LogType logType, Object... args);
 
     public void log(String message, LogType logType, Object... args) {
         this.log(null, message, logType, args);
