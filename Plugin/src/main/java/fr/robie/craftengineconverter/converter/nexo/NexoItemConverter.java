@@ -2743,7 +2743,6 @@ public class NexoItemConverter extends ItemConverter {
             resolved.markAsInternalOnly();
             ModelConfiguration model = resolved.getCraftEngineItemsConfiguration().getModelConfiguration();
             if (this.isNotNull(model)) {
-                Logger.info("Instance class for block model of item " + this.itemId + " resolved to " + model.getClass().getSimpleName() + " with block ID " + blockId);
                 if (model instanceof SimpleModelConfiguration simpleModelConfiguration && defaultModel instanceof SimpleModelConfiguration defaultSimpleModel && simpleModelConfiguration.getModel().equals(defaultSimpleModel.getModel())) {
                     simpleModelConfiguration.setGeneration(null);
                     return simpleModelConfiguration;
