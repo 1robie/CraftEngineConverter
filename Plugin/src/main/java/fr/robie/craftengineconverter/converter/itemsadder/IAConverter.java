@@ -1115,7 +1115,7 @@ public class IAConverter extends Converter {
                             }
                         }
                     } else {
-                        Logger.info(Message.ERROR__FILE__LOAD_FAILURE, LogType.ERROR, "file", f.getName());
+                        this.log(Message.ERROR__FILE__LOAD_FAILURE, LogType.ERROR, "file", f.getName());
                     }
                 }
             }
