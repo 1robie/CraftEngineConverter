@@ -5,6 +5,7 @@ import fr.robie.craftengineconverter.api.configuration.item.models.tints.TintCon
 import fr.robie.craftengineconverter.api.utils.ConfigurationSerializationUtils;
 import org.bukkit.configuration.ConfigurationSection;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,8 +25,20 @@ public class SimpleModelConfiguration implements ModelConfiguration {
         this.tints.add(Objects.requireNonNull(tint, "tint cannot be null"));
     }
 
-    public void setGeneration(@NotNull GenerationConfiguration generation) {
-        this.generation = Objects.requireNonNull(generation, "generation cannot be null");
+    public void setGeneration(@Nullable GenerationConfiguration generation) {
+        this.generation = generation;
+    }
+
+    public @NotNull String getModel() {
+        return this.model;
+    }
+
+    public @NotNull List<TintConfiguration> getTints() {
+        return this.tints;
+    }
+
+    public GenerationConfiguration getGeneration() {
+        return this.generation;
     }
 
     @Override
