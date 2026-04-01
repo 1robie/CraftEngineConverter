@@ -1,18 +1,26 @@
 package fr.robie.craftengineconverter.api.logger;
 
 public enum LogType {
-    ERROR("§c"),
-    INFO("§7"),
-    WARNING("§6"),
-    SUCCESS("§2");
+    ERROR("§c", "<red>"),
+    INFO("§7", "<gray>"),
+    WARNING("§6", "<yellow>"),
+    SUCCESS("§2", "<green>");
 
-    private final String color;
+    private static boolean useComponentColorCodes = false;
 
-    LogType(String color) {
-        this.color = color;
+    private final String bukkitColor;
+    private final String miniMessageColor;
+
+    LogType(String bukkitColor, String miniMessageColor) {
+        this.bukkitColor = bukkitColor;
+        this.miniMessageColor = miniMessageColor;
     }
 
     public String getColor() {
-        return this.color;
+        return useComponentColorCodes ? this.miniMessageColor : this.bukkitColor;
+    }
+
+    public static void setUseComponent(boolean useComponent) {
+        useComponentColorCodes = useComponent;
     }
 }

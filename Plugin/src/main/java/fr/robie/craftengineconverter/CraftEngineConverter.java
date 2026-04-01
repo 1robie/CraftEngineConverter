@@ -73,6 +73,7 @@ public final class CraftEngineConverter extends CraftEngineConverterPlugin {
         if (this.foliaCompatibilityManager.isPaperOrFolia()) {
             this.messageFormatter = new ComponentMeta(this);
             new ComponentLogger("<gradient:#FFD166:#FA3939>" + this.getPluginMeta().getName() + " " + this.getPluginMeta().getVersion() + "</gradient>", (ComponentMeta) this.messageFormatter);
+            LogType.setUseComponent(true);
         } else {
             this.messageFormatter = new ClassicMeta();
             new BukkitLogger(this.getDescription().getFullName());
@@ -82,7 +83,7 @@ public final class CraftEngineConverter extends CraftEngineConverterPlugin {
     @Override
     public void onLoad() {
         if (!Plugins.CRAFTENGINE.isPresent()) {
-            Logger.info("CraftEngine plugin not found ! Disabling CraftEngineConverter ...");
+            Logger.info("CraftEngine plugin not found ! Disabling CraftEngineConverter ...", LogType.ERROR);
             this.getServer().getPluginManager().disablePlugin(this);
             return;
         }
