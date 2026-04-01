@@ -29,11 +29,7 @@ public class CraftingIngredient implements SectionSerializable {
 
     @Override
     public void serialize(@NotNull ConfigurationSection section) {
-        if (this.items.size() == 1) {
-            section.set("item", this.items.getFirst());
-        } else {
-            section.set("items", this.items);
-        }
+        section.set("items", this.items.size() == 1 ? this.items.getFirst() : this.items);
         if (this.count != 1) {
             section.set("count", this.count);
         }

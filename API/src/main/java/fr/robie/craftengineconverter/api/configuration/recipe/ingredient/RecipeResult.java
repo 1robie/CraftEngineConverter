@@ -40,7 +40,7 @@ public class RecipeResult implements SectionSerializable {
 
     @Override
     public void serialize(@NotNull ConfigurationSection section) {
-        section.set("item", this.itemId);
+        section.set("id", this.itemId);
         if (this.count != 1) {
             section.set("count", this.count);
         }
