@@ -72,7 +72,7 @@ public final class CraftEngineConverter extends CraftEngineConverterPlugin {
     public CraftEngineConverter() {
         if (this.foliaCompatibilityManager.isPaperOrFolia()) {
             this.messageFormatter = new ComponentMeta(this);
-            new ComponentLogger(this.getPluginMeta().getName() + " " + this.getPluginMeta().getVersion(), (ComponentMeta) this.messageFormatter);
+            new ComponentLogger("<gradient:#FFD166:#FA3939>" + this.getPluginMeta().getName() + " " + this.getPluginMeta().getVersion() + "</gradient>", (ComponentMeta) this.messageFormatter);
         } else {
             this.messageFormatter = new ClassicMeta();
             new BukkitLogger(this.getDescription().getFullName());
