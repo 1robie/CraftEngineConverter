@@ -72,7 +72,8 @@ To use a different type, wrap it in a map with a `type` key:
 #     - IMAGES
 ```
 
-- Some internal refractor to remove code duplication to write CraftEngine item syntax
+- Some internal refractor to remove code duplication to write CraftEngine item, recipe, sound, etc... in a more generic
+  way.
 - New logger support minimessage syntax is your server is running Paper or Folia
 
 ## Nexo
