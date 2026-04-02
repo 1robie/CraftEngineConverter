@@ -297,36 +297,6 @@ Optional<String> resolved = this.tagResolver.resolveTags("<glyph:heart> Hello!",
 String output = this.resolved.orElse("<glyph:heart> Hello!");
 ```
 
-### Using SnakeUtils for YAML Manipulation
-
-```java
-// Create a SnakeUtils instance
-SnakeUtils utils = new SnakeUtils(yamlFile);
-
-// Get and set values with path notation
-utils.
-
-setValue("items.my_item.display_name","My Item");
-
-String name = this.utils.getString("items.my_item.display_name");
-
-// Work with sections
-SnakeUtils section = this.utils.getSection("items.my_item");
-section.
-
-setValue("material","DIAMOND_SWORD");
-
-// Get typed values
-int amount = this.utils.getInt("items.my_item.amount", 1);
-List<String> lore = this.utils.getStringList("items.my_item.lore");
-Map<String, Object> data = this.utils.getMap("items.my_item");
-
-// Save changes
-utils.
-
-save();
-```
-
 ## 🏗️ Building
 
 ### Prerequisites
@@ -352,13 +322,15 @@ mvn clean package
 
 ```
 CraftEngineConverter/
-├── API/              # Public API for other plugins
-├── Common/           # Shared utilities and core logic
-├── Hooks/            # Plugin integration modules
-│   ├── BOM/          # Bill of Materials
-│   ├── PacketEvents/ # PacketEvents integration
+├── API/                # Public API for other plugins
+├── Common/             # Shared utilities and core logic
+├── Hooks/              # Plugin integration modules
+│   ├── BOM/            # Bill of Materials
+│   ├── Nexo/           # Nexo plugin integration
+│   ├── ItemsAdder/     # ItemsAdder plugin integration
+│   ├── PacketEvents/   # PacketEvents integration
 │   └── PlaceholderAPI/ # PlaceholderAPI integration
-└── Plugin/           # Main plugin implementation
+└── Plugin/             # Main plugin implementation
 ```
 
 ## 🤝 Contributing
