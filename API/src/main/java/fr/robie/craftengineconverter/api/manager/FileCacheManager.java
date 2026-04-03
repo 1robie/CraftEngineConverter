@@ -1,14 +1,16 @@
-package fr.robie.craftengineconverter.common.manager;
+package fr.robie.craftengineconverter.api.manager;
 
 import com.google.gson.*;
 import com.google.gson.stream.JsonReader;
+import fr.robie.craftengineconverter.api.cache.FileCache;
 import fr.robie.craftengineconverter.api.format.Message;
 import fr.robie.craftengineconverter.api.logger.LogType;
 import fr.robie.craftengineconverter.api.logger.Logger;
-import fr.robie.craftengineconverter.common.cache.FileCache;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Files;
+import java.nio.file.Path;
 
 public class FileCacheManager {
     private static final Gson GSON = new GsonBuilder()
@@ -64,4 +66,13 @@ public class FileCacheManager {
     public static FileCache<JsonObject> getJsonCache() {
         return jsonCache;
     }
+
+    public static void saveJsonToFile(@NotNull Path path, @NotNull JsonObject json) {
+        try (var writer = Files.newBufferedWriter(path)) {
+            GSON.toJson(json, writer);
+        } catch (Exception e) {
+            Logger.showException(Message.ERROR__JSON__SAVE_FAILURE, e, "file", path.toString());
+        }
+    }
+
 }

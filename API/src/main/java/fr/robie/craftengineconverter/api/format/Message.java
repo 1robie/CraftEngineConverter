@@ -255,7 +255,7 @@ public enum Message {
 
     ERROR__CONVERTER__NEXO__PACK__ZIP_EXTRACT_FAILURE("Failed to extract and copy assets from ZIP: §e%file%§c"),
     ERROR__CONVERTER__NEXO__IMAGES__SAVE_FAILURE("Failed to save converted image file: §e%file%§c"),
-    ERROR__CONVERTER__NEXO__IMAGES__RELATIVE_PATH_FAILURE("Failed to compute relative path for image file: §e%file%§c");
+    ERROR__CONVERTER__NEXO__IMAGES__RELATIVE_PATH_FAILURE("Failed to compute relative path for image file: §e%file%§c"), ERROR__JSON__SAVE_FAILURE("Failed to save JSON file: §e%file%§c.");
     private final List<CraftEngineConverterMessage> defaults;
     private List<CraftEngineConverterMessage> loaded;
 

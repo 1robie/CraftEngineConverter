@@ -1,4 +1,4 @@
-package fr.robie.craftengineconverter.common.cache;
+package fr.robie.craftengineconverter.api.cache;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;

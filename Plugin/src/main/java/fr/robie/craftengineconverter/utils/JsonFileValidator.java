@@ -3,12 +3,12 @@ package fr.robie.craftengineconverter.utils;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import fr.robie.craftengineconverter.api.cache.FileCacheEntry;
 import fr.robie.craftengineconverter.api.logger.LogType;
 import fr.robie.craftengineconverter.api.logger.Logger;
+import fr.robie.craftengineconverter.api.manager.FileCacheManager;
 import fr.robie.craftengineconverter.api.progress.BukkitProgressBar;
 import fr.robie.craftengineconverter.common.CraftEngineConverterPlugin;
-import fr.robie.craftengineconverter.common.cache.FileCacheEntry;
-import fr.robie.craftengineconverter.common.manager.FileCacheManager;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 

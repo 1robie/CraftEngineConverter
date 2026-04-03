@@ -1,6 +1,7 @@
 package fr.robie.craftengineconverter.converter.nexo;
 
 import fr.robie.craftengineconverter.CraftEngineConverter;
+import fr.robie.craftengineconverter.api.cache.FileCacheEntry;
 import fr.robie.craftengineconverter.api.configuration.image.Bitmap;
 import fr.robie.craftengineconverter.api.configuration.image.MultipleCharactersBitmapConfiguration;
 import fr.robie.craftengineconverter.api.configuration.image.SingleCharacterBitmapConfiguration;
@@ -19,11 +20,10 @@ import fr.robie.craftengineconverter.api.enums.RecipeType;
 import fr.robie.craftengineconverter.api.format.Message;
 import fr.robie.craftengineconverter.api.logger.LogType;
 import fr.robie.craftengineconverter.api.logger.Logger;
+import fr.robie.craftengineconverter.api.manager.FileCacheManager;
 import fr.robie.craftengineconverter.api.progress.BukkitProgressBar;
 import fr.robie.craftengineconverter.common.BlockStatesMapper;
 import fr.robie.craftengineconverter.common.PluginNameMapper;
-import fr.robie.craftengineconverter.common.cache.FileCacheEntry;
-import fr.robie.craftengineconverter.common.manager.FileCacheManager;
 import fr.robie.craftengineconverter.common.records.ImageConversion;
 import fr.robie.craftengineconverter.common.utils.CraftEngineImageUtils;
 import fr.robie.craftengineconverter.common.utils.SnakeUtils;
