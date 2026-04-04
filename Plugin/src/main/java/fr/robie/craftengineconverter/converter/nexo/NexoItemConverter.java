@@ -43,10 +43,12 @@ import fr.robie.craftengineconverter.api.configuration.item.models.select.Displa
 import fr.robie.craftengineconverter.api.configuration.item.settings.InvulnerableSettingConfiguration;
 import fr.robie.craftengineconverter.api.configuration.item.settings.ProjectileSettingConfiguration;
 import fr.robie.craftengineconverter.api.enums.*;
+import fr.robie.craftengineconverter.api.enums.item.component.ConsumableAnimation;
 import fr.robie.craftengineconverter.api.format.Message;
 import fr.robie.craftengineconverter.api.logger.LogType;
 import fr.robie.craftengineconverter.api.logger.Logger;
 import fr.robie.craftengineconverter.api.utils.FloatsUtils;
+import fr.robie.craftengineconverter.api.utils.item.component.ConsumeEffect;
 import fr.robie.craftengineconverter.common.BlockStatesMapper;
 import fr.robie.craftengineconverter.common.enums.BukkitFlagToComponentFlag;
 import fr.robie.craftengineconverter.common.utils.enums.nexo.NexoBestTool;
@@ -482,16 +484,16 @@ public class NexoItemConverter extends ItemConverter {
         boolean hasConsumeParticles = consumableSection.getBoolean("consume_particles", true);
         double consumeSeconds = consumableSection.getDouble("consume_seconds", 1.6);
 
-        ConsumableConfiguration.Animation animation;
+        ConsumableAnimation animation;
         try {
-            animation = ConsumableConfiguration.Animation.valueOf(
+            animation = ConsumableAnimation.valueOf(
                     consumableSection.getString("animation", "eat").toUpperCase()
             );
         } catch (IllegalArgumentException e) {
-            animation = ConsumableConfiguration.Animation.EAT;
+            animation = ConsumableAnimation.EAT;
         }
 
-        List<AbstractEffectsConfiguration.ConsumeEffect> consumeEffects = new ArrayList<>();
+        List<ConsumeEffect> consumeEffects = new ArrayList<>();
 
         ConfigurationSection effectsSection = consumableSection.getConfigurationSection("effects");
         if (effectsSection != null) {
@@ -699,7 +701,7 @@ public class NexoItemConverter extends ItemConverter {
             return;
         }
 
-        List<AbstractEffectsConfiguration.ConsumeEffect> deathEffects = new ArrayList<>();
+        List<ConsumeEffect> deathEffects = new ArrayList<>();
 
         ConfigurationSection applyEffectsSection = deathEffectsSection.getConfigurationSection("APPLY_EFFECTS");
         if (this.isNotNull(applyEffectsSection)) {

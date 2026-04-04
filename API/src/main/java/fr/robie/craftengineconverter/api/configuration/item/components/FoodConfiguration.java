@@ -1,11 +1,13 @@
 package fr.robie.craftengineconverter.api.configuration.item.components;
 
+import com.google.gson.JsonObject;
+import fr.robie.craftengineconverter.api.configuration.bedrock.mapping.item.component.BedrockComponent;
 import fr.robie.craftengineconverter.api.configuration.item.ItemConfigurationSerializable;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.jetbrains.annotations.NotNull;
 
-public class FoodConfiguration implements ItemConfigurationSerializable {
+public class FoodConfiguration implements ItemConfigurationSerializable, BedrockComponent {
     private final int nutrition;
     private final float saturation;
     private final boolean canAlwaysEat;
@@ -31,4 +33,16 @@ public class FoodConfiguration implements ItemConfigurationSerializable {
             foodComponent.set("can_always_eat", true);
         }
     }
+
+    @Override
+    public void applyTo(@NotNull JsonObject componentObject) {
+        JsonObject foodComponent = new JsonObject();
+        foodComponent.addProperty("nutrition", this.nutrition);
+        foodComponent.addProperty("saturation", this.saturation);
+        if (this.canAlwaysEat) {
+            foodComponent.addProperty("can_always_eat", true);
+        }
+        componentObject.add("minecraft:food", foodComponent);
+    }
+
 }

@@ -1,21 +1,25 @@
 package fr.robie.craftengineconverter.api.configuration.item.components;
 
+import com.google.gson.JsonObject;
+import fr.robie.craftengineconverter.api.configuration.bedrock.mapping.item.component.BedrockComponent;
 import fr.robie.craftengineconverter.api.configuration.item.AbstractEffectsConfiguration;
+import fr.robie.craftengineconverter.api.enums.item.component.ConsumableAnimation;
+import fr.robie.craftengineconverter.api.utils.item.component.ConsumeEffect;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class ConsumableConfiguration extends AbstractEffectsConfiguration {
+public class ConsumableConfiguration extends AbstractEffectsConfiguration implements BedrockComponent {
 
     private final String sound;
     private final boolean hasConsumeParticles;
     private final double consumeSeconds;
-    private final Animation animation;
+    private final ConsumableAnimation animation;
     private final List<ConsumeEffect> onConsumeEffects;
 
-    public ConsumableConfiguration(String sound, boolean hasConsumeParticles, double consumeSeconds, Animation animation, List<ConsumeEffect> onConsumeEffects) {
+    public ConsumableConfiguration(String sound, boolean hasConsumeParticles, double consumeSeconds, ConsumableAnimation animation, List<ConsumeEffect> onConsumeEffects) {
         this.sound = sound;
         this.hasConsumeParticles = hasConsumeParticles;
         this.consumeSeconds = consumeSeconds;
@@ -23,12 +27,8 @@ public class ConsumableConfiguration extends AbstractEffectsConfiguration {
         this.onConsumeEffects = onConsumeEffects;
     }
 
-    public enum Animation {
-        NONE, EAT, DRINK, BLOCK, BOW, SPEAR, CROSSBOW, SPYGLASS, TOOT_HORN, BRUSH, BUNDLE, TRIDENT;
-
-        public String toKey() {
-            return this.name().toLowerCase();
-        }
+    public ConsumableConfiguration(double consumeSeconds, ConsumableAnimation animation, List<ConsumeEffect> onConsumeEffects) {
+        this(null, true, consumeSeconds, animation, onConsumeEffects);
     }
 
     @Override
@@ -45,12 +45,24 @@ public class ConsumableConfiguration extends AbstractEffectsConfiguration {
         if (this.consumeSeconds != 1.6) {
             consumableSection.set("consume_seconds", this.consumeSeconds);
         }
-        if (this.animation != Animation.EAT) {
+        if (this.animation != ConsumableAnimation.EAT) {
             consumableSection.set("animation", this.animation.toKey());
         }
 
         if (this.onConsumeEffects != null && !this.onConsumeEffects.isEmpty()) {
             consumableSection.set("on_consume_effects", this.serializeEffects(this.onConsumeEffects));
         }
+    }
+
+    @Override
+    public void applyTo(@NotNull JsonObject componentObject) {
+        JsonObject consumableObject = new JsonObject();
+        if (this.animation != ConsumableAnimation.EAT) {
+            consumableObject.addProperty("animation", this.animation.toKey());
+        }
+        if (this.onConsumeEffects != null && !this.onConsumeEffects.isEmpty()) {
+            consumableObject.add("on_consume_effects", this.serializeEffectsToJsonArray(this.onConsumeEffects));
+        }
+        componentObject.add("minecraft:consumable", consumableObject);
     }
 }

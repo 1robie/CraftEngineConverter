@@ -7,18 +7,18 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import org.jetbrains.annotations.NotNull;
 
 public class EquippableConfiguration implements ItemConfigurationSerializable {
-    private final EquipmentSlot equipmentSlot;
-    private final String equipSound;
-    private final String assetId;
-    private final Object allowedEntities;
-    private final boolean dispensable;
-    private final boolean swappable;
-    private final boolean damageOnHurt;
-    private final boolean equipOnInteract;
-    private final String cameraOverlay;
-    private final boolean canBeSheared;
-    private final String shearingSound;
-    private final String wings;
+    protected final EquipmentSlot equipmentSlot;
+    protected final String equipSound;
+    protected final String assetId;
+    protected final Object allowedEntities;
+    protected final boolean dispensable;
+    protected final boolean swappable;
+    protected final boolean damageOnHurt;
+    protected final boolean equipOnInteract;
+    protected final String cameraOverlay;
+    protected final boolean canBeSheared;
+    protected final String shearingSound;
+    protected final String wings;
 
     public EquippableConfiguration(EquipmentSlot equipmentSlot, String equipSound, String assetId, Object allowedEntities, boolean dispensable, boolean swappable, boolean damageOnHurt, boolean equipOnInteract, String cameraOverlay, boolean canBeSheared, String shearingSound, String wings) {
         this.equipmentSlot = equipmentSlot;
