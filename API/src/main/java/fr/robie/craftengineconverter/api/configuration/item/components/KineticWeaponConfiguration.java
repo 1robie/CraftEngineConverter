@@ -1,11 +1,13 @@
 package fr.robie.craftengineconverter.api.configuration.item.components;
 
+import com.google.gson.JsonObject;
+import fr.robie.craftengineconverter.api.configuration.bedrock.mapping.item.component.BedrockComponent;
 import fr.robie.craftengineconverter.api.configuration.item.ItemConfigurationSerializable;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.jetbrains.annotations.NotNull;
 
-public class KineticWeaponConfiguration implements ItemConfigurationSerializable {
+public class KineticWeaponConfiguration implements ItemConfigurationSerializable, BedrockComponent {
     private final long delayTicks;
     private final double damageMultiplier;
     private final double forwardMovement;
@@ -26,6 +28,50 @@ public class KineticWeaponConfiguration implements ItemConfigurationSerializable
         this.damageConditions = damageConditions;
     }
 
+    @Override
+    public void applyTo(@NotNull JsonObject componentObject) {
+        JsonObject kineticWeaponComponent = new JsonObject();
+        if (this.delayTicks > 0) {
+            kineticWeaponComponent.addProperty("delay_ticks", this.delayTicks);
+        }
+        if (this.damageMultiplier != 1.0) {
+            kineticWeaponComponent.addProperty("damage_multiplier", this.damageMultiplier);
+        }
+        if (this.forwardMovement != 0.0) {
+            kineticWeaponComponent.addProperty("forward_movement", this.forwardMovement);
+        }
+        if (this.sound != null && !this.sound.isBlank()) {
+            kineticWeaponComponent.addProperty("sound", this.sound);
+        }
+        if (this.hitSound != null && !this.hitSound.isBlank()) {
+            kineticWeaponComponent.addProperty("hit_sound", this.hitSound);
+        }
+
+        if (this.dismountConditions != null) {
+            JsonObject dismountObj = new JsonObject();
+            this.dismountConditions.serializeBedrock(dismountObj);
+            if (!dismountObj.isEmpty()) {
+                kineticWeaponComponent.add("dismount_conditions", dismountObj);
+            }
+        }
+        if (this.knockbackConditions != null) {
+            JsonObject knockbackObj = new JsonObject();
+            this.knockbackConditions.serializeBedrock(knockbackObj);
+            if (!knockbackObj.isEmpty()) {
+                kineticWeaponComponent.add("knockback_conditions", knockbackObj);
+            }
+        }
+        if (this.damageConditions != null) {
+            JsonObject damageObj = new JsonObject();
+            this.damageConditions.serializeBedrock(damageObj);
+            if (!damageObj.isEmpty()) {
+                kineticWeaponComponent.add("damage_conditions", damageObj);
+            }
+        }
+
+        componentObject.add("minecraft:kinetic_weapon", kineticWeaponComponent);
+    }
+
     public record KineticConditions(long maxDurationTicks, double minSpeed, double minRelativeSpeed) {
 
         public void serialize(@NotNull ConfigurationSection section) {
@@ -37,6 +83,18 @@ public class KineticWeaponConfiguration implements ItemConfigurationSerializable
             }
             if (this.minRelativeSpeed > 0.0) {
                 section.set("min_relative_speed", this.minRelativeSpeed);
+            }
+        }
+
+        public void serializeBedrock(@NotNull JsonObject target) {
+            if (this.maxDurationTicks > 0) {
+                target.addProperty("max_duration_ticks", this.maxDurationTicks);
+            }
+            if (this.minSpeed > 0.0) {
+                target.addProperty("min_speed", this.minSpeed);
+            }
+            if (this.minRelativeSpeed > 0.0) {
+                target.addProperty("min_relative_speed", this.minRelativeSpeed);
             }
         }
     }
