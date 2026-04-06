@@ -24,6 +24,7 @@ import fr.robie.craftengineconverter.api.logger.LogType;
 import fr.robie.craftengineconverter.api.logger.Logger;
 import fr.robie.craftengineconverter.api.manager.FileCacheManager;
 import fr.robie.craftengineconverter.api.progress.BukkitProgressBar;
+import fr.robie.craftengineconverter.api.utils.FileUtils;
 import fr.robie.craftengineconverter.common.BlockStatesMapper;
 import fr.robie.craftengineconverter.common.PluginNameMapper;
 import fr.robie.craftengineconverter.common.enums.NmsVersion;
@@ -75,7 +76,7 @@ public class IAConverter extends Converter {
         }
 
         if (outputFolder.exists()) {
-            this.deleteDirectory(outputFolder);
+            FileUtils.deleteDirectory(outputFolder);
         }
 
         if (!outputFolder.mkdirs()) {
@@ -251,7 +252,7 @@ public class IAConverter extends Converter {
         }
 
         if (outputBase.exists()) {
-            this.deleteDirectory(outputBase);
+            FileUtils.deleteDirectory(outputBase);
         }
         if (!outputBase.mkdirs()) {
             this.logDebug(Message.ERROR__CONVERTER__IA__OUTPUT_FOLDER_CREATION_FAILED, LogType.ERROR, "path", outputBase.getAbsolutePath());
@@ -478,7 +479,7 @@ public class IAConverter extends Converter {
         }
 
         if (outputFolder.exists()) {
-            this.deleteDirectory(outputFolder);
+            FileUtils.deleteDirectory(outputFolder);
         }
 
         if (!outputFolder.mkdirs()) {
@@ -588,7 +589,7 @@ public class IAConverter extends Converter {
             return;
         }
         if (outputFolder.exists()) {
-            this.deleteDirectory(outputFolder);
+            FileUtils.deleteDirectory(outputFolder);
         }
         if (!outputFolder.mkdirs()) {
             this.logDebug(Message.ERROR__CONVERTER__IA__OUTPUT_FOLDER_CREATION_FAILED, LogType.ERROR, "path", outputFolder.getAbsolutePath());
@@ -938,7 +939,7 @@ public class IAConverter extends Converter {
             }
 
             if (outputPackFile.exists()) {
-                this.deleteDirectory(outputPackFile);
+                FileUtils.deleteDirectory(outputPackFile);
             }
 
             if (!outputPackFile.mkdirs()) {

@@ -22,6 +22,7 @@ import fr.robie.craftengineconverter.api.logger.LogType;
 import fr.robie.craftengineconverter.api.logger.Logger;
 import fr.robie.craftengineconverter.api.manager.FileCacheManager;
 import fr.robie.craftengineconverter.api.progress.BukkitProgressBar;
+import fr.robie.craftengineconverter.api.utils.FileUtils;
 import fr.robie.craftengineconverter.common.BlockStatesMapper;
 import fr.robie.craftengineconverter.common.PluginNameMapper;
 import fr.robie.craftengineconverter.common.records.ImageConversion;
@@ -69,7 +70,7 @@ public class NexoConverter extends Converter {
         }
 
         if (outputBase.exists()) {
-            this.deleteDirectory(outputBase);
+            FileUtils.deleteDirectory(outputBase);
         }
 
         if (!outputBase.mkdirs()) {
@@ -138,7 +139,7 @@ public class NexoConverter extends Converter {
         }
 
         if (outputEmojisFolder.exists()) {
-            this.deleteDirectory(outputEmojisFolder);
+            FileUtils.deleteDirectory(outputEmojisFolder);
         }
 
         if (!outputEmojisFolder.mkdirs()) {
@@ -269,7 +270,7 @@ public class NexoConverter extends Converter {
             return;
         }
         if (outputFolder.exists()) {
-            this.deleteDirectory(outputFolder);
+            FileUtils.deleteDirectory(outputFolder);
         }
         if (!outputFolder.mkdirs()) {
             this.logDebug(Message.ERROR__MKDIR_FAILURE, LogType.ERROR, "directory", outputFolder.getName(), "path", outputFolder.getAbsolutePath());
@@ -967,7 +968,7 @@ public class NexoConverter extends Converter {
         }
 
         if (outputFolder.exists()) {
-            this.deleteDirectory(outputFolder);
+            FileUtils.deleteDirectory(outputFolder);
         }
 
         if (!outputFolder.mkdirs()) {
@@ -1133,7 +1134,7 @@ public class NexoConverter extends Converter {
             }
 
             if (outputPackFile.exists()) {
-                this.deleteDirectory(outputPackFile);
+                FileUtils.deleteDirectory(outputPackFile);
             }
             if (!outputPackFile.mkdirs()) {
                 this.logDebug(Message.ERROR__MKDIR_FAILURE, LogType.ERROR, "directory", outputPackFile.getName(), "path", outputPackFile.getAbsolutePath());
@@ -1247,14 +1248,14 @@ public class NexoConverter extends Converter {
             }
 
             if (!this.settings.dryRunEnabled()) {
-                this.deleteDirectory(tempDir);
+                FileUtils.deleteDirectory(tempDir);
             }
         } catch (IOException e) {
             Logger.showException(Message.ERROR__CONVERTER__NEXO__PACK__ZIP_EXTRACT_FAILURE, e, "file", zipFile.getName());
             errorRef.compareAndSet(null, e);
         } finally {
             if (!this.settings.dryRunEnabled() && tempDir.exists()) {
-                this.deleteDirectory(tempDir);
+                FileUtils.deleteDirectory(tempDir);
             }
         }
     }

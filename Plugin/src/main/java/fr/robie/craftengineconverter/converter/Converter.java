@@ -403,22 +403,6 @@ public abstract class Converter extends ObjectUtils {
         }
     }
 
-    protected void deleteDirectory(File directory) {
-        File[] files = directory.listFiles();
-        if (files != null) {
-            for (File file : files) {
-                if (file.isDirectory()) {
-                    this.deleteDirectory(file);
-                } else if (!file.delete()) {
-                    Logger.debug(Message.WARNING__FILE__DELETE_FAILURE, LogType.ERROR, "file", file.getName(), "path", file.getAbsolutePath());
-                }
-            }
-        }
-        if (!directory.delete()) {
-            Logger.debug(Message.WARNING__FOLDER__DELETE_FAILURE, LogType.ERROR, "folder", directory.getName(), "path", directory.getAbsolutePath());
-        }
-    }
-
     public record PackMapping(String namespaceSource, String originalPath, String namespaceTarget, String targetPath,
                               String newName) {
         public boolean matches(String path) {
