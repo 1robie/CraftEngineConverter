@@ -1,5 +1,7 @@
 package fr.robie.craftengineconverter.api.configuration.item.components;
 
+import com.google.gson.JsonObject;
+import fr.robie.craftengineconverter.api.configuration.bedrock.mapping.item.component.BedrockComponent;
 import fr.robie.craftengineconverter.api.configuration.item.ItemConfigurationSerializable;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -10,7 +12,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class ToolConfiguration implements ItemConfigurationSerializable {
+public class ToolConfiguration implements ItemConfigurationSerializable, BedrockComponent {
     private final float defaultMiningSpeed;
     private final int damagePerBlock;
     private final boolean canDestroyBlocksInCreative;
@@ -65,6 +67,55 @@ public class ToolConfiguration implements ItemConfigurationSerializable {
                 toolComponent.set("rules", ceRulesList);
             }
         }
+    }
+
+    @Override
+    public void applyTo(@NotNull JsonObject componentObject) {
+        JsonObject toolComponent = new JsonObject();
+
+        if (this.defaultMiningSpeed != 1.0f) {
+            toolComponent.addProperty("default_mining_speed", this.defaultMiningSpeed);
+        }
+
+        if (this.damagePerBlock != 1) {
+            toolComponent.addProperty("damage_per_block", this.damagePerBlock);
+        }
+
+        if (this.canDestroyBlocksInCreative) {
+            toolComponent.addProperty("can_destroy_blocks_in_creative", true);
+        }
+
+        if (this.rules != null && !this.rules.isEmpty()) {
+            List<JsonObject> ceRulesList = new ArrayList<>();
+
+            for (Rule rule : this.rules) {
+                JsonObject ceRule = new JsonObject();
+
+                if (rule.speed() != 0f) {
+                    ceRule.addProperty("speed", rule.speed());
+                }
+                if (rule.correctForDrops()) {
+                    ceRule.addProperty("correct_for_drops", true);
+                }
+                if (rule.blocks() != null) {
+                    if (rule.blocks() instanceof List<?> blocksList) {
+                        ceRule.add("blocks", componentObject.getAsJsonArray(blocksList.toString()));
+                    } else if (rule.blocks() instanceof String blockString) {
+                        ceRule.addProperty("blocks", blockString);
+                    }
+                }
+
+                if (!ceRule.entrySet().isEmpty()) {
+                    ceRulesList.add(ceRule);
+                }
+            }
+
+            if (!ceRulesList.isEmpty()) {
+                componentObject.add("rules", componentObject.getAsJsonArray(ceRulesList.toString()));
+            }
+        }
+
+        componentObject.add("minecraft:tool", toolComponent);
     }
 
     public record Rule(float speed, boolean correctForDrops, Object blocks) {
