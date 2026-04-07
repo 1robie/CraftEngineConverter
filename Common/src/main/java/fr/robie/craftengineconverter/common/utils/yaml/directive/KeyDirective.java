@@ -1,5 +1,6 @@
-package fr.robie.craftengineconverter.common.utils.directive;
+package fr.robie.craftengineconverter.common.utils.yaml.directive;
 
+import fr.robie.craftengineconverter.common.utils.yaml.constructor.SmartConstructor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.yaml.snakeyaml.nodes.Node;

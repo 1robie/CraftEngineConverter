@@ -1,4 +1,4 @@
-package fr.robie.craftengineconverter.common.utils.directive;
+package fr.robie.craftengineconverter.common.utils.yaml.directive;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -12,6 +12,8 @@ public final class KeyDirectiveRegistry {
 
     static {
         register(new VersionKeyDirective());
+        register(new PluginKeyDirective());
+        register(new MergeKeyDirective());
     }
 
     private KeyDirectiveRegistry() {}

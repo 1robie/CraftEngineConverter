@@ -1,6 +1,9 @@
-package fr.robie.craftengineconverter.common.utils.directive;
+package fr.robie.craftengineconverter.common.utils.yaml.constructor;
 
+import fr.robie.craftengineconverter.common.utils.yaml.directive.KeyDirective;
+import fr.robie.craftengineconverter.common.utils.yaml.directive.KeyDirectiveRegistry;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.yaml.snakeyaml.LoaderOptions;
 import org.yaml.snakeyaml.constructor.SafeConstructor;
 import org.yaml.snakeyaml.nodes.MappingNode;
@@ -14,12 +17,21 @@ import java.util.Map;
 public class SmartConstructor extends SafeConstructor {
 
     private static final String PREFIX = "$$";
-    private static final String FALLBACK = "$$fallback";
+    private static final String FALLBACK_STRIPPED = "fallback";
 
     public SmartConstructor(@NotNull LoaderOptions options) {
         super(options);
     }
 
+    @Override
+    public void flattenMapping(@NotNull final MappingNode node) {
+        super.flattenMapping(node);
+    }
+
+    @Nullable
+    public Object construct(@NotNull Node node) {
+        return this.constructObject(node);
+    }
 
     @Override
     public Object constructObject(Node node) {
@@ -42,9 +54,10 @@ public class SmartConstructor extends SafeConstructor {
             Node valueNode = tuple.getValueNode();
 
             if (key.startsWith(PREFIX)) {
-                KeyDirective directive = KeyDirectiveRegistry.findMatch(key);
+                String strippedKey = key.substring(PREFIX.length());
+                KeyDirective directive = KeyDirectiveRegistry.findMatch(strippedKey);
                 if (directive != null) {
-                    directive.handleBlockMerge(map, key, valueNode, this);
+                    directive.handleBlockMerge(map, strippedKey, valueNode, this);
                 }
             } else if (key.contains("::")) {
                 this.processDeepKey(map, key, valueNode);
@@ -73,24 +86,80 @@ public class SmartConstructor extends SafeConstructor {
     }
 
     @SuppressWarnings("unchecked")
-    private void processDeepKey(Map<Object, Object> map, String fullKey, Node valueNode) {
+    private void processDeepKey(Map<Object, Object> rootMap, String fullKey, Node valueNode) {
         String[] parts = fullKey.split("::");
-        Map<Object, Object> current = map;
+        Object current = rootMap;
 
         for (int i = 0; i < parts.length - 1; i++) {
-            Object existing = current.get(parts[i]);
-            if (existing instanceof Map) {
-                current = (Map<Object, Object>) existing;
-            } else {
-                Map<Object, Object> nested = new LinkedHashMap<>();
-                current.put(parts[i], nested);
-                current = nested;
+            String part = parts[i];
+            String nextPart = parts[i + 1];
+            boolean isNextIndex = this.isInteger(nextPart);
+
+            if (current instanceof Map) {
+                Map<Object, Object> map = (Map<Object, Object>) current;
+                Object existing = map.get(part);
+
+                if (existing != null) {
+                    current = existing;
+                } else {
+                    Object next;
+                    if (isNextIndex) {
+                        next = new java.util.ArrayList<>();
+                    } else {
+                        next = new LinkedHashMap<>();
+                    }
+                    map.put(part, next);
+                    current = next;
+                }
+            } else if (current instanceof java.util.List) {
+                java.util.List<Object> list = (java.util.List<Object>) current;
+                int index = Integer.parseInt(part);
+
+                while (list.size() <= index) {
+                    list.add(null);
+                }
+
+                Object existing = list.get(index);
+                if (existing != null) {
+                    current = existing;
+                } else {
+                    Object next;
+                    if (isNextIndex) {
+                        next = new java.util.ArrayList<>();
+                    } else {
+                        next = new LinkedHashMap<>();
+                    }
+                    list.set(index, next);
+                    current = next;
+                }
             }
         }
 
-        String finalKey = parts[parts.length - 1];
+        String finalPart = parts[parts.length - 1];
         Object value = this.constructObjectPublic(valueNode);
-        this.setWithMerge(current, finalKey, value, fullKey);
+
+        if (current instanceof Map) {
+            this.setWithMerge((Map<Object, Object>) current, finalPart, value, fullKey);
+        } else if (current instanceof java.util.List) {
+            java.util.List<Object> list = (java.util.List<Object>) current;
+            int index = Integer.parseInt(finalPart);
+            while (list.size() <= index) {
+                list.add(null);
+            }
+            list.set(index, value);
+        }
+    }
+
+    private boolean isInteger(String s) {
+        if (s == null || s.isEmpty()) {
+            return false;
+        }
+        for (int i = 0; i < s.length(); i++) {
+            if (!Character.isDigit(s.charAt(i))) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private Object constructValueSelector(MappingNode node) {
@@ -99,15 +168,16 @@ public class SmartConstructor extends SafeConstructor {
 
         for (NodeTuple tuple : node.getValue()) {
             String key = this.constructScalar((ScalarNode) tuple.getKeyNode());
+            String strippedKey = key.startsWith(PREFIX) ? key.substring(PREFIX.length()) : key;
 
-            if (FALLBACK.equals(key)) {
+            if (FALLBACK_STRIPPED.equals(strippedKey)) {
                 fallback = this.constructObjectPublic(tuple.getValueNode());
                 continue;
             }
 
-            KeyDirective directive = KeyDirectiveRegistry.findMatch(key);
+            KeyDirective directive = KeyDirectiveRegistry.findMatch(strippedKey);
             if (directive != null) {
-                Object candidate = directive.handleValueSelect(key, tuple.getValueNode(), this);
+                Object candidate = directive.handleValueSelect(strippedKey, tuple.getValueNode(), this);
                 if (candidate != null) {
                     matched = candidate;
                 }
