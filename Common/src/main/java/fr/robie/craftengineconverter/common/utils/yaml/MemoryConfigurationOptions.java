@@ -1,8 +1,10 @@
 package fr.robie.craftengineconverter.common.utils.yaml;
 
+import fr.robie.craftengineconverter.api.yaml.ConfigurationOptions;
 import org.jetbrains.annotations.NotNull;
 
-public class MemoryConfigurationOptions extends fr.robie.craftengineconverter.api.yaml.ConfigurationOptions {
+public class MemoryConfigurationOptions extends ConfigurationOptions {
+
     protected MemoryConfigurationOptions(@NotNull MemoryConfiguration configuration) {
         super(configuration);
     }

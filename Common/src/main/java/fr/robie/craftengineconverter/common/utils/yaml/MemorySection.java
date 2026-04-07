@@ -46,8 +46,7 @@ public class MemorySection implements fr.robie.craftengineconverter.api.yaml.Con
     }
 
     @Override
-    @NotNull
-    public Set<String> getKeys(boolean deep) {
+    public @NotNull Set<String> getKeys(boolean deep) {
         Set<String> result = new LinkedHashSet<String>();
 
         fr.robie.craftengineconverter.api.yaml.Configuration root = this.getRoot();

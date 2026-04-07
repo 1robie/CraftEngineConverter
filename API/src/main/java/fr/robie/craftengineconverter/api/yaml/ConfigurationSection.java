@@ -10,11 +10,9 @@ import java.util.Map;
 import java.util.Set;
 
 public interface ConfigurationSection {
-    @NotNull
-    Set<String> getKeys(boolean deep);
+    @NotNull Set<String> getKeys(boolean deep);
 
-    @NotNull
-    Map<String, Object> getValues(boolean deep);
+    @NotNull Map<String, Object> getValues(boolean deep);
 
     boolean contains(@NotNull String path);
 
