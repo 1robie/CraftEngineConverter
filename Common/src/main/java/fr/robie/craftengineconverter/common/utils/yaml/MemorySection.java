@@ -35,8 +35,8 @@ public class MemorySection implements ConfigurationSection {
 
 
     protected MemorySection(@NotNull ConfigurationSection parent, @NotNull String path) {
-        Preconditions.checkArgument(parent != null, "Parent cannot be null");
-        Preconditions.checkArgument(path != null, "Path cannot be null");
+        Preconditions.checkNotNull(parent, "Parent cannot be null");
+        Preconditions.checkNotNull(path, "Path cannot be null");
 
         this.path = path;
         this.parent = parent;
@@ -132,7 +132,7 @@ public class MemorySection implements ConfigurationSection {
 
     @Override
     public void addDefault(@NotNull String path, @Nullable Object value) {
-        Preconditions.checkArgument(path != null, "Path cannot be null");
+        Preconditions.checkNotNull(path, "Path cannot be null");
 
         Configuration root = this.getRoot();
         if (root == null) {
@@ -170,37 +170,61 @@ public class MemorySection implements ConfigurationSection {
 
         final char separator = root.options().pathSeparator();
 
-
         int i1 = -1, i2;
-        ConfigurationSection section = this;
+        Object current = this;
         while ((i1 = path.indexOf(separator, i2 = i1 + 1)) != -1) {
             String node = path.substring(i2, i1);
-            ConfigurationSection subSection = section.getConfigurationSection(node);
-            if (subSection == null) {
-                if (value == null) {
+            Object sub = this.getPart(current, node);
 
+            if (sub instanceof ConfigurationSection) {
+                current = sub;
+            } else if (sub instanceof List) {
+                current = sub;
+            } else {
+                if (value == null) {
                     return;
                 }
-                section = section.createSection(node);
-            } else {
-                section = subSection;
+                if (current instanceof ConfigurationSection sec) {
+                    current = sec.createSection(node);
+                } else {
+                    @SuppressWarnings("unchecked")
+                    List<Object> l = (List<Object>) current;
+                    int index = Integer.parseInt(node);
+                    while (l.size() <= index) {
+                        l.add(null);
+                    }
+                    ConfigurationSection newSection = new MemorySection(this.root, createPath(this, path.substring(0, i1)));
+                    l.set(index, newSection);
+                    current = newSection;
+                }
             }
         }
 
         String key = path.substring(i2);
-        if (section == this) {
+        if (current instanceof MemorySection sec) {
             if (value == null) {
-                this.map.remove(key);
+                sec.map.remove(key);
             } else {
-                SectionPathData entry = this.map.get(key);
+                SectionPathData entry = sec.map.get(key);
                 if (entry == null) {
-                    this.map.put(key, new SectionPathData(value));
+                    sec.map.put(key, new SectionPathData(value));
                 } else {
                     entry.setData(value);
                 }
             }
+        } else if (current instanceof ConfigurationSection sec) {
+            sec.set(key, value);
         } else {
-            section.set(key, value);
+            @SuppressWarnings("unchecked")
+            List<Object> l = (List<Object>) current;
+            try {
+                int index = Integer.parseInt(key);
+                while (l.size() <= index) {
+                    l.add(null);
+                }
+                l.set(index, value);
+            } catch (NumberFormatException ignored) {
+            }
         }
     }
 
@@ -214,9 +238,9 @@ public class MemorySection implements ConfigurationSection {
     @Contract("_, !null -> !null")
     @Nullable
     public Object get(@NotNull String path, @Nullable Object def) {
-        Preconditions.checkArgument(path != null, "Path cannot be null");
+        Preconditions.checkNotNull(path, "Path cannot be null");
 
-        if (path.length() == 0) {
+        if (path.isEmpty()) {
             return this;
         }
 
@@ -271,26 +295,53 @@ public class MemorySection implements ConfigurationSection {
 
         final char separator = root.options().pathSeparator();
 
-
         int i1 = -1, i2;
-        ConfigurationSection section = this;
+        Object current = this;
         while ((i1 = path.indexOf(separator, i2 = i1 + 1)) != -1) {
             String node = path.substring(i2, i1);
-            ConfigurationSection subSection = section.getConfigurationSection(node);
-            if (subSection == null) {
-                section = section.createSection(node);
+            Object sub = this.getPart(current, node);
+            if (sub instanceof ConfigurationSection) {
+                current = sub;
+            } else if (sub instanceof List) {
+                current = sub;
+            } else if (current instanceof ConfigurationSection sec) {
+                current = sec.createSection(node);
             } else {
-                section = subSection;
+                @SuppressWarnings("unchecked")
+                List<Object> l = (List<Object>) current;
+                int index = Integer.parseInt(node);
+                while (l.size() <= index) {
+                    l.add(null);
+                }
+                Object existing = l.get(index);
+                if (existing instanceof ConfigurationSection) {
+                    current = existing;
+                } else {
+                    ConfigurationSection newSection = new MemorySection(this.root, createPath(this, path.substring(0, i1)));
+                    l.set(index, newSection);
+                    current = newSection;
+                }
             }
         }
 
         String key = path.substring(i2);
-        if (section == this) {
-            ConfigurationSection result = new MemorySection(this, key);
-            this.map.put(key, new SectionPathData(result));
+        if (current instanceof MemorySection sec) {
+            ConfigurationSection result = new MemorySection(sec, key);
+            sec.map.put(key, new SectionPathData(result));
             return result;
+        } else if (current instanceof ConfigurationSection sec) {
+            return sec.createSection(key);
+        } else {
+            @SuppressWarnings("unchecked")
+            List<Object> l = (List<Object>) current;
+            int index = Integer.parseInt(key);
+            while (l.size() <= index) {
+                l.add(null);
+            }
+            ConfigurationSection newSection = new MemorySection(this.root, createPath(this, path));
+            l.set(index, newSection);
+            return newSection;
         }
-        return section.createSection(key);
     }
 
     @Override
@@ -520,7 +571,7 @@ public class MemorySection implements ConfigurationSection {
                 } catch (Exception ex) {
                 }
             } else if (object instanceof Character) {
-                result.add((double) ((Character) object).charValue());
+                result.add((double) (Character) object);
             } else if (object instanceof Number) {
                 result.add(((Number) object).doubleValue());
             }
@@ -546,10 +597,10 @@ public class MemorySection implements ConfigurationSection {
             } else if (object instanceof String) {
                 try {
                     result.add(Float.valueOf((String) object));
-                } catch (Exception ex) {
+                } catch (Exception ignored) {
                 }
             } else if (object instanceof Character) {
-                result.add((float) ((Character) object).charValue());
+                result.add((float) (Character) object);
             } else if (object instanceof Number) {
                 result.add(((Number) object).floatValue());
             }
@@ -575,10 +626,10 @@ public class MemorySection implements ConfigurationSection {
             } else if (object instanceof String) {
                 try {
                     result.add(Long.valueOf((String) object));
-                } catch (Exception ex) {
+                } catch (Exception ignored) {
                 }
             } else if (object instanceof Character) {
-                result.add((long) ((Character) object).charValue());
+                result.add((long) (Character) object);
             } else if (object instanceof Number) {
                 result.add(((Number) object).longValue());
             }
@@ -604,7 +655,7 @@ public class MemorySection implements ConfigurationSection {
             } else if (object instanceof String) {
                 try {
                     result.add(Byte.valueOf((String) object));
-                } catch (Exception ex) {
+                } catch (Exception ignored) {
                 }
             } else if (object instanceof Character) {
                 result.add((byte) ((Character) object).charValue());
@@ -622,7 +673,7 @@ public class MemorySection implements ConfigurationSection {
         List<?> list = this.getList(path);
 
         if (list == null) {
-            return new ArrayList<Character>(0);
+            return new ArrayList<>(0);
         }
 
         List<Character> result = new ArrayList<Character>();
@@ -660,7 +711,7 @@ public class MemorySection implements ConfigurationSection {
             } else if (object instanceof String) {
                 try {
                     result.add(Short.valueOf((String) object));
-                } catch (Exception ex) {
+                } catch (Exception ignored) {
                 }
             } else if (object instanceof Character) {
                 result.add((short) ((Character) object).charValue());
@@ -720,7 +771,7 @@ public class MemorySection implements ConfigurationSection {
     @Nullable
     @Override
     public <T extends Object> T getObject(@NotNull String path, @NotNull Class<T> clazz) {
-        Preconditions.checkArgument(clazz != null, "Class cannot be null");
+        Preconditions.checkNotNull(clazz, "Class cannot be null");
         Object def = this.getDefault(path);
         return this.getObject(path, clazz, (clazz.isInstance(def)) ? clazz.cast(def) : null);
     }
@@ -729,7 +780,7 @@ public class MemorySection implements ConfigurationSection {
     @Nullable
     @Override
     public <T extends Object> T getObject(@NotNull String path, @NotNull Class<T> clazz, @Nullable T def) {
-        Preconditions.checkArgument(clazz != null, "Class cannot be null");
+        Preconditions.checkNotNull(clazz, "Class cannot be null");
         Object val = this.get(path, def);
         return (clazz.isInstance(val)) ? clazz.cast(val) : def;
     }
@@ -834,7 +885,7 @@ public class MemorySection implements ConfigurationSection {
 
     @NotNull
     public static String createPath(@NotNull ConfigurationSection section, @Nullable String key, @Nullable ConfigurationSection relativeTo) {
-        Preconditions.checkArgument(section != null, "Cannot create path without a section");
+        Preconditions.checkNotNull(section, "Cannot create path without a section");
         Configuration root = section.getRoot();
         if (root == null) {
             throw new IllegalStateException("Cannot create path without a root");
@@ -892,7 +943,7 @@ public class MemorySection implements ConfigurationSection {
 
     @Nullable
     private SectionPathData getSectionPathData(@NotNull String path) {
-        Preconditions.checkArgument(path != null, "Path cannot be null");
+        Preconditions.checkNotNull(path, "Path cannot be null");
 
         Configuration root = this.getRoot();
         if (root == null) {

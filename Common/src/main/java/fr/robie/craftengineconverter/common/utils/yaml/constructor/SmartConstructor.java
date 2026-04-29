@@ -2,6 +2,7 @@ package fr.robie.craftengineconverter.common.utils.yaml.constructor;
 
 import fr.robie.craftengineconverter.common.utils.yaml.directive.KeyDirective;
 import fr.robie.craftengineconverter.common.utils.yaml.directive.KeyDirectiveRegistry;
+import fr.robie.craftengineconverter.common.utils.yaml.serialization.ConfigurationSerialization;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.yaml.snakeyaml.LoaderOptions;
@@ -38,7 +39,15 @@ public class SmartConstructor extends SafeConstructor {
         if (node instanceof MappingNode mn && this.isValueSelectorNode(mn)) {
             return this.constructValueSelector(mn);
         }
-        return super.constructObject(node);
+        Object result = super.constructObject(node);
+        if (result instanceof Map<?, ?> map && map.containsKey(ConfigurationSerialization.SERIALIZED_TYPE_KEY)) {
+            try {
+                //noinspection unchecked
+                return ConfigurationSerialization.deserializeObject((Map<String, ?>) map);
+            } catch (Exception ignored) {
+            }
+        }
+        return result;
     }
 
     @Override
