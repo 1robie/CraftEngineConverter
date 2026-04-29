@@ -2,6 +2,8 @@ package fr.robie.craftengineconverter.common.utils.yaml;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import fr.robie.craftengineconverter.api.yaml.Configuration;
+import fr.robie.craftengineconverter.api.yaml.ConfigurationSection;
 import org.bukkit.configuration.serialization.ConfigurationSerializable;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -12,27 +14,27 @@ import java.util.*;
 import static org.bukkit.util.NumberConversions.*;
 
 
-public class MemorySection implements fr.robie.craftengineconverter.api.yaml.ConfigurationSection {
+public class MemorySection implements ConfigurationSection {
     protected final Map<String, SectionPathData> map = new LinkedHashMap<String, SectionPathData>();
-    private final fr.robie.craftengineconverter.api.yaml.Configuration root;
-    private final fr.robie.craftengineconverter.api.yaml.ConfigurationSection parent;
+    private final Configuration root;
+    private final ConfigurationSection parent;
     private final String path;
     private final String fullPath;
 
 
     protected MemorySection() {
-        if (!(this instanceof fr.robie.craftengineconverter.api.yaml.Configuration)) {
+        if (!(this instanceof Configuration)) {
             throw new IllegalStateException("Cannot construct a root MemorySection when not a Configuration");
         }
 
         this.path = "";
         this.fullPath = "";
         this.parent = null;
-        this.root = (fr.robie.craftengineconverter.api.yaml.Configuration) this;
+        this.root = (Configuration) this;
     }
 
 
-    protected MemorySection(@NotNull fr.robie.craftengineconverter.api.yaml.ConfigurationSection parent, @NotNull String path) {
+    protected MemorySection(@NotNull ConfigurationSection parent, @NotNull String path) {
         Preconditions.checkArgument(parent != null, "Parent cannot be null");
         Preconditions.checkArgument(path != null, "Path cannot be null");
 
@@ -49,9 +51,9 @@ public class MemorySection implements fr.robie.craftengineconverter.api.yaml.Con
     public @NotNull Set<String> getKeys(boolean deep) {
         Set<String> result = new LinkedHashSet<String>();
 
-        fr.robie.craftengineconverter.api.yaml.Configuration root = this.getRoot();
+        Configuration root = this.getRoot();
         if (root != null && root.options().copyDefaults()) {
-            fr.robie.craftengineconverter.api.yaml.ConfigurationSection defaults = this.getDefaultSection();
+            ConfigurationSection defaults = this.getDefaultSection();
 
             if (defaults != null) {
                 result.addAll(defaults.getKeys(deep));
@@ -68,9 +70,9 @@ public class MemorySection implements fr.robie.craftengineconverter.api.yaml.Con
     public Map<String, Object> getValues(boolean deep) {
         Map<String, Object> result = new LinkedHashMap<String, Object>();
 
-        fr.robie.craftengineconverter.api.yaml.Configuration root = this.getRoot();
+        Configuration root = this.getRoot();
         if (root != null && root.options().copyDefaults()) {
-            fr.robie.craftengineconverter.api.yaml.ConfigurationSection defaults = this.getDefaultSection();
+            ConfigurationSection defaults = this.getDefaultSection();
 
             if (defaults != null) {
                 result.putAll(defaults.getValues(deep));
@@ -94,7 +96,7 @@ public class MemorySection implements fr.robie.craftengineconverter.api.yaml.Con
 
     @Override
     public boolean isSet(@NotNull String path) {
-        fr.robie.craftengineconverter.api.yaml.Configuration root = this.getRoot();
+        Configuration root = this.getRoot();
         if (root == null) {
             return false;
         }
@@ -118,13 +120,13 @@ public class MemorySection implements fr.robie.craftengineconverter.api.yaml.Con
 
     @Override
     @Nullable
-    public fr.robie.craftengineconverter.api.yaml.Configuration getRoot() {
+    public Configuration getRoot() {
         return this.root;
     }
 
     @Override
     @Nullable
-    public fr.robie.craftengineconverter.api.yaml.ConfigurationSection getParent() {
+    public ConfigurationSection getParent() {
         return this.parent;
     }
 
@@ -132,7 +134,7 @@ public class MemorySection implements fr.robie.craftengineconverter.api.yaml.Con
     public void addDefault(@NotNull String path, @Nullable Object value) {
         Preconditions.checkArgument(path != null, "Path cannot be null");
 
-        fr.robie.craftengineconverter.api.yaml.Configuration root = this.getRoot();
+        Configuration root = this.getRoot();
         if (root == null) {
             throw new IllegalStateException("Cannot add default without root");
         }
@@ -144,9 +146,9 @@ public class MemorySection implements fr.robie.craftengineconverter.api.yaml.Con
 
     @Override
     @Nullable
-    public fr.robie.craftengineconverter.api.yaml.ConfigurationSection getDefaultSection() {
-        fr.robie.craftengineconverter.api.yaml.Configuration root = this.getRoot();
-        fr.robie.craftengineconverter.api.yaml.Configuration defaults = root == null ? null : root.getDefaults();
+    public ConfigurationSection getDefaultSection() {
+        Configuration root = this.getRoot();
+        Configuration defaults = root == null ? null : root.getDefaults();
 
         if (defaults != null) {
             if (defaults.isConfigurationSection(this.getCurrentPath())) {
@@ -161,7 +163,7 @@ public class MemorySection implements fr.robie.craftengineconverter.api.yaml.Con
     public void set(@NotNull String path, @Nullable Object value) {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(path), "Cannot set to an empty path");
 
-        fr.robie.craftengineconverter.api.yaml.Configuration root = this.getRoot();
+        Configuration root = this.getRoot();
         if (root == null) {
             throw new IllegalStateException("Cannot use section without a root");
         }
@@ -170,10 +172,10 @@ public class MemorySection implements fr.robie.craftengineconverter.api.yaml.Con
 
 
         int i1 = -1, i2;
-        fr.robie.craftengineconverter.api.yaml.ConfigurationSection section = this;
+        ConfigurationSection section = this;
         while ((i1 = path.indexOf(separator, i2 = i1 + 1)) != -1) {
             String node = path.substring(i2, i1);
-            fr.robie.craftengineconverter.api.yaml.ConfigurationSection subSection = section.getConfigurationSection(node);
+            ConfigurationSection subSection = section.getConfigurationSection(node);
             if (subSection == null) {
                 if (value == null) {
 
@@ -218,40 +220,51 @@ public class MemorySection implements fr.robie.craftengineconverter.api.yaml.Con
             return this;
         }
 
-        fr.robie.craftengineconverter.api.yaml.Configuration root = this.getRoot();
+        Configuration root = this.getRoot();
         if (root == null) {
             throw new IllegalStateException("Cannot access section without a root");
         }
 
         final char separator = root.options().pathSeparator();
 
-
         int i1 = -1, i2;
-        fr.robie.craftengineconverter.api.yaml.ConfigurationSection section = this;
+        Object current = this;
         while ((i1 = path.indexOf(separator, i2 = i1 + 1)) != -1) {
-            final String currentPath = path.substring(i2, i1);
-            if (!section.contains(currentPath, true)) {
-                return def;
-            }
-            section = section.getConfigurationSection(currentPath);
-            if (section == null) {
+            current = this.getPart(current, path.substring(i2, i1));
+            if (current == null) {
                 return def;
             }
         }
 
         String key = path.substring(i2);
-        if (section == this) {
-            SectionPathData result = this.map.get(key);
-            return (result == null) ? def : result.getData();
+        Object result = this.getPart(current, key);
+        return (result == null) ? def : result;
+    }
+
+    @Nullable
+    private Object getPart(@Nullable Object current, @NotNull String node) {
+        if (current instanceof MemorySection sec) {
+            SectionPathData result = sec.map.get(node);
+            return (result == null) ? sec.getDefault(node) : result.getData();
+        } else if (current instanceof ConfigurationSection sec) {
+            return sec.get(node, null);
+        } else if (current instanceof List<?> list) {
+            try {
+                int index = Integer.parseInt(node);
+                if (index >= 0 && index < list.size()) {
+                    return list.get(index);
+                }
+            } catch (NumberFormatException ignored) {
+            }
         }
-        return section.get(key, def);
+        return null;
     }
 
     @Override
     @NotNull
-    public fr.robie.craftengineconverter.api.yaml.ConfigurationSection createSection(@NotNull String path) {
+    public ConfigurationSection createSection(@NotNull String path) {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(path), "Cannot create section at empty path");
-        fr.robie.craftengineconverter.api.yaml.Configuration root = this.getRoot();
+        Configuration root = this.getRoot();
         if (root == null) {
             throw new IllegalStateException("Cannot create section without a root");
         }
@@ -260,10 +273,10 @@ public class MemorySection implements fr.robie.craftengineconverter.api.yaml.Con
 
 
         int i1 = -1, i2;
-        fr.robie.craftengineconverter.api.yaml.ConfigurationSection section = this;
+        ConfigurationSection section = this;
         while ((i1 = path.indexOf(separator, i2 = i1 + 1)) != -1) {
             String node = path.substring(i2, i1);
-            fr.robie.craftengineconverter.api.yaml.ConfigurationSection subSection = section.getConfigurationSection(node);
+            ConfigurationSection subSection = section.getConfigurationSection(node);
             if (subSection == null) {
                 section = section.createSection(node);
             } else {
@@ -273,7 +286,7 @@ public class MemorySection implements fr.robie.craftengineconverter.api.yaml.Con
 
         String key = path.substring(i2);
         if (section == this) {
-            fr.robie.craftengineconverter.api.yaml.ConfigurationSection result = new MemorySection(this, key);
+            ConfigurationSection result = new MemorySection(this, key);
             this.map.put(key, new SectionPathData(result));
             return result;
         }
@@ -282,8 +295,8 @@ public class MemorySection implements fr.robie.craftengineconverter.api.yaml.Con
 
     @Override
     @NotNull
-    public fr.robie.craftengineconverter.api.yaml.ConfigurationSection createSection(@NotNull String path, @NotNull Map<?, ?> map) {
-        fr.robie.craftengineconverter.api.yaml.ConfigurationSection section = this.createSection(path);
+    public ConfigurationSection createSection(@NotNull String path, @NotNull Map<?, ?> map) {
+        ConfigurationSection section = this.createSection(path);
 
         for (Map.Entry<?, ?> entry : map.entrySet()) {
             if (entry.getValue() instanceof Map) {
@@ -672,7 +685,32 @@ public class MemorySection implements fr.robie.craftengineconverter.api.yaml.Con
         for (Object object : list) {
             if (object instanceof Map) {
                 result.add((Map<?, ?>) object);
+            } else if (object instanceof ConfigurationSection section) {
+                result.add(section.getValues(false));
             }
+        }
+
+        return result;
+    }
+
+    @Override
+    @NotNull
+    public List<ConfigurationSection> getSectionList(@NotNull String path) {
+        List<?> list = this.getList(path);
+        List<ConfigurationSection> result = new ArrayList<>();
+
+        if (list == null) {
+            return result;
+        }
+
+        int index = 0;
+        for (Object object : list) {
+            if (object instanceof ConfigurationSection) {
+                result.add((ConfigurationSection) object);
+            } else if (object instanceof Map map) {
+                result.add(this.createSection(path + "." + index, map));
+            }
+            index++;
         }
 
         return result;
@@ -711,20 +749,20 @@ public class MemorySection implements fr.robie.craftengineconverter.api.yaml.Con
 
     @Override
     @Nullable
-    public fr.robie.craftengineconverter.api.yaml.ConfigurationSection getConfigurationSection(@NotNull String path) {
+    public ConfigurationSection getConfigurationSection(@NotNull String path) {
         Object val = this.get(path, null);
         if (val != null) {
-            return (val instanceof fr.robie.craftengineconverter.api.yaml.ConfigurationSection) ? (fr.robie.craftengineconverter.api.yaml.ConfigurationSection) val : null;
+            return (val instanceof ConfigurationSection) ? (ConfigurationSection) val : null;
         }
 
         val = this.get(path, this.getDefault(path));
-        return (val instanceof fr.robie.craftengineconverter.api.yaml.ConfigurationSection) ? this.createSection(path) : null;
+        return (val instanceof ConfigurationSection) ? this.createSection(path) : null;
     }
 
     @Override
     public boolean isConfigurationSection(@NotNull String path) {
         Object val = this.get(path);
-        return val instanceof fr.robie.craftengineconverter.api.yaml.ConfigurationSection;
+        return val instanceof ConfigurationSection;
     }
 
     protected boolean isPrimitiveWrapper(@Nullable Object input) {
@@ -738,18 +776,18 @@ public class MemorySection implements fr.robie.craftengineconverter.api.yaml.Con
     protected Object getDefault(@NotNull String path) {
         Preconditions.checkArgument(path != null, "Path cannot be null");
 
-        fr.robie.craftengineconverter.api.yaml.Configuration root = this.getRoot();
-        fr.robie.craftengineconverter.api.yaml.Configuration defaults = root == null ? null : root.getDefaults();
+        Configuration root = this.getRoot();
+        Configuration defaults = root == null ? null : root.getDefaults();
         return (defaults == null) ? null : defaults.get(createPath(this, path));
     }
 
-    protected void mapChildrenKeys(@NotNull Set<String> output, @NotNull fr.robie.craftengineconverter.api.yaml.ConfigurationSection section, boolean deep) {
+    protected void mapChildrenKeys(@NotNull Set<String> output, @NotNull ConfigurationSection section, boolean deep) {
         if (section instanceof MemorySection sec) {
 
             for (Map.Entry<String, SectionPathData> entry : sec.map.entrySet()) {
                 output.add(createPath(section, entry.getKey(), this));
 
-                if ((deep) && (entry.getValue().getData() instanceof fr.robie.craftengineconverter.api.yaml.ConfigurationSection subsection)) {
+                if ((deep) && (entry.getValue().getData() instanceof ConfigurationSection subsection)) {
                     this.mapChildrenKeys(output, subsection, deep);
                 }
             }
@@ -762,7 +800,7 @@ public class MemorySection implements fr.robie.craftengineconverter.api.yaml.Con
         }
     }
 
-    protected void mapChildrenValues(@NotNull Map<String, Object> output, @NotNull fr.robie.craftengineconverter.api.yaml.ConfigurationSection section, boolean deep) {
+    protected void mapChildrenValues(@NotNull Map<String, Object> output, @NotNull ConfigurationSection section, boolean deep) {
         if (section instanceof MemorySection sec) {
 
             for (Map.Entry<String, SectionPathData> entry : sec.map.entrySet()) {
@@ -772,9 +810,9 @@ public class MemorySection implements fr.robie.craftengineconverter.api.yaml.Con
                 output.remove(childPath);
                 output.put(childPath, entry.getValue().getData());
 
-                if (entry.getValue().getData() instanceof fr.robie.craftengineconverter.api.yaml.ConfigurationSection) {
+                if (entry.getValue().getData() instanceof ConfigurationSection) {
                     if (deep) {
-                        this.mapChildrenValues(output, (fr.robie.craftengineconverter.api.yaml.ConfigurationSection) entry.getValue().getData(), deep);
+                        this.mapChildrenValues(output, (ConfigurationSection) entry.getValue().getData(), deep);
                     }
                 }
             }
@@ -789,22 +827,22 @@ public class MemorySection implements fr.robie.craftengineconverter.api.yaml.Con
 
 
     @NotNull
-    public static String createPath(@NotNull fr.robie.craftengineconverter.api.yaml.ConfigurationSection section, @Nullable String key) {
+    public static String createPath(@NotNull ConfigurationSection section, @Nullable String key) {
         return createPath(section, key, (section == null) ? null : section.getRoot());
     }
 
 
     @NotNull
-    public static String createPath(@NotNull fr.robie.craftengineconverter.api.yaml.ConfigurationSection section, @Nullable String key, @Nullable fr.robie.craftengineconverter.api.yaml.ConfigurationSection relativeTo) {
+    public static String createPath(@NotNull ConfigurationSection section, @Nullable String key, @Nullable ConfigurationSection relativeTo) {
         Preconditions.checkArgument(section != null, "Cannot create path without a section");
-        fr.robie.craftengineconverter.api.yaml.Configuration root = section.getRoot();
+        Configuration root = section.getRoot();
         if (root == null) {
             throw new IllegalStateException("Cannot create path without a root");
         }
         char separator = root.options().pathSeparator();
 
         StringBuilder builder = new StringBuilder();
-        for (fr.robie.craftengineconverter.api.yaml.ConfigurationSection parent = section; (parent != null) && (parent != relativeTo); parent = parent.getParent()) {
+        for (ConfigurationSection parent = section; (parent != null) && (parent != relativeTo); parent = parent.getParent()) {
             if (!builder.isEmpty()) {
                 builder.insert(0, separator);
             }
@@ -856,7 +894,7 @@ public class MemorySection implements fr.robie.craftengineconverter.api.yaml.Con
     private SectionPathData getSectionPathData(@NotNull String path) {
         Preconditions.checkArgument(path != null, "Path cannot be null");
 
-        fr.robie.craftengineconverter.api.yaml.Configuration root = this.getRoot();
+        Configuration root = this.getRoot();
         if (root == null) {
             throw new IllegalStateException("Cannot access section without a root");
         }
@@ -865,7 +903,7 @@ public class MemorySection implements fr.robie.craftengineconverter.api.yaml.Con
 
 
         int i1 = -1, i2;
-        fr.robie.craftengineconverter.api.yaml.ConfigurationSection section = this;
+        ConfigurationSection section = this;
         while ((i1 = path.indexOf(separator, i2 = i1 + 1)) != -1) {
             section = section.getConfigurationSection(path.substring(i2, i1));
             if (section == null) {
@@ -884,7 +922,7 @@ public class MemorySection implements fr.robie.craftengineconverter.api.yaml.Con
 
     @Override
     public String toString() {
-        fr.robie.craftengineconverter.api.yaml.Configuration root = this.getRoot();
+        Configuration root = this.getRoot();
         return this.getClass().getSimpleName() +
                 "[path='" +
                 this.getCurrentPath() +

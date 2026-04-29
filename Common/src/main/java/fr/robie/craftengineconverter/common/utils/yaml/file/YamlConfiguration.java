@@ -129,6 +129,8 @@ public class YamlConfiguration extends FileConfiguration {
 
             if (value instanceof MappingNode && !this.hasSerializedTypeKey((MappingNode) value)) {
                 this.fromNodeTree((MappingNode) value, section.createSection(keyString));
+            } else if (value instanceof SequenceNode) {
+                section.set(keyString, this.fromSequenceNode((SequenceNode) value, section, keyString));
             } else {
                 section.set(keyString, this.constructor.construct(value));
             }
@@ -140,6 +142,29 @@ public class YamlConfiguration extends FileConfiguration {
                 section.setInlineComments(keyString, this.getCommentLines(value.getInLineComments()));
             }
         }
+    }
+
+    private List<?> fromSequenceNode(@NotNull SequenceNode input, @NotNull ConfigurationSection section, @NotNull String path) {
+        List<Object> result = new ArrayList<>();
+        int index = 0;
+        for (Node node : input.getValue()) {
+            Node value = node;
+            while (value instanceof AnchorNode) {
+                value = ((AnchorNode) value).getRealNode();
+            }
+
+            if (value instanceof MappingNode && !this.hasSerializedTypeKey((MappingNode) value)) {
+                ConfigurationSection subSection = section.createSection(path + "." + index);
+                this.fromNodeTree((MappingNode) value, subSection);
+                result.add(subSection);
+            } else if (value instanceof SequenceNode) {
+                result.add(this.fromSequenceNode((SequenceNode) value, section, path + "." + index));
+            } else {
+                result.add(this.constructor.construct(value));
+            }
+            index++;
+        }
+        return result;
     }
 
     private boolean hasSerializedTypeKey(MappingNode node) {
