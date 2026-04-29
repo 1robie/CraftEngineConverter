@@ -134,6 +134,9 @@ public interface ConfigurationSection {
     @NotNull
     List<Map<?, ?>> getMapList(@NotNull String path);
 
+    @NotNull
+    List<ConfigurationSection> getSectionList(@NotNull String path);
+
 
     @Nullable
     <T extends Object> T getObject(@NotNull String path, @NotNull Class<T> clazz);

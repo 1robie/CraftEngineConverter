@@ -3,8 +3,11 @@ package fr.robie.craftengineconverter.api.configuration.bedrock.mapping.item;
 import com.google.gson.JsonObject;
 import fr.robie.craftengineconverter.api.configuration.bedrock.mapping.item.component.BedrockComponent;
 import fr.robie.craftengineconverter.api.configuration.bedrock.mapping.item.option.BedrockOptions;
+import fr.robie.craftengineconverter.api.configuration.bedrock.mapping.item.predicate.BedrockPredicate;
+import fr.robie.craftengineconverter.api.configuration.bedrock.texture.TextureData;
 import org.bukkit.Material;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,8 +19,11 @@ public abstract class ItemMapping {
 
     private String displayName;
     private BedrockOptions bedrockOptions;
+    private BedrockPredicate bedrockPredicate;
 
     private final List<BedrockComponent> bedrockComponents = new ArrayList<>();
+
+    private TextureData textureData;
 
     public ItemMapping(@NotNull Material javaMaterial, @NotNull String bedrockIdentifier) {
         this.javaMaterial = javaMaterial;
@@ -37,6 +43,24 @@ public abstract class ItemMapping {
     public ItemMapping addBedrockComponent(@NotNull BedrockComponent component) {
         this.bedrockComponents.add(component);
         return this;
+    }
+
+    public ItemMapping setBedrockPredicate(BedrockPredicate bedrockPredicate) {
+        this.bedrockPredicate = bedrockPredicate;
+        return this;
+    }
+
+    @NotNull
+    public TextureData getOrCreateTextureData() {
+        if (this.textureData == null) {
+            this.textureData = new TextureData(this.bedrockIdentifier);
+        }
+        return this.textureData;
+    }
+
+    @Nullable
+    public TextureData getTextureData() {
+        return this.textureData;
     }
 
     public Material getJavaMaterial() {
@@ -64,6 +88,10 @@ public abstract class ItemMapping {
                 component.applyTo(componentsObject);
             }
             jsonObject.add("components", componentsObject);
+        }
+
+        if (this.bedrockPredicate != null) {
+            jsonObject.add("predicate", this.bedrockPredicate.serialize());
         }
 
         return jsonObject;

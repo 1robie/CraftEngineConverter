@@ -1,10 +1,15 @@
 package fr.robie.craftengineconverter.converter.bedrock;
 
+import fr.robie.craftengineconverter.api.configuration.bedrock.ItemTextureConfiguration;
 import fr.robie.craftengineconverter.api.configuration.bedrock.ManifestConfiguration;
+import fr.robie.craftengineconverter.api.configuration.bedrock.mapping.MappingsConfiguration;
+import fr.robie.craftengineconverter.api.configuration.bedrock.mapping.item.ItemMapping;
+import fr.robie.craftengineconverter.api.configuration.bedrock.texture.TextureData;
 import fr.robie.craftengineconverter.api.manager.FileCacheManager;
 import fr.robie.craftengineconverter.api.utils.FileUtils;
+import fr.robie.craftengineconverter.api.yaml.ConfigurationSection;
 import fr.robie.craftengineconverter.common.CraftEngineConverterPlugin;
-import fr.robie.craftengineconverter.common.utils.SnakeUtils;
+import fr.robie.craftengineconverter.common.utils.yaml.file.YamlConfiguration;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -54,20 +59,36 @@ public class BedrockConverter {
             return;
         }
 
+        MappingsConfiguration mappingsConfiguration = new MappingsConfiguration();
+        ItemTextureConfiguration itemTextureConfiguration = new ItemTextureConfiguration();
+
         for (File file : listed) {
             if (file.isFile() && FileUtils.isYmlFile(file)) {
-                SnakeUtils snakeUtils = SnakeUtils.loadSmart(file);
-                SnakeUtils items = snakeUtils.getSection("items");
+                YamlConfiguration yamlConfiguration = YamlConfiguration.loadConfiguration(file);
+                ConfigurationSection items = yamlConfiguration.getConfigurationSection("items");
                 if (items != null) {
-                    for (String itemId : items.getKeys()) {
-                        SnakeUtils itemSection = items.getSection(itemId);
+                    for (String itemId : items.getKeys(false)) {
+                        ConfigurationSection itemSection = items.getConfigurationSection(itemId);
                         if (itemSection != null) {
-                            //TODO: continue
+                            BedrockItemLoader itemLoader = new BedrockItemLoader(itemId, itemSection);
+
+                            ItemMapping load = itemLoader.load();
+                            if (load != null) {
+                                mappingsConfiguration.addItemMapping(load);
+
+                                TextureData textureData = load.getTextureData();
+                                if (textureData != null) {
+                                    itemTextureConfiguration.addTextureData(textureData);
+                                }
+                            }
                         }
                     }
                 }
             }
         }
+
+        mappingsConfiguration.saveMappings(outputFolder.toPath());
+        itemTextureConfiguration.save(outputFolder.toPath());
     }
 
 
@@ -94,7 +115,7 @@ public class BedrockConverter {
                                             String typeName = typeFile.getName();
                                             switch (typeName) {
                                                 case "textures", "models" ->
-                                                        FileUtils.copyDirectory(typeFile, new File(outputPackFolder, "textures"));
+                                                        FileUtils.copyDirectory(typeFile, new File(outputPackFolder, typeName));
                                             }
                                         }
                                     }

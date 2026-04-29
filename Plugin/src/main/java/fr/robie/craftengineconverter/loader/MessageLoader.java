@@ -318,7 +318,6 @@ public class MessageLoader extends ObjectUtils implements Manageable {
         };
     }
 
-
     private void validateLoadedMessages(List<Message> loadedMessages, Languages language) {
         if (loadedMessages.size() == Message.values().length) {
             return;
