@@ -7,7 +7,6 @@ import fr.robie.craftengineconverter.api.configuration.bedrock.mapping.item.pred
 import fr.robie.craftengineconverter.api.configuration.bedrock.texture.TextureData;
 import org.bukkit.Material;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,9 +20,9 @@ public abstract class ItemMapping {
     private BedrockOptions bedrockOptions;
     private BedrockPredicate bedrockPredicate;
 
-    private final List<BedrockComponent> bedrockComponents = new ArrayList<>();
+    private final List<BedrockComponent> bedrockComponents = new ArrayList<>(0);
 
-    private TextureData textureData;
+    private final List<TextureData> texturesData = new ArrayList<>();
 
     public ItemMapping(@NotNull Material javaMaterial, @NotNull String bedrockIdentifier) {
         this.javaMaterial = javaMaterial;
@@ -50,17 +49,14 @@ public abstract class ItemMapping {
         return this;
     }
 
-    @NotNull
-    public TextureData getOrCreateTextureData() {
-        if (this.textureData == null) {
-            this.textureData = new TextureData(this.bedrockIdentifier);
-        }
-        return this.textureData;
+    public ItemMapping addTextureData(TextureData textureData) {
+        this.texturesData.add(textureData);
+        return this;
     }
 
-    @Nullable
-    public TextureData getTextureData() {
-        return this.textureData;
+    @NotNull
+    public List<TextureData> getTexturesData() {
+        return this.texturesData;
     }
 
     public Material getJavaMaterial() {

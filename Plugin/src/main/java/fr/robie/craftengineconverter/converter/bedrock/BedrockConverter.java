@@ -4,7 +4,6 @@ import fr.robie.craftengineconverter.api.configuration.bedrock.ItemTextureConfig
 import fr.robie.craftengineconverter.api.configuration.bedrock.ManifestConfiguration;
 import fr.robie.craftengineconverter.api.configuration.bedrock.mapping.MappingsConfiguration;
 import fr.robie.craftengineconverter.api.configuration.bedrock.mapping.item.ItemMapping;
-import fr.robie.craftengineconverter.api.configuration.bedrock.texture.TextureData;
 import fr.robie.craftengineconverter.api.manager.FileCacheManager;
 import fr.robie.craftengineconverter.api.utils.FileUtils;
 import fr.robie.craftengineconverter.api.yaml.ConfigurationSection;
@@ -76,10 +75,7 @@ public class BedrockConverter {
                             if (load != null) {
                                 mappingsConfiguration.addItemMapping(load);
 
-                                TextureData textureData = load.getTextureData();
-                                if (textureData != null) {
-                                    itemTextureConfiguration.addTextureData(textureData);
-                                }
+                                load.getTexturesData().forEach(itemTextureConfiguration::addTextureData);
                             }
                         }
                     }

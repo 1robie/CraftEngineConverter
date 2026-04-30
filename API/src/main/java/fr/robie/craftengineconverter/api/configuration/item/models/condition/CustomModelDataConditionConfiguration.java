@@ -16,4 +16,8 @@ public class CustomModelDataConditionConfiguration extends ConditionModelConfigu
         super.serialize(section);
         section.set("index", this.index);
     }
+
+    public int getIndex() {
+        return this.index;
+    }
 }

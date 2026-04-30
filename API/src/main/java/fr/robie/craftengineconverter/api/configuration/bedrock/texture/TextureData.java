@@ -16,6 +16,11 @@ public class TextureData {
         this.bedrockIdentifier = bedrockIdentifier;
     }
 
+    public TextureData addTexture(@NotNull String texture) {
+        this.textures.add(texture);
+        return this;
+    }
+
     public String getBedrockIdentifier() {
         return this.bedrockIdentifier;
     }
