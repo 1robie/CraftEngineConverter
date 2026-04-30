@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 @AutoModelConfigurationLoader({"composite", "minecraft:composite"})
-public class CompositeModelConfigurationLoader implements ModelConfigurationLoader {
+public class CompositeModelConfigurationLoader implements ModelConfigurationLoader<ModelConfiguration> {
     @Override
     public @Nullable ModelConfiguration load(@NotNull ConfigurationSection section) {
         CompositeModelConfiguration config = new CompositeModelConfiguration();

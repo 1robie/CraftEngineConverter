@@ -6,6 +6,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 @FunctionalInterface
-public interface ModelConfigurationLoader {
-    @Nullable ModelConfiguration load(@NotNull ConfigurationSection section);
+public interface ModelConfigurationLoader<T extends ModelConfiguration> {
+    @Nullable T load(@NotNull ConfigurationSection section);
 }

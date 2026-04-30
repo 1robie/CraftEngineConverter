@@ -1,6 +1,9 @@
 package fr.robie.craftengineconverter.api.configuration.loader.models.select;
 
 import fr.robie.craftengineconverter.api.configuration.item.models.ModelConfiguration;
+import fr.robie.craftengineconverter.api.configuration.item.models.select.SelectModelConfiguration;
+import fr.robie.craftengineconverter.api.configuration.loader.models.ModelConfigurationLoader;
+import fr.robie.craftengineconverter.api.configuration.loader.models.ModelConfigurationRegistry;
 import fr.robie.craftengineconverter.api.yaml.ConfigurationSection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -8,17 +11,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
-public abstract class AbstractSelectModelConfiguration<T> implements SelectModelConfigurationLoader<T> {
-    private final String property;
+public abstract class AbstractSelectModelConfiguration<T> implements ModelConfigurationLoader<SelectModelConfiguration<T>> {
 
-    public AbstractSelectModelConfiguration(@NotNull String property) {
-        this.property = property;
-    }
-
-    @Override
-    @NotNull
-    public String getPropertyName() {
-        return this.property;
+    public AbstractSelectModelConfiguration() {
     }
 
     @Nullable
@@ -45,5 +40,9 @@ public abstract class AbstractSelectModelConfiguration<T> implements SelectModel
             } catch (IllegalArgumentException ignored) {
             }
         }
+    }
+
+    protected ModelConfiguration loadModel(ConfigurationSection modelSection) {
+        return ModelConfigurationRegistry.load(modelSection);
     }
 }

@@ -1,13 +1,15 @@
 package fr.robie.craftengineconverter.api.configuration.loader.models.select;
 
+import fr.robie.craftengineconverter.api.annotations.AutoSelectModelConfigurationLoader;
 import fr.robie.craftengineconverter.api.configuration.item.models.select.BlockStateSelectConfiguration;
 import fr.robie.craftengineconverter.api.yaml.ConfigurationSection;
 import org.jetbrains.annotations.NotNull;
 
+@AutoSelectModelConfigurationLoader({"block_state", "minecraft:block_state"})
 public class BlockStateSelectConfigurationLoader extends AbstractSelectModelConfiguration<Object> {
 
     public BlockStateSelectConfigurationLoader() {
-        super("block_state");
+        super();
     }
 
     @Override

@@ -1,14 +1,16 @@
 package fr.robie.craftengineconverter.api.configuration.loader.models.select;
 
+import fr.robie.craftengineconverter.api.annotations.AutoSelectModelConfigurationLoader;
 import fr.robie.craftengineconverter.api.configuration.item.models.select.ComponentSelectConfiguration;
 import fr.robie.craftengineconverter.api.configuration.item.models.select.SelectModelConfiguration;
 import fr.robie.craftengineconverter.api.yaml.ConfigurationSection;
 import org.jetbrains.annotations.NotNull;
 
+@AutoSelectModelConfigurationLoader({"component", "minecraft:component"})
 public class ComponentSelectConfigurationLoader extends AbstractSelectModelConfiguration<Object> {
 
     public ComponentSelectConfigurationLoader() {
-        super("component");
+        super();
     }
 
     @Override

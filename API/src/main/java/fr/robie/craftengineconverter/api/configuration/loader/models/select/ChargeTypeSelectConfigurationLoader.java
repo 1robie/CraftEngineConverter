@@ -1,15 +1,17 @@
 package fr.robie.craftengineconverter.api.configuration.loader.models.select;
 
+import fr.robie.craftengineconverter.api.annotations.AutoSelectModelConfigurationLoader;
 import fr.robie.craftengineconverter.api.configuration.item.models.range_dispatch.ChargeType;
 import fr.robie.craftengineconverter.api.configuration.item.models.select.ChargeTypeSelectConfiguration;
 import fr.robie.craftengineconverter.api.configuration.item.models.select.SelectModelConfiguration;
 import fr.robie.craftengineconverter.api.yaml.ConfigurationSection;
 import org.jetbrains.annotations.NotNull;
 
+@AutoSelectModelConfigurationLoader({"charge_type", "minecraft:charge_type"})
 public class ChargeTypeSelectConfigurationLoader extends AbstractSelectModelConfiguration<ChargeType> {
 
     public ChargeTypeSelectConfigurationLoader() {
-        super("minecraft:charge_type");
+        super();
     }
 
     @Override

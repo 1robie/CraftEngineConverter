@@ -1,27 +1,19 @@
 package fr.robie.craftengineconverter.api.configuration.loader.models.select;
 
 import fr.robie.craftengineconverter.api.configuration.item.models.select.SelectModelConfiguration;
+import fr.robie.craftengineconverter.api.configuration.loader.models.ModelConfigurationLoader;
 import fr.robie.craftengineconverter.api.yaml.ConfigurationSection;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
 
 public class SelectModelConfigurationRegistry {
-    private static final Map<String, SelectModelConfigurationLoader<?>> LOADERS = new HashMap<>();
+    private static final Map<String, ModelConfigurationLoader<SelectModelConfiguration<?>>> LOADERS = new HashMap<>();
 
-    static {
-        registerLoader(new ChargeTypeSelectConfigurationLoader());
-        registerLoader(new BlockStateSelectConfigurationLoader());
-        registerLoader(new ComponentSelectConfigurationLoader());
-        registerLoader(new CustomModelDataSelectConfigurationLoader());
-        registerLoader(new DisplayContentSelectConfigurationLoader());
-        registerLoader(new LocalTimeSelectConfigurationLoader());
-        registerLoader(new MainHandSelectConfigurationLoader());
-    }
-
-    public static void registerLoader(SelectModelConfigurationLoader<?> loader) {
-        LOADERS.put(loader.getPropertyName(), loader);
+    public static void register(@NotNull String property, @NotNull ModelConfigurationLoader<SelectModelConfiguration<?>> loader) {
+        LOADERS.put(property, loader);
     }
 
     @Nullable
@@ -34,15 +26,7 @@ public class SelectModelConfigurationRegistry {
             return null;
         }
 
-        SelectModelConfigurationLoader<?> loader = LOADERS.get(property);
-        if (loader == null) {
-            if (property.startsWith("minecraft:")) {
-                loader = LOADERS.get(property.substring("minecraft:".length()));
-            } else {
-                loader = LOADERS.get("minecraft:" + property);
-            }
-        }
-
+        ModelConfigurationLoader<SelectModelConfiguration<?>> loader = LOADERS.get(property);
         if (loader == null) {
             return null;
         }

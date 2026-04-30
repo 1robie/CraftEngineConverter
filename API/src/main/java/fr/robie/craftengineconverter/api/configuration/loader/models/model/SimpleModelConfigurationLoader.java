@@ -15,7 +15,7 @@ import java.util.List;
 
 
 @AutoModelConfigurationLoader({"model", "minecraft:model"})
-public class SimpleModelConfigurationLoader implements ModelConfigurationLoader {
+public class SimpleModelConfigurationLoader implements ModelConfigurationLoader<ModelConfiguration> {
 
     @Override
     public @Nullable ModelConfiguration load(@NotNull ConfigurationSection section) {
@@ -26,7 +26,6 @@ public class SimpleModelConfigurationLoader implements ModelConfigurationLoader 
 
         SimpleModelConfiguration config = new SimpleModelConfiguration(path);
 
-        // generation block (optional)
         ConfigurationSection generationSection = section.getConfigurationSection("generation");
         if (generationSection != null) {
             String parent = generationSection.getString("parent");
