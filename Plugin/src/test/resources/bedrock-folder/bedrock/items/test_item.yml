@@ -20,7 +20,7 @@ items:
 
 
   test:test:
-    material: PAPER
+    material: elytra
     item-model: "test:test"
     data:
       item-name: <!i><#FF8C00><i18n:item.flame_elytra>

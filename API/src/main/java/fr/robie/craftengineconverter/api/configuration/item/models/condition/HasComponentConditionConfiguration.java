@@ -13,6 +13,11 @@ public class HasComponentConditionConfiguration extends ConditionModelConfigurat
         this.ignoreDefault = ignoreDefault;
     }
 
+    @NotNull
+    public String getComponent() {
+        return this.component;
+    }
+
     @Override
     public void serialize(@NotNull ConfigurationSection section) {
         super.serialize(section);

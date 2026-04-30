@@ -1,6 +1,7 @@
 package fr.robie.craftengineconverter.api.configuration.item.models.condition;
 
-import fr.robie.craftengineconverter.api.configuration.bedrock.mapping.item.predicate.*;
+import fr.robie.craftengineconverter.api.configuration.bedrock.mapping.item.predicate.BedrockPredicate;
+import fr.robie.craftengineconverter.api.configuration.bedrock.mapping.item.predicate.condition.*;
 import fr.robie.craftengineconverter.api.configuration.item.models.ModelConfiguration;
 import fr.robie.craftengineconverter.api.utils.ConfigurationSerializationUtils;
 import org.bukkit.configuration.ConfigurationSection;
@@ -53,14 +54,14 @@ public class ConditionModelConfiguration implements ModelConfiguration {
     }
 
     public BedrockPredicate getOnTruePredicate() {
-        return this.getPredicate(this.onTrue, true);
+        return this.toBedrockPredicate(this.onTrue, true);
     }
 
     public BedrockPredicate getOnFalsePredicate() {
-        return this.getPredicate(this.onFalse, false);
+        return this.toBedrockPredicate(this.onFalse, false);
     }
 
-    private BedrockPredicate getPredicate(ModelConfiguration condition, boolean value) {
+    private BedrockPredicate toBedrockPredicate(ModelConfiguration condition, boolean value) {
         if (condition == null) {
             return null;
         }
@@ -76,6 +77,9 @@ public class ConditionModelConfiguration implements ModelConfiguration {
         }
         if (propertyName.equalsIgnoreCase("custom_model_data") && this instanceof CustomModelDataConditionConfiguration customModelDataConditionConfiguration) {
             return new CustomModelDataPredicate(customModelDataConditionConfiguration.getIndex(), value);
+        }
+        if (propertyName.equalsIgnoreCase("has_component") && this instanceof HasComponentConditionConfiguration hasComponentConditionConfiguration) {
+            return new HasComponentPredicate(hasComponentConditionConfiguration.getComponent(), value);
         }
         return null;
     }
