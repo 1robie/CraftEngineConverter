@@ -4,25 +4,24 @@ import fr.robie.craftengineconverter.api.configuration.bedrock.ItemTextureConfig
 import fr.robie.craftengineconverter.api.configuration.bedrock.ManifestConfiguration;
 import fr.robie.craftengineconverter.api.configuration.bedrock.mapping.MappingsConfiguration;
 import fr.robie.craftengineconverter.api.configuration.bedrock.mapping.item.ItemMapping;
+import fr.robie.craftengineconverter.api.logger.Logger;
 import fr.robie.craftengineconverter.api.manager.FileCacheManager;
 import fr.robie.craftengineconverter.api.utils.FileUtils;
 import fr.robie.craftengineconverter.api.yaml.ConfigurationSection;
-import fr.robie.craftengineconverter.common.CraftEngineConverterPlugin;
 import fr.robie.craftengineconverter.common.utils.yaml.file.YamlConfiguration;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
 public class BedrockConverter {
-    private final CraftEngineConverterPlugin plugin;
+    private final File pluginFolder;
 
-    public BedrockConverter(CraftEngineConverterPlugin plugin) {
-        this.plugin = plugin;
+    public BedrockConverter(File pluginFolder) {
+        this.pluginFolder = pluginFolder;
     }
 
-
     public void convert() {
-        File outputFolder = new File(this.plugin.getDataFolder(), "bedrock-converted/Geyser-Spigot");
+        File outputFolder = new File(this.pluginFolder, "bedrock-converted/Geyser-Spigot");
 
         if (outputFolder.exists()) {
             FileUtils.deleteDirectory(outputFolder);
@@ -39,22 +38,31 @@ public class BedrockConverter {
 
         File packs = new File(outputFolder, "packs");
         if (!FileUtils.mkdirs(packs)) {
+            return;
         }
 
+        File textures = new File(packs, "textures");
+        if (!FileUtils.mkdirs(textures)) {
+            return;
+        }
 
+        this.convertItemMappingsFolder(new File(this.pluginFolder, "bedrock/items"), outputFolder);
     }
 
     private void convertItemMappingsFolder(@NotNull File inputFolder, @NotNull File outputFolder) {
         if (!inputFolder.exists() || !inputFolder.isDirectory()) {
+            Logger.info("Input folder does not exist or is not a directory: " + inputFolder.getAbsolutePath());
             return;
         }
 
         File[] listed = inputFolder.listFiles();
         if (listed == null) {
+            Logger.info("No files found in input folder: " + inputFolder.getAbsolutePath());
             return;
         }
 
         if (!FileUtils.mkdirs(outputFolder)) {
+            Logger.info("Failed to create output folder: " + outputFolder.getAbsolutePath());
             return;
         }
 
@@ -83,6 +91,7 @@ public class BedrockConverter {
             }
         }
 
+        Logger.info("Saving mappings and textures to: " + outputFolder.getAbsolutePath());
         mappingsConfiguration.saveMappings(outputFolder.toPath());
         itemTextureConfiguration.save(outputFolder.toPath());
     }

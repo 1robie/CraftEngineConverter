@@ -41,6 +41,8 @@ public class MappingsConfiguration {
             itemsObject.add("minecraft:" + material.name().toLowerCase(), mappingsArray);
         }
 
+        jsonObject.add("items", itemsObject);
+
         Path mappingsFile = directory.resolve("items_mappings.json");
         FileCacheManager.saveJsonToFile(mappingsFile, jsonObject);
     }

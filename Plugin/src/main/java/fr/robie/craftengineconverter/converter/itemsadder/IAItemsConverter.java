@@ -1036,7 +1036,7 @@ public class IAItemsConverter extends ItemConverter {
         String pulling2Texture = this.namespaced(texturesSection.getString("pulling_2"), this.namespace);
 
         UseDurationRangeDispatchConfiguration pullingDispatch = new UseDurationRangeDispatchConfiguration();
-        pullingDispatch.setScale(0.05);
+        pullingDispatch.setScale(0.05f);
         pullingDispatch.addEntry(0.65, this.buildSimpleModel("minecraft:item/bow_pulling_1", pulling1Texture));
         pullingDispatch.addEntry(0.90, this.buildSimpleModel("minecraft:item/bow_pulling_2", pulling2Texture));
         pullingDispatch.setFallback(this.buildSimpleModel("minecraft:item/bow_pulling_0", pulling0Texture));
@@ -1086,7 +1086,7 @@ public class IAItemsConverter extends ItemConverter {
 
     private void handleBow3D(String defaultModelPath, String pulling0ModelPath, String pulling1ModelPath, String pulling2ModelPath) {
         UseDurationRangeDispatchConfiguration pullingDispatch = new UseDurationRangeDispatchConfiguration();
-        pullingDispatch.setScale(0.05);
+        pullingDispatch.setScale(0.05f);
         pullingDispatch.addEntry(0.65, new SimpleModelConfiguration(pulling1ModelPath));
         pullingDispatch.addEntry(0.90, new SimpleModelConfiguration(pulling2ModelPath));
         pullingDispatch.setFallback(new SimpleModelConfiguration(pulling0ModelPath));

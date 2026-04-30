@@ -1897,7 +1897,7 @@ public class NexoItemConverter extends ItemConverter {
 
         if (this.isNotNull(baseModel) && this.isNotNull(pulling0) && this.isNotNull(pulling1) && this.isNotNull(pulling2)) {
             UseDurationRangeDispatchConfiguration pullingDispatch = new UseDurationRangeDispatchConfiguration();
-            pullingDispatch.setScale(0.05);
+            pullingDispatch.setScale(0.05f);
             pullingDispatch.addEntry(0.65, new SimpleModelConfiguration(pulling1));
             pullingDispatch.addEntry(0.90, new SimpleModelConfiguration(pulling2));
             pullingDispatch.setFallback(new SimpleModelConfiguration(pulling0));

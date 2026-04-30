@@ -1,0 +1,44 @@
+items:
+  default:cap:
+    material: leather_helmet
+    $$<=1.21.1:
+      client-bound-material: leather_horse_armor
+    data:
+      item-name: <!i><white><i18n:item.cap>
+      unbreakable: true
+      remove-components:
+        - attribute_modifiers
+      $$>=1.21.2:
+        equippable:
+          slot: head
+    model:
+      type: minecraft:model
+      path: minecraft:item/custom/cap
+      tints:
+        - type: minecraft:dye
+          default: -6265536
+
+
+  test:test:
+    material: PAPER
+    item-model: "test:test"
+    data:
+      item-name: <!i><#FF8C00><i18n:item.flame_elytra>
+      components:
+        custom_model_data:
+          - 3.0f
+    model:
+      type: minecraft:condition
+      property: minecraft:broken
+      on-false:
+        path: minecraft:item/custom/test
+        generation:
+          parent: minecraft:item/generated
+          textures:
+            layer0: minecraft:item/custom/test
+      on-true:
+        path: minecraft:item/custom/broken_test
+        generation:
+          parent: minecraft:item/generated
+          textures:
+            layer0: minecraft:item/custom/broken_test

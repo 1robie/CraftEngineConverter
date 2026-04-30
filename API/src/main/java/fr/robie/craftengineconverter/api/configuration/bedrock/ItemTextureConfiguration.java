@@ -2,6 +2,7 @@ package fr.robie.craftengineconverter.api.configuration.bedrock;
 
 import com.google.gson.JsonObject;
 import fr.robie.craftengineconverter.api.configuration.bedrock.texture.TextureData;
+import fr.robie.craftengineconverter.api.logger.Logger;
 import fr.robie.craftengineconverter.api.manager.FileCacheManager;
 import org.jetbrains.annotations.NotNull;
 
@@ -47,9 +48,12 @@ public class ItemTextureConfiguration {
                 texturesObject.add(textureData.getBedrockIdentifier(), textureData.serialize());
             }
             jsonObject.add("texture_data", texturesObject);
+        } else {
+            Logger.info("No textures added to the item texture configuration, skipping texture_data section.");
         }
 
-        FileCacheManager.saveJsonToFile(directory.resolve("textures").resolve("item_texture.json"), jsonObject);
+        FileCacheManager.saveJsonToFile(directory.resolve("packs").resolve("textures").resolve("item_texture.json"), jsonObject);
+        Logger.info("Item texture configuration saved successfully.");
     }
 
 }

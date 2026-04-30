@@ -2,13 +2,16 @@ package fr.robie.craftengineconverter.command;
 
 import fr.robie.craftengineconverter.CraftEngineConverter;
 import fr.robie.craftengineconverter.common.permission.Permission;
+import fr.robie.craftengineconverter.converter.bedrock.BedrockConverter;
 import fr.robie.craftengineconverter.utils.command.CommandType;
 import fr.robie.craftengineconverter.utils.command.VCommand;
-import org.bukkit.block.Block;
 
 public class CraftEngineConverterCommand extends VCommand {
+    private final BedrockConverter bedrockConverter;
+
     public CraftEngineConverterCommand(CraftEngineConverter craftEngineConverter) {
         super(craftEngineConverter);
+        this.bedrockConverter = new BedrockConverter(craftEngineConverter.getDataFolder());
         this.setPermission(Permission.COMMAND_USE);
         this.addSubCommand(new CraftEngineConverterCommandReload(craftEngineConverter));
         this.addSubCommand(new CraftEngineConverterCommandConvert(craftEngineConverter));
@@ -19,12 +22,9 @@ public class CraftEngineConverterCommand extends VCommand {
     @Override
     protected CommandType perform(CraftEngineConverter plugin) {
         this.syntaxMessage();
-        Block targetBlockExact = this.player.getTargetBlockExact(100);
-        if (targetBlockExact != null) {
-            this.player.sendMessage("Target block: " + targetBlockExact.getBlockData().getAsString());
-        } else {
-            this.player.sendMessage("No target block within range.");
-        }
+
+        this.bedrockConverter.convert();
+
         return CommandType.SUCCESS;
     }
 }

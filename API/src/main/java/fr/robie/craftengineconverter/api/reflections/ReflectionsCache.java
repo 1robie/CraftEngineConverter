@@ -36,6 +36,14 @@ public class ReflectionsCache {
         return this.cache.computeIfAbsent(key, k -> this.createReflections(classLoader, packageName));
     }
 
+    public Reflections getOrCreate(@NotNull ClassLoader classLoader, @NotNull String packageName) {
+        if (packageName.trim().isEmpty()) {
+            throw new IllegalArgumentException("Package name cannot be empty");
+        }
+        CacheKey key = new CacheKey(packageName, classLoader);
+        return this.cache.computeIfAbsent(key, k -> this.createReflections(classLoader, packageName));
+    }
+
     private Reflections createReflections(ClassLoader classLoader, String packageName) {
         return new Reflections(new ConfigurationBuilder()
                 .forPackage(packageName, classLoader)
