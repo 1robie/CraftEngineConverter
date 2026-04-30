@@ -11,9 +11,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
-public abstract class AbstractSelectModelConfiguration<T> implements ModelConfigurationLoader<SelectModelConfiguration<T>> {
+public abstract class AbstractSelectModelConfigurationLoader<T> implements ModelConfigurationLoader<SelectModelConfiguration<T>> {
 
-    public AbstractSelectModelConfiguration() {
+    public AbstractSelectModelConfigurationLoader() {
     }
 
     @Nullable

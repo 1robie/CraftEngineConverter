@@ -6,7 +6,7 @@ import fr.robie.craftengineconverter.api.yaml.ConfigurationSection;
 import org.jetbrains.annotations.NotNull;
 
 @AutoSelectModelConfigurationLoader({"block_state", "minecraft:block_state"})
-public class BlockStateSelectConfigurationLoader extends AbstractSelectModelConfiguration<Object> {
+public class BlockStateSelectConfigurationLoader extends AbstractSelectModelConfigurationLoader<Object> {
 
     public BlockStateSelectConfigurationLoader() {
         super();

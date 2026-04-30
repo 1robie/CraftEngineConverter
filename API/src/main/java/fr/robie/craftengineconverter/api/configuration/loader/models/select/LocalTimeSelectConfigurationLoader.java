@@ -7,7 +7,7 @@ import fr.robie.craftengineconverter.api.yaml.ConfigurationSection;
 import org.jetbrains.annotations.NotNull;
 
 @AutoSelectModelConfigurationLoader({"local_time", "minecraft:local_time"})
-public class LocalTimeSelectConfigurationLoader extends AbstractSelectModelConfiguration<Object> {
+public class LocalTimeSelectConfigurationLoader extends AbstractSelectModelConfigurationLoader<Object> {
 
     public LocalTimeSelectConfigurationLoader() {
         super();

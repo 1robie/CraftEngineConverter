@@ -8,7 +8,7 @@ import fr.robie.craftengineconverter.api.yaml.ConfigurationSection;
 import org.jetbrains.annotations.NotNull;
 
 @AutoSelectModelConfigurationLoader({"main_hand", "minecraft:main_hand"})
-public class MainHandSelectConfigurationLoader extends AbstractSelectModelConfiguration<MainHand> {
+public class MainHandSelectConfigurationLoader extends AbstractSelectModelConfigurationLoader<MainHand> {
 
     public MainHandSelectConfigurationLoader() {
         super();

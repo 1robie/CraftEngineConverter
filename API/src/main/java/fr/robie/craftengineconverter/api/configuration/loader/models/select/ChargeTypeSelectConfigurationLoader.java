@@ -8,7 +8,7 @@ import fr.robie.craftengineconverter.api.yaml.ConfigurationSection;
 import org.jetbrains.annotations.NotNull;
 
 @AutoSelectModelConfigurationLoader({"charge_type", "minecraft:charge_type"})
-public class ChargeTypeSelectConfigurationLoader extends AbstractSelectModelConfiguration<ChargeType> {
+public class ChargeTypeSelectConfigurationLoader extends AbstractSelectModelConfigurationLoader<ChargeType> {
 
     public ChargeTypeSelectConfigurationLoader() {
         super();

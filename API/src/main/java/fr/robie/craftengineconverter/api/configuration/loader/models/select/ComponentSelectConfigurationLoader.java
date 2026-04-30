@@ -7,7 +7,7 @@ import fr.robie.craftengineconverter.api.yaml.ConfigurationSection;
 import org.jetbrains.annotations.NotNull;
 
 @AutoSelectModelConfigurationLoader({"component", "minecraft:component"})
-public class ComponentSelectConfigurationLoader extends AbstractSelectModelConfiguration<Object> {
+public class ComponentSelectConfigurationLoader extends AbstractSelectModelConfigurationLoader<Object> {
 
     public ComponentSelectConfigurationLoader() {
         super();

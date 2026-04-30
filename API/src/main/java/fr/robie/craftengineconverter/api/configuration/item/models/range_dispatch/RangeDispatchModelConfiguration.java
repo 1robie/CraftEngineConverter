@@ -10,7 +10,7 @@ import java.util.*;
 
 public class RangeDispatchModelConfiguration implements ModelConfiguration {
     private final String property;
-    private Double scale;
+    private Float scale;
     private final List<Entry> entries = new ArrayList<>();
     private ModelConfiguration fallback;
 
@@ -18,7 +18,7 @@ public class RangeDispatchModelConfiguration implements ModelConfiguration {
         this.property = this.namespaced(property);
     }
 
-    public void setScale(@Nullable Double scale) {
+    public void setScale(@Nullable Float scale) {
         this.scale = scale;
     }
 
@@ -44,29 +44,18 @@ public class RangeDispatchModelConfiguration implements ModelConfiguration {
             List<Map<String, Object>> serializedEntries = new ArrayList<>();
             for (Entry entry : this.entries) {
                 Map<String, Object> map = new LinkedHashMap<>();
-                map.put("threshold", entry.getThreshold());
-                map.put("model", ConfigurationSerializationUtils.toMap(entry.getModel()));
+                map.put("threshold", entry.threshold());
+                map.put("model", ConfigurationSerializationUtils.toMap(entry.model()));
                 serializedEntries.add(map);
             }
             section.set("entries", serializedEntries);
         }
     }
 
-    public static class Entry {
-        private final double threshold;
-        private final ModelConfiguration model;
-
+    public record Entry(double threshold, ModelConfiguration model) {
         public Entry(double threshold, @NotNull ModelConfiguration model) {
             this.threshold = threshold;
             this.model = Objects.requireNonNull(model, "model cannot be null");
-        }
-
-        public double getThreshold() {
-            return this.threshold;
-        }
-
-        public ModelConfiguration getModel() {
-            return this.model;
         }
     }
 }

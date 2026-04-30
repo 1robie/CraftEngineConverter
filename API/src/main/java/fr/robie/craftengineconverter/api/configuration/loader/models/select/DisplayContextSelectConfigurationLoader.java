@@ -8,7 +8,7 @@ import fr.robie.craftengineconverter.api.yaml.ConfigurationSection;
 import org.jetbrains.annotations.NotNull;
 
 @AutoSelectModelConfigurationLoader({"display_context", "minecraft:display_context"})
-public class DisplayContextSelectConfigurationLoader extends AbstractSelectModelConfiguration<DisplayContent> {
+public class DisplayContextSelectConfigurationLoader extends AbstractSelectModelConfigurationLoader<DisplayContent> {
 
     public DisplayContextSelectConfigurationLoader() {
         super();

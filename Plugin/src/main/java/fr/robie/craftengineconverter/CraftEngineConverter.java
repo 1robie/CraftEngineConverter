@@ -1,15 +1,18 @@
 package fr.robie.craftengineconverter;
 
 import fr.robie.craftengineconverter.api.annotations.AutoModelConfigurationLoader;
+import fr.robie.craftengineconverter.api.annotations.AutoRangeDispatchConfigurationLoader;
 import fr.robie.craftengineconverter.api.annotations.AutoSelectModelConfigurationLoader;
 import fr.robie.craftengineconverter.api.annotations.AutoTintConfigurationLoader;
 import fr.robie.craftengineconverter.api.builder.TimerBuilder;
 import fr.robie.craftengineconverter.api.configuration.Configuration;
 import fr.robie.craftengineconverter.api.configuration.ConfigurationKey;
 import fr.robie.craftengineconverter.api.configuration.item.models.ModelConfiguration;
+import fr.robie.craftengineconverter.api.configuration.item.models.range_dispatch.RangeDispatchModelConfiguration;
 import fr.robie.craftengineconverter.api.configuration.item.models.select.SelectModelConfiguration;
 import fr.robie.craftengineconverter.api.configuration.loader.models.ModelConfigurationLoader;
 import fr.robie.craftengineconverter.api.configuration.loader.models.ModelConfigurationRegistry;
+import fr.robie.craftengineconverter.api.configuration.loader.models.range_dispatch.RangeDispatchConfigurationRegistry;
 import fr.robie.craftengineconverter.api.configuration.loader.models.select.SelectModelConfigurationRegistry;
 import fr.robie.craftengineconverter.api.configuration.loader.models.tints.TintConfigurationLoader;
 import fr.robie.craftengineconverter.api.configuration.loader.models.tints.TintConfigurationRegistry;
@@ -257,6 +260,7 @@ public final class CraftEngineConverter extends CraftEngineConverterPlugin {
         this.loadModelConfigurationRegistry();
         this.loadTintConfigurationRegistry();
         this.loadSelectModelConfigurationRegistry();
+        this.loadRangeDispatchModelConfigurationRegistry();
     }
 
     private void loadModelConfigurationRegistry() {
@@ -291,6 +295,10 @@ public final class CraftEngineConverter extends CraftEngineConverterPlugin {
         }
 
         ModelConfigurationRegistry.register("select", SelectModelConfigurationRegistry::load);
+        ModelConfigurationRegistry.register("minecraft:select", SelectModelConfigurationRegistry::load);
+        count++;
+        ModelConfigurationRegistry.register("range_dispatch", RangeDispatchConfigurationRegistry::load);
+        ModelConfigurationRegistry.register("minecraft:range_dispatch", RangeDispatchConfigurationRegistry::load);
         count++;
 
         Logger.info("Loaded " + count + " ModelConfigurationLoaders");
@@ -352,6 +360,39 @@ public final class CraftEngineConverter extends CraftEngineConverterPlugin {
             }
         }
         Logger.info("Loaded " + count + " SelectModelConfigurationLoaders");
+    }
+
+    private void loadRangeDispatchModelConfigurationRegistry() {
+        Reflections reflections = ReflectionsCache.getInstance().getOrCreate(this, "fr.robie.craftengineconverter");
+        Set<Class<?>> candidates = reflections.getTypesAnnotatedWith(AutoModelConfigurationLoader.class);
+        int count = 0;
+        for (Class<?> clazz : candidates) {
+            if (!ModelConfigurationLoader.class.isAssignableFrom(clazz)) {
+                continue;
+            }
+            if (!VersionFilter.passes(clazz, clazz.getSimpleName())) {
+                continue;
+            }
+            AutoRangeDispatchConfigurationLoader annotation = clazz.getAnnotation(AutoRangeDispatchConfigurationLoader.class);
+            if (annotation.value().length == 0) {
+                Logger.debug("Skipping <aqua>" + clazz.getName() + "<reset> — no names specified in @AutoRangeDispatchConfigurationLoader");
+                continue;
+            }
+            try {
+                Class<? extends ModelConfigurationLoader> typedClass = clazz.asSubclass(ModelConfigurationLoader.class);
+                ModelConfigurationLoader<RangeDispatchModelConfiguration> loader = (ModelConfigurationLoader<RangeDispatchModelConfiguration>) typedClass.getDeclaredConstructor().newInstance();
+                for (String name : annotation.value()) {
+                    RangeDispatchConfigurationRegistry.register(name, loader);
+                }
+                count++;
+            } catch (ClassCastException e) {
+                Logger.showException("Class <aqua>" + clazz.getName() + "<reset> cannot be cast to ModelConfigurationLoader", e);
+            } catch (Exception e) {
+                Logger.showException("Failed to load RangeDispatchModelConfigurationLoader <aqua>" + clazz.getName() + "<reset> for names " + Arrays.toString(annotation.value()), e);
+            }
+        }
+
+        Logger.info("Loaded " + count + " RangeDispatchModelConfigurationLoaders");
     }
 
     public void reloadMessages() {

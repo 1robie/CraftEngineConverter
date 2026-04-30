@@ -7,7 +7,7 @@ import fr.robie.craftengineconverter.api.yaml.ConfigurationSection;
 import org.jetbrains.annotations.NotNull;
 
 @AutoSelectModelConfigurationLoader({"custom_model_data", "minecraft:custom_model_data"})
-public class CustomModelDataSelectConfigurationLoader extends AbstractSelectModelConfiguration<String> {
+public class CustomModelDataSelectConfigurationLoader extends AbstractSelectModelConfigurationLoader<String> {
 
     public CustomModelDataSelectConfigurationLoader() {
         super();
