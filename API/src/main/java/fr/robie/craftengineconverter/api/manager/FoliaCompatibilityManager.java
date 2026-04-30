@@ -16,8 +16,8 @@ import java.util.function.Consumer;
 public record FoliaCompatibilityManager(FoliaLib foliaLib) {
     private static FoliaCompatibilityManager instance;
 
-    public FoliaCompatibilityManager(Plugin foliaLib) {
-        this.foliaLib = new FoliaLib(foliaLib);
+    public FoliaCompatibilityManager(Plugin plugin) {
+        this(new FoliaLib(plugin));
         instance = this;
     }
 
