@@ -53,7 +53,6 @@ public class ItemTextureConfiguration {
         }
 
         FileCacheManager.saveJsonToFile(directory.resolve("item_texture.json"), jsonObject);
-        Logger.info("Item texture configuration saved successfully.");
     }
 
 }

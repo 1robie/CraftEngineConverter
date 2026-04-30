@@ -12,7 +12,6 @@ import fr.robie.craftengineconverter.api.configuration.item.models.condition.Con
 import fr.robie.craftengineconverter.api.configuration.item.models.model.GenerationConfiguration;
 import fr.robie.craftengineconverter.api.configuration.item.models.model.SimpleModelConfiguration;
 import fr.robie.craftengineconverter.api.configuration.loader.models.ModelConfigurationRegistry;
-import fr.robie.craftengineconverter.api.logger.LogType;
 import fr.robie.craftengineconverter.api.logger.Logger;
 import fr.robie.craftengineconverter.api.yaml.ConfigurationSection;
 import org.bukkit.Material;
@@ -106,14 +105,9 @@ public class BedrockItemLoader {
             if (generation != null) {
                 TextureData textureData = generation.toTextureData(textureId);
                 if (textureData != null) {
-                    Logger.info("", "Adding texture data for item %itemId% with texture id %textureId%", LogType.INFO, "itemId", this.itemId, "textureId", textureId);
                     groupDefinitionMapping.addTextureData(textureData);
                 }
             }
-        } else if (modelConfiguration != null) {
-            Logger.info("Model configuration for item %itemId% is not a SimpleModelConfiguration, skipping texture data extraction.", LogType.INFO, "itemId", this.itemId);
-        } else {
-            Logger.info("No model configuration for item %itemId%, skipping texture data extraction.", LogType.INFO, "itemId", this.itemId);
         }
     }
 

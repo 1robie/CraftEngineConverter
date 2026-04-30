@@ -41,7 +41,10 @@ public class GenerationConfiguration {
     public TextureData toTextureData(@NotNull String bedrockIdentifier) {
         TextureData textureData = new TextureData(bedrockIdentifier);
         for (String texture : this.textures.values()) {
-            textureData.addTexture(texture);
+            if (texture.contains(":")) {
+                texture = texture.substring(texture.indexOf(':') + 1);
+            }
+            textureData.addTexture("textures/"+texture);
         }
         return textureData;
     }
