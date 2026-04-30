@@ -1,6 +1,6 @@
 name: ${project.parent.artifactId}
 version: ${plugin.finalVersion}
-authors: [ ${ plugin.author } ]
+authors: [ ${plugin.author} ]
 description: ${plugin.description}
 main: ${plugin.mainClass}
 api-version: ${plugin.apiVersion}
