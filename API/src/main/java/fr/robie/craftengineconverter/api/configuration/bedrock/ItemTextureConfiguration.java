@@ -52,7 +52,7 @@ public class ItemTextureConfiguration {
             Logger.info("No textures added to the item texture configuration, skipping texture_data section.");
         }
 
-        FileCacheManager.saveJsonToFile(directory.resolve("packs").resolve("textures").resolve("item_texture.json"), jsonObject);
+        FileCacheManager.saveJsonToFile(directory.resolve("item_texture.json"), jsonObject);
         Logger.info("Item texture configuration saved successfully.");
     }
 

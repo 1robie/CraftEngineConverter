@@ -41,15 +41,20 @@ public class BedrockConverter {
             return;
         }
 
-        File textures = new File(packs, "textures");
+        File craftEngineConverterPack = new File(packs, "CraftEngineConverterPack");
+        if (!FileUtils.mkdirs(craftEngineConverterPack)) {
+            return;
+        }
+
+        File textures = new File(craftEngineConverterPack, "textures");
         if (!FileUtils.mkdirs(textures)) {
             return;
         }
 
-        this.convertItemMappingsFolder(new File(this.pluginFolder, "bedrock/items"), outputFolder);
+        this.convertItemMappingsFolder(new File(this.pluginFolder, "bedrock/items"), textures, customMappings);
     }
 
-    private void convertItemMappingsFolder(@NotNull File inputFolder, @NotNull File outputFolder) {
+    private void convertItemMappingsFolder(@NotNull File inputFolder, @NotNull File texturesFolder, @NotNull File itemMappingsOutputFolder) {
         if (!inputFolder.exists() || !inputFolder.isDirectory()) {
             Logger.info("Input folder does not exist or is not a directory: " + inputFolder.getAbsolutePath());
             return;
@@ -61,8 +66,8 @@ public class BedrockConverter {
             return;
         }
 
-        if (!FileUtils.mkdirs(outputFolder)) {
-            Logger.info("Failed to create output folder: " + outputFolder.getAbsolutePath());
+        if (!FileUtils.mkdirs(texturesFolder)) {
+            Logger.info("Failed to create output folder: " + texturesFolder.getAbsolutePath());
             return;
         }
 
@@ -91,9 +96,8 @@ public class BedrockConverter {
             }
         }
 
-        Logger.info("Saving mappings and textures to: " + outputFolder.getAbsolutePath());
-        mappingsConfiguration.saveMappings(outputFolder.toPath());
-        itemTextureConfiguration.save(outputFolder.toPath());
+        mappingsConfiguration.saveMappings(itemMappingsOutputFolder.toPath());
+        itemTextureConfiguration.save(texturesFolder.toPath());
     }
 
 
