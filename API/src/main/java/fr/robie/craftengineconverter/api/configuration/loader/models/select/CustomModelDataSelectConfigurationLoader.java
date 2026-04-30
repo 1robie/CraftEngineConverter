@@ -1,0 +1,22 @@
+package fr.robie.craftengineconverter.api.configuration.loader.models.select;
+
+import fr.robie.craftengineconverter.api.configuration.item.models.select.CustomModelDataSelectConfiguration;
+import fr.robie.craftengineconverter.api.configuration.item.models.select.SelectModelConfiguration;
+import fr.robie.craftengineconverter.api.yaml.ConfigurationSection;
+import org.jetbrains.annotations.NotNull;
+
+public class CustomModelDataSelectConfigurationLoader extends AbstractSelectModelConfiguration<String> {
+
+    public CustomModelDataSelectConfigurationLoader() {
+        super("custom_model_data");
+    }
+
+    @Override
+    public SelectModelConfiguration<String> load(@NotNull ConfigurationSection section) {
+        int index = section.getInt("index", 0);
+        SelectModelConfiguration<String> config = new CustomModelDataSelectConfiguration(index);
+        config.setFallback(this.loadFallback(section));
+        this.loadCases(section, config::addCase, Object::toString);
+        return config;
+    }
+}

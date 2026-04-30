@@ -1,6 +1,6 @@
 name: ${project.parent.artifactId}
 version: ${plugin.finalVersion}
-authors: [ ${plugin.author} ]
+authors: [ ${ plugin.author } ]
 description: ${plugin.description}
 main: ${plugin.mainClass}
 api-version: ${plugin.apiVersion}
@@ -9,3 +9,5 @@ softdepend:
   - packetevents
   - PlaceholderAPI
 folia-supported: true
+libraries:
+  - org.reflections:reflections:0.10.2

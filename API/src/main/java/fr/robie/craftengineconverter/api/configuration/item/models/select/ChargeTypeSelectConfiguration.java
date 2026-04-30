@@ -1,14 +1,10 @@
 package fr.robie.craftengineconverter.api.configuration.item.models.select;
 
-public class ChargeTypeSelectConfiguration extends SelectModelConfiguration<ChargeTypeSelectConfiguration.ChargeType> {
+import fr.robie.craftengineconverter.api.configuration.item.models.range_dispatch.ChargeType;
+
+public class ChargeTypeSelectConfiguration extends SelectModelConfiguration<ChargeType> {
 
     public ChargeTypeSelectConfiguration() {
         super("minecraft:charge_type");
-    }
-
-    public enum ChargeType {
-        NONE,
-        ROCKET,
-        ARROW
     }
 }

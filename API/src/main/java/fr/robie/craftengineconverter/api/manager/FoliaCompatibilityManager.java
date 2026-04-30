@@ -2,6 +2,7 @@ package fr.robie.craftengineconverter.api.manager;
 
 import com.tcoded.folialib.FoliaLib;
 import com.tcoded.folialib.wrapper.task.WrappedTask;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
@@ -12,17 +13,26 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
-public class FoliaCompatibilityManager {
-    private final FoliaLib foliaLib;
+public record FoliaCompatibilityManager(FoliaLib foliaLib) {
+    private static FoliaCompatibilityManager instance;
 
-    public FoliaCompatibilityManager(Plugin plugin) {
-        this.foliaLib = new FoliaLib(plugin);
+    public FoliaCompatibilityManager(Plugin foliaLib) {
+        this.foliaLib = new FoliaLib(foliaLib);
+        instance = this;
+    }
+
+    public static FoliaCompatibilityManager getInstance() {
+        if (instance == null) {
+            throw new IllegalStateException("FoliaCompatibilityManager has not been initialized yet.");
+        }
+        return instance;
     }
 
     /**
      * Get the FoliaLib instance for direct access if needed.
      */
-    public FoliaLib getFoliaLib() {
+    @Override
+    public FoliaLib foliaLib() {
         return this.foliaLib;
     }
 
@@ -260,7 +270,7 @@ public class FoliaCompatibilityManager {
         if (this.foliaLib.isFolia()) {
             // Use Bukkit.isOwnedByCurrentRegion() on Folia
             try {
-                return org.bukkit.Bukkit.isOwnedByCurrentRegion(location);
+                return Bukkit.isOwnedByCurrentRegion(location);
             } catch (Exception e) {
                 // Fallback if method doesn't exist in current version
                 return true;
@@ -280,7 +290,7 @@ public class FoliaCompatibilityManager {
         if (this.foliaLib.isFolia()) {
             // Use Bukkit.isOwnedByCurrentRegion() on Folia
             try {
-                return org.bukkit.Bukkit.isOwnedByCurrentRegion(entity);
+                return Bukkit.isOwnedByCurrentRegion(entity);
             } catch (Exception e) {
                 // Fallback if method doesn't exist in current version
                 return true;

@@ -1,8 +1,15 @@
 package fr.robie.craftengineconverter;
 
+import fr.robie.craftengineconverter.api.annotations.AutoModelConfigurationLoader;
+import fr.robie.craftengineconverter.api.annotations.AutoTintConfigurationLoader;
 import fr.robie.craftengineconverter.api.builder.TimerBuilder;
 import fr.robie.craftengineconverter.api.configuration.Configuration;
 import fr.robie.craftengineconverter.api.configuration.ConfigurationKey;
+import fr.robie.craftengineconverter.api.configuration.loader.models.ModelConfigurationLoader;
+import fr.robie.craftengineconverter.api.configuration.loader.models.ModelConfigurationRegistry;
+import fr.robie.craftengineconverter.api.configuration.loader.models.select.SelectModelConfigurationRegistry;
+import fr.robie.craftengineconverter.api.configuration.loader.models.tints.TintConfigurationLoader;
+import fr.robie.craftengineconverter.api.configuration.loader.models.tints.TintConfigurationRegistry;
 import fr.robie.craftengineconverter.api.database.StorageManager;
 import fr.robie.craftengineconverter.api.enums.ConverterOption;
 import fr.robie.craftengineconverter.api.enums.Plugins;
@@ -17,7 +24,9 @@ import fr.robie.craftengineconverter.api.manager.FileCacheManager;
 import fr.robie.craftengineconverter.api.manager.FoliaCompatibilityManager;
 import fr.robie.craftengineconverter.api.packet.PacketLoader;
 import fr.robie.craftengineconverter.api.profile.ServerProfile;
+import fr.robie.craftengineconverter.api.reflections.ReflectionsCache;
 import fr.robie.craftengineconverter.api.tag.ITagResolver;
+import fr.robie.craftengineconverter.api.utils.VersionFilter;
 import fr.robie.craftengineconverter.behavior.BehaviorRegister;
 import fr.robie.craftengineconverter.command.CraftEngineConverterCommand;
 import fr.robie.craftengineconverter.common.CraftEngineConverterPlugin;
@@ -45,6 +54,7 @@ import org.bstats.bukkit.Metrics;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.ServicePriority;
 import org.jetbrains.annotations.NotNull;
+import org.reflections.Reflections;
 
 import java.io.File;
 import java.util.*;
@@ -121,6 +131,7 @@ public final class CraftEngineConverter extends CraftEngineConverterPlugin {
 
         this.storageManager.loadDatabase();
         this.serverProfile.load();
+        this.loadRegistries();
 
         this.commandManager.registerCommand("craftengineconverter", new CraftEngineConverterCommand(this), "cengineconverter", "cec");
 
@@ -237,6 +248,65 @@ public final class CraftEngineConverter extends CraftEngineConverterPlugin {
         }
 
         Logger.info(Message.MESSAGE__PLUGIN__SHUTDOWN__COMPLETE, "time", TimerBuilder.formatTimeAuto(System.currentTimeMillis() - startTime));
+    }
+
+    private void loadRegistries() {
+        this.loadModelConfigurationRegistry();
+        this.loadTintConfigurationRegistry();
+    }
+
+    private void loadModelConfigurationRegistry() {
+        Reflections reflections = ReflectionsCache.getInstance().getOrCreate(this, "fr.robie.craftengineconverter");
+        Set<Class<?>> candidates = reflections.getTypesAnnotatedWith(AutoModelConfigurationLoader.class);
+        int count = 0;
+        for (Class<?> clazz : candidates) {
+            if (!ModelConfigurationLoader.class.isAssignableFrom(clazz)) {
+                continue;
+            }
+            if (!VersionFilter.passes(clazz, clazz.getSimpleName())) {
+                continue;
+            }
+            AutoModelConfigurationLoader annotation = clazz.getAnnotation(AutoModelConfigurationLoader.class);
+            try {
+                ModelConfigurationLoader loader = (ModelConfigurationLoader) clazz.getDeclaredConstructor().newInstance();
+                for (String name : annotation.value()) {
+                    ModelConfigurationRegistry.register(name, loader);
+                }
+                count++;
+            } catch (Exception e) {
+                Logger.showException("Failed to load ModelConfigurationLoader <aqua>" + clazz.getName() + "<reset> for names " + Arrays.toString(annotation.value()), e);
+            }
+        }
+
+        ModelConfigurationRegistry.register("select", SelectModelConfigurationRegistry::load);
+        count++;
+
+        Logger.info("Loaded " + count + " ModelConfigurationLoaders");
+    }
+
+    private void loadTintConfigurationRegistry() {
+        Reflections reflections = ReflectionsCache.getInstance().getOrCreate(this, "fr.robie.craftengineconverter");
+        Set<Class<?>> candidates = reflections.getTypesAnnotatedWith(AutoTintConfigurationLoader.class);
+        int count = 0;
+        for (Class<?> clazz : candidates) {
+            if (!TintConfigurationLoader.class.isAssignableFrom(clazz)) {
+                continue;
+            }
+            if (!fr.robie.craftengineconverter.api.utils.VersionFilter.passes(clazz, clazz.getSimpleName())) {
+                continue;
+            }
+            AutoTintConfigurationLoader annotation = clazz.getAnnotation(AutoTintConfigurationLoader.class);
+            try {
+                TintConfigurationLoader loader = (TintConfigurationLoader) clazz.getDeclaredConstructor().newInstance();
+                for (String name : annotation.value()) {
+                    TintConfigurationRegistry.register(name, loader);
+                }
+                count++;
+            } catch (Exception e) {
+                fr.robie.craftengineconverter.api.logger.Logger.showException("Failed to load TintConfigurationLoader <aqua>" + clazz.getName() + "<reset> for names " + java.util.Arrays.toString(annotation.value()), e);
+            }
+        }
+        Logger.info("Loaded " + count + " TintConfigurationLoaders");
     }
 
     public void reloadMessages() {

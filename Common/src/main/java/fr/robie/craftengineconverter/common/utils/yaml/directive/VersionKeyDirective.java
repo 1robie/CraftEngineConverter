@@ -1,6 +1,6 @@
 package fr.robie.craftengineconverter.common.utils.yaml.directive;
 
-import fr.robie.craftengineconverter.common.enums.NmsVersion;
+import fr.robie.craftengineconverter.api.utils.MinecraftVersion;
 import fr.robie.craftengineconverter.common.utils.yaml.constructor.SmartConstructor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,77 +53,27 @@ public class VersionKeyDirective implements KeyDirective {
         String verA = m.group(2);
         String verB = m.group(3);
 
-        NmsVersion current = NmsVersion.nmsVersion;
+        MinecraftVersion current = MinecraftVersion.current();
 
         if (verB != null) {
-            NmsVersion min = resolve(verA);
-            NmsVersion max = resolve(verB);
+            MinecraftVersion min = MinecraftVersion.parse(verA);
+            MinecraftVersion max = MinecraftVersion.parse(verB);
             return current.isAtLeast(min) && current.isAtMost(max);
         }
 
-        NmsVersion target = resolve(verA);
+        MinecraftVersion target = MinecraftVersion.parse(verA);
 
         if (operator == null || operator.isEmpty()) {
-            return current == target;
+            return current.equals(target);
         }
         return switch (operator) {
             case ">=" -> current.isAtLeast(target);
-            case ">" -> current.isNewerThan(target);
+            case ">" -> current.compareTo(target) > 0;
             case "<=" -> current.isAtMost(target);
-            case "<" -> current.isOlderThan(target);
-            case "==" -> current == target;
-            case "!=" -> current != target;
+            case "<" -> current.compareTo(target) < 0;
+            case "==" -> current.equals(target);
+            case "!=" -> !current.equals(target);
             default -> false;
         };
-    }
-
-    private static NmsVersion resolve(@NotNull String versionStr) {
-        Matcher m = Pattern.compile("(\\d+\\.\\d+)(\\.\\d+)?").matcher(versionStr);
-        if (!m.find()) {
-            return NmsVersion.UNKNOWN;
-        }
-
-        String base = m.group(1).replace(".", "");
-        String patch = m.group(2) != null ? m.group(2).replace(".", "") : "0";
-        int target;
-        try {
-            target = Integer.parseInt(base + patch);
-        } catch (NumberFormatException e) {
-            return NmsVersion.UNKNOWN;
-        }
-
-        NmsVersion best = NmsVersion.UNKNOWN;
-        int bestDiff = Integer.MAX_VALUE;
-        for (NmsVersion v : NmsVersion.values()) {
-            if (v == NmsVersion.UNKNOWN) {
-                continue;
-            }
-            int diff = Math.abs(versionInt(v) - target);
-            if (diff < bestDiff) {
-                bestDiff = diff;
-                best = v;
-                if (diff == 0) {
-                    break;
-                }
-            }
-        }
-        return best;
-    }
-
-    private static int versionInt(@NotNull NmsVersion v) {
-        String name = v.name();
-        if (!name.startsWith("V_")) {
-            return Integer.MAX_VALUE;
-        }
-        String[] p = name.substring(2).split("_");
-        try {
-            return switch (p.length) {
-                case 2 -> Integer.parseInt(p[0] + p[1] + "0");
-                case 3 -> Integer.parseInt(p[0] + p[1] + p[2]);
-                default -> Integer.MAX_VALUE;
-            };
-        } catch (NumberFormatException e) {
-            return Integer.MAX_VALUE;
-        }
     }
 }

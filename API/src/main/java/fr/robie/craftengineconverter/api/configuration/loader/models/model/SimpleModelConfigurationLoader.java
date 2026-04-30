@@ -1,5 +1,6 @@
 package fr.robie.craftengineconverter.api.configuration.loader.models.model;
 
+import fr.robie.craftengineconverter.api.annotations.AutoModelConfigurationLoader;
 import fr.robie.craftengineconverter.api.configuration.item.models.ModelConfiguration;
 import fr.robie.craftengineconverter.api.configuration.item.models.model.GenerationConfiguration;
 import fr.robie.craftengineconverter.api.configuration.item.models.model.SimpleModelConfiguration;
@@ -12,6 +13,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
+
+@AutoModelConfigurationLoader({"model", "minecraft:model"})
 public class SimpleModelConfigurationLoader implements ModelConfigurationLoader {
 
     @Override

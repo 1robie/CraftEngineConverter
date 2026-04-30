@@ -1,6 +1,6 @@
 package fr.robie.craftengineconverter.api.configuration.loader.models.tints;
 
-import fr.robie.craftengineconverter.api.configuration.item.models.tints.*;
+import fr.robie.craftengineconverter.api.configuration.item.models.tints.TintConfiguration;
 import fr.robie.craftengineconverter.api.logger.LogType;
 import fr.robie.craftengineconverter.api.logger.Logger;
 import fr.robie.craftengineconverter.api.yaml.ConfigurationSection;
@@ -14,17 +14,6 @@ import java.util.Map;
 
 public class TintConfigurationRegistry {
     private static final Map<String, TintConfigurationLoader> LOADERS = new HashMap<>();
-
-    static {
-        register("constant", TintConfigurationRegistry::loadConstant);
-        register("dye", TintConfigurationRegistry::loadDye);
-        register("firework", TintConfigurationRegistry::loadFirework);
-        register("grass", TintConfigurationRegistry::loadGrass);
-        register("map_color", TintConfigurationRegistry::loadMapColor);
-        register("potion", TintConfigurationRegistry::loadPotion);
-        register("team", TintConfigurationRegistry::loadTeam);
-        register("custom_model_data", TintConfigurationRegistry::loadCustomModelData);
-    }
 
     private TintConfigurationRegistry() {
     }
@@ -65,50 +54,5 @@ public class TintConfigurationRegistry {
             }
         }
         return result;
-    }
-
-    private static TintConfiguration loadConstant(ConfigurationSection section) {
-        Object value = section.get("value");
-        if (value == null) {
-            return null;
-        }
-        return new ConstantTintConfiguration(value);
-    }
-
-    private static TintConfiguration loadCustomModelData(ConfigurationSection section) {
-        int index = section.getInt("index", 0);
-        Object defaultValue = section.get("default");
-        return new CustomModelDataTintConfiguration(index, defaultValue);
-    }
-
-    private static TintConfiguration loadDye(ConfigurationSection section) {
-        Object o = section.get("default");
-        return o == null ? null : new DyeTintConfiguration(o);
-    }
-
-    private static TintConfiguration loadFirework(ConfigurationSection section) {
-        Object o = section.get("default");
-        return o == null ? null : new FireworkTintConfiguration(o);
-    }
-
-    private static TintConfiguration loadGrass(ConfigurationSection section) {
-        float temperature = (float) section.getDouble("temperature", 0.0);
-        float downfall = (float) section.getDouble("downfall", 0.0);
-        return new GrassTintConfiguration(temperature, downfall);
-    }
-
-    private static TintConfiguration loadMapColor(ConfigurationSection section) {
-        Object o = section.get("default");
-        return o == null ? null : new MapColorTintConfiguration(o);
-    }
-
-    private static TintConfiguration loadPotion(ConfigurationSection section) {
-        Object o = section.get("default");
-        return o == null ? null : new PotionTintConfiguration(o);
-    }
-
-    private static TintConfiguration loadTeam(ConfigurationSection section) {
-        Object o = section.get("default");
-        return o == null ? null : new TeamTintConfiguration(o);
     }
 }

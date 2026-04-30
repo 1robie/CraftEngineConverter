@@ -27,8 +27,10 @@ import fr.robie.craftengineconverter.api.configuration.item.loottables.entries.F
 import fr.robie.craftengineconverter.api.configuration.item.models.condition.ConditionModelConfiguration;
 import fr.robie.craftengineconverter.api.configuration.item.models.model.GenerationConfiguration;
 import fr.robie.craftengineconverter.api.configuration.item.models.model.SimpleModelConfiguration;
+import fr.robie.craftengineconverter.api.configuration.item.models.range_dispatch.ChargeType;
 import fr.robie.craftengineconverter.api.configuration.item.models.range_dispatch.UseDurationRangeDispatchConfiguration;
 import fr.robie.craftengineconverter.api.configuration.item.models.select.ChargeTypeSelectConfiguration;
+import fr.robie.craftengineconverter.api.configuration.item.models.select.DisplayContent;
 import fr.robie.craftengineconverter.api.configuration.item.models.select.DisplayContentSelectConfiguration;
 import fr.robie.craftengineconverter.api.configuration.item.settings.DropDisplayConfiguration;
 import fr.robie.craftengineconverter.api.configuration.item.settings.EquippableConfiguration;
@@ -1066,8 +1068,8 @@ public class IAItemsConverter extends ItemConverter {
         String arrowTexture = this.namespaced(texturesSection.getString("arrow"), this.namespace);
 
         ChargeTypeSelectConfiguration chargeTypeSelect = new ChargeTypeSelectConfiguration();
-        chargeTypeSelect.addCase(ChargeTypeSelectConfiguration.ChargeType.ARROW, this.buildSimpleModel("minecraft:item/crossbow_arrow", arrowTexture));
-        chargeTypeSelect.addCase(ChargeTypeSelectConfiguration.ChargeType.ROCKET, this.buildSimpleModel("minecraft:item/crossbow_firework", rocketTexture));
+        chargeTypeSelect.addCase(ChargeType.ARROW, this.buildSimpleModel("minecraft:item/crossbow_arrow", arrowTexture));
+        chargeTypeSelect.addCase(ChargeType.ROCKET, this.buildSimpleModel("minecraft:item/crossbow_firework", rocketTexture));
         chargeTypeSelect.setFallback(this.buildSimpleModel("minecraft:item/crossbow", normalTexture));
 
         UseDurationRangeDispatchConfiguration pullingDispatch = new UseDurationRangeDispatchConfiguration();
@@ -1113,8 +1115,8 @@ public class IAItemsConverter extends ItemConverter {
         String arrowModel = this.namespaced(modelsSection.getString("arrow"), this.namespace);
 
         ChargeTypeSelectConfiguration chargeTypeSelect = new ChargeTypeSelectConfiguration();
-        chargeTypeSelect.addCase(ChargeTypeSelectConfiguration.ChargeType.ARROW, new SimpleModelConfiguration(arrowModel));
-        chargeTypeSelect.addCase(ChargeTypeSelectConfiguration.ChargeType.ROCKET, new SimpleModelConfiguration(rocketModel));
+        chargeTypeSelect.addCase(ChargeType.ARROW, new SimpleModelConfiguration(arrowModel));
+        chargeTypeSelect.addCase(ChargeType.ROCKET, new SimpleModelConfiguration(rocketModel));
         chargeTypeSelect.setFallback(new SimpleModelConfiguration(normalModel));
 
         UseDurationRangeDispatchConfiguration pullingDispatch = new UseDurationRangeDispatchConfiguration();
@@ -1139,9 +1141,9 @@ public class IAItemsConverter extends ItemConverter {
 
         DisplayContentSelectConfiguration displayContentSelect = new DisplayContentSelectConfiguration();
         displayContentSelect.addCase(new SimpleModelConfiguration(normalModel),
-                DisplayContentSelectConfiguration.DisplayContent.GUI,
-                DisplayContentSelectConfiguration.DisplayContent.GROUND,
-                DisplayContentSelectConfiguration.DisplayContent.FIXED
+                DisplayContent.GUI,
+                DisplayContent.GROUND,
+                DisplayContent.FIXED
         );
         displayContentSelect.setFallback(usingItemCondition);
 

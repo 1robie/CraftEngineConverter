@@ -3,7 +3,7 @@ package fr.robie.craftengineconverter.api.configuration.item.models.select;
 import org.bukkit.configuration.ConfigurationSection;
 import org.jetbrains.annotations.NotNull;
 
-public class CustomModelDataSelectConfiguration extends SelectModelConfiguration<Object> {
+public class CustomModelDataSelectConfiguration extends SelectModelConfiguration<String> {
     private final int index;
 
     public CustomModelDataSelectConfiguration(int index) {

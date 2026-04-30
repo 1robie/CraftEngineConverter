@@ -1,0 +1,51 @@
+package fr.robie.craftengineconverter.api.reflections;
+
+import org.bukkit.plugin.java.JavaPlugin;
+import org.jetbrains.annotations.NotNull;
+import org.reflections.Reflections;
+import org.reflections.scanners.Scanners;
+import org.reflections.util.ConfigurationBuilder;
+
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
+public class ReflectionsCache {
+    private static ReflectionsCache instance;
+
+    private final Map<CacheKey, Reflections> cache;
+
+    private ReflectionsCache() {
+        this.cache = new ConcurrentHashMap<>();
+    }
+
+    public static synchronized ReflectionsCache getInstance() {
+        if (instance == null) {
+            instance = new ReflectionsCache();
+        }
+        return instance;
+    }
+
+    public Reflections getOrCreate(@NotNull JavaPlugin plugin, @NotNull String packageName) {
+        if (packageName.trim().isEmpty()) {
+            throw new IllegalArgumentException("Package name cannot be empty");
+        }
+
+        ClassLoader classLoader = plugin.getClass().getClassLoader();
+        CacheKey key = new CacheKey(packageName, classLoader);
+
+        return this.cache.computeIfAbsent(key, k -> this.createReflections(classLoader, packageName));
+    }
+
+    private Reflections createReflections(ClassLoader classLoader, String packageName) {
+        return new Reflections(new ConfigurationBuilder()
+                .forPackage(packageName, classLoader)
+                .addClassLoaders(classLoader)
+                .setScanners(Scanners.TypesAnnotated, Scanners.SubTypes));
+    }
+
+    private record CacheKey(String packageName, int classLoaderHash) {
+        CacheKey(String packageName, ClassLoader classLoader) {
+            this(packageName, System.identityHashCode(classLoader));
+        }
+    }
+}

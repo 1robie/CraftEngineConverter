@@ -37,8 +37,10 @@ import fr.robie.craftengineconverter.api.configuration.item.models.ModelConfigur
 import fr.robie.craftengineconverter.api.configuration.item.models.condition.ConditionModelConfiguration;
 import fr.robie.craftengineconverter.api.configuration.item.models.model.GenerationConfiguration;
 import fr.robie.craftengineconverter.api.configuration.item.models.model.SimpleModelConfiguration;
+import fr.robie.craftengineconverter.api.configuration.item.models.range_dispatch.ChargeType;
 import fr.robie.craftengineconverter.api.configuration.item.models.range_dispatch.UseDurationRangeDispatchConfiguration;
 import fr.robie.craftengineconverter.api.configuration.item.models.select.ChargeTypeSelectConfiguration;
+import fr.robie.craftengineconverter.api.configuration.item.models.select.DisplayContent;
 import fr.robie.craftengineconverter.api.configuration.item.models.select.DisplayContentSelectConfiguration;
 import fr.robie.craftengineconverter.api.configuration.item.settings.InvulnerableSettingConfiguration;
 import fr.robie.craftengineconverter.api.configuration.item.settings.ProjectileSettingConfiguration;
@@ -1392,9 +1394,9 @@ public class NexoItemConverter extends ItemConverter {
 
         DisplayContentSelectConfiguration displayContentSelect = new DisplayContentSelectConfiguration();
         displayContentSelect.addCase(new SimpleModelConfiguration(namespacedModel),
-                DisplayContentSelectConfiguration.DisplayContent.GUI,
-                DisplayContentSelectConfiguration.DisplayContent.GROUND,
-                DisplayContentSelectConfiguration.DisplayContent.FIXED
+                DisplayContent.GUI,
+                DisplayContent.GROUND,
+                DisplayContent.FIXED
         );
         displayContentSelect.setFallback(usingItemCondition);
 
@@ -1922,8 +1924,8 @@ public class NexoItemConverter extends ItemConverter {
 
         if (this.isNotNull(baseModel) && this.isNotNull(pulling0) && this.isNotNull(pulling1) && this.isNotNull(pulling2)) {
             ChargeTypeSelectConfiguration chargeTypeSelect = new ChargeTypeSelectConfiguration();
-            chargeTypeSelect.addCase(ChargeTypeSelectConfiguration.ChargeType.ARROW, new SimpleModelConfiguration(arrowModel != null ? arrowModel : pulling2));
-            chargeTypeSelect.addCase(ChargeTypeSelectConfiguration.ChargeType.ROCKET, new SimpleModelConfiguration(fireworkModel != null ? fireworkModel : pulling2));
+            chargeTypeSelect.addCase(ChargeType.ARROW, new SimpleModelConfiguration(arrowModel != null ? arrowModel : pulling2));
+            chargeTypeSelect.addCase(ChargeType.ROCKET, new SimpleModelConfiguration(fireworkModel != null ? fireworkModel : pulling2));
             chargeTypeSelect.setFallback(new SimpleModelConfiguration(baseModel));
 
             UseDurationRangeDispatchConfiguration pullingDispatch = new UseDurationRangeDispatchConfiguration();
