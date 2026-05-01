@@ -118,7 +118,7 @@
             <dependency>
                 <groupId>com.nexomc</groupId>
                 <artifactId>nexo</artifactId>
-                <version>1.20.1</version>
+                <version>1.23</version>
                 <exclusions>
                     <exclusion>
                         <groupId>dev.triumphteam</groupId>
