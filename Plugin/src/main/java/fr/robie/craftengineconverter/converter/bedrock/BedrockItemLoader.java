@@ -40,8 +40,8 @@ public class BedrockItemLoader {
             ItemModelItemMapping onFalse = new ItemModelItemMapping(material, this.itemId, null);
             ItemModelItemMapping onTrue = new ItemModelItemMapping(material, this.itemId + "_" + conditionModelConfiguration.getProperty(), null);
 
-            onTrue.setBedrockPredicate(conditionModelConfiguration.getOnTruePredicate());
-            onFalse.setBedrockPredicate(conditionModelConfiguration.getOnFalsePredicate());
+            onTrue.addBedrockPredicate(conditionModelConfiguration.getOnTruePredicate());
+            onFalse.addBedrockPredicate(conditionModelConfiguration.getOnFalsePredicate());
 
             this.convertItem(onTrue);
             this.convertItem(onFalse);

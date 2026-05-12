@@ -1,5 +1,6 @@
 package fr.robie.craftengineconverter.api.configuration.bedrock.mapping.item;
 
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import fr.robie.craftengineconverter.api.configuration.bedrock.mapping.item.component.BedrockComponent;
 import fr.robie.craftengineconverter.api.configuration.bedrock.mapping.item.option.BedrockOptions;
@@ -18,7 +19,8 @@ public abstract class ItemMapping {
 
     private String displayName;
     private BedrockOptions bedrockOptions;
-    private BedrockPredicate bedrockPredicate;
+    private final List<BedrockPredicate> bedrockPredicates = new ArrayList<>();
+    private PredicateStrategy predicateStrategy = PredicateStrategy.AND;
 
     private final List<BedrockComponent> bedrockComponents = new ArrayList<>(0);
 
@@ -44,8 +46,13 @@ public abstract class ItemMapping {
         return this;
     }
 
-    public ItemMapping setBedrockPredicate(BedrockPredicate bedrockPredicate) {
-        this.bedrockPredicate = bedrockPredicate;
+    public ItemMapping addBedrockPredicate(BedrockPredicate bedrockPredicate) {
+        this.bedrockPredicates.add(bedrockPredicate);
+        return this;
+    }
+
+    public ItemMapping setPredicateStrategy(@NotNull PredicateStrategy predicateStrategy) {
+        this.predicateStrategy = predicateStrategy;
         return this;
     }
 
@@ -86,10 +93,24 @@ public abstract class ItemMapping {
             jsonObject.add("components", componentsObject);
         }
 
-        if (this.bedrockPredicate != null) {
-            jsonObject.add("predicate", this.bedrockPredicate.serialize());
+        if (!this.bedrockPredicates.isEmpty()) {
+            if (this.bedrockPredicates.size() == 1) {
+                jsonObject.add("predicate", this.bedrockPredicates.getFirst().serialize());
+            } else {
+                jsonObject.addProperty("predicate_strategy", this.predicateStrategy.name().toLowerCase());
+                JsonArray predicateArray = new JsonArray();
+                for (BedrockPredicate predicate : this.bedrockPredicates) {
+                    predicateArray.add(predicate.serialize());
+                }
+                jsonObject.add("predicates", predicateArray);
+            }
         }
 
         return jsonObject;
+    }
+
+    public enum PredicateStrategy {
+        AND,
+        OR
     }
 }
