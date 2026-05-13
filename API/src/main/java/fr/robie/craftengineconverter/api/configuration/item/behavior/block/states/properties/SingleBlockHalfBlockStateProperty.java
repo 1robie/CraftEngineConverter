@@ -1,7 +1,7 @@
 package fr.robie.craftengineconverter.api.configuration.item.behavior.block.states.properties;
 
 import fr.robie.craftengineconverter.api.configuration.item.behavior.block.states.BlockStateProperty;
-import net.momirealms.craftengine.core.block.properties.type.SingleBlockHalf;
+import net.momirealms.craftengine.core.block.property.type.SingleBlockHalf;
 import org.bukkit.configuration.ConfigurationSection;
 import org.jetbrains.annotations.NotNull;
 import org.jspecify.annotations.NonNull;

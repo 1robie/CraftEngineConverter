@@ -41,6 +41,8 @@
 
         <plugin.finalVersion>${project.version}${dev.suffix}</plugin.finalVersion>
         <dev.suffix/>
+
+        <dependency.craftengine.version>26.5-SNAPSHOT</dependency.craftengine.version>
     </properties>
 
     <dependencyManagement>
@@ -96,13 +98,13 @@
             <dependency>
                 <groupId>net.momirealms</groupId>
                 <artifactId>craft-engine-core</artifactId>
-                <version>0.0.67</version>
+                <version>${dependency.craftengine.version}</version>
                 <scope>provided</scope>
             </dependency>
             <dependency>
                 <groupId>net.momirealms</groupId>
                 <artifactId>craft-engine-bukkit</artifactId>
-                <version>0.0.67</version>
+                <version>${dependency.craftengine.version}</version>
                 <scope>provided</scope>
             </dependency>
 

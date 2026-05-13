@@ -6,9 +6,9 @@ import fr.robie.craftengineconverter.api.configuration.item.behavior.block.state
 import fr.robie.craftengineconverter.api.configuration.item.behavior.block.states.properties.SingleBlockHalfBlockStateProperty;
 import fr.robie.craftengineconverter.api.configuration.item.behavior.block.states.properties.StairsShapeBlockStateProperty;
 import fr.robie.craftengineconverter.api.configuration.item.models.ModelConfiguration;
-import net.momirealms.craftengine.core.block.properties.type.SingleBlockHalf;
-import net.momirealms.craftengine.core.block.properties.type.StairsShape;
-import net.momirealms.craftengine.core.util.HorizontalDirection;
+import fr.robie.craftengineconverter.api.configuration.utils.HorizontalDirection;
+import net.momirealms.craftengine.core.block.property.type.SingleBlockHalf;
+import net.momirealms.craftengine.core.block.property.type.StairsShape;
 import org.jetbrains.annotations.NotNull;
 
 public class StairsBlockState extends AbstractDefaultBlockState {

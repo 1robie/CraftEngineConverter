@@ -4,7 +4,7 @@ import fr.robie.craftengineconverter.api.configuration.item.behavior.block.state
 import fr.robie.craftengineconverter.api.configuration.item.behavior.block.states.properties.BooleanBlockStateProperty;
 import fr.robie.craftengineconverter.api.configuration.item.behavior.block.states.properties.SlabTypeBlockStateProperty;
 import fr.robie.craftengineconverter.api.configuration.item.models.ModelConfiguration;
-import net.momirealms.craftengine.core.block.properties.type.SlabType;
+import net.momirealms.craftengine.core.block.property.type.SlabType;
 import org.jetbrains.annotations.NotNull;
 
 public class SlabBlockState extends AbstractDefaultBlockState {

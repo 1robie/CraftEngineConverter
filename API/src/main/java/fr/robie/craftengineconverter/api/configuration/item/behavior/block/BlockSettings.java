@@ -1,7 +1,7 @@
 package fr.robie.craftengineconverter.api.configuration.item.behavior.block;
 
 import fr.robie.craftengineconverter.api.common.TrackableSettings;
-import net.momirealms.craftengine.core.block.PushReaction;
+import net.momirealms.craftengine.core.block.setting.PushReaction;
 import net.momirealms.craftengine.core.util.Instrument;
 import net.momirealms.craftengine.core.util.Tristate;
 import org.bukkit.configuration.ConfigurationSection;

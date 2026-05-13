@@ -7,6 +7,7 @@ import net.momirealms.craftengine.core.item.ItemBuildContext;
 import net.momirealms.craftengine.core.item.behavior.ItemBehavior;
 import net.momirealms.craftengine.core.item.behavior.ItemBehaviorFactory;
 import net.momirealms.craftengine.core.pack.Pack;
+import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.plugin.context.Context;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.world.*;
@@ -136,17 +137,17 @@ public class EnergyBlastItemBehavior extends ItemBehavior {
 
     public static class Factory implements ItemBehaviorFactory<EnergyBlastItemBehavior> {
         @Override
-        public EnergyBlastItemBehavior create(Pack pack, Path path, String node, Key id, Map<String, Object> arguments) {
-            long delayMs = arguments.getOrDefault("delay_ms", 1000) instanceof Number n ? n.longValue() : 1000;
-            double blastLength = arguments.getOrDefault("length", 10d) instanceof Number n ? n.doubleValue() : 10d;
-            double blastSpacing = arguments.getOrDefault("spacing", 0.5d) instanceof Number n ? n.doubleValue() : 0.5d;
-            long blastDamage = arguments.getOrDefault("damage", 5d) instanceof Number n ? n.longValue() : 5;
-            ParticleConfig particleConfig = ParticleConfig.fromMap$blockEntity(arguments);
-            double damageBoxX = arguments.getOrDefault("damage_box_x", 0.5) instanceof Number n1 ? n1.doubleValue() : 0.5;
-            double damageBoxY = arguments.getOrDefault("damage_box_y", 0.5) instanceof Number n2 ? n2.doubleValue() : 0.5;
-            double damageBoxZ = arguments.getOrDefault("damage_box_z", 0.5) instanceof Number n3 ? n3.doubleValue() : 0.5;
-            boolean damagePlayersOnly = arguments.getOrDefault("damage_players_only", false) instanceof Boolean b1 ? b1 : false;
-            boolean stopOnFirstHit = arguments.getOrDefault("stop_on_first_hit", false) instanceof Boolean b2 ? b2 : false;
+        public EnergyBlastItemBehavior create(Pack pack, Path path, Key id, ConfigSection section) {
+            long delayMs = section.getOrDefault("delay_ms", 1000) instanceof Number n ? n.longValue() : 1000;
+            double blastLength = section.getOrDefault("length", 10d) instanceof Number n ? n.doubleValue() : 10d;
+            double blastSpacing = section.getOrDefault("spacing", 0.5d) instanceof Number n ? n.doubleValue() : 0.5d;
+            long blastDamage = section.getOrDefault("damage", 5d) instanceof Number n ? n.longValue() : 5;
+            ParticleConfig particleConfig = ParticleConfig.fromConfig$blockEntity(section);
+            double damageBoxX = section.getOrDefault("damage_box_x", 0.5) instanceof Number n1 ? n1.doubleValue() : 0.5;
+            double damageBoxY = section.getOrDefault("damage_box_y", 0.5) instanceof Number n2 ? n2.doubleValue() : 0.5;
+            double damageBoxZ = section.getOrDefault("damage_box_z", 0.5) instanceof Number n3 ? n3.doubleValue() : 0.5;
+            boolean damagePlayersOnly = section.getOrDefault("damage_players_only", false) instanceof Boolean b1 ? b1 : false;
+            boolean stopOnFirstHit = section.getOrDefault("stop_on_first_hit", false) instanceof Boolean b2 ? b2 : false;
             return new EnergyBlastItemBehavior(
                     delayMs,
                     blastLength,
@@ -159,7 +160,6 @@ public class EnergyBlastItemBehavior extends ItemBehavior {
                     damagePlayersOnly,
                     stopOnFirstHit
             );
-
         }
     }
 }

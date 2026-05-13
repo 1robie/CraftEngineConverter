@@ -61,7 +61,7 @@ import fr.robie.craftengineconverter.utils.loots.ItemLoot;
 import fr.robie.craftengineconverter.utils.loots.MinecraftItemLoot;
 import net.momirealms.craftengine.core.entity.EquipmentSlot;
 import net.momirealms.craftengine.core.entity.display.Billboard;
-import net.momirealms.craftengine.core.item.setting.AnvilRepairItem;
+import net.momirealms.craftengine.core.item.setting.value.AnvilRepairItem;
 import net.momirealms.craftengine.core.util.Direction;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;

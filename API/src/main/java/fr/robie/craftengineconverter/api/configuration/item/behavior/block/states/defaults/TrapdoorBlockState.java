@@ -5,8 +5,8 @@ import fr.robie.craftengineconverter.api.configuration.item.behavior.block.state
 import fr.robie.craftengineconverter.api.configuration.item.behavior.block.states.properties.HorizontalDirectionBlockStateProperty;
 import fr.robie.craftengineconverter.api.configuration.item.behavior.block.states.properties.SingleBlockHalfBlockStateProperty;
 import fr.robie.craftengineconverter.api.configuration.item.models.ModelConfiguration;
-import net.momirealms.craftengine.core.block.properties.type.SingleBlockHalf;
-import net.momirealms.craftengine.core.util.HorizontalDirection;
+import fr.robie.craftengineconverter.api.configuration.utils.HorizontalDirection;
+import net.momirealms.craftengine.core.block.property.type.SingleBlockHalf;
 import org.jetbrains.annotations.NotNull;
 
 public class TrapdoorBlockState extends AbstractDefaultBlockState {

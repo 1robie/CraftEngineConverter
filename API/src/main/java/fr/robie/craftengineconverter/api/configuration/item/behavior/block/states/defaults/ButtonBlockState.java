@@ -7,8 +7,8 @@ import fr.robie.craftengineconverter.api.configuration.item.behavior.block.state
 import fr.robie.craftengineconverter.api.configuration.item.behavior.block.states.properties.BooleanBlockStateProperty;
 import fr.robie.craftengineconverter.api.configuration.item.behavior.block.states.properties.HorizontalDirectionBlockStateProperty;
 import fr.robie.craftengineconverter.api.configuration.item.models.ModelConfiguration;
-import net.momirealms.craftengine.core.block.properties.type.AnchorType;
-import net.momirealms.craftengine.core.util.HorizontalDirection;
+import fr.robie.craftengineconverter.api.configuration.utils.HorizontalDirection;
+import net.momirealms.craftengine.core.block.property.type.AnchorType;
 import org.jetbrains.annotations.NotNull;
 
 public class ButtonBlockState extends AbstractDefaultBlockState {

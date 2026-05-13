@@ -6,8 +6,8 @@ import fr.robie.craftengineconverter.api.configuration.item.behavior.block.state
 import fr.robie.craftengineconverter.api.configuration.item.behavior.block.states.properties.HingeBlockStateProperty;
 import fr.robie.craftengineconverter.api.configuration.item.behavior.block.states.properties.HorizontalDirectionBlockStateProperty;
 import fr.robie.craftengineconverter.api.configuration.item.models.ModelConfiguration;
-import net.momirealms.craftengine.core.block.properties.type.DoubleBlockHalf;
-import net.momirealms.craftengine.core.util.HorizontalDirection;
+import fr.robie.craftengineconverter.api.configuration.utils.HorizontalDirection;
+import net.momirealms.craftengine.core.block.property.type.DoubleBlockHalf;
 import org.bukkit.block.data.type.Door;
 import org.jetbrains.annotations.NotNull;
 
