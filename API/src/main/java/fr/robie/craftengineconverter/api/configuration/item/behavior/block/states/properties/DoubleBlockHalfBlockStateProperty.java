@@ -6,6 +6,8 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.jetbrains.annotations.NotNull;
 import org.jspecify.annotations.NonNull;
 
+import java.util.Locale;
+
 public class DoubleBlockHalfBlockStateProperty implements BlockStateProperty<DoubleBlockHalf> {
     private final String name;
     private final DoubleBlockHalf value;
@@ -29,6 +31,6 @@ public class DoubleBlockHalfBlockStateProperty implements BlockStateProperty<Dou
     public void serialize(@NotNull ConfigurationSection propertiesSection) {
         ConfigurationSection section = propertiesSection.createSection(this.name);
         section.set("type", "double_block_half");
-        section.set("default", this.value.name().toLowerCase());
+        section.set("default", this.value.name().toLowerCase(Locale.ROOT));
     }
 }

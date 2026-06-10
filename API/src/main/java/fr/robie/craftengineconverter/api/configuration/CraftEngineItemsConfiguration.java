@@ -11,6 +11,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 public class CraftEngineItemsConfiguration {
     private final String itemId;
@@ -65,7 +66,7 @@ public class CraftEngineItemsConfiguration {
     }
 
     public void serialize(@NotNull YamlConfiguration yamlConfiguration, @NotNull String path, @NotNull ConfigurationSection itemSection) {
-        itemSection.set("material", (this.material == null ? this.defaultMaterial : this.material).name().toLowerCase());
+        itemSection.set("material", (this.material == null ? this.defaultMaterial : this.material).name().toLowerCase(Locale.ROOT));
         for (ItemConfigurationSerializable itemConfiguration : this.itemsConfigurations) {
             itemConfiguration.serialize(yamlConfiguration, path, itemSection, this.itemId);
         }

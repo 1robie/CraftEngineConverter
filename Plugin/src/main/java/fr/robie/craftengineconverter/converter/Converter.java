@@ -8,14 +8,15 @@ import fr.robie.craftengineconverter.api.configuration.item.behavior.block.state
 import fr.robie.craftengineconverter.api.enums.ConverterOption;
 import fr.robie.craftengineconverter.api.enums.Plugins;
 import fr.robie.craftengineconverter.api.format.Message;
-import fr.robie.craftengineconverter.api.logger.LogType;
-import fr.robie.craftengineconverter.api.logger.Logger;
+
 import fr.robie.craftengineconverter.api.progress.BukkitProgressBar;
 import fr.robie.craftengineconverter.api.utils.ObjectUtils;
 import fr.robie.craftengineconverter.common.cache.FileCacheEntry;
 import fr.robie.craftengineconverter.common.manager.FileCacheManager;
 import fr.robie.craftengineconverter.converter.settings.BasicConverterSettings;
 import fr.robie.craftengineconverter.utils.ConfigFile;
+import fr.robie.messageflow.formatter.Placeholder;
+import fr.robie.messageflow.logger.Logger;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
@@ -94,12 +95,23 @@ public abstract class Converter extends ObjectUtils {
 
     public abstract CompletableFuture<Void> convertPack(boolean async, Optional<Player> player);
 
-    protected void log(@NotNull Message message, LogType logType, Object... args) {
-        Logger.info("§e" + this.converterName + " converter", message, logType, args);
+    protected void log(@NotNull Message message, Logger.LogType logType, Placeholder placeholder) {
+        this.processConverterLog(message, logType, placeholder);
     }
 
-    protected void logDebug(@NotNull Message message, LogType logType, Object... args) {
-        Logger.debug("§e" + this.converterName + " converter", message, logType, args);
+    protected void logDebug(@NotNull Message message, Logger.LogType logType, Placeholder placeholder) {
+        if (Configuration.get(ConfigurationKey.ENABLE_DEBUG)) {
+            this.processConverterLog(message, logType, placeholder);
+        }
+    }
+
+    private void processConverterLog(@NotNull Message message, Logger.LogType logType, Placeholder placeholder) {
+        switch (logType) {
+            case INFO -> Logger.info("§8[§e" + this.converterName + " converter§8]", message, placeholder);
+            case WARNING -> Logger.warn("§e" + this.converterName + " converter", message, placeholder);
+            case ERROR -> Logger.error("§e" + this.converterName + " converter", message, placeholder);
+            case DEBUG -> Logger.debug("§e" + this.converterName + " converter", message, placeholder);
+        }
     }
 
     @NotNull
@@ -157,7 +169,7 @@ public abstract class Converter extends ObjectUtils {
                 FileCacheEntry<YamlConfiguration> fileCacheEntry = entry.get();
                 toConvert.add(new ConfigFile(itemFile, baseDir, fileCacheEntry.getData()));
             } else {
-                this.log(Message.ERROR__FILE__LOAD_FAILURE, LogType.ERROR, "file", fileName);
+                this.log(Message.ERROR__FILE__LOAD_FAILURE, Logger.LogType.ERROR, Placeholder.of("file", fileName));
             }
         }
     }
@@ -198,14 +210,14 @@ public abstract class Converter extends ObjectUtils {
                                     CountDownLatch latch, AtomicReference<Exception> errorRef,
                                     boolean useMultiThread) {
         if (!assetsFolder.exists() || !assetsFolder.isDirectory()) {
-            this.logDebug(Message.WARNING__CONVERTER__PACK_DIRECTORY_NOT_FOUND, LogType.WARNING, "path", assetsFolder.getAbsolutePath());
+            this.logDebug(Message.WARNING__CONVERTER__PACK_DIRECTORY_NOT_FOUND, Logger.LogType.WARNING, Placeholder.of("path", assetsFolder.getAbsolutePath()));
             return;
         }
 
         try {
             this.copyDirectory(assetsFolder, outputAssetsFolder, assetsFolder, progress, executor, latch, errorRef, useMultiThread);
         } catch (IOException e) {
-            this.log(Message.ERROR__CONVERTER__FAILED_SAVE_FILE, LogType.ERROR, "type", "assets", "file", packName);
+            this.log(Message.ERROR__CONVERTER__FAILED_SAVE_FILE, Logger.LogType.ERROR, Placeholder.of("type", "assets", "file", packName));
             errorRef.compareAndSet(null, e);
         }
     }
@@ -215,7 +227,7 @@ public abstract class Converter extends ObjectUtils {
                                  CountDownLatch latch, AtomicReference<Exception> errorRef,
                                  boolean useMultiThread) throws IOException {
         if (!this.settings.dryRunEnabled() && !destination.exists() && !destination.mkdirs()) {
-            Logger.debug(Message.ERROR__MKDIR_FAILURE, LogType.ERROR, "directory", destination.getName(), "path", destination.getAbsolutePath());
+            this.logDebug(Message.ERROR__MKDIR_FAILURE, Logger.LogType.ERROR, Placeholder.of("directory", destination.getName(), "path", destination.getAbsolutePath()));
             return;
         }
 
@@ -265,7 +277,7 @@ public abstract class Converter extends ObjectUtils {
 
                     if (file.isDirectory()) {
                         if (!this.settings.dryRunEnabled() && !targetFile.exists() && !targetFile.mkdirs()) {
-                            Logger.debug(Message.ERROR__MKDIR_FAILURE, LogType.ERROR, "directory", targetFile.getName(), "path", targetFile.getAbsolutePath());
+                            this.logDebug(Message.ERROR__MKDIR_FAILURE, Logger.LogType.ERROR, Placeholder.of("directory", targetFile.getName(), "path", targetFile.getAbsolutePath()));
                         }
                         this.copyDirectoryContents(file, targetFile, progress, executor, latch, errorRef, useMultiThread);
                     } else {
@@ -276,7 +288,7 @@ public abstract class Converter extends ObjectUtils {
                 File targetFile = new File(destination, relativePathStr);
                 if (file.isDirectory()) {
                     if (!this.settings.dryRunEnabled() && !targetFile.exists() && !targetFile.mkdirs()) {
-                        Logger.debug(Message.ERROR__MKDIR_FAILURE, LogType.ERROR, "directory", targetFile.getName(), "path", targetFile.getAbsolutePath());
+                        this.logDebug(Message.ERROR__MKDIR_FAILURE, Logger.LogType.ERROR, Placeholder.of("directory", targetFile.getName(), "path", targetFile.getAbsolutePath()));
                     }
                     this.copyDirectory(file, destination, assetsRoot, progress, executor, latch, errorRef, useMultiThread);
                 } else {
@@ -317,7 +329,7 @@ public abstract class Converter extends ObjectUtils {
                                        ExecutorService executor, CountDownLatch latch,
                                        AtomicReference<Exception> errorRef, boolean useMultiThread) throws IOException {
         if (!this.settings.dryRunEnabled() && !destination.exists() && !destination.mkdirs()) {
-            Logger.debug(Message.ERROR__MKDIR_FAILURE, LogType.ERROR, "directory", destination.getName(), "path", destination.getAbsolutePath());
+            this.logDebug(Message.ERROR__MKDIR_FAILURE, Logger.LogType.ERROR, Placeholder.of("directory", destination.getName(), "path", destination.getAbsolutePath()));
             return;
         }
 
@@ -344,19 +356,19 @@ public abstract class Converter extends ObjectUtils {
                     latch.await();
                     if (!this.settings.dryRunEnabled() && !targetFile.getParentFile().exists()
                             && !targetFile.getParentFile().mkdirs()) {
-                        Logger.debug(Message.ERROR__MKDIR_FAILURE, LogType.ERROR, "directory", targetFile.getParentFile().getName(), "path", targetFile.getParentFile().getAbsolutePath());
+                        this.logDebug(Message.ERROR__MKDIR_FAILURE, Logger.LogType.ERROR, Placeholder.of("directory", targetFile.getParentFile().getName(), "path", targetFile.getParentFile().getAbsolutePath()));
                     }
                     this.copyFile(file, targetFile);
                     progress.increment();
                 } catch (Exception e) {
-                    Logger.debug(Message.ERROR__FILE__COPY_EXCEPTION, LogType.ERROR, "file", file.getAbsolutePath(), "message", e.getMessage());
+                    this.logDebug(Message.ERROR__FILE__COPY_EXCEPTION, Logger.LogType.ERROR, Placeholder.of("file", file.getAbsolutePath(), "message", e.getMessage()));
                     errorRef.compareAndSet(null, e);
                 }
             });
         } else {
             if (!this.settings.dryRunEnabled() && !targetFile.getParentFile().exists()
                     && !targetFile.getParentFile().mkdirs()) {
-                this.logDebug(Message.ERROR__MKDIR_FAILURE, LogType.ERROR, "directory", targetFile.getParentFile().getName(), "path", targetFile.getParentFile().getAbsolutePath());
+                this.logDebug(Message.ERROR__MKDIR_FAILURE, Logger.LogType.ERROR, Placeholder.of("directory", targetFile.getParentFile().getName(), "path", targetFile.getParentFile().getAbsolutePath()));
             }
             this.copyFile(file, targetFile);
             progress.increment();
@@ -392,14 +404,14 @@ public abstract class Converter extends ObjectUtils {
 
             if (!outputFile.getParentFile().exists()) {
                 if (!outputFile.getParentFile().mkdirs()) {
-                    Logger.debug(Message.ERROR__MKDIR_FAILURE, LogType.ERROR, "directory", outputFile.getParentFile().getName(),
-                            "path", outputFile.getParentFile().getAbsolutePath());
+                    this.logDebug(Message.ERROR__MKDIR_FAILURE, Logger.LogType.ERROR, Placeholder.of("directory", outputFile.getParentFile().getName(),
+                            "path", outputFile.getParentFile().getAbsolutePath()));
                 }
             }
 
             convertedConfig.save(outputFile);
         } catch (IOException e) {
-            Logger.showException(Message.ERROR__CONVERTER__FAILED_SAVE_FILE, e, "type", type, "file", baseFile.getName());
+            Logger.error(Message.ERROR__CONVERTER__FAILED_SAVE_FILE, e, Placeholder.of("type", type, "file", baseFile.getName()));
         }
     }
 
@@ -410,12 +422,12 @@ public abstract class Converter extends ObjectUtils {
                 if (file.isDirectory()) {
                     this.deleteDirectory(file);
                 } else if (!file.delete()) {
-                    Logger.debug(Message.WARNING__FILE__DELETE_FAILURE, LogType.ERROR, "file", file.getName(), "path", file.getAbsolutePath());
+                    this.logDebug(Message.WARNING__FILE__DELETE_FAILURE, Logger.LogType.ERROR, Placeholder.of("file", file.getName(), "path", file.getAbsolutePath()));
                 }
             }
         }
         if (!directory.delete()) {
-            Logger.debug(Message.WARNING__FOLDER__DELETE_FAILURE, LogType.ERROR, "folder", directory.getName(), "path", directory.getAbsolutePath());
+            this.logDebug(Message.WARNING__FOLDER__DELETE_FAILURE, Logger.LogType.ERROR, Placeholder.of("folder", directory.getName(), "path", directory.getAbsolutePath()));
         }
     }
 
@@ -570,7 +582,7 @@ public abstract class Converter extends ObjectUtils {
                     this.fileByRawId.put(rawItemId, configFile);
                     this.finalIdByRawId.put(rawItemId, finalItemId);
                 } catch (Exception e) {
-                    Logger.showException(Message.ERROR__CONVERTER__ITEM_LOAD_FAILURE, e, "item", finalItemId, "file", configFile.sourceFile().getName());
+                    Logger.error(Message.ERROR__CONVERTER__ITEM_LOAD_FAILURE, e, Placeholder.of("item", finalItemId, "file", configFile.sourceFile().getName()));
                 }
             }
         }
@@ -588,7 +600,7 @@ public abstract class Converter extends ObjectUtils {
                     return true;
                 }
             }
-            Logger.debug(Message.ERROR__CONVERTER__MISSING_DEPENDENCY, LogType.WARNING, "item-id", rawItemId);
+            Logger.warn(Message.ERROR__CONVERTER__MISSING_DEPENDENCY, Placeholder.of("item-id", rawItemId));
             return false;
         }
 
@@ -627,7 +639,7 @@ public abstract class Converter extends ObjectUtils {
                 }
             }
             if (sortedRawIds.size() != this.convertersByRawId.size()) {
-                Logger.info(Message.WARNING__CONVERTER__CIRCULAR_DEPENDENCY, LogType.WARNING);
+                Logger.warn(Message.WARNING__CONVERTER__CIRCULAR_DEPENDENCY);
                 this.convertersByRawId.keySet().stream()
                         .filter(rawId -> !sortedRawIds.contains(rawId))
                         .forEach(sortedRawIds::add);
@@ -650,7 +662,7 @@ public abstract class Converter extends ObjectUtils {
                     }
                     this.injectResolvedDependency(rawItemId, converter);
                 } catch (Exception e) {
-                    Logger.showException(Message.ERROR__CONVERTER__ITEM_CONVERT_EXCEPTION, e, "item", this.finalIdByRawId.get(rawItemId));
+                    Logger.error(Message.ERROR__CONVERTER__ITEM_CONVERT_EXCEPTION, e, Placeholder.of("item", this.finalIdByRawId.get(rawItemId)));
                 } finally {
                     progress.increment();
                 }
@@ -675,7 +687,7 @@ public abstract class Converter extends ObjectUtils {
                         this.finalItemIdsByFile.get(configFile).add(finalItemId);
                     }
                 } catch (Exception e) {
-                    Logger.showException(Message.ERROR__CONVERTER__ITEM_SERIALIZE_EXCEPTION, e, "item", finalItemId);
+                    Logger.error(Message.ERROR__CONVERTER__ITEM_SERIALIZE_EXCEPTION, e, Placeholder.of("item", finalItemId));
                 }
             }
         }

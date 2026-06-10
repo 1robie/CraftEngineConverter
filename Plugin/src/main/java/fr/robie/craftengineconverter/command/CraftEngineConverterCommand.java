@@ -4,7 +4,6 @@ import fr.robie.craftengineconverter.CraftEngineConverter;
 import fr.robie.craftengineconverter.common.permission.Permission;
 import fr.robie.craftengineconverter.utils.command.CommandType;
 import fr.robie.craftengineconverter.utils.command.VCommand;
-import org.bukkit.block.Block;
 
 public class CraftEngineConverterCommand extends VCommand {
     public CraftEngineConverterCommand(CraftEngineConverter craftEngineConverter) {
@@ -19,12 +18,6 @@ public class CraftEngineConverterCommand extends VCommand {
     @Override
     protected CommandType perform(CraftEngineConverter plugin) {
         this.syntaxMessage();
-        Block targetBlockExact = this.player.getTargetBlockExact(100);
-        if (targetBlockExact != null) {
-            this.player.sendMessage("Target block: " + targetBlockExact.getBlockData().getAsString());
-        } else {
-            this.player.sendMessage("No target block within range.");
-        }
         return CommandType.SUCCESS;
     }
 }

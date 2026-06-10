@@ -3,9 +3,10 @@ package fr.robie.craftengineconverter.common.manager;
 import com.google.gson.*;
 import com.google.gson.stream.JsonReader;
 import fr.robie.craftengineconverter.api.format.Message;
-import fr.robie.craftengineconverter.api.logger.LogType;
-import fr.robie.craftengineconverter.api.logger.Logger;
+
 import fr.robie.craftengineconverter.common.cache.FileCache;
+import fr.robie.messageflow.formatter.Placeholder;
+import fr.robie.messageflow.logger.Logger;
 import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.nio.file.Files;
@@ -31,12 +32,12 @@ public class FileCacheManager {
                         GSON.toJson(parsed, writer);
                     }
 
-                    Logger.info(Message.ERROR__JSON__MALFORMED_AUTO_FIXED, LogType.WARNING, "file", file.getAbsolutePath());
+                    Logger.warn(Message.ERROR__JSON__MALFORMED_AUTO_FIXED, Placeholder.of("file", file.getAbsolutePath()));
                     return parsed;
                 }
             }
         } catch (Exception e) {
-            Logger.showException(Message.ERROR__JSON__LOAD_FAILURE, e, "file", file.getAbsolutePath());
+            Logger.error(Message.ERROR__JSON__LOAD_FAILURE, e, Placeholder.of("file", file.getAbsolutePath()));
             return null;
         }
     });

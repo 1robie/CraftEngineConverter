@@ -3,21 +3,18 @@ package fr.robie.craftengineconverter.utils;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import fr.robie.craftengineconverter.api.logger.LogType;
-import fr.robie.craftengineconverter.api.logger.Logger;
+
 import fr.robie.craftengineconverter.api.progress.BukkitProgressBar;
 import fr.robie.craftengineconverter.common.CraftEngineConverterPlugin;
 import fr.robie.craftengineconverter.common.cache.FileCacheEntry;
 import fr.robie.craftengineconverter.common.manager.FileCacheManager;
+import fr.robie.messageflow.logger.Logger;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 
 import java.io.File;
 import java.io.FileWriter;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 public class JsonFileValidator {
     private final CraftEngineConverterPlugin plugin;
@@ -49,13 +46,13 @@ public class JsonFileValidator {
                 try {
                     this.validateJsonFile(entry.namespaceDir(), entry.jsonFile());
                 } catch (Exception e) {
-                    Logger.debug("An error occurred while validating " + entry.jsonFile().getName() + ": " + e.getMessage(), LogType.ERROR);
+                    Logger.error("An error occurred while validating " + entry.jsonFile().getName() + ": " + e.getMessage());
                 } finally {
                     this.progressBar.increment();
                 }
             }
         } catch (Exception e) {
-            Logger.debug("An error occurred during JSON validation: " + e.getMessage(), LogType.ERROR);
+            Logger.error("An error occurred during JSON validation: " + e.getMessage());
         } finally {
             if (this.progressBar != null) {
                 this.progressBar.stop();
@@ -100,7 +97,7 @@ public class JsonFileValidator {
         for (File child : children) {
             if (child.isDirectory()) {
                 this.collectJsonFilesRecursive(namespaceDir, child, queue);
-            } else if (child.isFile() && child.getName().toLowerCase().endsWith(".json")) {
+            } else if (child.isFile() && child.getName().toLowerCase(Locale.ROOT).endsWith(".json")) {
                 queue.add(new FileValidationEntry(namespaceDir, child));
             }
         }
@@ -138,14 +135,14 @@ public class JsonFileValidator {
                         ? textureValue.split(":", 2)[1].replaceFirst("(block|item)/", "")
                         : textureValue.replaceFirst("(block|item)/", "");
                 try {
-                    Material.valueOf(materialName.toUpperCase().replace("/", "_"));
+                    Material.valueOf(materialName.toUpperCase(Locale.ROOT).replace("/", "_"));
                     continue;
                 } catch (IllegalArgumentException ignored) {
                     int lastUnderscore = materialName.lastIndexOf("_");
                     if (lastUnderscore != -1) {
                         String trimmed = materialName.substring(0, lastUnderscore);
                         try {
-                            Material.valueOf(trimmed.toUpperCase().replace("/", "_"));
+                            Material.valueOf(trimmed.toUpperCase(Locale.ROOT).replace("/", "_"));
                             continue;
                         } catch (IllegalArgumentException ignored2) {
                         }
@@ -276,7 +273,7 @@ public class JsonFileValidator {
                 continue;
             }
 
-            Logger.info("Missing texture '" + textureValue + "' (key: '" + entry.getKey() + "') " +
+            Logger.warn("Missing texture '" + textureValue + "' (key: '" + entry.getKey() + "') " +
                     "referenced in model: " + jsonFile.getAbsolutePath() + "\n" +
                     "  Tried: " + textureFile.getAbsolutePath() + "\n" +
                     "  Tried: " + fallbackFile.getAbsolutePath() + "\n" +
@@ -285,7 +282,7 @@ public class JsonFileValidator {
                     "  Tried: " + minecraftFile.getAbsolutePath() + "\n" +
                     "  Tried: " + skippedSegmentFile.getAbsolutePath() + "\n" +
                     "  Tried: " + jsonNameFile.getAbsolutePath() + "\n" +
-                    "  Tried: " + jsonNameWithPathFile.getAbsolutePath(), LogType.WARNING);
+                    "  Tried: " + jsonNameWithPathFile.getAbsolutePath());
         }
 
         if (modified) {

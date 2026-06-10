@@ -6,6 +6,8 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Locale;
+
 public class GlowDropColorConfiguration implements ItemConfigurationSerializable {
     private final DyeColor color;
 
@@ -15,6 +17,6 @@ public class GlowDropColorConfiguration implements ItemConfigurationSerializable
 
     @Override
     public void serialize(@NotNull YamlConfiguration yamlConfiguration, @NotNull String path, @NotNull ConfigurationSection itemSection, @NotNull String itemId) {
-        this.getOrCreateSection(itemSection, "settings").set("glow-color", this.color.name().toLowerCase());
+        this.getOrCreateSection(itemSection, "settings").set("glow-color", this.color.name().toLowerCase(Locale.ROOT));
     }
 }

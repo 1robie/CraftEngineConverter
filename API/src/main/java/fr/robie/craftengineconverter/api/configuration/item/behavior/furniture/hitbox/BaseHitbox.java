@@ -22,4 +22,10 @@ public abstract class BaseHitbox implements Hitbox {
         if (!this.seats.isEmpty())
             data.put("seats", this.seats);
     }
+
+    public void addPosition(float x, float y, float z) {
+        this.position.addValue(0, x);
+        this.position.addValue(1, y);
+        this.position.addValue(2, z);
+    }
 }

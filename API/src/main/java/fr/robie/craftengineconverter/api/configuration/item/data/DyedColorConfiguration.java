@@ -6,6 +6,8 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Locale;
+
 public class DyedColorConfiguration implements ItemConfigurationSerializable {
     private final int rgb;
 
@@ -17,7 +19,7 @@ public class DyedColorConfiguration implements ItemConfigurationSerializable {
         String colorStr = color.toString().trim();
 
         try {
-            DyeColor dyeColor = DyeColor.valueOf(colorStr.toUpperCase());
+            DyeColor dyeColor = DyeColor.valueOf(colorStr.toUpperCase(Locale.ROOT));
             return new DyedColorConfiguration(dyeColor.getColor().asRGB());
         } catch (IllegalArgumentException ignored) {
         }

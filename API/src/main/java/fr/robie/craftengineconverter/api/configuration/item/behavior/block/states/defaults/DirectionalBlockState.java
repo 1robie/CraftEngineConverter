@@ -10,13 +10,15 @@ import net.momirealms.craftengine.core.util.Direction;
 import org.bukkit.configuration.ConfigurationSection;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Locale;
+
 public class DirectionalBlockState extends AbstractDefaultBlockState {
     public DirectionalBlockState(@NotNull Plugins plugin, @NotNull String itemId, @NotNull CraftEngineBlockState blockState, @NotNull ModelConfiguration model) {
         DirectionBlockStateProperty facingProperty = new DirectionBlockStateProperty("facing", Direction.NORTH);
         this.addProperty(facingProperty);
 
         for (Direction facing : Direction.values()) {
-            String facingName = facing.name().toLowerCase();
+            String facingName = facing.name().toLowerCase(Locale.ROOT);
 
             int x = 0;
             int y = 0;

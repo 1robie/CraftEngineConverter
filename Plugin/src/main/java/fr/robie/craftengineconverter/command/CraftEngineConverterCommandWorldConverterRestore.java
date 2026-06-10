@@ -6,11 +6,13 @@ import fr.robie.craftengineconverter.api.database.StorageManager;
 import fr.robie.craftengineconverter.api.format.Message;
 import fr.robie.craftengineconverter.api.history.BlockHistory;
 import fr.robie.craftengineconverter.api.history.EntityHistory;
-import fr.robie.craftengineconverter.api.logger.Logger;
+
 import fr.robie.craftengineconverter.api.profile.ServerProfile;
 import fr.robie.craftengineconverter.common.permission.Permission;
 import fr.robie.craftengineconverter.utils.command.CommandType;
 import fr.robie.craftengineconverter.utils.command.VCommand;
+import fr.robie.messageflow.formatter.Placeholder;
+import fr.robie.messageflow.logger.Logger;
 import net.momirealms.craftengine.bukkit.api.CraftEngineBlocks;
 import net.momirealms.craftengine.bukkit.api.CraftEngineFurniture;
 import org.bukkit.Bukkit;
@@ -40,7 +42,7 @@ public class CraftEngineConverterCommandWorldConverterRestore extends VCommand {
         ServerProfile serverProfile = this.plugin.getServerProfile();
 
         if (!dataBaseManager.isEnabled()) {
-            this.message(plugin, this.sender, Message.COMMAND__WORLD_CONVERTER__RESTORE__DATABASE_DISABLED);
+            this.messageFormatter.sendMessage(Message.COMMAND__WORLD_CONVERTER__RESTORE__DATABASE_DISABLED, this.sender);
             return CommandType.SUCCESS;
         }
 
@@ -51,22 +53,20 @@ public class CraftEngineConverterCommandWorldConverterRestore extends VCommand {
         int totalActiveConversions = activeBlockConversions + activeEntityConversions;
 
         if (totalActiveConversions == 0) {
-            this.message(plugin, this.sender, Message.COMMAND__WORLD_CONVERTER__RESTORE__ALL__NONE);
+            this.messageFormatter.sendMessage(Message.COMMAND__WORLD_CONVERTER__RESTORE__ALL__NONE, this.sender);
             return CommandType.SUCCESS;
         }
 
+        Placeholder.Builder builder = Placeholder.builder();
+        builder.register("count", String.valueOf(totalActiveConversions))
+                .register("blocks", String.valueOf(activeBlockConversions))
+                .register("entities", String.valueOf(activeEntityConversions));
         if (!confirm) {
-            this.message(plugin, this.sender, Message.COMMAND__WORLD_CONVERTER__RESTORE__ALL__CONFIRM,
-                    "count", totalActiveConversions,
-                    "blocks", activeBlockConversions,
-                    "entities", activeEntityConversions);
+            this.messageFormatter.sendMessage(Message.COMMAND__WORLD_CONVERTER__RESTORE__ALL__CONFIRM, this.sender, builder.build());
             return CommandType.SUCCESS;
         }
 
-        this.message(plugin, this.sender, Message.COMMAND__WORLD_CONVERTER__RESTORE__ALL__START,
-                "count", totalActiveConversions,
-                "blocks", activeBlockConversions,
-                "entities", activeEntityConversions);
+        this.messageFormatter.sendMessage(Message.COMMAND__WORLD_CONVERTER__RESTORE__ALL__START, this.sender, builder.build());
 
         long startTime = System.currentTimeMillis();
         AtomicInteger restoredBlockCount = new AtomicInteger(0);
@@ -110,7 +110,7 @@ public class CraftEngineConverterCommandWorldConverterRestore extends VCommand {
                         serverProfile.markBlockAsReverted(history);
                         restoredBlockCount.incrementAndGet();
                     } catch (Exception e) {
-                        Logger.showException("Failed to restore block at " + location, e);
+                        Logger.error("Failed to restore block at " + location, e);
                     }
                 }
             }, tickDelay);
@@ -150,7 +150,7 @@ public class CraftEngineConverterCommandWorldConverterRestore extends VCommand {
                         serverProfile.markEntityAsReverted(entityHistory);
                         restoredEntityCount.incrementAndGet();
                     } catch (Exception e) {
-                        Logger.showException("Failed to restore entity at " + location, e);
+                        Logger.error("Failed to restore entity at " + location, e);
                     }
                 }
             }, tickDelay);
@@ -162,14 +162,14 @@ public class CraftEngineConverterCommandWorldConverterRestore extends VCommand {
 
             long endTime = System.currentTimeMillis();
 
-            this.message(plugin, this.sender, Message.COMMAND__WORLD_CONVERTER__RESTORE__ALL__COMPLETE,
-                    "restored", restoredBlockCount.get() + restoredEntityCount.get(),
-                    "restored_blocks", restoredBlockCount.get(),
-                    "restored_entities", restoredEntityCount.get(),
-                    "total", totalBlockCount.get() + totalEntityCount.get(),
-                    "total_blocks", totalBlockCount.get(),
-                    "total_entities", totalEntityCount.get(),
-                    "time", TimerBuilder.formatTimeAuto(endTime - startTime));
+            builder.register("restored", String.valueOf(restoredBlockCount.get() + restoredEntityCount.get()))
+                    .register("restored_blocks", String.valueOf(restoredBlockCount.get()))
+                    .register("restored_entities", String.valueOf(restoredEntityCount.get()))
+                    .register("total", String.valueOf(totalBlockCount.get() + totalEntityCount.get()))
+                    .register("total_blocks", String.valueOf(totalBlockCount.get()))
+                    .register("total_entities", String.valueOf(totalEntityCount.get()))
+                    .register("time", TimerBuilder.formatTimeAuto(endTime - startTime));
+            this.messageFormatter.sendMessage(Message.COMMAND__WORLD_CONVERTER__RESTORE__ALL__COMPLETE, this.sender, builder.build());
         }, totalDelayTicks + 1);
 
         return CommandType.SUCCESS;
@@ -193,7 +193,7 @@ public class CraftEngineConverterCommandWorldConverterRestore extends VCommand {
             org.bukkit.block.data.BlockData blockData = Bukkit.createBlockData(history.getOriginalBlock());
             block.setBlockData(blockData, false);
         } catch (Exception e) {
-            Logger.showException("Failed to parse block data: " + history.getOriginalBlock(), e);
+            Logger.error("Failed to parse block data: " + history.getOriginalBlock(), e);
             try {
                 String materialName = history.getOriginalBlock().split("\\[")[0];
                 Material material = Material.matchMaterial(materialName);
@@ -201,7 +201,7 @@ public class CraftEngineConverterCommandWorldConverterRestore extends VCommand {
                     block.setType(material, false);
                 }
             } catch (Exception ex) {
-                Logger.showException("Failed to restore block, setting to AIR", ex);
+                Logger.error("Failed to restore block, setting to AIR", ex);
                 block.setType(Material.AIR, false);
             }
         }

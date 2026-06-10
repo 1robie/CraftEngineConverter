@@ -1,7 +1,7 @@
 package fr.robie.craftengineconverter.common.enums;
 
-import fr.robie.craftengineconverter.api.logger.LogType;
-import fr.robie.craftengineconverter.api.logger.Logger;
+
+import fr.robie.messageflow.logger.Logger;
 import org.bukkit.Bukkit;
 
 import java.util.regex.Matcher;
@@ -86,13 +86,13 @@ public enum NmsVersion {
         }
 
         if (currentVersion > highestSupportedVersionEnum.version) {
-            Logger.info(String.format(
+            Logger.warn(String.format(
                     "Running Minecraft %s (newer than highest supported version %s). " +
                             "Please report this version to help us add support. " +
                             "Check for plugin updates if you experience issues.",
                     currentVersion,
                     highestSupportedVersionEnum.name()
-            ), LogType.WARNING);
+            ));
             return UNKNOWN;
         }
 

@@ -9,6 +9,8 @@ import fr.robie.craftengineconverter.api.configuration.utils.HorizontalDirection
 import net.momirealms.craftengine.core.block.property.type.SingleBlockHalf;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Locale;
+
 public class TrapdoorBlockState extends AbstractDefaultBlockState {
     public TrapdoorBlockState(@NotNull String baseBlock, @NotNull ModelConfiguration modelBottom, @NotNull ModelConfiguration modelTop, @NotNull ModelConfiguration modelOpen) {
         HorizontalDirectionBlockStateProperty facingProperty = new HorizontalDirectionBlockStateProperty("facing", HorizontalDirection.NORTH);
@@ -27,15 +29,15 @@ public class TrapdoorBlockState extends AbstractDefaultBlockState {
                 for (boolean open : new boolean[]{false, true}) {
                     for (boolean waterlogged : new boolean[]{false, true}) {
                         String appearanceName = String.format("facing=%s,half=%s,open=%s,waterlogged=%s",
-                                facing.name().toLowerCase(),
-                                half.name().toLowerCase(),
+                                facing.name().toLowerCase(Locale.ROOT),
+                                half.name().toLowerCase(Locale.ROOT),
                                 open,
                                 waterlogged);
 
                         String state = String.format("%s[facing=%s,half=%s,open=%s,powered=true,waterlogged=%s]",
                                 baseBlock,
-                                facing.name().toLowerCase(),
-                                half.name().toLowerCase(),
+                                facing.name().toLowerCase(Locale.ROOT),
+                                half.name().toLowerCase(Locale.ROOT),
                                 open,
                                 waterlogged);
 

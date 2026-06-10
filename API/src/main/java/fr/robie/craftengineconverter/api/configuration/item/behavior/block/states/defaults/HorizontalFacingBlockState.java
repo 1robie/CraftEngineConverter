@@ -10,6 +10,8 @@ import fr.robie.craftengineconverter.api.enums.Plugins;
 import org.bukkit.configuration.ConfigurationSection;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Locale;
+
 public class HorizontalFacingBlockState extends AbstractDefaultBlockState {
     public HorizontalFacingBlockState(
             @NotNull Plugins plugin,
@@ -21,7 +23,7 @@ public class HorizontalFacingBlockState extends AbstractDefaultBlockState {
         this.addProperty(facingProperty);
 
         for (HorizontalDirection facing : HorizontalDirection.values()) {
-            String facingName = facing.name().toLowerCase();
+            String facingName = facing.name().toLowerCase(Locale.ROOT);
 
             int y = switch (facing) {
                 case SOUTH -> 180;

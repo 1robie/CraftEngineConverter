@@ -6,6 +6,7 @@ import org.bukkit.DyeColor;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 public class ArmorStandElement extends ItemElement {
@@ -33,7 +34,7 @@ public class ArmorStandElement extends ItemElement {
         if (this.isSmall)
             data.put("small", true);
         if (this.glowColor != DyeColor.WHITE)
-            data.put("glow-color", this.glowColor.name().toLowerCase());
+            data.put("glow-color", this.glowColor.name().toLowerCase(Locale.ROOT));
         return data;
     }
 }

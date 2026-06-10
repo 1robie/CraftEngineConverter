@@ -1,14 +1,22 @@
 package fr.robie.craftengineconverter.hooks.packetevent;
 
 import com.github.retrooper.packetevents.wrapper.play.server.*;
-import fr.robie.craftengineconverter.api.format.ComponentMeta;
 import fr.robie.craftengineconverter.common.packet.PacketContent;
 import fr.robie.craftengineconverter.common.packet.PacketProcessor;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.jetbrains.annotations.NotNull;
 import org.jspecify.annotations.NonNull;
 
 public class PacketEventsProcessor {
+
+    private static String getPlainText(Component component) {
+        if (component == null) {
+            return "";
+        }
+        return MiniMessage.miniMessage().serialize(component);
+    }
+
     public static final PacketProcessor<WrapperPlayServerSystemChatMessage> SYSTEM_CHAT_MESSAGE = new PacketProcessor<>() {
         @Override
         public String name() {
@@ -23,7 +31,7 @@ public class PacketEventsProcessor {
         @Override
         public @NotNull PacketContent<WrapperPlayServerSystemChatMessage> unpack(WrapperPlayServerSystemChatMessage wrappedPacket) {
             Component internal = wrappedPacket.getMessage();
-            return new PacketContent<>(wrappedPacket, this, ComponentMeta.getPlainText(internal));
+            return new PacketContent<>(wrappedPacket, this, getPlainText(internal));
         }
     };
 
@@ -41,7 +49,7 @@ public class PacketEventsProcessor {
         @Override
         public @NotNull PacketContent<WrapperPlayServerSetTitleText> unpack(WrapperPlayServerSetTitleText container) {
             Component internal = container.getTitle();
-            return new PacketContent<>(container, this, ComponentMeta.getPlainText(internal));
+            return new PacketContent<>(container, this, getPlainText(internal));
         }
     };
 
@@ -59,7 +67,7 @@ public class PacketEventsProcessor {
         @Override
         public @NotNull PacketContent<WrapperPlayServerSetTitleSubtitle> unpack(WrapperPlayServerSetTitleSubtitle container) {
             Component internal = container.getSubtitle();
-            return new PacketContent<>(container, this, ComponentMeta.getPlainText(internal));
+            return new PacketContent<>(container, this, getPlainText(internal));
         }
     };
 
@@ -77,7 +85,7 @@ public class PacketEventsProcessor {
         @Override
         public @NotNull PacketContent<WrapperPlayServerActionBar> unpack(WrapperPlayServerActionBar container) {
             Component internal = container.getActionBarText();
-            return new PacketContent<>(container, this, ComponentMeta.getPlainText(internal));
+            return new PacketContent<>(container, this, getPlainText(internal));
         }
     };
 
@@ -95,7 +103,7 @@ public class PacketEventsProcessor {
         @Override
         public @NotNull PacketContent<WrapperPlayServerBossBar> unpack(WrapperPlayServerBossBar container) {
             Component internal = container.getTitle();
-            return new PacketContent<>(container, this, ComponentMeta.getPlainText(internal));
+            return new PacketContent<>(container, this, getPlainText(internal));
         }
     };
 
@@ -113,7 +121,7 @@ public class PacketEventsProcessor {
         @Override
         public @NonNull PacketContent<WrapperPlayServerOpenWindow> unpack(WrapperPlayServerOpenWindow container) {
             Component internal = container.getTitle();
-            return new PacketContent<>(container, this, ComponentMeta.getPlainText(internal));
+            return new PacketContent<>(container, this, getPlainText(internal));
         }
     };
 }

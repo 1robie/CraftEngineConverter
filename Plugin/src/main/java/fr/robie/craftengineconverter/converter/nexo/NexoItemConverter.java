@@ -44,8 +44,7 @@ import fr.robie.craftengineconverter.api.configuration.item.settings.Invulnerabl
 import fr.robie.craftengineconverter.api.configuration.item.settings.ProjectileSettingConfiguration;
 import fr.robie.craftengineconverter.api.enums.*;
 import fr.robie.craftengineconverter.api.format.Message;
-import fr.robie.craftengineconverter.api.logger.LogType;
-import fr.robie.craftengineconverter.api.logger.Logger;
+
 import fr.robie.craftengineconverter.api.utils.FloatsUtils;
 import fr.robie.craftengineconverter.common.BlockStatesMapper;
 import fr.robie.craftengineconverter.common.enums.BukkitFlagToComponentFlag;
@@ -59,6 +58,8 @@ import fr.robie.craftengineconverter.utils.Tuple;
 import fr.robie.craftengineconverter.utils.loots.CraftEngineItemLoot;
 import fr.robie.craftengineconverter.utils.loots.ItemLoot;
 import fr.robie.craftengineconverter.utils.loots.MinecraftItemLoot;
+import fr.robie.messageflow.formatter.Placeholder;
+import fr.robie.messageflow.logger.Logger;
 import net.momirealms.craftengine.core.entity.EquipmentSlot;
 import net.momirealms.craftengine.core.entity.display.Billboard;
 import net.momirealms.craftengine.core.item.setting.value.AnvilRepairItem;
@@ -116,7 +117,7 @@ public class NexoItemConverter extends ItemConverter {
     @Override
     public void convertMaterial() {
         try {
-            this.craftEngineItemsConfiguration.setMaterial(Material.valueOf(this.nexoItemSection.getString("material", "").toUpperCase()));
+            this.craftEngineItemsConfiguration.setMaterial(Material.valueOf(this.nexoItemSection.getString("material", "").toUpperCase(Locale.ROOT)));
         } catch (Exception ignored) {
         }
     }
@@ -168,7 +169,7 @@ public class NexoItemConverter extends ItemConverter {
             List<ComponentFlag> convertedFlags = new ArrayList<>();
             for (String flag : itemFlags) {
                 try {
-                    ItemFlag bukkitFlag = ItemFlag.valueOf(flag.toUpperCase());
+                    ItemFlag bukkitFlag = ItemFlag.valueOf(flag.toUpperCase(Locale.ROOT));
                     ComponentFlag componentFlag = BukkitFlagToComponentFlag.fromBukkitItemFlag(bukkitFlag);
                     if (componentFlag != null) {
                         convertedFlags.add(componentFlag);
@@ -203,7 +204,7 @@ public class NexoItemConverter extends ItemConverter {
             net.momirealms.craftengine.core.attribute.AttributeModifier.Operation operation;
             if (rawOperation instanceof String strOperation) {
                 try {
-                    operation = net.momirealms.craftengine.core.attribute.AttributeModifier.Operation.valueOf(strOperation.toUpperCase());
+                    operation = net.momirealms.craftengine.core.attribute.AttributeModifier.Operation.valueOf(strOperation.toUpperCase(Locale.ROOT));
                 } catch (Exception e) {
                     if (strOperation.equalsIgnoreCase("ADD_NUMBER")) {
                         operation = net.momirealms.craftengine.core.attribute.AttributeModifier.Operation.ADD_VALUE;
@@ -238,7 +239,7 @@ public class NexoItemConverter extends ItemConverter {
                 continue;
             }
             try {
-                attributeSlot = net.momirealms.craftengine.core.attribute.AttributeModifier.Slot.valueOf(strSlot.toUpperCase());
+                attributeSlot = net.momirealms.craftengine.core.attribute.AttributeModifier.Slot.valueOf(strSlot.toUpperCase(Locale.ROOT));
             } catch (Exception ignored) {
             }
             if (attributeSlot == null) {
@@ -252,7 +253,7 @@ public class NexoItemConverter extends ItemConverter {
                 if (typeObj instanceof String typeStr && textObj instanceof String textStr) {
                     net.momirealms.craftengine.core.attribute.AttributeModifier.Display.Type displayType;
                     try {
-                        displayType = net.momirealms.craftengine.core.attribute.AttributeModifier.Display.Type.valueOf(typeStr.toUpperCase());
+                        displayType = net.momirealms.craftengine.core.attribute.AttributeModifier.Display.Type.valueOf(typeStr.toUpperCase(Locale.ROOT));
                     } catch (Exception e) {
                         continue;
                     }
@@ -260,7 +261,7 @@ public class NexoItemConverter extends ItemConverter {
                 }
             }
 
-            attributeModifiers.add(new AttributeModifier(stringAttribute.toLowerCase(), attributeSlot, null, amount, operation, display));
+            attributeModifiers.add(new AttributeModifier(stringAttribute.toLowerCase(Locale.ROOT), attributeSlot, null, amount, operation, display));
         }
 
         if (!attributeModifiers.isEmpty()) {
@@ -283,7 +284,7 @@ public class NexoItemConverter extends ItemConverter {
             } catch (Exception e) {
                 enchantmentName = enchantmentKey;
             }
-            enchantmentConfiguration.addEnchantment(enchantmentName.toLowerCase(), level);
+            enchantmentConfiguration.addEnchantment(enchantmentName.toLowerCase(Locale.ROOT), level);
         }
         if (enchantmentConfiguration.hasEnchantments()) {
             this.craftEngineItemsConfiguration.addItemConfiguration(enchantmentConfiguration);
@@ -438,7 +439,7 @@ public class NexoItemConverter extends ItemConverter {
                 }
 
                 if (ceRulesList.isEmpty()) {
-                    Logger.info(Message.WARNING__CONVERTER__NEXO__TOOL__NO_BLOCKS_FOUND, "item", this.itemId);
+                    Logger.info(Message.WARNING__CONVERTER__NEXO__TOOL__NO_BLOCKS_FOUND, Placeholder.of("item", this.itemId));
                 }
             }
 
@@ -485,7 +486,7 @@ public class NexoItemConverter extends ItemConverter {
         ConsumableConfiguration.Animation animation;
         try {
             animation = ConsumableConfiguration.Animation.valueOf(
-                    consumableSection.getString("animation", "eat").toUpperCase()
+                    consumableSection.getString("animation", "eat").toUpperCase(Locale.ROOT)
             );
         } catch (IllegalArgumentException e) {
             animation = ConsumableConfiguration.Animation.EAT;
@@ -578,9 +579,9 @@ public class NexoItemConverter extends ItemConverter {
         EquipmentSlot equipmentSlot = null;
         if (this.isValidString(slot)) {
             try {
-                equipmentSlot = EquipmentSlot.valueOf(slot.toUpperCase());
+                equipmentSlot = EquipmentSlot.valueOf(slot.toUpperCase(Locale.ROOT));
             } catch (IllegalArgumentException e) {
-                Logger.debug(Message.WARNING__CONVERTER__NEXO__EQUIPPABLE__UNKNOWN_SLOT, LogType.WARNING, "slot", slot, "item", this.itemId);
+                Logger.warn(Message.WARNING__CONVERTER__NEXO__EQUIPPABLE__UNKNOWN_SLOT, Placeholder.of("slot", slot, "item", this.itemId));
             }
         }
 
@@ -621,7 +622,7 @@ public class NexoItemConverter extends ItemConverter {
             try {
                 this.craftEngineItemsConfiguration.addItemConfiguration(new fr.robie.craftengineconverter.api.configuration.item.data.TooltipStyleConfiguration(NamespacedKey.fromString(toolTipStyle)));
             } catch (IllegalArgumentException e) {
-                Logger.debug(Message.WARNING__CONVERTER__NEXO__TOOLTIP_STYLE__UNKNOWN_STYLE, LogType.WARNING, "style", toolTipStyle, "item", this.itemId);
+                Logger.warn(Message.WARNING__CONVERTER__NEXO__TOOLTIP_STYLE__UNKNOWN_STYLE, Placeholder.of("style", toolTipStyle, "item", this.itemId));
             }
         }
     }
@@ -639,7 +640,7 @@ public class NexoItemConverter extends ItemConverter {
         float seconds = (float) useCooldownSection.getDouble("seconds", 1.0);
         if (seconds <= 0) {
             seconds = 1.0f;
-            Logger.debug(Message.WARNING__CONVERTER__NEXO__USE_COOLDOWN__INVALID_SECONDS, LogType.WARNING, "seconds", seconds, "item", this.itemId);
+            Logger.warn(Message.WARNING__CONVERTER__NEXO__USE_COOLDOWN__INVALID_SECONDS, Placeholder.of("seconds", String.valueOf(seconds), "item", this.itemId));
         }
         String cooldownGroup = useCooldownSection.getString("group");
         this.craftEngineItemsConfiguration.addItemConfiguration(new fr.robie.craftengineconverter.api.configuration.item.components.UseCooldownConfiguration(seconds, cooldownGroup));
@@ -657,7 +658,7 @@ public class NexoItemConverter extends ItemConverter {
             if (!minecraftType.contains(":")) {
                 minecraftType = "minecraft:" + minecraftType;
             }
-            this.craftEngineItemsConfiguration.addItemConfiguration(new fr.robie.craftengineconverter.api.configuration.item.components.UseRemainderConfiguration(minecraftType.toLowerCase(), 1));
+            this.craftEngineItemsConfiguration.addItemConfiguration(new fr.robie.craftengineconverter.api.configuration.item.components.UseRemainderConfiguration(minecraftType.toLowerCase(Locale.ROOT), 1));
         }
     }
 
@@ -876,7 +877,7 @@ public class NexoItemConverter extends ItemConverter {
 
     private void processBlockOrTag(String input, List<String> blockArray, List<String> tagsArray) {
         try {
-            Material.valueOf(input.toUpperCase());
+            Material.valueOf(input.toUpperCase(Locale.ROOT));
             String normalized = input.toLowerCase(Locale.ROOT);
             if (!normalized.contains(":")) {
                 normalized = "minecraft:" + normalized;
@@ -974,14 +975,14 @@ public class NexoItemConverter extends ItemConverter {
                         minReach = Double.parseDouble(parts[0].trim());
                         maxReach = Double.parseDouble(parts[1].trim());
                     } catch (NumberFormatException e) {
-                        Logger.debug(Message.WARNING__CONVERTER__NEXO__ATTACK_RANGE__INVALID_REACH_FORMAT, LogType.WARNING, "reach", reach, "item", this.itemId);
+                        Logger.warn(Message.WARNING__CONVERTER__NEXO__ATTACK_RANGE__INVALID_REACH_FORMAT, Placeholder.of("reach", reach, "item", this.itemId));
                     }
                 }
             } else {
                 try {
                     maxReach = Double.parseDouble(reach.trim());
                 } catch (NumberFormatException e) {
-                    Logger.debug(Message.WARNING__CONVERTER__NEXO__ATTACK_RANGE__INVALID_REACH_VALUE, LogType.WARNING, "reach", reach, "item", this.itemId);
+                    Logger.warn(Message.WARNING__CONVERTER__NEXO__ATTACK_RANGE__INVALID_REACH_VALUE, Placeholder.of("reach", reach, "item", this.itemId));
                 }
             }
         }
@@ -1013,16 +1014,16 @@ public class NexoItemConverter extends ItemConverter {
         fr.robie.craftengineconverter.api.configuration.item.components.SwingAnimationConfiguration.AnimationType type;
         try {
             type = fr.robie.craftengineconverter.api.configuration.item.components.SwingAnimationConfiguration.AnimationType.valueOf(
-                    swingAnimationSection.getString("type", "whack").toUpperCase()
+                    swingAnimationSection.getString("type", "whack").toUpperCase(Locale.ROOT)
             );
         } catch (IllegalArgumentException e) {
-            Logger.debug(Message.WARNING__CONVERTER__NEXO__SWING_ANIMATION__INVALID_TYPE, LogType.WARNING, "item", this.itemId);
+            Logger.debug(Message.WARNING__CONVERTER__NEXO__SWING_ANIMATION__INVALID_TYPE, Placeholder.of("item", this.itemId));
             type = fr.robie.craftengineconverter.api.configuration.item.components.SwingAnimationConfiguration.AnimationType.WHACK;
         }
 
         long durationTicks = TimerBuilder.parseTimeToTicks(swingAnimationSection.getString("duration", "6t"));
         if (durationTicks <= 0) {
-            Logger.debug(Message.WARNING__CONVERTER__NEXO__SWING_ANIMATION__INVALID_DURATION, LogType.WARNING, "duration", durationTicks, "item", this.itemId);
+            Logger.debug(Message.WARNING__CONVERTER__NEXO__SWING_ANIMATION__INVALID_DURATION, Placeholder.of("duration", String.valueOf(durationTicks), "item", this.itemId));
             durationTicks = 6;
         }
 
@@ -1055,7 +1056,7 @@ public class NexoItemConverter extends ItemConverter {
     public void convertMinimumAttackChargeComponent() {
         double minAttackCharge = this.nexoItemSection.getDouble("Components.minimum_attack_charge", -1f);
         if (minAttackCharge >= 0f) {
-            minAttackCharge = Math.max(0.0, Math.min(1.0, minAttackCharge));
+            minAttackCharge = Math.clamp(minAttackCharge, 0.0, 1.0);
             this.craftEngineItemsConfiguration.addItemConfiguration(new fr.robie.craftengineconverter.api.configuration.item.components.MinimumAttackChargeConfiguration((float) minAttackCharge));
         }
     }
@@ -1265,7 +1266,7 @@ public class NexoItemConverter extends ItemConverter {
 
         modelPath = this.cleanPath(modelPath);
         if (this.isNull(modelPath)) {
-            Logger.debug(Message.WARNING__CONVERTER__NEXO__MODEL__PROCESS_FAILURE, LogType.WARNING, "item", this.itemId);
+            Logger.debug(Message.WARNING__CONVERTER__NEXO__MODEL__PROCESS_FAILURE, Placeholder.of("item", this.itemId));
             return;
         }
 
@@ -1284,7 +1285,7 @@ public class NexoItemConverter extends ItemConverter {
 
         String namespacedPath = this.namespaced(modelPath);
         if (this.isNull(namespacedPath)) {
-            Logger.debug(Message.WARNING__CONVERTER__NEXO__MODEL__NAMESPACE_FAILURE, LogType.WARNING, "item", this.itemId);
+            Logger.debug(Message.WARNING__CONVERTER__NEXO__MODEL__NAMESPACE_FAILURE, Placeholder.of("item", this.itemId));
             return;
         }
         this.craftEngineItemsConfiguration.setModelConfiguration(new SimpleModelConfiguration(namespacedPath));
@@ -1803,7 +1804,7 @@ public class NexoItemConverter extends ItemConverter {
                     this.buildModel(packSection, "minecraft:item/template_shulker_box", "particle");
 
             default ->
-                    Logger.info(Message.WARNING__CONVERTER__NEXO__MODEL__PARENT_NOT_SUPPORTED, LogType.WARNING, "parent", parentModel, "item", this.itemId);
+                    Logger.info(Message.WARNING__CONVERTER__NEXO__MODEL__PARENT_NOT_SUPPORTED, Placeholder.of("parent", parentModel, "item", this.itemId));
         }
     }
 
@@ -1822,7 +1823,7 @@ public class NexoItemConverter extends ItemConverter {
         }
 
         if (texturesSection == null && singleTexture == null) {
-            Logger.debug(Message.WARNING__CONVERTER__NEXO__MODEL__GENERATED__MISSING_TEXTURE, LogType.WARNING, "item", this.itemId, "parent", parent);
+            Logger.debug(Message.WARNING__CONVERTER__NEXO__MODEL__GENERATED__MISSING_TEXTURE, Placeholder.of("item", this.itemId, "parent", parent));
             return;
         }
 
@@ -1845,7 +1846,11 @@ public class NexoItemConverter extends ItemConverter {
                     modelPath = finalTexturePath;
                 }
             } else {
-                Logger.debug(Message.WARNING__CONVERTER__NEXO__MODEL__GENERATED__MISSING_TEXTURE_KEY, LogType.WARNING, "item", this.itemId, "parent", parent, "key", textureKey);
+                Placeholder.Builder builder = Placeholder.builder();
+                builder.register("item", this.itemId);
+                builder.register("parent", parent);
+                builder.register("key", textureKey);
+                Logger.debug(Message.WARNING__CONVERTER__NEXO__MODEL__GENERATED__MISSING_TEXTURE_KEY, builder.build());
                 return;
             }
         }
@@ -1904,7 +1909,7 @@ public class NexoItemConverter extends ItemConverter {
 
             this.craftEngineItemsConfiguration.setModelConfiguration(usingItemCondition);
         } else {
-            Logger.debug(Message.WARNING__CONVERTER__NEXO__MODEL__BOW__PROCESS_FAILURE, LogType.WARNING, "item", this.itemId);
+            Logger.debug(Message.WARNING__CONVERTER__NEXO__MODEL__BOW__PROCESS_FAILURE, Placeholder.of("item", this.itemId));
         }
     }
 
@@ -1935,7 +1940,7 @@ public class NexoItemConverter extends ItemConverter {
 
             this.craftEngineItemsConfiguration.setModelConfiguration(usingItemCondition);
         } else {
-            Logger.debug(Message.WARNING__CONVERTER__NEXO__MODEL__CROSSBOW__PROCESS_FAILURE, LogType.WARNING, "item", this.itemId);
+            Logger.debug(Message.WARNING__CONVERTER__NEXO__MODEL__CROSSBOW__PROCESS_FAILURE, Placeholder.of("item", this.itemId));
         }
     }
 
@@ -1980,7 +1985,7 @@ public class NexoItemConverter extends ItemConverter {
             }
             String drop = logStripSection.getString("drop");
             if (this.isValidString(drop)) {
-                Logger.info("Custom block " + this.itemId + " has a log_strip configuration with a drop defined. This is not supported and will be ignored.", LogType.INFO);
+                Logger.info("Custom block " + this.itemId + " has a log_strip configuration with a drop defined. This is not supported and will be ignored.");
             }
         }
         String nexoCustomBlockType = nexoCustomBlockSection.getString("type", "NOTEBLOCK");
@@ -2036,7 +2041,7 @@ public class NexoItemConverter extends ItemConverter {
                 try {
                     BlockStatesMapper.getInstance().convertNoteBlockState(this.getConverter().getPluginType(), this.itemId, customVariation);
                 } catch (IllegalArgumentException e) {
-                    Logger.debug(Message.WARNING__CONVERTER__NEXO__CUSTOM_BLOCK__BLOCK_DATA_FAILURE, LogType.WARNING, "variation", customVariation, "item", this.itemId);
+                    Logger.debug(Message.WARNING__CONVERTER__NEXO__CUSTOM_BLOCK__BLOCK_DATA_FAILURE, Placeholder.of("variation", String.valueOf(customVariation), "item", this.itemId));
                     e.printStackTrace();
                 }
             }
@@ -2045,7 +2050,7 @@ public class NexoItemConverter extends ItemConverter {
         if (this.isNotNull(directionalSection)) {
             try {
                 if (!this.isValidString(directionalSection.getString("parent_block"))) {
-                    NexoDirectionBlock directionBlock = NexoDirectionBlock.valueOf(directionalSection.getString("type", "").toUpperCase());
+                    NexoDirectionBlock directionBlock = NexoDirectionBlock.valueOf(directionalSection.getString("type", "").toUpperCase(Locale.ROOT));
                     switch (directionBlock) {
                         case LOG -> {
                             String xBlock = directionalSection.getString("x_block", "");
@@ -2119,7 +2124,7 @@ public class NexoItemConverter extends ItemConverter {
                     }
                 }
             } catch (Exception e) {
-                Logger.info("Ignoring directional configuration for custom block " + this.itemId + " due to unknown type " + directionalSection.getString("type"), LogType.INFO);
+                Logger.info("Ignoring directional configuration for custom block " + this.itemId + " due to unknown type " + directionalSection.getString("type"));
             }
         } else {
             blockConfiguration.setStateBlock(new SingleStateBlock(Plugins.NEXO, state, this.itemId, modelConfiguration));
@@ -2160,11 +2165,11 @@ public class NexoItemConverter extends ItemConverter {
         }
         ConfigurationSection nexoSaplingSection = nexoCustomBlockSection.getConfigurationSection("sapling");
         if (this.isNotNull(nexoSaplingSection)) {
-            Logger.debug(Message.WARNING__CONVERTER__NEXO__CUSTOM_BLOCK__SAPLING_NOT_SUPPORTED, LogType.WARNING, "item", this.itemId);
+            Logger.debug(Message.WARNING__CONVERTER__NEXO__CUSTOM_BLOCK__SAPLING_NOT_SUPPORTED, Placeholder.of("item", this.itemId));
             // TODO implement sapling behavior conversion
             boolean growsNaturally = nexoSaplingSection.getBoolean("grows_naturally", true);
             if (!growsNaturally) {
-                Logger.info(Message.WARNING__CONVERTER__NEXO__CUSTOM_BLOCK__SAPLING_NATURAL_ONLY, LogType.INFO, "item", this.itemId);
+                Logger.info(Message.WARNING__CONVERTER__NEXO__CUSTOM_BLOCK__SAPLING_NATURAL_ONLY, Placeholder.of("item", this.itemId));
             }
         }
         ConfigurationSection nexoDropSection = nexoCustomBlockSection.getConfigurationSection("drop");
@@ -2177,9 +2182,9 @@ public class NexoItemConverter extends ItemConverter {
             if (this.isValidString(minimalType)) {
                 NexoMinimalType nexoMinimalType = null;
                 try {
-                    nexoMinimalType = NexoMinimalType.valueOf(minimalType.toUpperCase());
+                    nexoMinimalType = NexoMinimalType.valueOf(minimalType.toUpperCase(Locale.ROOT));
                 } catch (IllegalArgumentException e) {
-                    Logger.debug(Message.WARNING__CONVERTER__NEXO__CUSTOM_BLOCK__UNKNOWN_MINIMAL_TYPE, LogType.WARNING, "type", minimalType, "item", this.itemId);
+                    Logger.debug(Message.WARNING__CONVERTER__NEXO__CUSTOM_BLOCK__UNKNOWN_MINIMAL_TYPE, Placeholder.of("type", minimalType, "item", this.itemId));
                 }
                 if (this.isNotNull(nexoMinimalType)) {
                     blockSettings.setRequireCorrectTools(true);
@@ -2189,9 +2194,9 @@ public class NexoItemConverter extends ItemConverter {
             if (this.isValidString(bestTool)) {
                 NexoBestTool nexoBestTool = null;
                 try {
-                    nexoBestTool = NexoBestTool.valueOf(bestTool.toUpperCase());
+                    nexoBestTool = NexoBestTool.valueOf(bestTool.toUpperCase(Locale.ROOT));
                 } catch (IllegalArgumentException e) {
-                    Logger.debug(Message.WARNING__CONVERTER__NEXO__CUSTOM_BLOCK__UNKNOWN_BEST_TOOL, LogType.WARNING, "tool", bestTool, "item", this.itemId);
+                    Logger.debug(Message.WARNING__CONVERTER__NEXO__CUSTOM_BLOCK__UNKNOWN_BEST_TOOL, Placeholder.of("tool", bestTool, "item", this.itemId));
                 }
                 if (this.isNotNull(nexoBestTool)) {
                     blockSettings.addTag(nexoBestTool.getBestTool());
@@ -2318,7 +2323,7 @@ public class NexoItemConverter extends ItemConverter {
                 seatPosition.setValue(1, Float.parseFloat(split[1].trim()));
                 seatPosition.setValue(2, Float.parseFloat(split[2].trim()));
             } catch (Exception e) {
-                Logger.debug(Message.WARNING__FURNITURE__INVALID_SEAT_FORMAT, LogType.WARNING, "item", this.itemId, "value", seat);
+                Logger.debug(Message.WARNING__FURNITURE__INVALID_SEAT_FORMAT, Placeholder.of("item", this.itemId, "value", seat));
             }
         }
 
@@ -2334,14 +2339,14 @@ public class NexoItemConverter extends ItemConverter {
             try {
                 displayType = ItemDisplayType.valueOf(display_transform);
             } catch (IllegalArgumentException e) {
-                Logger.debug(Message.WARNING__FURNITURE__UNKNOWN_DISPLAY_TRANSFORM, LogType.WARNING, "item", this.itemId, "transform", display_transform);
+                Logger.debug(Message.WARNING__FURNITURE__UNKNOWN_DISPLAY_TRANSFORM, Placeholder.of("item", this.itemId, "transform", display_transform));
                 displayType = ItemDisplayType.NONE;
             }
             String tracking_rotation = nexoPropertiesSection.getString("tracking_rotation", net.momirealms.craftengine.core.entity.display.Billboard.FIXED.name());
             try {
                 transformType = Billboard.valueOf(tracking_rotation);
             } catch (IllegalArgumentException e) {
-                Logger.debug(Message.WARNING__FURNITURE__UNKNOWN_TRACKING_ROTATION, LogType.WARNING, "item", this.itemId, "rotation", tracking_rotation);
+                Logger.debug(Message.WARNING__FURNITURE__UNKNOWN_TRACKING_ROTATION, Placeholder.of("item", this.itemId, "rotation", tracking_rotation));
             }
             List<Float> translations = nexoPropertiesSection.getFloatList("translation");
             if (translations.size() >= 3) {
@@ -2349,7 +2354,7 @@ public class NexoItemConverter extends ItemConverter {
                 displayTranslation.setValue(1, translations.get(1));
                 displayTranslation.setValue(2, translations.get(2));
             } else if (!translations.isEmpty()) {
-                Logger.debug(Message.WARNING__FURNITURE__INVALID_TRANSLATION_SIZE, LogType.WARNING, "item", this.itemId, "size", translations.size());
+                Logger.debug(Message.WARNING__FURNITURE__INVALID_TRANSLATION_SIZE, Placeholder.of("item", this.itemId, "size", String.valueOf(translations.size())));
             }
             String scales = nexoPropertiesSection.getString("scale");
             if (this.isNotNull(scales)) {
@@ -2359,7 +2364,7 @@ public class NexoItemConverter extends ItemConverter {
                     scale.setValue(1, Float.parseFloat(split[1].trim()));
                     scale.setValue(2, Float.parseFloat(split[2].trim()));
                 } catch (Exception e) {
-                    Logger.debug(Message.WARNING__FURNITURE__INVALID_SCALE_FORMAT, LogType.WARNING, "item", this.itemId, "value", scales);
+                    Logger.debug(Message.WARNING__FURNITURE__INVALID_SCALE_FORMAT, Placeholder.of("item", this.itemId, "value", scales));
                 }
             }
         }
@@ -2374,7 +2379,7 @@ public class NexoItemConverter extends ItemConverter {
             List<Map<?, ?>> loots = dropSection.getMapList("loots");
             List<ItemLoot> itemLoots = this.parseItemLoots(loots);
             if (this.isValidString(minimal_type) || this.isValidString(best_tool)) {
-                Logger.debug(Message.WARNING__FURNITURE__CUSTOM_DROP_CONDITIONS_NOT_SUPPORTED, LogType.WARNING, "item", this.itemId);
+                Logger.debug(Message.WARNING__FURNITURE__CUSTOM_DROP_CONDITIONS_NOT_SUPPORTED, Placeholder.of("item", this.itemId));
             }
             if (dropSelfWithSilktouch && !fortuneAffectsDrop) {
                 // fortuneAffectsDrop == false && dropSelfWithSilktouch == true
@@ -2517,7 +2522,7 @@ public class NexoItemConverter extends ItemConverter {
                         }
                         String[] parts = shulker.trim().split("\\s+");
                         if (parts.length < 3) {
-                            Logger.debug(Message.WARNING__FURNITURE__INVALID_SHULKER_ENTRY, LogType.WARNING, "item", this.itemId, "entry", shulker);
+                            Logger.debug(Message.WARNING__FURNITURE__INVALID_SHULKER_ENTRY, Placeholder.of("item", this.itemId, "entry", shulker));
                             continue;
                         }
                         String[] coords = parts[0].split("\\s*,\\s*");
@@ -2530,7 +2535,7 @@ public class NexoItemConverter extends ItemConverter {
                             hitbox.setScale(Float.parseFloat(parts[1]));
                             hitbox.setPeek((int) (Float.parseFloat(parts[2]) * 100));
                             if (parts.length >= 4) {
-                                String dir = parts[3].toUpperCase();
+                                String dir = parts[3].toUpperCase(Locale.ROOT);
                                 hitbox.setDirection(this.getDirectionFromString(dir));
                             }
                             if (seatPosition.isUpdated() && !seatsAdded.getAndSet(true)) {
@@ -2538,7 +2543,7 @@ public class NexoItemConverter extends ItemConverter {
                             }
                             hitboxList.add(hitbox);
                         } catch (NumberFormatException e) {
-                            Logger.debug(Message.WARNING__FURNITURE__NON_NUMERIC_SHULKER_VALUES, LogType.WARNING, "item", this.itemId, "entry", shulker);
+                            Logger.debug(Message.WARNING__FURNITURE__NON_NUMERIC_SHULKER_VALUES, Placeholder.of("item", this.itemId, "entry", shulker));
                         }
                     }
 
@@ -2549,7 +2554,7 @@ public class NexoItemConverter extends ItemConverter {
                         }
                         String[] parts = ghast.trim().split("\\s+");
                         if (parts.length < 2) {
-                            Logger.debug(Message.WARNING__FURNITURE__INVALID_GHAST_ENTRY, LogType.WARNING, "item", this.itemId, "entry", ghast);
+                            Logger.debug(Message.WARNING__FURNITURE__INVALID_GHAST_ENTRY, Placeholder.of("item", this.itemId, "entry", ghast));
                             continue;
                         }
                         String[] coords = parts[0].split("\\s*,\\s*");
@@ -2565,7 +2570,7 @@ public class NexoItemConverter extends ItemConverter {
                             }
                             hitboxList.add(hitbox);
                         } catch (NumberFormatException e) {
-                            Logger.debug(Message.WARNING__FURNITURE__NON_NUMERIC_GHAST_VALUES, LogType.WARNING, "item", this.itemId, "entry", ghast);
+                            Logger.debug(Message.WARNING__FURNITURE__NON_NUMERIC_GHAST_VALUES, Placeholder.of("item", this.itemId, "entry", ghast));
                         }
                     }
 
@@ -2576,7 +2581,7 @@ public class NexoItemConverter extends ItemConverter {
                         }
                         String[] parts = interaction.trim().split("\\s+");
                         if (parts.length != 2) {
-                            Logger.debug(Message.WARNING__FURNITURE__INVALID_INTERACTION_ENTRY, LogType.WARNING, "item", this.itemId, "entry", interaction);
+                            Logger.debug(Message.WARNING__FURNITURE__INVALID_INTERACTION_ENTRY, Placeholder.of("item", this.itemId, "entry", interaction));
                             continue;
                         }
                         String[] coords = parts[0].split("\\s*,\\s*");
@@ -2591,7 +2596,7 @@ public class NexoItemConverter extends ItemConverter {
                             hitbox.setHeight(Float.parseFloat(size[1]));
                             hitboxList.add(hitbox);
                         } catch (NumberFormatException e) {
-                            Logger.debug(Message.WARNING__FURNITURE__NON_NUMERIC_INTERACTION_VALUES, LogType.WARNING, "item", this.itemId, "entry", interaction);
+                            Logger.debug(Message.WARNING__FURNITURE__NON_NUMERIC_INTERACTION_VALUES, Placeholder.of("item", this.itemId, "entry", interaction));
                         }
                     }
                 }
@@ -2619,7 +2624,7 @@ public class NexoItemConverter extends ItemConverter {
             }
             String[] parts = barrier.trim().split("\\s*,\\s*");
             if (parts.length != 3) {
-                Logger.debug(Message.WARNING__FURNITURE__INVALID_BARRIER_ENTRY, LogType.WARNING, "item", this.itemId, "entry", barrier);
+                Logger.debug(Message.WARNING__FURNITURE__INVALID_BARRIER_ENTRY, Placeholder.of("item", this.itemId, "entry", barrier));
                 continue;
             }
 
@@ -2654,7 +2659,7 @@ public class NexoItemConverter extends ItemConverter {
         if (part.contains("..")) {
             String[] rangeSplit = part.split("\\.\\.");
             if (rangeSplit.length != 2) {
-                Logger.debug(Message.WARNING__FURNITURE__INVALID_BARRIER_RANGE, LogType.WARNING, "range", part, "entry", original);
+                Logger.debug(Message.WARNING__FURNITURE__INVALID_BARRIER_RANGE, Placeholder.of("range", part, "entry", original));
                 return new int[0];
             }
             try {
@@ -2668,21 +2673,21 @@ public class NexoItemConverter extends ItemConverter {
                 }
                 return values;
             } catch (NumberFormatException e) {
-                Logger.debug(Message.WARNING__FURNITURE__NON_NUMERIC_BARRIER_RANGE_BOUNDS, LogType.WARNING, "range", part, "entry", original);
+                Logger.debug(Message.WARNING__FURNITURE__NON_NUMERIC_BARRIER_RANGE_BOUNDS, Placeholder.of("range", part, "entry", original));
                 return new int[0];
             }
         } else {
             try {
                 return new int[]{Integer.parseInt(part)};
             } catch (NumberFormatException e) {
-                Logger.debug(Message.WARNING__FURNITURE__NON_NUMERIC_BARRIER_VALUE, LogType.WARNING, "value", part, "entry", original);
+                Logger.debug(Message.WARNING__FURNITURE__NON_NUMERIC_BARRIER_VALUE, Placeholder.of("value", part, "entry", original));
                 return new int[0];
             }
         }
     }
 
     public Direction getDirectionFromString(String direction) {
-        return switch (direction.toUpperCase()) {
+        return switch (direction.toUpperCase(Locale.ROOT)) {
             case "DOWN" -> Direction.DOWN;
             case "NORTH" -> Direction.NORTH;
             case "SOUTH" -> Direction.SOUTH;
@@ -2708,7 +2713,7 @@ public class NexoItemConverter extends ItemConverter {
                     minAmount = Integer.parseInt(split[0].trim());
                     maxAmount = split.length == 2 ? Integer.parseInt(split[1].trim()) : minAmount;
                 } catch (NumberFormatException e) {
-                    Logger.debug(Message.WARNING__FURNITURE__INVALID_AMOUNT_FORMAT, LogType.WARNING, "item", this.itemId, "amount", amountString);
+                    Logger.debug(Message.WARNING__FURNITURE__INVALID_AMOUNT_FORMAT, Placeholder.of("item", this.itemId, "amount", amountString));
                 }
             }
             float probability = 1.0f;
@@ -2719,7 +2724,7 @@ public class NexoItemConverter extends ItemConverter {
                 try {
                     probability = Float.parseFloat(probString);
                 } catch (NumberFormatException e) {
-                    Logger.debug(Message.WARNING__FURNITURE__INVALID_PROBABILITY_FORMAT, LogType.WARNING, "item", this.itemId, "probability", probString);
+                    Logger.debug(Message.WARNING__FURNITURE__INVALID_PROBABILITY_FORMAT, Placeholder.of("item", this.itemId, "probability", probString));
                 }
             }
             if (lootMap.get("nexo_item") instanceof String nexoItemString) {

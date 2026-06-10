@@ -1,5 +1,6 @@
 package fr.robie.craftengineconverter.api.configuration.functions.internal;
 
+import java.util.Locale;
 import java.util.Map;
 
 public class DamageFunction extends AbstractEventFunction {
@@ -30,7 +31,7 @@ public class DamageFunction extends AbstractEventFunction {
             map.put("amount", this.amount);
         }
         if (this.target != PlayerTarget.SELF) {
-            map.put("target", this.target.name().toLowerCase());
+            map.put("target", this.target.name().toLowerCase(Locale.ROOT));
         }
         if (!"generic".equals(this.damageType)) {
             map.put("damage-type", this.damageType);

@@ -4,6 +4,7 @@ import fr.robie.craftengineconverter.api.enums.Hand;
 import org.bukkit.configuration.ConfigurationSection;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Locale;
 import java.util.Objects;
 
 public class HandCondition extends AbstractCondition {
@@ -17,6 +18,6 @@ public class HandCondition extends AbstractCondition {
     @Override
     public void serialize(@NotNull ConfigurationSection section) {
         super.serialize(section);
-        section.set("hand", this.hand.name().toLowerCase());
+        section.set("hand", this.hand.name().toLowerCase(Locale.ROOT));
     }
 }

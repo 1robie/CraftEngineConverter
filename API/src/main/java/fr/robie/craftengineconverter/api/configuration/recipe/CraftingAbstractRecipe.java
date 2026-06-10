@@ -5,6 +5,8 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Locale;
+
 public abstract class CraftingAbstractRecipe<T extends Enum<?>> extends AbstractRecipe {
     private T category;
     private String group;
@@ -25,7 +27,7 @@ public abstract class CraftingAbstractRecipe<T extends Enum<?>> extends Abstract
     public void serialize(@NotNull ConfigurationSection section) {
         super.serialize(section);
         if (this.category != null) {
-            section.set("category", this.category.name().toLowerCase());
+            section.set("category", this.category.name().toLowerCase(Locale.ROOT));
         }
         if (this.group != null) {
             section.set("group", this.group);

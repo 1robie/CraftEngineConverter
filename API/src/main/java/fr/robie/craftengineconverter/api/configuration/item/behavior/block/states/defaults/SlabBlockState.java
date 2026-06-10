@@ -7,6 +7,8 @@ import fr.robie.craftengineconverter.api.configuration.item.models.ModelConfigur
 import net.momirealms.craftengine.core.block.property.type.SlabType;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Locale;
+
 public class SlabBlockState extends AbstractDefaultBlockState {
     public SlabBlockState(
             @NotNull String baseBlock,
@@ -21,7 +23,7 @@ public class SlabBlockState extends AbstractDefaultBlockState {
 
         for (SlabType type : SlabType.values()) {
             for (boolean waterlogged : new boolean[]{false, true}) {
-                String typeName = type.name().toLowerCase();
+                String typeName = type.name().toLowerCase(Locale.ROOT);
                 String appearanceName = String.format("type=%s,waterlogged=%s", typeName, waterlogged);
                 String state = String.format("%s[type=%s,waterlogged=%s]", baseBlock, typeName, waterlogged);
 

@@ -6,6 +6,8 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.jetbrains.annotations.NotNull;
 import org.jspecify.annotations.NonNull;
 
+import java.util.Locale;
+
 public class AnchorTypeBlockStateProperty implements BlockStateProperty<AnchorType> {
     private final String name;
     private final AnchorType value;
@@ -29,6 +31,6 @@ public class AnchorTypeBlockStateProperty implements BlockStateProperty<AnchorTy
     public void serialize(@NotNull ConfigurationSection propertiesSection) {
         ConfigurationSection section = propertiesSection.createSection(this.name);
         section.set("type", "anchor_type");
-        section.set("default", this.value.name().toLowerCase());
+        section.set("default", this.value.name().toLowerCase(Locale.ROOT));
     }
 }

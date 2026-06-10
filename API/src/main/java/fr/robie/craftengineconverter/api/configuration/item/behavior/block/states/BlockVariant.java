@@ -5,6 +5,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.LinkedHashMap;
+import java.util.Locale;
 import java.util.Map;
 
 public class BlockVariant {
@@ -17,7 +18,7 @@ public class BlockVariant {
     }
 
     public <T> BlockVariant addVariantCondition(@NotNull BlockStateProperty<T> property, @NotNull T value) {
-        this.variantConditions.put(property.name(), property.name() + "=" + value.toString().toLowerCase());
+        this.variantConditions.put(property.name(), property.name() + "=" + value.toString().toLowerCase(Locale.ROOT));
         return this;
     }
 

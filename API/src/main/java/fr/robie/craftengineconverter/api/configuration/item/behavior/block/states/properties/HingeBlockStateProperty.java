@@ -6,6 +6,8 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.jetbrains.annotations.NotNull;
 import org.jspecify.annotations.NonNull;
 
+import java.util.Locale;
+
 public class HingeBlockStateProperty implements BlockStateProperty<Door.Hinge> {
     private final String name;
     private final Door.Hinge value;
@@ -29,6 +31,6 @@ public class HingeBlockStateProperty implements BlockStateProperty<Door.Hinge> {
     public void serialize(@NotNull ConfigurationSection propertiesSection) {
         ConfigurationSection section = propertiesSection.createSection(this.name);
         section.set("type", "hinge");
-        section.set("default", this.value.name().toLowerCase());
+        section.set("default", this.value.name().toLowerCase(Locale.ROOT));
     }
 }

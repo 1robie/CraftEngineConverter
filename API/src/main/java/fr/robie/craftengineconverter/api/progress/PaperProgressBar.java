@@ -1,7 +1,7 @@
 package fr.robie.craftengineconverter.api.progress;
 
 import fr.robie.craftengineconverter.api.CraftEngineConverterPluginInterface;
-import fr.robie.craftengineconverter.api.format.ComponentMeta;
+import fr.robie.messageflow.formatter.AdventureMessageFormatter;
 import net.kyori.adventure.bossbar.BossBar;
 
 /**
@@ -9,15 +9,15 @@ import net.kyori.adventure.bossbar.BossBar;
  * It uses the ProgressColor enum for color and updates the boss bar for the player.
  */
 public class PaperProgressBar extends BukkitProgressBar {
-    private final ComponentMeta componentMeta;
+    private final AdventureMessageFormatter<?> messageFormatter;
     private final BossBar bossBar;
 
     public PaperProgressBar(CraftEngineConverterPluginInterface plugin, Builder builder) {
         super(plugin, builder);
-        if (plugin.getMessageFormatter() instanceof ComponentMeta meta) {
-            this.componentMeta = meta;
+        if (plugin.getMessageFormatter() instanceof AdventureMessageFormatter<?> adventureFormatter) {
+            this.messageFormatter = adventureFormatter;
         } else {
-            this.componentMeta = new ComponentMeta(plugin);
+            throw new IllegalStateException("Plugin's message formatter must be an instance of AdventureMessageFormatter");
         }
         if (this.isNotNull(builder.player)) {
             BossBar.Color color = BossBar.Color.BLUE;
@@ -33,7 +33,7 @@ public class PaperProgressBar extends BukkitProgressBar {
                     }
                 }
             }
-            this.bossBar = BossBar.bossBar(this.componentMeta.getComponent(this.isNotNull(builder.prefix) ? builder.prefix : "Progress"), 0f, color, BossBar.Overlay.PROGRESS);
+            this.bossBar = BossBar.bossBar(this.messageFormatter.getComponent(this.isNotNull(builder.prefix) ? builder.prefix : "Progress"), 0f, color, BossBar.Overlay.PROGRESS);
         } else {
             this.bossBar = null;
         }
@@ -58,12 +58,12 @@ public class PaperProgressBar extends BukkitProgressBar {
     @Override
     public void displayProgress() {
         if (this.isNotNull(this.bossBar) && this.isNotNull(this.player) && this.player.isOnline()) {
-            float progress = Math.min(1f, Math.max(0f, (float) this.getCurrent() / this.getTotal()));
+            float progress = Math.clamp((float) this.getCurrent() / this.getTotal(), 0f, 1f);
             if (this.bossBar.progress() == progress) {
                 return;
             }
             this.bossBar.progress(progress);
-            this.bossBar.name(this.componentMeta.getComponent(this.getProgress()));
+            this.bossBar.name(this.messageFormatter.getComponent(this.getProgress()));
         } else {
             super.displayProgress();
         }

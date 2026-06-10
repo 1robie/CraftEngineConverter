@@ -1,5 +1,6 @@
 package fr.robie.craftengineconverter.api.configuration.functions.internal;
 
+import java.util.Locale;
 import java.util.Map;
 
 public class SetLevelFunction extends AbstractEventFunction {
@@ -28,7 +29,7 @@ public class SetLevelFunction extends AbstractEventFunction {
             map.put("add", true);
         }
         if (this.target != PlayerTarget.SELF) {
-            map.put("target", this.target.name().toLowerCase());
+            map.put("target", this.target.name().toLowerCase(Locale.ROOT));
         }
         return map;
     }

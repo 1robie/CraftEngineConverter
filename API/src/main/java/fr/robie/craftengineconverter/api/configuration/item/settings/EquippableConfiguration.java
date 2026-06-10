@@ -6,6 +6,8 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Locale;
+
 public class EquippableConfiguration implements ItemConfigurationSerializable {
     private final EquipmentSlot equipmentSlot;
     private final String equipSound;
@@ -72,7 +74,7 @@ public class EquippableConfiguration implements ItemConfigurationSerializable {
                 : this.getOrCreateSection(this.getOrCreateSection(itemSection, "data"), "equippable");
 
         if (this.equipmentSlot != null) {
-            ceEquippableSection.set("slot", this.equipmentSlot.name().toLowerCase());
+            ceEquippableSection.set("slot", this.equipmentSlot.name().toLowerCase(Locale.ROOT));
         }
 
         if (this.equipSound != null && !this.equipSound.isBlank() && !this.equipSound.equals("item.armor.equip_generic")) {

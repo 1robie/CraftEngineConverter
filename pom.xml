@@ -64,6 +64,13 @@
                 <version>${project.version}</version>
             </dependency>
 
+            <dependency>
+                <groupId>com.github.1robie.MessageFlow</groupId>
+                <artifactId>message-flow</artifactId>
+                <version>main-SNAPSHOT</version>
+                <scope>compile</scope>
+            </dependency>
+
             <!-- Paper -->
             <dependency>
                 <groupId>io.papermc.paper</groupId>
@@ -299,6 +306,12 @@
         <repository>
             <id>central-snapshots</id>
             <url>https://central.sonatype.com/repository/maven-snapshots/</url>
+        </repository>
+
+        <!-- JitPack -->
+        <repository>
+            <id>jitpack.io</id>
+            <url>https://jitpack.io</url>
         </repository>
     </repositories>
 </project>

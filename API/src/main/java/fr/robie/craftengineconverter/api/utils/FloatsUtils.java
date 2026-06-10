@@ -13,8 +13,10 @@ public class FloatsUtils {
     }
 
     public void setValue(int index, float value) {
-        this.values[index] = value;
-        this.updated = true;
+        if (this.values[index] != value) {
+            this.values[index] = value;
+            this.updated = true;
+        }
     }
 
     public void addValue(int index, float value) {

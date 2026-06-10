@@ -5,6 +5,7 @@ import net.momirealms.craftengine.core.entity.display.TextDisplayAlignment;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 public class TextDisplayElement implements Element {
@@ -42,7 +43,7 @@ public class TextDisplayElement implements Element {
         if (this.hasShadow) data.put("has-shadow", true);
         if (this.seeThrough) data.put("is-see-through", true);
         if (!this.useDefaultBackground) data.put("use-default-background-color", false);
-        if (this.alignment != null) data.put("alignment", this.alignment.name().toLowerCase());
+        if (this.alignment != null) data.put("alignment", this.alignment.name().toLowerCase(Locale.ROOT));
         return data;
     }
 }

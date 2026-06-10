@@ -6,6 +6,7 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 
 public class InvulnerableSettingConfiguration implements ItemConfigurationSerializable {
@@ -31,14 +32,14 @@ public class InvulnerableSettingConfiguration implements ItemConfigurationSerial
         if (this.mergeInvulnerableTypes) {
             List<String> invulnerable = settings.getStringList("invulnerable");
             for (InvulnerableType type : this.invulnerableTypes) {
-                String typeName = type.name().toLowerCase();
+                String typeName = type.name().toLowerCase(Locale.ROOT);
                 if (!invulnerable.contains(typeName)) {
                     invulnerable.add(typeName);
                 }
             }
             settings.set("invulnerable", invulnerable);
         } else {
-            List<String> invulnerable = this.invulnerableTypes.stream().map(type -> type.name().toLowerCase()).toList();
+            List<String> invulnerable = this.invulnerableTypes.stream().map(type -> type.name().toLowerCase(Locale.ROOT)).toList();
             settings.set("invulnerable", invulnerable);
         }
     }

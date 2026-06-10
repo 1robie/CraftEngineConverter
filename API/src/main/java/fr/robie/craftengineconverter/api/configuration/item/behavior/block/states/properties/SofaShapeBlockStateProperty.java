@@ -6,6 +6,8 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.jetbrains.annotations.NotNull;
 import org.jspecify.annotations.NonNull;
 
+import java.util.Locale;
+
 public class SofaShapeBlockStateProperty implements BlockStateProperty<SofaShape> {
     private final String name;
     private final SofaShape value;
@@ -29,6 +31,6 @@ public class SofaShapeBlockStateProperty implements BlockStateProperty<SofaShape
     public void serialize(@NotNull ConfigurationSection propertiesSection) {
         ConfigurationSection section = propertiesSection.createSection(this.name);
         section.set("type", "sofa_shape");
-        section.set("default", this.value.name().toLowerCase());
+        section.set("default", this.value.name().toLowerCase(Locale.ROOT));
     }
 }

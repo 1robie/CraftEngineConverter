@@ -66,7 +66,7 @@ public enum ArmorConverter {
         }
 
         for (Map.Entry<ArmorConverter, ConfigurationSection> entry : converterSections.entrySet()) {
-            entry.getValue().set("type", entry.getKey().name().toLowerCase());
+            entry.getValue().set("type", entry.getKey().name().toLowerCase(Locale.ROOT));
         }
 
         return converterSections;

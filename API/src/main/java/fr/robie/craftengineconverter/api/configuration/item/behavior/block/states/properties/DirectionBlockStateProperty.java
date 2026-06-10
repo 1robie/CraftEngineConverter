@@ -5,6 +5,8 @@ import net.momirealms.craftengine.core.util.Direction;
 import org.bukkit.configuration.ConfigurationSection;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Locale;
+
 public record DirectionBlockStateProperty(String name, Direction value) implements BlockStateProperty<Direction> {
     public DirectionBlockStateProperty(@NotNull String name, @NotNull Direction value) {
         this.name = name;
@@ -20,6 +22,6 @@ public record DirectionBlockStateProperty(String name, Direction value) implemen
     public void serialize(@NotNull ConfigurationSection propertiesSection) {
         ConfigurationSection section = propertiesSection.createSection(this.name);
         section.set("type", "direction");
-        section.set("default", this.value.name().toLowerCase());
+        section.set("default", this.value.name().toLowerCase(Locale.ROOT));
     }
 }
