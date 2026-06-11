@@ -25,6 +25,7 @@
                         </goals>
                         <configuration>
                             <shadedArtifactAttached>false</shadedArtifactAttached>
+                            <createDependencyReducedPom>false</createDependencyReducedPom>
                             <outputFile>${project.build.directory}/${project.build.finalName}.jar</outputFile>
                             <artifactSet>
                                 <includes>
@@ -33,6 +34,7 @@
                                     <include>org.bstats:bstats-bukkit</include>
                                     <include>org.bstats:bstats-base</include>
                                     <include>fr.maxlego08.sarah:sarah</include>
+                                    <include>com.github.1robie.MessageFlow:message-flow</include>
                                 </includes>
                             </artifactSet>
                             <relocations>
@@ -47,6 +49,10 @@
                                 <relocation>
                                     <pattern>fr.maxlego08.sarah</pattern>
                                     <shadedPattern>fr.robie.craftengineconverter.lib.sarah</shadedPattern>
+                                </relocation>
+                                <relocation>
+                                    <pattern>fr.robie.messageflow</pattern>
+                                    <shadedPattern>fr.robie.craftengineconverter.lib.messageflow</shadedPattern>
                                 </relocation>
                             </relocations>
                             <filters>
@@ -68,6 +74,11 @@
         <dependency>
             <groupId>fr.robie.craftengineconverter</groupId>
             <artifactId>BOM</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.github.1robie.MessageFlow</groupId>
+            <artifactId>message-flow</artifactId>
         </dependency>
 
         <dependency>

@@ -17,7 +17,7 @@ import fr.robie.craftengineconverter.api.configuration.item.behavior.furniture.I
 import fr.robie.craftengineconverter.api.configuration.item.behavior.furniture.Placement;
 import fr.robie.craftengineconverter.api.configuration.item.behavior.furniture.element.ArmorStandElement;
 import fr.robie.craftengineconverter.api.configuration.item.behavior.furniture.element.ItemDisplayElement;
-import fr.robie.craftengineconverter.api.configuration.item.behavior.furniture.hitbox.Hitbox;
+import fr.robie.craftengineconverter.api.configuration.item.behavior.furniture.hitbox.BaseHitbox;
 import fr.robie.craftengineconverter.api.configuration.item.behavior.furniture.hitbox.ShulkerHitbox;
 import fr.robie.craftengineconverter.api.configuration.item.components.*;
 import fr.robie.craftengineconverter.api.configuration.item.data.*;
@@ -41,7 +41,6 @@ import fr.robie.craftengineconverter.api.enums.CraftEngineBlockState;
 import fr.robie.craftengineconverter.api.enums.ItemDisplayType;
 import fr.robie.craftengineconverter.api.enums.Plugins;
 import fr.robie.craftengineconverter.api.format.Message;
-import fr.robie.craftengineconverter.api.logger.Logger;
 import fr.robie.craftengineconverter.api.utils.FloatsUtils;
 import fr.robie.craftengineconverter.common.enums.BukkitFlagToComponentFlag;
 import fr.robie.craftengineconverter.common.utils.enums.BlockParent;
@@ -51,6 +50,8 @@ import fr.robie.craftengineconverter.common.utils.enums.ia.IAModelsKeys;
 import fr.robie.craftengineconverter.common.utils.enums.ia.IAPlacedModelTypes;
 import fr.robie.craftengineconverter.converter.Converter;
 import fr.robie.craftengineconverter.converter.ItemConverter;
+import fr.robie.messageflow.formatter.Placeholder;
+import fr.robie.messageflow.logger.Logger;
 import net.momirealms.craftengine.core.attribute.AttributeModifier;
 import net.momirealms.craftengine.core.entity.EquipmentSlot;
 import net.momirealms.craftengine.core.entity.display.Billboard;
@@ -84,7 +85,7 @@ public class IAItemsConverter extends ItemConverter {
         ConfigurationSection resourceSection = this.iaItemSection.getConfigurationSection("resource");
         if (this.isNotNull(resourceSection)) {
             try {
-                this.craftEngineItemsConfiguration.setMaterial(Material.valueOf(resourceSection.getString("material", "").toUpperCase()));
+                this.craftEngineItemsConfiguration.setMaterial(Material.valueOf(resourceSection.getString("material", "").toUpperCase(Locale.ROOT)));
             } catch (Exception ignored) {
             }
         }
@@ -144,7 +145,7 @@ public class IAItemsConverter extends ItemConverter {
             List<ComponentFlag> convertedFlags = new ArrayList<>();
             for (String flag : itemFlags) {
                 try {
-                    ItemFlag bukkitFlag = ItemFlag.valueOf(flag.toUpperCase());
+                    ItemFlag bukkitFlag = ItemFlag.valueOf(flag.toUpperCase(Locale.ROOT));
                     ComponentFlag componentFlag = BukkitFlagToComponentFlag.fromBukkitItemFlag(bukkitFlag);
                     if (componentFlag != null) {
                         convertedFlags.add(componentFlag);
@@ -170,7 +171,7 @@ public class IAItemsConverter extends ItemConverter {
 
                 net.momirealms.craftengine.core.attribute.AttributeModifier.Slot slot;
                 try {
-                    slot = net.momirealms.craftengine.core.attribute.AttributeModifier.Slot.valueOf(equipmentSlot.toUpperCase());
+                    slot = net.momirealms.craftengine.core.attribute.AttributeModifier.Slot.valueOf(equipmentSlot.toUpperCase(Locale.ROOT));
                 } catch (Exception e) {
                     Logger.debug("[IAItemsConverter] Invalid equipment slot " + equipmentSlot + " for attribute modifiers for item " + this.itemId);
                     continue;
@@ -189,7 +190,7 @@ public class IAItemsConverter extends ItemConverter {
                         }
 
                         double value = attributeSection.getDouble("value", 0.0);
-                        String operationStr = attributeSection.getString("operation", "add_value").toUpperCase();
+                        String operationStr = attributeSection.getString("operation", "add_value").toUpperCase(Locale.ROOT);
                         net.momirealms.craftengine.core.attribute.AttributeModifier.Operation operation;
                         try {
                             if (operationStr.equalsIgnoreCase("multiply_base")) {
@@ -227,7 +228,7 @@ public class IAItemsConverter extends ItemConverter {
         }
 
         try {
-            String fallbackKey = "minecraft:" + key.replaceAll("([A-Z])", "_$1").toLowerCase();
+            String fallbackKey = "minecraft:" + key.replaceAll("([A-Z])", "_$1").toLowerCase(Locale.ROOT);
             return Registry.ATTRIBUTE.getOrThrow(NamespacedKey.fromString(fallbackKey));
         } catch (Exception ignored) {
         }
@@ -333,9 +334,14 @@ public class IAItemsConverter extends ItemConverter {
                 if (glow) {
                     String color = glowSection.getString("color");
                     try {
-                        this.craftEngineItemsConfiguration.addItemConfiguration(new GlowDropColorConfiguration(DyeColor.valueOf(color.toLowerCase())));
+                        this.craftEngineItemsConfiguration.addItemConfiguration(new GlowDropColorConfiguration(DyeColor.valueOf(color.toLowerCase(Locale.ROOT))));
                     } catch (Exception e) {
-                        Logger.debug(Message.ERROR__CONVERTER__INVALID_GLOW_DROP_COLOR, "converter", "IAItemsConverter", "item", this.itemId, "color", color, "valid_colors", Arrays.toString(DyeColor.values()));
+                        Placeholder.Builder builder = Placeholder.builder();
+                        builder.register("converter", "IAItemsConverter")
+                                .register("item", this.itemId)
+                                .register("color", color)
+                                .register("valid_colors", Arrays.toString(DyeColor.values()));
+                        Logger.debug(Message.ERROR__CONVERTER__INVALID_GLOW_DROP_COLOR, builder.build());
                     }
                 }
             }
@@ -411,7 +417,7 @@ public class IAItemsConverter extends ItemConverter {
     }
 
     private EquipmentSlot resolveEquipmentSlot(ConfigurationSection equipmentSection) {
-        EquipmentSlot fromItemId = this.getEquipmentSlotFromSuffix(this.itemId.toLowerCase(), false);
+        EquipmentSlot fromItemId = this.getEquipmentSlotFromSuffix(this.itemId.toLowerCase(Locale.ROOT), false);
         if (fromItemId != null) {
             return fromItemId;
         }
@@ -425,7 +431,7 @@ public class IAItemsConverter extends ItemConverter {
     }
 
     private EquipmentSlot getEquipmentSlotFromSuffix(String name, boolean uppercase) {
-        String upString = uppercase ? name.toUpperCase() : name;
+        String upString = uppercase ? name.toUpperCase(Locale.ROOT) : name;
         if (upString.endsWith(uppercase ? "_HELMET" : "_helmet") || upString.endsWith("_SKULL") || upString.endsWith("_HAT")) {
             return EquipmentSlot.HEAD;
         }
@@ -522,7 +528,7 @@ public class IAItemsConverter extends ItemConverter {
             return null;
         }
         try {
-            return EquipmentSlot.valueOf(slot.toUpperCase());
+            return EquipmentSlot.valueOf(slot.toUpperCase(Locale.ROOT));
         } catch (IllegalArgumentException e) {
             Logger.debug("[IAItemsConverter] Invalid equipment slot '" + slot + "' for item " + this.itemId);
             return null;
@@ -566,7 +572,7 @@ public class IAItemsConverter extends ItemConverter {
     private IADirectionalMode getDirectionalMode() {
         try {
             String mode = this.iaItemSection.getString("specific_properties.block.placed_model.directional_mode", "NONE");
-            return IADirectionalMode.valueOf(mode.toUpperCase());
+            return IADirectionalMode.valueOf(mode.toUpperCase(Locale.ROOT));
         } catch (Exception e) {
             return IADirectionalMode.NONE;
         }
@@ -803,14 +809,8 @@ public class IAItemsConverter extends ItemConverter {
     private IAPlacedModelTypes getPlacedModelType(ConfigurationSection blockSection) {
         try {
             String type = blockSection.getString("placed_model.type", "REAL");
-            IAPlacedModelTypes modelType = IAPlacedModelTypes.valueOf(type.toUpperCase());
 
-            if (modelType == IAPlacedModelTypes.FIRE) {
-                Logger.info("[IAItemsConverter] Placed model type FIRE is not supported by CraftEngine so it will be converted as REAL for item " + this.itemId);
-                return IAPlacedModelTypes.REAL;
-            }
-
-            return modelType;
+            return IAPlacedModelTypes.valueOf(type.toUpperCase(Locale.ROOT));
         } catch (Exception e) {
             return IAPlacedModelTypes.REAL;
         }
@@ -943,7 +943,7 @@ public class IAItemsConverter extends ItemConverter {
     private BlockParent getBlockParent(ConfigurationSection graphicsSection) {
         try {
             String parentStr = graphicsSection.getString("parent", "");
-            return BlockParent.valueOf(parentStr.toUpperCase());
+            return BlockParent.valueOf(parentStr.toUpperCase(Locale.ROOT));
         } catch (Exception e) {
             return null;
         }
@@ -1191,7 +1191,7 @@ public class IAItemsConverter extends ItemConverter {
     private void convertFurniture(ConfigurationSection furnitureSection, ConfigurationSection behavioursSection) {
         IAEntityTypes entityType = IAEntityTypes.ITEM_FRAME;
         try {
-            entityType = IAEntityTypes.valueOf(furnitureSection.getString("entity", "ITEM_FRAME").toUpperCase());
+            entityType = IAEntityTypes.valueOf(furnitureSection.getString("entity", "ITEM_FRAME").toUpperCase(Locale.ROOT));
         } catch (Exception ignored) {
         }
 
@@ -1222,18 +1222,18 @@ public class IAItemsConverter extends ItemConverter {
         // --- Display properties ---
         Billboard transformType = Billboard.FIXED;
         ItemDisplayType displayType = ItemDisplayType.NONE;
-        FloatsUtils displayTranslation = new FloatsUtils(3, new float[]{0f, 0.5f, 0f});
-        if (isBig) {
-            displayTranslation.addValue(1, 1f);
-        }
+        FloatsUtils displayTranslation = new FloatsUtils(3, new float[]{0f, 0f, 0f});
+//        if (isBig) {
+//            displayTranslation.addValue(1, 1f);
+//        }
         FloatsUtils scale = new FloatsUtils(3, new float[]{1f, 1f, 1f});
 
         ConfigurationSection displayTransformationSection = furnitureSection.getConfigurationSection("display_transformation");
         if (this.isNotNull(displayTransformationSection)) {
             try {
-                displayType = ItemDisplayType.valueOf(displayTransformationSection.getString("transform", "FIXED").toUpperCase());
+                displayType = ItemDisplayType.valueOf(displayTransformationSection.getString("transform", "FIXED").toUpperCase(Locale.ROOT));
             } catch (Exception e) {
-                Logger.debug(Message.WARNING__CONVERTER__IA__FURNITURE__UNKNOWN_DISPLAY_TRANSFORM, "item", this.itemId, "transform", displayTransformationSection.getString("transform"));
+                Logger.debug(Message.WARNING__CONVERTER__IA__FURNITURE__UNKNOWN_DISPLAY_TRANSFORM, Placeholder.of("item", this.itemId, "transform", displayTransformationSection.getString("transform")));
             }
             ConfigurationSection translationSection = displayTransformationSection.getConfigurationSection("translation");
             if (this.isNotNull(translationSection)) {
@@ -1267,42 +1267,89 @@ public class IAItemsConverter extends ItemConverter {
             }
         }
 
-        // --- Element ---
-        ItemElement element;
-        if (entityType == IAEntityTypes.ARMOR_STAND) {
-            ArmorStandElement armorStand = new ArmorStandElement(this.itemId);
-            if (scale.isUpdated()) {
-                armorStand.setScale(scale.getValue(0), scale.getValue(1), scale.getValue(2));
-            }
-            if (!isBig) {
-                armorStand.setSmall(true);
-            }
-            element = armorStand;
-        } else {
-            ItemDisplayElement itemDisplay = new ItemDisplayElement(this.itemId);
-            int light = furnitureSection.getInt("light_level", -1);
-            if (light >= 0) {
-                itemDisplay.display().setBrightness(light, -1);
-            }
-            if (displayType != ItemDisplayType.NONE) {
-                itemDisplay.setDisplayTransform(displayType);
-            }
-            itemDisplay.display().setBillboard(transformType);
-            if (displayTranslation.isUpdated()) {
-                itemDisplay.display().setTranslation(displayTranslation.getValue(0), displayTranslation.getValue(1), displayTranslation.getValue(2));
-            }
-            if (scale.isUpdated()) {
-                itemDisplay.display().setScale(scale.getValue(0), scale.getValue(1), scale.getValue(2));
-            }
-            element = itemDisplay;
+        int heightSize = furnitureSection.getInt("hitbox.height", 1);
+
+        Double sitHeight = null;
+        if (behavioursSection.contains("furniture_sit.sit_height")) {
+            sitHeight = behavioursSection.getDouble("furniture_sit.sit_height", 0d);
         }
 
-        // --- Hitboxes ---
-        double sitHeight = behavioursSection.getDouble("furniture_sit.sit_height", 0d);
-        List<Hitbox> hitboxList = new ArrayList<>();
-        ConfigurationSection iaHitboxesSection = furnitureSection.getConfigurationSection("hitbox");
-        if (this.isNotNull(iaHitboxesSection)) {
-            this.parseItemsAdderHitboxes(iaHitboxesSection, hitboxList, sitHeight);
+        for (FurniturePlacement placement : placements) {
+
+            FloatsUtils placementTranslation  = switch (placement) {
+                case WALL -> new FloatsUtils(3, new float[]{0f, -1f, 0.5f}); // TODO: check to sizeProportion
+                case GROUND -> new FloatsUtils(3, new float[]{0f, heightSize/2f, 0f});
+                case CEILING -> new FloatsUtils(3, new float[]{0f, -heightSize/2f, 0f});
+            };
+
+            ItemElement element;
+            if (entityType == IAEntityTypes.ARMOR_STAND) {
+                ArmorStandElement armorStand = new ArmorStandElement(this.itemId);
+                if (scale.isUpdated()) {
+                    armorStand.setScale(scale.getValue(0), scale.getValue(1), scale.getValue(2));
+                }
+                if (!isBig) {
+                    armorStand.setSmall(true);
+                }
+                element = armorStand;
+            } else {
+                ItemDisplayElement itemDisplay = new ItemDisplayElement(this.itemId);
+                int light = furnitureSection.getInt("light_level", -1);
+                if (light >= 0) {
+                    itemDisplay.display().setBrightness(light, -1);
+                }
+                if (displayType != ItemDisplayType.NONE) {
+                    itemDisplay.setDisplayTransform(displayType);
+                }
+                itemDisplay.display().setBillboard(transformType);
+                if (displayTranslation.isUpdated()) {
+                    itemDisplay.display().setTranslation(displayTranslation.getValue(0), displayTranslation.getValue(1), displayTranslation.getValue(2));
+                }
+                itemDisplay.display().addTranslation(placementTranslation.getValue(0), displayTranslation.isUpdated() ? 0 : placementTranslation.getValue(1), placementTranslation.getValue(2));
+                if (scale.isUpdated()) {
+                    itemDisplay.display().setScale(scale.getValue(0), scale.getValue(1), scale.getValue(2));
+                }
+                element = itemDisplay;
+            }
+            List<BaseHitbox> hitboxList = new ArrayList<>();
+            ConfigurationSection iaHitboxesSection = furnitureSection.getConfigurationSection("hitbox");
+            if (this.isNotNull(iaHitboxesSection)) {
+                switch (placement) {
+                    case GROUND -> this.parseItemsAdderHitboxes(
+                            iaHitboxesSection,
+                            hitboxList,
+                            sitHeight,
+                            AxisMode.CENTER,
+                            AxisMode.POSITIVE,
+                            AxisMode.CENTER
+                    );
+                    case WALL -> this.parseItemsAdderHitboxes(
+                            iaHitboxesSection,
+                            hitboxList,
+                            sitHeight,
+                            AxisMode.CENTER,
+                            AxisMode.CENTER,
+                            AxisMode.POSITIVE
+                    );
+                    case CEILING -> this.parseItemsAdderHitboxes(
+                            iaHitboxesSection,
+                            hitboxList,
+                            sitHeight,
+                            AxisMode.CENTER,
+                            AxisMode.NEGATIVE,
+                            AxisMode.CENTER
+                    );
+                }
+            }
+
+            Placement placementConfig = furnitureConfiguration.getOrCreatePlacement(placement);
+            placementConfig.addElement(element);
+            hitboxList.forEach(baseHitbox -> {
+               if (placement == FurniturePlacement.WALL) {
+                   baseHitbox.addPosition(placementTranslation.getValue(0) + displayTranslation.getValue(0), placementTranslation.getValue(1) + (displayTranslation.isUpdated() ? 0 : displayTranslation.getValue(1)), placementTranslation.getValue(2) + displayTranslation.getValue(2));
+               }
+               placementConfig.addHitbox(baseHitbox);
+            });
         }
 
         // --- Loot ---
@@ -1313,40 +1360,72 @@ public class IAItemsConverter extends ItemConverter {
         lootConfiguration.addPool(pool);
         furnitureConfiguration.setLoot(lootConfiguration);
 
-        // --- Placements ---
-        for (FurniturePlacement furniturePlacement : placements) {
-            Placement placement = furnitureConfiguration.getOrCreatePlacement(furniturePlacement);
-            placement.addElement(element);
-            hitboxList.forEach(placement::addHitbox);
-        }
-
         this.getCraftEngineItemsConfiguration().addItemConfiguration(furnitureConfiguration);
     }
 
-    private void parseItemsAdderHitboxes(ConfigurationSection iaHitboxesSection, List<Hitbox> hitboxes, double seatPosition) {
+    private void parseItemsAdderHitboxes(
+            ConfigurationSection iaHitboxesSection,
+            List<BaseHitbox> hitboxes,
+            Double seatPosition,
+            AxisMode xMode,
+            AxisMode yMode,
+            AxisMode zMode
+    ) {
         if (iaHitboxesSection == null) {
             return;
         }
 
-        int length = iaHitboxesSection.getInt("length", 1);
-        int width = iaHitboxesSection.getInt("width", 1);
-        int height = iaHitboxesSection.getInt("height", 1);
-        int lengthOffset = iaHitboxesSection.getInt("length_offset", 0);
+        int width = iaHitboxesSection.getInt("width", 1);     // X
+        int height = iaHitboxesSection.getInt("height", 1);   // Y
+        int length = iaHitboxesSection.getInt("length", 1);   // Z
+
         int widthOffset = iaHitboxesSection.getInt("width_offset", 0);
         int heightOffset = iaHitboxesSection.getInt("height_offset", 0);
+        int lengthOffset = iaHitboxesSection.getInt("length_offset", 0);
 
-        for (int x = 0; x < length; x++) {
+        int startX = switch (xMode) {
+            case CENTER -> -(width / 2);
+            case POSITIVE -> 0;
+            case NEGATIVE -> -(width - 1);
+        };
+
+        int startY = switch (yMode) {
+            case CENTER -> -(height / 2);
+            case POSITIVE -> 0;
+            case NEGATIVE -> -(height - 1);
+        };
+
+        int startZ = switch (zMode) {
+            case CENTER -> -(length / 2);
+            case POSITIVE -> 0;
+            case NEGATIVE -> -(length - 1);
+        };
+
+        for (int x = 0; x < width; x++) {
             for (int y = 0; y < height; y++) {
-                for (int z = 0; z < width; z++) {
+                for (int z = 0; z < length; z++) {
+
+                    int finalX = startX + x + widthOffset;
+                    int finalY = startY + y + heightOffset;
+                    int finalZ = startZ + z + lengthOffset;
+
                     ShulkerHitbox hitbox = new ShulkerHitbox();
-                    hitbox.setPosition(x + lengthOffset, y + heightOffset, z + widthOffset);
-                    if (x == 0 && y == 0 && z == 0) {
-                        hitbox.addSeat(0, (float) seatPosition, 0, 0);
+                    hitbox.setPosition(finalX, finalY, finalZ);
+
+                    if (x == 0 && y == 0 && z == 0 && seatPosition != null) {
+                        hitbox.addSeat(0, seatPosition.floatValue(), 0, 180);
                     }
+
                     hitboxes.add(hitbox);
                 }
             }
         }
+    }
+
+    private enum AxisMode {
+        CENTER,
+        POSITIVE,
+        NEGATIVE
     }
 
 }

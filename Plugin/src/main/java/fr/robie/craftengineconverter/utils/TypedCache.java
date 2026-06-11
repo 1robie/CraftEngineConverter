@@ -1,6 +1,8 @@
 package fr.robie.craftengineconverter.utils;
 
-import fr.robie.craftengineconverter.api.logger.Logger;
+
+
+import fr.robie.messageflow.logger.Logger;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -79,7 +81,7 @@ public class TypedCache<T> {
                 this.batchProcessor.accept(batch);
                 keysToRemove.forEach(this.cache::remove);
             } catch (Exception e) {
-                Logger.showException(
+                Logger.error(
                     "Failed to process batch of " + this.type.getSimpleName() + " objects",
                     e
                 );
@@ -108,7 +110,7 @@ public class TypedCache<T> {
                             this.cache.remove(k);
                         }
                     } catch (Exception e) {
-                        Logger.showException(
+                        Logger.error(
                                 "Failed to flush batch of " + this.type.getSimpleName() + " objects",
                                 e
                         );

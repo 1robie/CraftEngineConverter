@@ -7,6 +7,7 @@ import fr.robie.craftengineconverter.common.permission.Permission;
 import fr.robie.craftengineconverter.listener.WorldConverterManager;
 import fr.robie.craftengineconverter.utils.command.CommandType;
 import fr.robie.craftengineconverter.utils.command.VCommand;
+import fr.robie.messageflow.formatter.Placeholder;
 
 public class CraftEngineConverterCommandWorldConverterClearCachedChunks extends VCommand {
     public CraftEngineConverterCommandWorldConverterClearCachedChunks(CraftEngineConverter plugin) {
@@ -26,9 +27,9 @@ public class CraftEngineConverterCommandWorldConverterClearCachedChunks extends 
 
         long endTime = System.currentTimeMillis();
 
-        this.message(plugin, this.sender, Message.COMMAND__WORLD_CONVERTER__CLEAR_CACHED_CHUNKS__COMPLETE,
-                "chunks", clearedChunks,
-                "time", TimerBuilder.formatTimeAuto(endTime - startTime));
+        this.messageFormatter.sendMessage(Message.COMMAND__WORLD_CONVERTER__CLEAR_CACHED_CHUNKS__COMPLETE, this.sender,
+                Placeholder.of("chunks", String.valueOf(clearedChunks),
+                        "time", TimerBuilder.formatTimeAuto(endTime - startTime)));
 
         return CommandType.SUCCESS;
     }

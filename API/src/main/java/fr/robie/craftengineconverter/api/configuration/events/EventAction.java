@@ -3,10 +3,7 @@ package fr.robie.craftengineconverter.api.configuration.events;
 import fr.robie.craftengineconverter.api.configuration.functions.Function;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class EventAction {
     private final EventTrigger eventTrigger;
@@ -26,7 +23,7 @@ public class EventAction {
         for (Function function : this.functions) {
             serializedFunctions.add(function.serialize());
         }
-        map.put(this.eventTrigger.getKey().toLowerCase(), serializedFunctions);
+        map.put(this.eventTrigger.getKey().toLowerCase(Locale.ROOT), serializedFunctions);
         return map;
 
     }

@@ -6,6 +6,7 @@ import fr.robie.craftengineconverter.api.enums.ItemDisplayType;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 public class ItemDisplayElement extends ItemElement {
@@ -24,7 +25,7 @@ public class ItemDisplayElement extends ItemElement {
         data.put("type", "item_display");
         super.serialize(data);
         if (this.displayTransform != ItemDisplayType.FIXED)
-            data.put("display-transform", this.displayTransform.name().toLowerCase());
+            data.put("display-transform", this.displayTransform.name().toLowerCase(Locale.ROOT));
         this.display.serialize(data);
         return data;
     }

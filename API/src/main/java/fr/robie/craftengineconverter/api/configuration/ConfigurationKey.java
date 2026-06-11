@@ -10,10 +10,7 @@ import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Supplier;
 
 public enum ConfigurationKey {
@@ -34,7 +31,7 @@ public enum ConfigurationKey {
                 List<ConverterOption> options = new ArrayList<>();
                 for (String s : stringList) {
                     try {
-                        options.add(ConverterOption.valueOf(s.toUpperCase()));
+                        options.add(ConverterOption.valueOf(s.toUpperCase(Locale.ROOT)));
                     } catch (IllegalArgumentException ignored) {
                     }
                 }
@@ -150,7 +147,7 @@ public enum ConfigurationKey {
         if (raw.isEnum()) {
             return (o, d) -> {
                 try {
-                    return (T) Enum.valueOf((Class<Enum>) raw, o.toString().toUpperCase());
+                    return (T) Enum.valueOf((Class<Enum>) raw, o.toString().toUpperCase(Locale.ROOT));
                 } catch (IllegalArgumentException e) {
                     return d.get();
                 }

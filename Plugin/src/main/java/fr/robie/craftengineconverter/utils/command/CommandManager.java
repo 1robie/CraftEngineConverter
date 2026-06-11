@@ -2,9 +2,11 @@ package fr.robie.craftengineconverter.utils.command;
 
 import fr.robie.craftengineconverter.CraftEngineConverter;
 import fr.robie.craftengineconverter.api.format.Message;
-import fr.robie.craftengineconverter.api.logger.LogType;
-import fr.robie.craftengineconverter.api.logger.Logger;
+
 import fr.robie.craftengineconverter.utils.CraftEngineConverterUtils;
+import fr.robie.messageflow.formatter.MessageFormatter;
+import fr.robie.messageflow.formatter.Placeholder;
+import fr.robie.messageflow.logger.Logger;
 import org.bukkit.Bukkit;
 import org.bukkit.command.*;
 import org.bukkit.entity.Player;
@@ -15,11 +17,14 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import java.util.function.Consumer;
 
 public class CommandManager extends CraftEngineConverterUtils implements CommandExecutor, TabCompleter, CommandManagerInt {
     private static CommandMap commandMap;
     private static Constructor<? extends PluginCommand> constructor;
+
+    private MessageFormatter<?,?> messageFormatter;
 
     static {
         try {
@@ -49,6 +54,7 @@ public class CommandManager extends CraftEngineConverterUtils implements Command
      * This method should be called when the plugin is being loaded.
      */
     public void loadCommands() {
+        this.messageFormatter = this.plugin.getMessageFormatter();
         this.applyToCommands(VCommand::onLoad);
     }
 
@@ -88,7 +94,7 @@ public class CommandManager extends CraftEngineConverterUtils implements Command
         try {
             action.accept(command);
         } catch (Exception e) {
-            Logger.showException("Error while applying command action to: " + command.getSyntax(), e);
+            Logger.error("Error while applying command action to: " + command.getSyntax() + " - " + e.getMessage());
         }
         List<VCommand> children = command.getSubVCommands();
         if (children != null && !children.isEmpty()) {
@@ -103,8 +109,9 @@ public class CommandManager extends CraftEngineConverterUtils implements Command
      */
     @Override
     public void validCommands() {
-        Logger.info("Loading " + this.getUniqueCommand() + " commands", LogType.SUCCESS);
+        Logger.info("Loading %count% commands", Placeholder.of("count", String.valueOf(this.getUniqueCommand())));
         this.commandChecking();
+        Logger.info("Commands loaded successfully");
     }
 
     /**
@@ -127,7 +134,7 @@ public class CommandManager extends CraftEngineConverterUtils implements Command
     @Override
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
         for (VCommand command : this.commands) {
-            if (command.getSubCommands().contains(cmd.getName().toLowerCase())) {
+            if (command.getSubCommands().contains(cmd.getName().toLowerCase(Locale.ROOT))) {
                 if ((args.length == 0 || command.isIgnoreParent()) && command.getParent() == null) {
                     CommandType type = this.processRequirements(command, sender, args);
                     if (!type.equals(CommandType.CONTINUE)) {
@@ -135,14 +142,14 @@ public class CommandManager extends CraftEngineConverterUtils implements Command
                     }
                 }
             } else if (args.length >= 1 && command.getParent() != null
-                    && this.canExecute(args, cmd.getName().toLowerCase(), command)) {
+                    && this.canExecute(args, cmd.getName().toLowerCase(Locale.ROOT), command)) {
                 CommandType type = this.processRequirements(command, sender, args);
                 if (!type.equals(CommandType.CONTINUE)) {
                     return true;
                 }
             }
         }
-        this.message(this.plugin, sender, Message.COMMAND__NO_ARGS);
+        this.messageFormatter.sendMessage(Message.COMMAND__NO_ARGS, sender);
         return true;
     }
 
@@ -154,7 +161,7 @@ public class CommandManager extends CraftEngineConverterUtils implements Command
      */
     private boolean canExecute(String[] args, String cmd, VCommand command) {
         for (int index = args.length - 1; index > -1; index--) {
-            if (command.getSubCommands().contains(args[index].toLowerCase())) {
+            if (command.getSubCommands().contains(args[index].toLowerCase(Locale.ROOT))) {
                 if (command.isIgnoreArgs()
                         && (command.getParent() == null || this.canExecute(args, cmd, command.getParent(), index - 1))) {
                     return true;
@@ -176,11 +183,11 @@ public class CommandManager extends CraftEngineConverterUtils implements Command
      * @return
      */
     private boolean canExecute(String[] args, String cmd, VCommand command, int index) {
-        if (index < 0 && command.getSubCommands().contains(cmd.toLowerCase())) {
+        if (index < 0 && command.getSubCommands().contains(cmd.toLowerCase(Locale.ROOT))) {
             return true;
         } else if (index < 0) {
             return false;
-        } else if (command.getSubCommands().contains(args[index].toLowerCase())) {
+        } else if (command.getSubCommands().contains(args[index].toLowerCase(Locale.ROOT))) {
             return this.canExecute(args, cmd, command.getParent(), index - 1);
         }
         return false;
@@ -199,7 +206,7 @@ public class CommandManager extends CraftEngineConverterUtils implements Command
     private CommandType processRequirements(VCommand command, CommandSender sender, String[] strings) {
 
         if (!(sender instanceof Player) && !command.isConsoleCanUse()) {
-            this.message(this.plugin, sender, Message.COMMAND__PLAYER_ONLY);
+            this.messageFormatter.sendMessage(Message.COMMAND__PLAYER_ONLY, sender);
             return CommandType.DEFAULT;
         }
 
@@ -209,7 +216,7 @@ public class CommandManager extends CraftEngineConverterUtils implements Command
                 super.runAsync(this.plugin, () -> {
                     CommandType returnType = command.prePerform(this.plugin, sender, strings);
                     if (returnType == CommandType.SYNTAX_ERROR) {
-                        this.message(this.plugin, sender, Message.COMMAND__SYNTAX__ERROR, "syntax", command.getSyntax());
+                        this.messageFormatter.sendMessage(Message.COMMAND__SYNTAX__ERROR, sender, Placeholder.of("syntax", command.getSyntax()));
                     }
                 });
                 return CommandType.DEFAULT;
@@ -217,11 +224,11 @@ public class CommandManager extends CraftEngineConverterUtils implements Command
 
             CommandType returnType = command.prePerform(this.plugin, sender, strings);
             if (returnType == CommandType.SYNTAX_ERROR) {
-                this.message(this.plugin, sender, Message.COMMAND__SYNTAX__ERROR, "syntax", command.getSyntax());
+                this.messageFormatter.sendMessage(Message.COMMAND__SYNTAX__ERROR, sender, Placeholder.of("syntax", command.getSyntax()));
             }
             return returnType;
         }
-        this.message(this.plugin, sender, Message.COMMAND__NO_PERMISSION);
+        this.messageFormatter.sendMessage(Message.COMMAND__NO_PERMISSION, sender);
         return CommandType.DEFAULT;
     }
 
@@ -240,7 +247,7 @@ public class CommandManager extends CraftEngineConverterUtils implements Command
      */
     public boolean isValid(VCommand command, String commandString) {
         return command.getParent() != null ? this.isValid(command.getParent(), commandString)
-                : command.getSubCommands().contains(commandString.toLowerCase());
+                : command.getSubCommands().contains(commandString.toLowerCase(Locale.ROOT));
     }
 
     /**
@@ -250,8 +257,7 @@ public class CommandManager extends CraftEngineConverterUtils implements Command
     private void commandChecking() {
         this.commands.forEach(command -> {
             if (command.sameSubCommands()) {
-                Logger.info(command + " command to an argument similar to its parent command !",
-                        LogType.ERROR);
+                Logger.error(command + " command to an argument similar to its parent command !");
                 this.plugin.getServer().getPluginManager().disablePlugin(this.plugin);
             }
         });
@@ -262,14 +268,14 @@ public class CommandManager extends CraftEngineConverterUtils implements Command
 
         for (VCommand command : this.commands) {
 
-            if (command.getSubCommands().contains(cmd.getName().toLowerCase())) {
+            if (command.getSubCommands().contains(cmd.getName().toLowerCase(Locale.ROOT))) {
                 if (args.length == 1 && command.getParent() == null) {
                     return this.proccessTab(sender, command, args);
                 }
             } else {
                 String[] newArgs = Arrays.copyOf(args, args.length - 1);
                 if (newArgs.length >= 1 && command.getParent() != null
-                        && this.canExecute(newArgs, cmd.getName().toLowerCase(), command)) {
+                        && this.canExecute(newArgs, cmd.getName().toLowerCase(Locale.ROOT), command)) {
                     return this.proccessTab(sender, command, args);
                 }
             }
@@ -344,7 +350,7 @@ public class CommandManager extends CraftEngineConverterUtils implements Command
                 Logger.info("Unable to add the command " + vCommand.getSyntax());
             }
         } catch (Exception exception) {
-            Logger.showException("Error while registering command " + vCommand.getSyntax(), exception);
+            Logger.error("Error while registering command " + vCommand.getSyntax(), exception);
         }
     }
 }

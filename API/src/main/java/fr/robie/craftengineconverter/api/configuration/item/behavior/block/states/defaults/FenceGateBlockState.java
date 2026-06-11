@@ -4,8 +4,10 @@ import fr.robie.craftengineconverter.api.configuration.item.behavior.block.state
 import fr.robie.craftengineconverter.api.configuration.item.behavior.block.states.properties.BooleanBlockStateProperty;
 import fr.robie.craftengineconverter.api.configuration.item.behavior.block.states.properties.HorizontalDirectionBlockStateProperty;
 import fr.robie.craftengineconverter.api.configuration.item.models.ModelConfiguration;
-import net.momirealms.craftengine.core.util.HorizontalDirection;
+import fr.robie.craftengineconverter.api.configuration.utils.HorizontalDirection;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Locale;
 
 public class FenceGateBlockState extends AbstractDefaultBlockState {
     public FenceGateBlockState(
@@ -29,13 +31,13 @@ public class FenceGateBlockState extends AbstractDefaultBlockState {
             for (boolean inWall : new boolean[]{false, true}) {
                 for (boolean open : new boolean[]{false, true}) {
                     String appearanceName = String.format("facing=%s,in_wall=%s,open=%s",
-                            facing.name().toLowerCase(),
+                            facing.name().toLowerCase(Locale.ROOT),
                             inWall,
                             open);
 
                     String state = String.format("%s[facing=%s,in_wall=%s,open=%s,powered=true]",
                             baseBlock,
-                            facing.name().toLowerCase(),
+                            facing.name().toLowerCase(Locale.ROOT),
                             inWall,
                             open);
 

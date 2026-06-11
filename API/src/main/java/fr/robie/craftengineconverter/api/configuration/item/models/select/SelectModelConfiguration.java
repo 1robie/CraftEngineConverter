@@ -6,10 +6,7 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class SelectModelConfiguration<T> implements ModelConfiguration {
     private final String property;
@@ -58,7 +55,7 @@ public class SelectModelConfiguration<T> implements ModelConfiguration {
                 List<String> stringList = new ArrayList<>();
                 for (Object item : list) {
                     if (item instanceof Enum<?> enumItem) {
-                        stringList.add(enumItem.name().toLowerCase());
+                        stringList.add(enumItem.name().toLowerCase(Locale.ROOT));
                     } else {
                         stringList.add(item.toString());
                     }
@@ -66,7 +63,7 @@ public class SelectModelConfiguration<T> implements ModelConfiguration {
                 return stringList;
             }
             if (this.when instanceof Enum<?> enumValue) {
-                return enumValue.name().toLowerCase();
+                return enumValue.name().toLowerCase(Locale.ROOT);
             }
             return this.when.toString();
         }

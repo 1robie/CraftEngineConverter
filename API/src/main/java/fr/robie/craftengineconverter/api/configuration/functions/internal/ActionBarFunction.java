@@ -2,6 +2,7 @@ package fr.robie.craftengineconverter.api.configuration.functions.internal;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Locale;
 import java.util.Map;
 
 public class ActionBarFunction extends AbstractEventFunction {
@@ -30,7 +31,7 @@ public class ActionBarFunction extends AbstractEventFunction {
         Map<String, Object> map = super.serialize();
         map.put("actionbar", this.actionbarMessage);
         if (this.target != PlayerTarget.SELF) {
-            map.put("target", this.target.name().toLowerCase());
+            map.put("target", this.target.name().toLowerCase(Locale.ROOT));
         }
         return map;
     }

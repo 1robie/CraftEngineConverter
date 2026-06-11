@@ -1,10 +1,12 @@
 package fr.robie.craftengineconverter.api.configuration.item.behavior.block.states.properties;
 
 import fr.robie.craftengineconverter.api.configuration.item.behavior.block.states.BlockStateProperty;
-import net.momirealms.craftengine.core.util.HorizontalDirection;
+import fr.robie.craftengineconverter.api.configuration.utils.HorizontalDirection;
 import org.bukkit.configuration.ConfigurationSection;
 import org.jetbrains.annotations.NotNull;
 import org.jspecify.annotations.NonNull;
+
+import java.util.Locale;
 
 public class HorizontalDirectionBlockStateProperty implements BlockStateProperty<HorizontalDirection> {
     private final String name;
@@ -29,6 +31,6 @@ public class HorizontalDirectionBlockStateProperty implements BlockStateProperty
     public void serialize(@NotNull ConfigurationSection propertiesSection) {
         ConfigurationSection section = propertiesSection.createSection(this.name);
         section.set("type", "horizontal_direction");
-        section.set("default", this.value.name().toLowerCase());
+        section.set("default", this.value.name().toLowerCase(Locale.ROOT));
     }
 }

@@ -5,8 +5,8 @@ import fr.robie.craftengineconverter.api.configuration.Configuration;
 import fr.robie.craftengineconverter.api.configuration.ConfigurationKey;
 import fr.robie.craftengineconverter.api.database.StorageManager;
 import fr.robie.craftengineconverter.api.enums.ConverterOption;
+import fr.robie.craftengineconverter.api.enums.Languages;
 import fr.robie.craftengineconverter.api.enums.Plugins;
-import fr.robie.craftengineconverter.api.format.ComponentMeta;
 import fr.robie.craftengineconverter.api.format.Message;
 import fr.robie.craftengineconverter.api.format.MessageFormatter;
 import fr.robie.craftengineconverter.api.logger.BukkitLogger;
@@ -21,6 +21,7 @@ import fr.robie.craftengineconverter.api.tag.ITagResolver;
 import fr.robie.craftengineconverter.behavior.BehaviorRegister;
 import fr.robie.craftengineconverter.command.CraftEngineConverterCommand;
 import fr.robie.craftengineconverter.common.CraftEngineConverterPlugin;
+import fr.robie.craftengineconverter.common.manager.FileCacheManager;
 import fr.robie.craftengineconverter.common.format.ClassicMeta;
 import fr.robie.craftengineconverter.common.scanner.BlockStateMappingScanner;
 import fr.robie.craftengineconverter.common.utils.CraftEngineImageUtils;
@@ -38,10 +39,16 @@ import fr.robie.craftengineconverter.hooks.nexo.NexoWorldConverter;
 import fr.robie.craftengineconverter.hooks.packetevent.PacketEventHook;
 import fr.robie.craftengineconverter.hooks.placeholderapi.PlaceholderAPIUtils;
 import fr.robie.craftengineconverter.listener.WorldConverterManager;
-import fr.robie.craftengineconverter.loader.MessageLoader;
 import fr.robie.craftengineconverter.utils.TagResolver;
 import fr.robie.craftengineconverter.utils.command.CommandManager;
+import fr.robie.messageflow.configuration.ConfigurationManager;
+import fr.robie.messageflow.configuration.lang.EnumLanguageConfiguration;
+import fr.robie.messageflow.formatter.MessageFormatter;
+import fr.robie.messageflow.formatter.Placeholder;
+import fr.robie.messageflow.impl.MessageManager;
+import fr.robie.messageflow.logger.Logger;
 import org.bstats.bukkit.Metrics;
+
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.ServicePriority;
 import org.jetbrains.annotations.NotNull;
@@ -57,40 +64,37 @@ public final class CraftEngineConverter extends CraftEngineConverterPlugin {
     private static final int BSTAT_PLUGIN_ID = 28612;
 
     private final Map<String, Converter> converterMap = new HashMap<>();
-
     private final StorageManager storageManager = new DataBaseManager(this);
     private final ServerProfile serverProfile = new ServerProfileManager(this);
     private final FoliaCompatibilityManager foliaCompatibilityManager = new FoliaCompatibilityManager(this);
     private final CommandManager commandManager = new CommandManager(this);
     private final WorldConverterManager worldConverterManager = new WorldConverterManager(this);
     private final ITagResolver tagResolver = new TagResolver();
-    private final MessageLoader messageLoader = new MessageLoader(this);
-    private final MessageFormatter messageFormatter;
+    private final MessageManager<CraftEngineConverterPlugin, Languages> messageManager;
+    private final MessageFormatter<CraftEngineConverterPlugin, ?> messageFormatter;
+
     private Metrics metrics;
     private PacketLoader packetLoader;
 
     public CraftEngineConverter() {
-        if (this.foliaCompatibilityManager.isPaperOrFolia()) {
-            this.messageFormatter = new ComponentMeta(this);
-            new ComponentLogger("<gradient:#FFD166:#FA3939>" + this.getPluginMeta().getName() + " " + this.getPluginMeta().getVersion() + "</gradient>", (ComponentMeta) this.messageFormatter);
-            LogType.setUseComponent(true);
-        } else {
-            this.messageFormatter = new ClassicMeta();
-            new BukkitLogger(this.getDescription().getFullName());
-        }
+        ConfigurationManager.Setting.ADVENTURE_LOGGER_PREFIX.setValue("<dark_gray>[</dark_gray><gradient:#FFD166:#FA3939>%plugin-full%</gradient><dark_gray>]</dark_gray>");
+        EnumLanguageConfiguration<Languages> languagesEnumLanguageConfiguration = new EnumLanguageConfiguration<>(Languages.class, Languages.EN);
+        languagesEnumLanguageConfiguration.languagePathFormat("translations/%s/messages.yml");
+        this.messageManager = new MessageManager<>(this, languagesEnumLanguageConfiguration, Message.class);
+        this.messageFormatter = this.messageManager.formatter();
     }
 
     @Override
     public void onLoad() {
         if (!Plugins.CRAFTENGINE.isPresent()) {
-            Logger.info("CraftEngine plugin not found ! Disabling CraftEngineConverter ...", LogType.ERROR);
+            Logger.error("CraftEngine plugin not found ! Disabling CraftEngineConverter ...");
             this.getServer().getPluginManager().disablePlugin(this);
             return;
         }
         this.reloadBlockStateMappings();
         this.reloadConfig();
         if (Plugins.PACKET_EVENTS.isPresent()) {
-            Logger.info("[Hook] PacketEvents", LogType.SUCCESS);
+            Logger.info("[Hook] PacketEvents");
             if (Configuration.<Boolean>get(ConfigurationKey.PACKET_EVENTS_FORMATTING)) {
                 this.packetLoader = new PacketEventHook(this);
             }
@@ -112,7 +116,7 @@ public final class CraftEngineConverter extends CraftEngineConverterPlugin {
         Logger.info(Message.MESSAGE__PLUGIN__STARTUP__START);
 
         if (!this.getDataFolder().exists() && !this.getDataFolder().mkdirs()) {
-            Logger.info("Unable to create plugin folder ! Disabling CraftEngineConverter ...", LogType.ERROR);
+            Logger.error("Unable to create plugin folder ! Disabling CraftEngineConverter ...");
             this.getServer().getPluginManager().disablePlugin(this);
             return;
         }
@@ -175,12 +179,12 @@ public final class CraftEngineConverter extends CraftEngineConverterPlugin {
                 for (CompletableFuture<Void> future : futures) {
                     future.thenAccept(v -> {
                         if (counter.decrementAndGet() == 0) {
-                            Logger.info(Message.MESSAGE__AUTO_CONVERTER__STARTUP__COMPLETE, "time", TimerBuilder.formatTimeAuto(System.currentTimeMillis() - startTimeAutoConverter));
+                            Logger.info(Message.MESSAGE__AUTO_CONVERTER__STARTUP__COMPLETE, Placeholder.of("time", TimerBuilder.formatTimeAuto(System.currentTimeMillis() - startTimeAutoConverter)));
                         }
                     });
                 }
             } else {
-                Logger.info(Message.MESSAGE__AUTO_CONVERTER__STARTUP__COMPLETE, "time", TimerBuilder.formatTimeAuto(System.currentTimeMillis() - startTimeAutoConverter));
+                Logger.info(Message.MESSAGE__AUTO_CONVERTER__STARTUP__COMPLETE, Placeholder.of("time", TimerBuilder.formatTimeAuto(System.currentTimeMillis() - startTimeAutoConverter)));
             }
         } else {
             Logger.info(Message.MESSAGE__AUTO_CONVERTER__STARTUP__DISABLED);
@@ -205,7 +209,7 @@ public final class CraftEngineConverter extends CraftEngineConverterPlugin {
             }
         }
 
-        Logger.info(Message.MESSAGE__PLUGIN__STARTUP__COMPLETE, "time", TimerBuilder.formatTimeAuto(System.currentTimeMillis() - startTime));
+        Logger.info(Message.MESSAGE__PLUGIN__STARTUP__COMPLETE, Placeholder.of("time", TimerBuilder.formatTimeAuto(System.currentTimeMillis() - startTime)));
     }
 
     @Override
@@ -238,11 +242,11 @@ public final class CraftEngineConverter extends CraftEngineConverterPlugin {
             Logger.info("Grand total converted : " + this.placementTracker.getTotalConverted() + " (Failed : " + this.placementTracker.getTotalFailed() + ", Overall success rate : " + String.format("%.2f", this.placementTracker.getOverallSuccessRate()) + "%)");
         }
 
-        Logger.info(Message.MESSAGE__PLUGIN__SHUTDOWN__COMPLETE, "time", TimerBuilder.formatTimeAuto(System.currentTimeMillis() - startTime));
+        Logger.info(Message.MESSAGE__PLUGIN__SHUTDOWN__COMPLETE, Placeholder.of("time", TimerBuilder.formatTimeAuto(System.currentTimeMillis() - startTime)));
     }
 
     public void reloadMessages() {
-        this.messageLoader.reload();
+        this.messageManager.loadLanguage(Configuration.get(ConfigurationKey.LANGUAGE));
     }
 
     private void registerListener(@NotNull Listener listener) {
@@ -254,7 +258,7 @@ public final class CraftEngineConverter extends CraftEngineConverterPlugin {
     }
 
     @Override
-    public MessageFormatter getMessageFormatter() {
+    public MessageFormatter<CraftEngineConverterPlugin, ?> getMessageFormatter() {
         return this.messageFormatter;
     }
 
@@ -269,11 +273,11 @@ public final class CraftEngineConverter extends CraftEngineConverterPlugin {
     }
 
     public void registerConverter(Converter converter) {
-        this.converterMap.put(converter.getName().toLowerCase(), converter);
+        this.converterMap.put(converter.getName().toLowerCase(Locale.ROOT), converter);
     }
 
     public Optional<Converter> getConverter(String name) {
-        return Optional.ofNullable(this.converterMap.get(name.toLowerCase()));
+        return Optional.ofNullable(this.converterMap.get(name.toLowerCase(Locale.ROOT)));
     }
 
     public Set<String> getConverterNames() {

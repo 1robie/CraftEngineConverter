@@ -6,10 +6,12 @@ import fr.robie.craftengineconverter.api.configuration.item.behavior.block.state
 import fr.robie.craftengineconverter.api.configuration.item.behavior.block.states.properties.SingleBlockHalfBlockStateProperty;
 import fr.robie.craftengineconverter.api.configuration.item.behavior.block.states.properties.StairsShapeBlockStateProperty;
 import fr.robie.craftengineconverter.api.configuration.item.models.ModelConfiguration;
-import net.momirealms.craftengine.core.block.properties.type.SingleBlockHalf;
-import net.momirealms.craftengine.core.block.properties.type.StairsShape;
-import net.momirealms.craftengine.core.util.HorizontalDirection;
+import fr.robie.craftengineconverter.api.configuration.utils.HorizontalDirection;
+import net.momirealms.craftengine.core.block.property.type.SingleBlockHalf;
+import net.momirealms.craftengine.core.block.property.type.StairsShape;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Locale;
 
 public class StairsBlockState extends AbstractDefaultBlockState {
     public StairsBlockState(
@@ -32,16 +34,16 @@ public class StairsBlockState extends AbstractDefaultBlockState {
                 for (StairsShape shape : StairsShape.values()) {
                     for (boolean waterlogged : new boolean[]{false, true}) {
                         String appearanceName = String.format("facing=%s,half=%s,shape=%s,waterlogged=%s",
-                                facing.name().toLowerCase(),
-                                half.name().toLowerCase(),
-                                shape.name().toLowerCase(),
+                                facing.name().toLowerCase(Locale.ROOT),
+                                half.name().toLowerCase(Locale.ROOT),
+                                shape.name().toLowerCase(Locale.ROOT),
                                 waterlogged);
 
                         String state = String.format("%s[facing=%s,half=%s,shape=%s,waterlogged=%s]",
                                 baseBlock,
-                                facing.name().toLowerCase(),
-                                half.name().toLowerCase(),
-                                shape.name().toLowerCase(),
+                                facing.name().toLowerCase(Locale.ROOT),
+                                half.name().toLowerCase(Locale.ROOT),
+                                shape.name().toLowerCase(Locale.ROOT),
                                 waterlogged);
 
                         ModelConfiguration model = switch (shape) {

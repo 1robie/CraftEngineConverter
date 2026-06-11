@@ -40,7 +40,7 @@ public class ServerProfileManager implements ServerProfile {
         List<BlockHistory> allBlockHistories = this.storageManager.getAllActiveConversions();
 
         for (BlockHistory history : allBlockHistories) {
-            if (Boolean.FALSE.equals(history.isReverted())) {
+            if (!history.isReverted()) {
                 String key = this.createCacheKey(
                         history.getWorldName(),
                         history.getChunkX(),
@@ -85,7 +85,7 @@ public class ServerProfileManager implements ServerProfile {
      */
     @Override
     public void addBlockHistory(@NotNull BlockHistory blockHistory) {
-        if (Boolean.FALSE.equals(blockHistory.isReverted())) {
+        if (!blockHistory.isReverted()) {
             String key = this.createCacheKey(
                     blockHistory.getWorldName(),
                     blockHistory.getChunkX(),

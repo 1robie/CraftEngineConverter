@@ -4,20 +4,18 @@ import fr.robie.craftengineconverter.api.builder.TimerBuilder;
 import fr.robie.craftengineconverter.api.enums.ConverterOption;
 import fr.robie.craftengineconverter.api.enums.CraftEngineBlockState;
 import fr.robie.craftengineconverter.api.format.Message;
-import fr.robie.craftengineconverter.api.logger.LogType;
-import fr.robie.craftengineconverter.api.logger.Logger;
+
 import fr.robie.craftengineconverter.api.progress.BukkitProgressBar;
 import fr.robie.craftengineconverter.api.progress.ProgressBarOption;
 import fr.robie.craftengineconverter.api.progress.ProgressBarUtils;
+import fr.robie.messageflow.formatter.Placeholder;
+import fr.robie.messageflow.logger.Logger;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.EnumMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class Configuration {
     private static final Map<ConfigurationKey, Object> configValues = new EnumMap<>(ConfigurationKey.class);
@@ -113,7 +111,12 @@ public class Configuration {
                 if (key.getRawType().isInstance(defaultValue)) {
                     configValues.put(key, defaultValue);
                 } else {
-                    Logger.debug(Message.ERROR__PLUGIN__CONFIGURATION__TYPE_MISMATCH, LogType.ERROR, "path", key.getPath(), "expected", key.getRawType().getSimpleName(), "got", defaultValue.getClass().getSimpleName(), "default", defaultValue);
+                    Placeholder.Builder builder = Placeholder.builder();
+                    builder.register("expected", key.getRawType().getSimpleName());
+                    builder.register("got", defaultValue.getClass().getSimpleName());
+                    builder.register("default", defaultValue.toString());
+                    builder.register("path", key.getPath());
+                    Logger.debug(Message.ERROR__PLUGIN__CONFIGURATION__TYPE_MISMATCH, builder.build());
                 }
                 continue;
             }
@@ -121,20 +124,25 @@ public class Configuration {
             try {
                 value = key.deserialize(o);
             } catch (Exception e) {
-                Logger.info("Invalid value for " + key.getPath() + " in configuration, using default value: " + defaultValue, LogType.WARNING);
+                Logger.warn("Invalid value for " + key.getPath() + " in configuration, using default value: " + defaultValue);
                 value = defaultValue;
             }
             if (key.getRawType().isInstance(value)) {
                 configValues.put(key, value);
             } else {
-                Logger.debug(Message.ERROR__PLUGIN__CONFIGURATION__TYPE_MISMATCH, LogType.ERROR, "path", key.getPath(), "expected", key.getRawType().getSimpleName(), "got", defaultValue.getClass().getSimpleName(), "default", defaultValue);
+                Placeholder.Builder builder = Placeholder.builder();
+                builder.register("expected", key.getRawType().getSimpleName());
+                builder.register("got", value.getClass().getSimpleName());
+                builder.register("default", defaultValue.toString());
+                builder.register("path", key.getPath());
+                Logger.debug(Message.ERROR__PLUGIN__CONFIGURATION__TYPE_MISMATCH, builder.build());
             }
         }
         for (ConverterOption options : ConverterOption.values()) {
             if (options == ConverterOption.ALL) {
                 continue;
             }
-            String path = "progress-bar-options." + options.name().toLowerCase().replace("_", "-");
+            String path = "progress-bar-options." + options.name().toLowerCase(Locale.ROOT).replace("_", "-");
             this.loadProgressBarOption(config, options, path);
         }
         ConfigurationSection worldConverterProgressBarSection = config.getConfigurationSection("world-converter.progress-bar-options");
@@ -142,12 +150,12 @@ public class Configuration {
             this.loadProgressBarOption(config, worldConverterProgressBarOptions, "world-converter.progress-bar-options");
         }
         for (CraftEngineBlockState blockStateLimit : CraftEngineBlockState.values()) {
-            String path = "block-state-limit." + blockStateLimit.name().toLowerCase().replace("_", "-");
+            String path = "block-state-limit." + blockStateLimit.name().toLowerCase(Locale.ROOT).replace("_", "-");
             int startLimit = this.getOrAddInt(config, path + ".start-limit", blockStateLimit.getStart());
             try {
                 blockStateLimit.setStart(startLimit);
             } catch (Exception e) {
-                Logger.debug("Invalid start limit for " + blockStateLimit.name() + " in configuration.", LogType.WARNING);
+                Logger.debug("Invalid start limit for " + blockStateLimit.name() + " in configuration.");
             }
         }
         if (this.isUpdated) {
@@ -155,11 +163,11 @@ public class Configuration {
                 config.save(file);
                 this.isUpdated = false;
             } catch (Exception e) {
-                Logger.info("Could not save the configuration file: " + e.getMessage(), LogType.ERROR);
+                Logger.error("Could not save the configuration file: " + e.getMessage(), e);
             }
         }
         long endTime = System.currentTimeMillis();
-        Logger.info(Message.MESSAGE__PLUGIN__CONFIGURATION__LOADED, LogType.SUCCESS, "time", TimerBuilder.formatTimeAuto(endTime - startTime));
+        Logger.info(Message.MESSAGE__PLUGIN__CONFIGURATION__LOADED, Placeholder.of("time", TimerBuilder.formatTimeAuto(endTime - startTime)));
     }
 
     private void loadProgressBarOption(YamlConfiguration config, ProgressBarUtils options, String path) {
@@ -170,19 +178,19 @@ public class Configuration {
         char emptyChar = this.getOrAddString(config, path + ".empty-char", String.valueOf(options.getEmptyChar())).charAt(0);
         int barWidth = this.getOrAddInt(config, path + ".bar-width", options.getBarWidth());
         try {
-            options.setProgressColor(BukkitProgressBar.ProgressColor.valueOf(progressColor.toUpperCase()));
+            options.setProgressColor(BukkitProgressBar.ProgressColor.valueOf(progressColor.toUpperCase(Locale.ROOT)));
         } catch (Exception e) {
-            Logger.debug("Invalid progress color for " + options + " in configuration, valid values are: " + String.join(",", this.getAvailableColors()), LogType.WARNING);
+            Logger.debug("Invalid progress color for " + options + " in configuration, valid values are: " + String.join(",", this.getAvailableColors()));
         }
         try {
-            options.setEmptyColor(BukkitProgressBar.ProgressColor.valueOf(emptyColor.toUpperCase()));
+            options.setEmptyColor(BukkitProgressBar.ProgressColor.valueOf(emptyColor.toUpperCase(Locale.ROOT)));
         } catch (Exception e) {
-            Logger.debug("Invalid empty color for " + options + " in configuration, valid values are: " + String.join(",", this.getAvailableColors()), LogType.WARNING);
+            Logger.debug("Invalid empty color for " + options + " in configuration, valid values are: " + String.join(",", this.getAvailableColors()));
         }
         try {
-            options.setPercentColor(BukkitProgressBar.ProgressColor.valueOf(percentColor.toUpperCase()));
+            options.setPercentColor(BukkitProgressBar.ProgressColor.valueOf(percentColor.toUpperCase(Locale.ROOT)));
         } catch (Exception e) {
-            Logger.debug("Invalid percent color for " + options + " in configuration, valid values are: " + String.join(",", this.getAvailableColors()), LogType.WARNING);
+            Logger.debug("Invalid percent color for " + options + " in configuration, valid values are: " + String.join(",", this.getAvailableColors()));
         }
         options.setProgressChar(progressChar);
         options.setEmptyChar(emptyChar);

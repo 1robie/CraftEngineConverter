@@ -1,5 +1,6 @@
 package fr.robie.craftengineconverter.api.configuration.functions.internal;
 
+import java.util.Locale;
 import java.util.Map;
 
 public class CloseInventoryFunction extends AbstractEventFunction {
@@ -17,7 +18,7 @@ public class CloseInventoryFunction extends AbstractEventFunction {
     public Map<String, Object> serialize() {
         Map<String, Object> map = super.serialize();
         if (this.target != PlayerTarget.SELF) {
-            map.put("target", this.target.name().toLowerCase());
+            map.put("target", this.target.name().toLowerCase(Locale.ROOT));
         }
         return map;
     }

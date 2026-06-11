@@ -6,8 +6,10 @@ import fr.robie.craftengineconverter.api.configuration.item.ItemConfigurationSer
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.jetbrains.annotations.NotNull;
+import java.util.Locale;
 
 public class SwingAnimationConfiguration implements ItemConfigurationSerializable, BedrockComponent {
+
 
     private final AnimationType type;
     private final int duration;
@@ -41,7 +43,7 @@ public class SwingAnimationConfiguration implements ItemConfigurationSerializabl
         NONE, WHACK, STAB;
 
         public String toKey() {
-            return this.name().toLowerCase();
+            return this.name().toLowerCase(Locale.ROOT);
         }
     }
 

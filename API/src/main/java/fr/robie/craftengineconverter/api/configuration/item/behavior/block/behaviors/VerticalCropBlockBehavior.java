@@ -3,6 +3,7 @@ package fr.robie.craftengineconverter.api.configuration.item.behavior.block.beha
 import fr.robie.craftengineconverter.api.configuration.item.behavior.block.BlockBehavior;
 import net.momirealms.craftengine.core.util.Direction;
 
+import java.util.Locale;
 import java.util.Map;
 
 public class VerticalCropBlockBehavior implements BlockBehavior {
@@ -22,7 +23,7 @@ public class VerticalCropBlockBehavior implements BlockBehavior {
         data.put("type", "vertical_crop_block");
         data.put("max-height", this.maxHeight);
         data.put("grow-speed", this.growSpeed);
-        data.put("direction", this.growDirection.toString().toLowerCase());
+        data.put("direction", this.growDirection.toString().toLowerCase(Locale.ROOT));
         return data;
     }
 }

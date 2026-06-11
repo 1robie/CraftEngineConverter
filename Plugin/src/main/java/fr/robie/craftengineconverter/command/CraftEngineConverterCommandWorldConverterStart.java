@@ -9,6 +9,7 @@ import fr.robie.craftengineconverter.common.permission.Permission;
 import fr.robie.craftengineconverter.listener.WorldConverterManager;
 import fr.robie.craftengineconverter.utils.command.CommandType;
 import fr.robie.craftengineconverter.utils.command.VCommand;
+import fr.robie.messageflow.formatter.Placeholder;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
 
@@ -33,12 +34,12 @@ public class CraftEngineConverterCommandWorldConverterStart extends VCommand {
         boolean forceConversion = this.containFlag("--force");
 
         if (this.currentConversion != null && !this.currentConversion.isDone() && !forceConversion) {
-            this.message(plugin, this.sender, Message.COMMAND__WORLD_CONVERTER__ALREADY_RUNNING);
+            this.messageFormatter.sendMessage(Message.COMMAND__WORLD_CONVERTER__ALREADY_RUNNING, this.sender);
             return CommandType.SUCCESS;
         }
 
         if (forceConversion && this.currentConversion != null && !this.currentConversion.isDone()) {
-            this.message(plugin, this.sender, Message.COMMAND__WORLD_CONVERTER__FORCE_STOPPING);
+            this.messageFormatter.sendMessage(Message.COMMAND__WORLD_CONVERTER__FORCE_STOPPING, this.sender);
             worldConverterManager.cancelAllConversions();
             this.currentConversion.cancel(true);
         }
@@ -63,7 +64,7 @@ public class CraftEngineConverterCommandWorldConverterStart extends VCommand {
         }
         BukkitProgressBar progressBar = builder.build(this.plugin);
 
-        this.message(plugin, this.sender, Message.COMMAND__WORLD_CONVERTER__START, "chunks", totalChunks);
+        this.messageFormatter.sendMessage(Message.COMMAND__WORLD_CONVERTER__START, this.sender, Placeholder.of("chunks", String.valueOf(totalChunks)));
 
         int oldConvertedBlocks = worldConverterManager.getPlacementTracker().getBlocksConverted();
         int oldConvertedFurniture = worldConverterManager.getPlacementTracker().getFurnitureConverted();
@@ -83,11 +84,13 @@ public class CraftEngineConverterCommandWorldConverterStart extends VCommand {
             int convertedBlocks = worldConverterManager.getPlacementTracker().getBlocksConverted();
             int convertedFurniture = worldConverterManager.getPlacementTracker().getFurnitureConverted();
 
-            this.message(plugin, this.sender, Message.COMMAND__WORLD_CONVERTER__COMPLETE,
-                    "chunks", processedChunks,
-                    "blocks", convertedBlocks - oldConvertedBlocks,
-                    "furniture", convertedFurniture - oldConvertedFurniture,
-                    "time", TimerBuilder.formatTimeAuto(endTime - startTime));
+            Placeholder.Builder placeholderBuilder = Placeholder.builder();
+            placeholderBuilder.register("chunks", String.valueOf(processedChunks))
+                    .register("blocks", String.valueOf(convertedBlocks - oldConvertedBlocks))
+                    .register("furniture", String.valueOf(convertedFurniture - oldConvertedFurniture))
+                    .register("time", TimerBuilder.formatTimeAuto(endTime - startTime));
+
+            this.messageFormatter.sendMessage(Message.COMMAND__WORLD_CONVERTER__COMPLETE, this.sender, placeholderBuilder.build());
         });
 
         return CommandType.SUCCESS;

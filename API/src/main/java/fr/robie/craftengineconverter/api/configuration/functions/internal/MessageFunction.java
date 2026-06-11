@@ -1,5 +1,6 @@
 package fr.robie.craftengineconverter.api.configuration.functions.internal;
 
+import java.util.Locale;
 import java.util.Map;
 
 public class MessageFunction extends AbstractEventFunction {
@@ -25,7 +26,7 @@ public class MessageFunction extends AbstractEventFunction {
         Map<String, Object> map = super.serialize();
         map.put("message", this.message);
         if (this.target != PlayerTarget.SELF) {
-            map.put("target", this.target.name().toLowerCase());
+            map.put("target", this.target.name().toLowerCase(Locale.ROOT));
         }
         if (this.overlay) {
             map.put("overlay", true);

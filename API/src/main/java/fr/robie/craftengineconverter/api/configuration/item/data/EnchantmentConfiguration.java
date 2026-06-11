@@ -7,6 +7,7 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 
@@ -38,11 +39,11 @@ public class EnchantmentConfiguration implements ItemConfigurationSerializable {
             enchantment.set("merge", true);
             ConfigurationSection enchantmentsSection = this.getOrCreateSection(enchantment, "enchantments");
             for (Map.Entry<String, Integer> entry : this.enchantments.entrySet()) {
-                enchantmentsSection.set(this.getEnchantmentName(entry.getKey().toLowerCase()), entry.getValue());
+                enchantmentsSection.set(this.getEnchantmentName(entry.getKey().toLowerCase(Locale.ROOT)), entry.getValue());
             }
         } else {
             for (Map.Entry<String, Integer> entry : this.enchantments.entrySet()) {
-                enchantment.set(this.getEnchantmentName(entry.getKey().toLowerCase()), entry.getValue());
+                enchantment.set(this.getEnchantmentName(entry.getKey().toLowerCase(Locale.ROOT)), entry.getValue());
             }
         }
     }

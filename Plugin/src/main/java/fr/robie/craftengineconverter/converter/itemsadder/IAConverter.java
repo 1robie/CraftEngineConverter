@@ -23,6 +23,7 @@ import fr.robie.craftengineconverter.api.format.Message;
 import fr.robie.craftengineconverter.api.logger.LogType;
 import fr.robie.craftengineconverter.api.logger.Logger;
 import fr.robie.craftengineconverter.api.manager.FileCacheManager;
+
 import fr.robie.craftengineconverter.api.progress.BukkitProgressBar;
 import fr.robie.craftengineconverter.api.utils.FileUtils;
 import fr.robie.craftengineconverter.common.BlockStatesMapper;
@@ -36,6 +37,8 @@ import fr.robie.craftengineconverter.common.utils.enums.ia.IARecipesTypes;
 import fr.robie.craftengineconverter.converter.Converter;
 import fr.robie.craftengineconverter.utils.ConfigFile;
 import fr.robie.craftengineconverter.utils.JsonFileValidator;
+import fr.robie.messageflow.formatter.Placeholder;
+import fr.robie.messageflow.logger.Logger;
 import net.momirealms.craftengine.core.item.recipe.CookingRecipeCategory;
 import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
@@ -71,7 +74,7 @@ public class IAConverter extends Converter {
         File inputFolder = new File("plugins/" + this.converterName + "/contents");
         File outputFolder = new File(this.plugin.getDataFolder(), "converted/" + this.converterName + "/CraftEngine/resources/craftengineconverter/configuration/items");
         if (!inputFolder.exists() || !inputFolder.isDirectory()) {
-            this.logDebug(Message.ERROR__CONVERTER__IA__CONTENTS_FOLDER_NOT_FOUND, LogType.ERROR, "path", inputFolder.getAbsolutePath());
+            this.logDebug(Message.ERROR__CONVERTER__IA__CONTENTS_FOLDER_NOT_FOUND, Logger.LogType.ERROR, Placeholder.of("path", inputFolder.getAbsolutePath()));
             return;
         }
 
@@ -80,7 +83,7 @@ public class IAConverter extends Converter {
         }
 
         if (!outputFolder.mkdirs()) {
-            this.logDebug(Message.ERROR__CONVERTER__IA__OUTPUT_FOLDER_CREATION_FAILED, LogType.ERROR, "path", outputFolder.getAbsolutePath());
+            this.logDebug(Message.ERROR__CONVERTER__IA__OUTPUT_FOLDER_CREATION_FAILED, Logger.LogType.ERROR, Placeholder.of("path", outputFolder.getAbsolutePath()));
             return;
         }
 
@@ -116,19 +119,19 @@ public class IAConverter extends Converter {
 
                     String newName = PluginNameMapper.getInstance().getNewName(Plugins.ITEMS_ADDER, blockId);
                     if (newName == null) {
-                        this.logDebug(Message.ERROR__CONVERTER__IA__MISSING_NAME_MAPPING, LogType.ERROR, "block", blockId);
+                        this.logDebug(Message.ERROR__CONVERTER__IA__MISSING_NAME_MAPPING, Logger.LogType.ERROR, Placeholder.of("block", blockId));
                         continue;
                     }
 
                     try {
                         conversion.converter().accept(newName, customVariation);
                     } catch (IllegalArgumentException e) {
-                        this.logDebug(Message.ERROR__CONVERTER__IA__BLOCK_STATE_CONVERSION_FAILURE, LogType.ERROR, "block", blockId, "variation", customVariation);
+                        this.logDebug(Message.ERROR__CONVERTER__IA__BLOCK_STATE_CONVERSION_FAILURE, Logger.LogType.ERROR, Placeholder.of("block", blockId, "variation", String.valueOf(customVariation)));
                     }
                 }
             }
         } catch (Exception e) {
-            Logger.showException(Message.ERROR__CONVERTER__IA__ITEM_CONVERSION_EXCEPTION, e);
+            Logger.error(Message.ERROR__CONVERTER__IA__ITEM_CONVERSION_EXCEPTION, e);
         } finally {
             progressBar.stop();
         }
@@ -150,7 +153,7 @@ public class IAConverter extends Converter {
                 configFile -> {
                     ConfigurationSection originalItems = configFile.config().getConfigurationSection("items");
                     if (this.isNull(originalItems)) {
-                        this.logDebug(Message.WARNING__CONVERTER__IA__ITEMS__NO_SECTION, LogType.WARNING, "file", configFile.sourceFile().getName());
+                        this.logDebug(Message.WARNING__CONVERTER__IA__ITEMS__NO_SECTION, Logger.LogType.WARNING, Placeholder.of("file", configFile.sourceFile().getName()));
                         return Collections.emptySet();
                     }
                     return originalItems.getKeys(false);
@@ -247,7 +250,7 @@ public class IAConverter extends Converter {
         File inputFolder = new File("plugins/" + this.converterName + "/contents");
         File outputBase = new File(this.plugin.getDataFolder(), "converted/" + this.converterName + "/CraftEngine/resources/craftengineconverter/configuration/images");
         if (!inputFolder.exists() || !inputFolder.isDirectory()) {
-            this.logDebug(Message.ERROR__CONVERTER__IA__CONTENTS_FOLDER_NOT_FOUND, LogType.ERROR, "path", inputFolder.getAbsolutePath());
+            this.logDebug(Message.ERROR__CONVERTER__IA__CONTENTS_FOLDER_NOT_FOUND, Logger.LogType.ERROR, Placeholder.of("path", inputFolder.getAbsolutePath()));
             return;
         }
 
@@ -255,7 +258,7 @@ public class IAConverter extends Converter {
             FileUtils.deleteDirectory(outputBase);
         }
         if (!outputBase.mkdirs()) {
-            this.logDebug(Message.ERROR__CONVERTER__IA__OUTPUT_FOLDER_CREATION_FAILED, LogType.ERROR, "path", outputBase.getAbsolutePath());
+            this.logDebug(Message.ERROR__CONVERTER__IA__OUTPUT_FOLDER_CREATION_FAILED, Logger.LogType.ERROR, Placeholder.of("path", outputBase.getAbsolutePath()));
             return;
         }
 
@@ -264,7 +267,7 @@ public class IAConverter extends Converter {
         int totalFontImage = this.populateQueueIA(inputFolder, inputFolder, toConvert, List.of("font_images"));
 
         if (toConvert.isEmpty()) {
-            this.logDebug(Message.WARNING__CONVERTER__IA__IMAGES__NONE_FOUND, LogType.WARNING);
+            this.logDebug(Message.WARNING__CONVERTER__IA__IMAGES__NONE_FOUND, Logger.LogType.WARNING, Placeholder.empty());
             return;
         }
 
@@ -278,7 +281,7 @@ public class IAConverter extends Converter {
                 this.convertFontImageFile(configFile, outputBase, progressBar);
             }
         } catch (Exception e) {
-            Logger.showException(Message.ERROR__CONVERTER__IA__IMAGES__CONVERSION_EXCEPTION, e);
+            Logger.error(Message.ERROR__CONVERTER__IA__IMAGES__CONVERSION_EXCEPTION, e);
         } finally {
             progressBar.stop();
         }
@@ -343,7 +346,7 @@ public class IAConverter extends Converter {
         File outputFolder = new File(this.plugin.getDataFolder(), "converted/" + this.converterName + "/CraftEngine/resources/craftengineconverter/configuration/languages/languages.yml");
 
         if (!inputFolder.exists() || !inputFolder.isDirectory()) {
-            this.logDebug(Message.ERROR__CONVERTER__IA__CONTENTS_FOLDER_NOT_FOUND, LogType.ERROR, "path", inputFolder.getAbsolutePath());
+            this.logDebug(Message.ERROR__CONVERTER__IA__CONTENTS_FOLDER_NOT_FOUND, Logger.LogType.ERROR, Placeholder.of("path", inputFolder.getAbsolutePath()));
             return;
         }
 
@@ -351,7 +354,7 @@ public class IAConverter extends Converter {
         this.populateQueueIA(inputFolder, inputFolder, toConvert, List.of("minecraft_lang_overwrite", "dictionary"));
 
         if (toConvert.isEmpty()) {
-            this.logDebug(Message.WARNING__CONVERTER__IA__LANGUAGES__NONE_FOUND, LogType.WARNING);
+            this.logDebug(Message.WARNING__CONVERTER__IA__LANGUAGES__NONE_FOUND, Logger.LogType.WARNING, Placeholder.empty());
             return;
         }
 
@@ -380,12 +383,12 @@ public class IAConverter extends Converter {
                     totalEntries += dictionarySection.getKeys().size();
                 }
             } catch (Exception e) {
-                this.logDebug(Message.ERROR__CONVERTER__IA__LANGUAGES__COUNT_FAILURE, LogType.ERROR, "file", configFile.sourceFile().getName());
+                this.logDebug(Message.ERROR__CONVERTER__IA__LANGUAGES__COUNT_FAILURE, Logger.LogType.ERROR, Placeholder.of("file", configFile.sourceFile().getName()));
             }
         }
 
         if (totalEntries == 0) {
-            this.logDebug(Message.WARNING__CONVERTER__IA__LANGUAGES__NO_ENTRIES_FOUND, LogType.WARNING);
+            this.logDebug(Message.WARNING__CONVERTER__IA__LANGUAGES__NO_ENTRIES_FOUND, Logger.LogType.WARNING, Placeholder.empty());
             return;
         }
 
@@ -408,7 +411,7 @@ public class IAConverter extends Converter {
                 }
             }
         } catch (Exception e) {
-            Logger.showException(Message.ERROR__CONVERTER__IA__LANGUAGES__CONVERSION_EXCEPTION, e);
+            Logger.error(Message.ERROR__CONVERTER__IA__LANGUAGES__CONVERSION_EXCEPTION, e);
         } finally {
             progressBar.stop();
         }
@@ -433,14 +436,18 @@ public class IAConverter extends Converter {
                     }
 
                     for (String langKey : languages) {
-                        String ceLangKey = langKey.equalsIgnoreCase("ALL") ? "en" : langKey.toLowerCase();
+                        String ceLangKey = langKey.equalsIgnoreCase("ALL") ? "en" : langKey.toLowerCase(Locale.ROOT);
 
                         for (Map.Entry<String, Object> entry : entries.entrySet()) {
                             try {
                                 String translationKey = "translations\\n" + ceLangKey + "\\n" + entry.getKey();
                                 ceTranslation.addData(translationKey, entry.getValue(), "\\n");
                             } catch (Exception e) {
-                                this.logDebug(Message.ERROR__CONVERTER__IA__LANGUAGES__KEY_CONVERSION_FAILURE, LogType.ERROR, "key", entry.getKey(), "lang", ceLangKey, "file", configFile.sourceFile().getName());
+                                Placeholder.Builder placeholderBuilder = Placeholder.builder();
+                                placeholderBuilder.register("key", entry.getKey())
+                                        .register("lang", ceLangKey)
+                                        .register("file", configFile.sourceFile().getName());
+                                this.logDebug(Message.ERROR__CONVERTER__IA__LANGUAGES__KEY_CONVERSION_FAILURE, Logger.LogType.ERROR, placeholderBuilder.build());
                             }
                             progressBar.increment();
                         }
@@ -449,19 +456,23 @@ public class IAConverter extends Converter {
             }
             SnakeUtils dictionarySection = toTranslate.getSection("dictionary");
             if (dictionarySection != null) {
-                String dictionaryLang = toTranslate.getString("info.dictionary-lang", "en").toLowerCase();
+                String dictionaryLang = toTranslate.getString("info.dictionary-lang", "en").toLowerCase(Locale.ROOT);
                 for (String dictKey : dictionarySection.getKeys()) {
                     try {
                         String ceDictKey = "translations\\n" + dictionaryLang + "\\n" + dictKey;
                         ceTranslation.addData(ceDictKey, dictionarySection.getString(dictKey), "\\n");
                     } catch (Exception e) {
-                        this.logDebug(Message.ERROR__CONVERTER__IA__LANGUAGES__KEY_CONVERSION_FAILURE, LogType.ERROR, "key", dictKey, "lang", dictionaryLang, "file", configFile.sourceFile().getName());
+                        Placeholder.Builder placeholderBuilder = Placeholder.builder();
+                        placeholderBuilder.register("key", dictKey)
+                                .register("lang", dictionaryLang)
+                                .register("file", configFile.sourceFile().getName());
+                        this.logDebug(Message.ERROR__CONVERTER__IA__LANGUAGES__KEY_CONVERSION_FAILURE, Logger.LogType.ERROR, placeholderBuilder.build());
                     }
                     progressBar.increment();
                 }
             }
         } catch (Exception e) {
-            Logger.showException(Message.ERROR__CONVERTER__IA__LANGUAGES__FILE_CONVERSION_FAILURE, e, "file", configFile.sourceFile().getName());
+            Logger.error(Message.ERROR__CONVERTER__IA__LANGUAGES__FILE_CONVERSION_FAILURE, e, Placeholder.of("file", configFile.sourceFile().getName()));
         }
     }
 
@@ -474,7 +485,7 @@ public class IAConverter extends Converter {
         File inputFolder = new File("plugins/" + this.converterName + "/contents");
         File outputFolder = new File(this.plugin.getDataFolder(), "converted/" + this.converterName + "/CraftEngine/resources/craftengineconverter/configuration/sounds");
         if (!inputFolder.exists() || !inputFolder.isDirectory()) {
-            this.logDebug(Message.ERROR__CONVERTER__IA__CONTENTS_FOLDER_NOT_FOUND, LogType.ERROR, "path", inputFolder.getAbsolutePath());
+            this.logDebug(Message.ERROR__CONVERTER__IA__CONTENTS_FOLDER_NOT_FOUND, Logger.LogType.ERROR, Placeholder.of("path", inputFolder.getAbsolutePath()));
             return;
         }
 
@@ -483,7 +494,7 @@ public class IAConverter extends Converter {
         }
 
         if (!outputFolder.mkdirs()) {
-            this.logDebug(Message.ERROR__CONVERTER__IA__OUTPUT_FOLDER_CREATION_FAILED, LogType.ERROR, "path", outputFolder.getAbsolutePath());
+            this.logDebug(Message.ERROR__CONVERTER__IA__OUTPUT_FOLDER_CREATION_FAILED, Logger.LogType.ERROR, Placeholder.of("path", outputFolder.getAbsolutePath()));
             return;
         }
 
@@ -503,7 +514,7 @@ public class IAConverter extends Converter {
                 this.convertSoundsFile(configFile, outputFolder, progressBar);
             }
         } catch (Exception e) {
-            Logger.showException(Message.ERROR__CONVERTER__IA__SOUNDS__CONVERSION_EXCEPTION, e);
+            Logger.error(Message.ERROR__CONVERTER__IA__SOUNDS__CONVERSION_EXCEPTION, e);
         } finally {
             progressBar.stop();
         }
@@ -521,7 +532,7 @@ public class IAConverter extends Converter {
 
         ConfigurationSection originalSounds = config.getConfigurationSection("sounds");
         if (this.isNull(originalSounds)) {
-            this.logDebug(Message.WARNING__CONVERTER__IA__SOUNDS__NO_SECTION, LogType.WARNING, "file", fileName);
+            this.logDebug(Message.WARNING__CONVERTER__IA__SOUNDS__NO_SECTION, Logger.LogType.WARNING, Placeholder.of("file", fileName));
             return;
         }
 
@@ -529,7 +540,7 @@ public class IAConverter extends Converter {
         for (String soundId : originalSounds.getKeys(false)) {
             ConfigurationSection section = originalSounds.getConfigurationSection(soundId);
             if (this.isNull(section)) {
-                this.logDebug(Message.WARNING__CONVERTER__IA__SOUNDS__SKIPPED_NO_SECTION, LogType.WARNING, "sound", soundId, "file", fileName);
+                this.logDebug(Message.WARNING__CONVERTER__IA__SOUNDS__SKIPPED_NO_SECTION, Logger.LogType.WARNING, Placeholder.of("sound", soundId, "file", fileName));
                 progressBar.increment();
                 continue;
             }
@@ -564,7 +575,7 @@ public class IAConverter extends Converter {
                 }
                 convertedCount++;
             } catch (Exception e) {
-                Logger.showException(Message.ERROR__CONVERTER__IA__SOUNDS__CONVERSION_FAILURE, e, "sound", soundId, "file", fileName);
+                Logger.error(Message.ERROR__CONVERTER__IA__SOUNDS__CONVERSION_FAILURE, e, Placeholder.of("sound", soundId, "file", fileName));
             }
             progressBar.increment();
         }
@@ -585,14 +596,14 @@ public class IAConverter extends Converter {
         File inputFolder = new File("plugins/" + this.converterName + "/contents");
         File outputFolder = new File(this.plugin.getDataFolder(), "converted/" + this.converterName + "/CraftEngine/resources/craftengineconverter/configuration/recipes");
         if (!inputFolder.exists() || !inputFolder.isDirectory()) {
-            this.logDebug(Message.ERROR__CONVERTER__IA__CONTENTS_FOLDER_NOT_FOUND, LogType.ERROR, "path", inputFolder.getAbsolutePath());
+            this.logDebug(Message.ERROR__CONVERTER__IA__CONTENTS_FOLDER_NOT_FOUND, Logger.LogType.ERROR, Placeholder.of("path", inputFolder.getAbsolutePath()));
             return;
         }
         if (outputFolder.exists()) {
-            FileUtils.deleteDirectory(outputFolder);
+            this.deleteDirectory(outputFolder);
         }
         if (!outputFolder.mkdirs()) {
-            this.logDebug(Message.ERROR__CONVERTER__IA__OUTPUT_FOLDER_CREATION_FAILED, LogType.ERROR, "path", outputFolder.getAbsolutePath());
+            this.logDebug(Message.ERROR__CONVERTER__IA__OUTPUT_FOLDER_CREATION_FAILED, Logger.LogType.ERROR, Placeholder.of("path", outputFolder.getAbsolutePath()));
             return;
         }
 
@@ -627,7 +638,7 @@ public class IAConverter extends Converter {
                 this.convertRecipesFile(configFile, outputFolder, progressBar);
             }
         } catch (Exception e) {
-            Logger.showException(Message.ERROR__CONVERTER__IA__RECIPES__CONVERSION_EXCEPTION, e);
+            Logger.error(Message.ERROR__CONVERTER__IA__RECIPES__CONVERSION_EXCEPTION, e);
         } finally {
             progressBar.stop();
         }
@@ -645,7 +656,7 @@ public class IAConverter extends Converter {
         ConfigurationSection originalRecipes = config.getConfigurationSection("recipes");
 
         if (this.isNull(originalRecipes)) {
-            this.logDebug(Message.WARNING__CONVERTER__IA__RECIPES__NO_SECTION, LogType.WARNING, "file", fileName);
+            this.logDebug(Message.WARNING__CONVERTER__IA__RECIPES__NO_SECTION, Logger.LogType.WARNING, Placeholder.of("file", fileName));
             return;
         }
 
@@ -658,25 +669,29 @@ public class IAConverter extends Converter {
             for (String recipeId : craftingSection.getKeys(false)) {
                 IARecipesTypes iaRecipesType;
                 try {
-                    iaRecipesType = IARecipesTypes.valueOf(craftingType.toUpperCase());
+                    iaRecipesType = IARecipesTypes.valueOf(craftingType.toUpperCase(Locale.ROOT));
                 } catch (IllegalArgumentException e) {
-                    this.logDebug(Message.WARNING__CONVERTER__IA__RECIPES__SKIPPED_UNKNOWN_TYPE, LogType.WARNING, "type", craftingType, "recipe", recipeId, "file", fileName);
+                    Placeholder.Builder placeholderBuilder = Placeholder.builder();
+                    placeholderBuilder.register("type", craftingType)
+                            .register("recipe", recipeId)
+                            .register("file", fileName);
+                    this.logDebug(Message.WARNING__CONVERTER__IA__RECIPES__SKIPPED_UNKNOWN_TYPE, Logger.LogType.WARNING, placeholderBuilder.build());
                     progressBar.increment();
                     continue;
                 }
 
                 ConfigurationSection recipeSection = craftingSection.getConfigurationSection(recipeId);
                 if (this.isNull(recipeSection)) {
-                    this.logDebug(Message.WARNING__CONVERTER__IA__RECIPES__SKIPPED_NO_SECTION, LogType.WARNING, "recipe", recipeId, "file", fileName);
+                    this.logDebug(Message.WARNING__CONVERTER__IA__RECIPES__SKIPPED_NO_SECTION, Logger.LogType.WARNING, Placeholder.of("recipe", recipeId, "file", fileName));
                     progressBar.increment();
                     continue;
                 }
 
-                String baseRecipeId = namespace + ":" + recipeId.toLowerCase();
+                String baseRecipeId = namespace + ":" + recipeId.toLowerCase(Locale.ROOT);
                 try {
                     this.convertRecipe(iaRecipesType, recipeSection, recipes, baseRecipeId, recipeId, fileName);
                 } catch (Exception e) {
-                    Logger.showException(Message.ERROR__CONVERTER__IA__RECIPES__CONVERSION_FAILURE, e, "recipe", recipeId, "file", fileName);
+                    Logger.error(Message.ERROR__CONVERTER__IA__RECIPES__CONVERSION_FAILURE, e, Placeholder.of("recipe", recipeId, "file", fileName));
                 }
                 progressBar.increment();
             }
@@ -697,10 +712,10 @@ public class IAConverter extends Converter {
                 return;
             }
             case ANVIL_REPAIR -> //TODO: Implement Anvil Repair conversion
-                    this.logDebug(Message.WARNING__CONVERTER__IA__RECIPES__ANVIL_REPAIR_NOT_IMPLEMENTED, LogType.WARNING, "recipe", recipeId);
+                    this.logDebug(Message.WARNING__CONVERTER__IA__RECIPES__ANVIL_REPAIR_NOT_IMPLEMENTED, Logger.LogType.WARNING, Placeholder.of("recipe", recipeId));
             case SMITHING -> recipe = this.convertSmithingRecipe(iaRecipe, recipeId, fileName);
             default ->
-                    this.logDebug(Message.WARNING__CONVERTER__IA__RECIPES__UNSUPPORTED_TYPE, LogType.WARNING, "type", type, "recipe", recipeId);
+                    this.logDebug(Message.WARNING__CONVERTER__IA__RECIPES__UNSUPPORTED_TYPE, Logger.LogType.WARNING, Placeholder.of("type", String.valueOf(type), "recipe", recipeId));
         }
 
         if (recipe != null) {
@@ -781,7 +796,7 @@ public class IAConverter extends Converter {
             RecipeType recipeType = this.getCookingTypeFromMachine(machine);
 
             if (recipeType == null) {
-                Logger.debug(Message.WARNING__CONVERTER__IA__RECIPES__UNKNOWN_MACHINE_TYPE, "machine", machine, "recipe", recipeId);
+                Logger.debug(Message.WARNING__CONVERTER__IA__RECIPES__UNKNOWN_MACHINE_TYPE, Placeholder.of("machine", machine, "recipe", recipeId));
                 continue;
             }
 
@@ -840,7 +855,7 @@ public class IAConverter extends Converter {
                 smithingRecipe.setBase(convertedBase);
             }
         } else {
-            this.logDebug(Message.WARNING__CONVERTER__IA__RECIPES__SMITHING_MISSING_BASE, LogType.WARNING, "recipe", recipeId, "file", fileName);
+            this.logDebug(Message.WARNING__CONVERTER__IA__RECIPES__SMITHING_MISSING_BASE, Logger.LogType.WARNING, Placeholder.of("recipe", recipeId, "file", fileName));
         }
 
         String addition = iaRecipe.getString("addition");
@@ -860,7 +875,7 @@ public class IAConverter extends Converter {
     }
 
     private RecipeType getCookingTypeFromMachine(String machine) {
-        return switch (machine.toUpperCase()) {
+        return switch (machine.toUpperCase(Locale.ROOT)) {
             case "FURNACE" -> RecipeType.SMELTING;
             case "BLAST_FURNACE" -> RecipeType.BLASTING;
             case "SMOKER" -> RecipeType.SMOKING;
@@ -875,8 +890,8 @@ public class IAConverter extends Converter {
         }
 
         try {
-            Material material = Material.valueOf(itemReference.toUpperCase());
-            return "minecraft:" + material.name().toLowerCase();
+            Material material = Material.valueOf(itemReference.toUpperCase(Locale.ROOT));
+            return "minecraft:" + material.name().toLowerCase(Locale.ROOT);
         } catch (IllegalArgumentException ignored) {
         }
 
@@ -886,7 +901,11 @@ public class IAConverter extends Converter {
             if (this.isValidString(mappedId)) {
                 return mappedId;
             } else {
-                this.logDebug(Message.WARNING__CONVERTER__IA__RECIPES__UNKNOWN_ITEM_REFERENCE, LogType.WARNING, "item", itemReference, "recipe", recipeId, "file", fileName);
+                Placeholder.Builder placeholderBuilder = Placeholder.builder();
+                placeholderBuilder.register("item", itemReference)
+                        .register("recipe", recipeId)
+                        .register("file", fileName);
+                this.logDebug(Message.WARNING__CONVERTER__IA__RECIPES__UNKNOWN_ITEM_REFERENCE, Logger.LogType.WARNING, placeholderBuilder.build());
                 return null;
             }
         }
@@ -896,12 +915,16 @@ public class IAConverter extends Converter {
             return mappedId;
         }
 
-        String itemReferenceLowerCase = itemReference.toLowerCase();
+        String itemReferenceLowerCase = itemReference.toLowerCase(Locale.ROOT);
         if (itemReferenceLowerCase.equalsIgnoreCase("iron_chain") && NmsVersion.nmsVersion.isAtMost(NmsVersion.V_1_21_8)) {
             return "minecraft:chain";
         }
 
-        this.logDebug(Message.WARNING__CONVERTER__IA__RECIPES__ITEM_REFERENCE_CONVERSION_FAILURE, LogType.WARNING, "item", itemReference, "recipe", recipeId, "file", fileName);
+        Placeholder.Builder placeholderBuilder = Placeholder.builder();
+        placeholderBuilder.register("item", itemReference)
+                .register("recipe", recipeId)
+                .register("file", fileName);
+                this.logDebug(Message.WARNING__CONVERTER__IA__RECIPES__ITEM_REFERENCE_CONVERSION_FAILURE, Logger.LogType.WARNING, placeholderBuilder.build());
         return itemReferenceLowerCase;
     }
 
@@ -934,7 +957,7 @@ public class IAConverter extends Converter {
             File outputPackFile = new File(this.plugin.getDataFolder(), "converted/" + this.converterName + "/CraftEngine/resources/craftengineconverter/resourcepack");
 
             if (!inputFolder.exists() || !inputFolder.isDirectory()) {
-                this.logDebug(Message.ERROR__CONVERTER__IA__CONTENTS_FOLDER_NOT_FOUND, LogType.ERROR, "path", inputFolder.getAbsolutePath());
+                this.logDebug(Message.ERROR__CONVERTER__IA__CONTENTS_FOLDER_NOT_FOUND, Logger.LogType.ERROR, Placeholder.of("path", inputFolder.getAbsolutePath()));
                 return;
             }
 
@@ -943,7 +966,7 @@ public class IAConverter extends Converter {
             }
 
             if (!outputPackFile.mkdirs()) {
-                this.logDebug(Message.ERROR__CONVERTER__IA__OUTPUT_FOLDER_CREATION_FAILED, LogType.ERROR, "path", outputPackFile.getAbsolutePath());
+                this.logDebug(Message.ERROR__CONVERTER__IA__OUTPUT_FOLDER_CREATION_FAILED, Logger.LogType.ERROR, Placeholder.of("path", outputPackFile.getAbsolutePath()));
                 return;
             }
 
@@ -956,13 +979,13 @@ public class IAConverter extends Converter {
                 return;
             }
             for (File f : listed) {
-                if (f.isDirectory() && !blacklistedNamespacesList.contains(f.getName().toLowerCase())) {
+                if (f.isDirectory() && !blacklistedNamespacesList.contains(f.getName().toLowerCase(Locale.ROOT))) {
                     File[] listedFiles = f.listFiles();
                     if (this.isNull(listedFiles)) {
                         continue;
                     }
                     for (File subFile : listedFiles) {
-                        if (subFile.isDirectory() && validMinecraftFolders.contains(subFile.getName().toLowerCase())) {
+                        if (subFile.isDirectory() && validMinecraftFolders.contains(subFile.getName().toLowerCase(Locale.ROOT))) {
                             totalFiles += this.countFilesInDirectory(subFile);
                         } else if (subFile.getName().equalsIgnoreCase("resourcepack")) {
                             File assetsDir = new File(subFile, "assets");
@@ -979,7 +1002,7 @@ public class IAConverter extends Converter {
                                         if (namespaceFolders == null) {
                                             continue;
                                         }
-                                        boolean looksLikeNamespace = Arrays.stream(namespaceFolders).anyMatch(nf -> nf.isDirectory() && validMinecraftFolders.contains(nf.getName().toLowerCase()));
+                                        boolean looksLikeNamespace = Arrays.stream(namespaceFolders).anyMatch(nf -> nf.isDirectory() && validMinecraftFolders.contains(nf.getName().toLowerCase(Locale.ROOT)));
                                         if (looksLikeNamespace) {
                                             totalFiles += this.countFilesInDirectory(potentialNamespace);
                                         }
@@ -1009,13 +1032,13 @@ public class IAConverter extends Converter {
                 File contentsFolder = listed.length > 0 ? listed[0].getParentFile() : null;
 
                 for (File namespaceDir : listed) {
-                    if (namespaceDir.isDirectory() && !blacklistedNamespacesList.contains(namespaceDir.getName().toLowerCase())) {
+                    if (namespaceDir.isDirectory() && !blacklistedNamespacesList.contains(namespaceDir.getName().toLowerCase(Locale.ROOT))) {
                         File[] namespaceFiles = namespaceDir.listFiles();
                         if (this.isNull(namespaceFiles)) {
                             continue;
                         }
                         for (File f : namespaceFiles) {
-                            String folderName = f.getName().toLowerCase();
+                            String folderName = f.getName().toLowerCase(Locale.ROOT);
                             if (f.isDirectory() && validMinecraftFolders.contains(folderName)) {
                                 File assetsRoot = contentsFolder != null ? contentsFolder : namespaceDir.getParentFile();
                                 this.copyDirectory(f, outputAssetsFolder, assetsRoot, progressBar, executor, latch, errorRef, useMultiThread);
@@ -1034,7 +1057,7 @@ public class IAConverter extends Converter {
                                             if (namespaceFolders == null) {
                                                 continue;
                                             }
-                                            boolean looksLikeNamespace = Arrays.stream(namespaceFolders).anyMatch(nf -> nf.isDirectory() && validMinecraftFolders.contains(nf.getName().toLowerCase()));
+                                            boolean looksLikeNamespace = Arrays.stream(namespaceFolders).anyMatch(nf -> nf.isDirectory() && validMinecraftFolders.contains(nf.getName().toLowerCase(Locale.ROOT)));
                                             if (looksLikeNamespace) {
                                                 this.copyDirectory(potentialNamespace, outputAssetsFolder, f, progressBar, executor, latch, errorRef, useMultiThread);
                                             }
@@ -1050,8 +1073,8 @@ public class IAConverter extends Converter {
                     latch.countDown();
                     executor.shutdown();
                     if (!executor.awaitTermination(1, TimeUnit.HOURS)) {
-                        Logger.debug(Message.ERROR__FILE_OPERATIONS__TIMEOUT, LogType.ERROR);
-                        Logger.debug(Message.ERROR__FILE_OPERATIONS__FORCE_SHUTDOWN, LogType.ERROR);
+                        Logger.error(Message.ERROR__FILE_OPERATIONS__TIMEOUT);
+                        Logger.error(Message.ERROR__FILE_OPERATIONS__FORCE_SHUTDOWN);
                     }
                 }
 
@@ -1071,7 +1094,7 @@ public class IAConverter extends Converter {
             jsonFileValidator.validateAllJsonFiles();
 
         } catch (Exception e) {
-            Logger.showException(Message.ERROR__PACK_CONVERSION__EXCEPTION, e, "plugin", this.converterName);
+            Logger.error(Message.ERROR__PACK_CONVERSION__EXCEPTION, e, Placeholder.of("plugin", this.converterName));
         } finally {
             if (this.isNotNull(executor) && !executor.isShutdown()) {
                 executor.shutdown();
@@ -1116,7 +1139,7 @@ public class IAConverter extends Converter {
                             }
                         }
                     } else {
-                        this.log(Message.ERROR__FILE__LOAD_FAILURE, LogType.ERROR, "file", f.getName());
+                        this.logDebug(Message.ERROR__FILE__LOAD_FAILURE, Logger.LogType.ERROR, Placeholder.of("file", f.getName()));
                     }
                 }
             }

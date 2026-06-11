@@ -1,3 +1,8 @@
+
+- Change logs, and message manager to use my own library.
+- Change all toLowerCase() and toUpperCase() to use `Locale.ROOT` to avoid locale issues (e.g. Turkish locale).
+
+
 # 0.0.2
 
 - Message now support multiples type (`TITLE`, `BOSS_BAR` (Required Paper Server), `TCHAT`, `ACTION_BAR`,

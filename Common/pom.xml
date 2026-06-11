@@ -39,6 +39,12 @@
             <artifactId>sarah</artifactId>
             <scope>compile</scope>
         </dependency>
+
+        <dependency>
+            <groupId>com.github.1robie.MessageFlow</groupId>
+            <artifactId>message-flow</artifactId>
+            <scope>provided</scope>
+        </dependency>
     </dependencies>
 
     <build>

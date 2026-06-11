@@ -1,14 +1,13 @@
 package fr.robie.craftengineconverter.utils;
 
 import fr.robie.craftengineconverter.common.permission.Permission;
-import fr.robie.craftengineconverter.utils.format.MessageUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.permissions.Permissible;
 import org.bukkit.plugin.Plugin;
 
 import java.text.DecimalFormat;
 
-public class CraftEngineConverterUtils extends MessageUtils {
+public class CraftEngineConverterUtils {
     protected String format(double decimal) {
         return this.format(decimal, "#.##");
     }

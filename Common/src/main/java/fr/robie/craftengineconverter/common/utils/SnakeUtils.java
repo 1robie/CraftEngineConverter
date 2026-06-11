@@ -1,5 +1,8 @@
 package fr.robie.craftengineconverter.common.utils;
 
+
+import fr.robie.craftengineconverter.common.utils.directive.SmartConstructor;
+import fr.robie.messageflow.logger.Logger;
 import fr.robie.craftengineconverter.api.logger.LogType;
 import fr.robie.craftengineconverter.api.logger.Logger;
 import fr.robie.craftengineconverter.common.utils.yaml.constructor.SmartConstructor;
@@ -111,7 +114,7 @@ public class SnakeUtils implements AutoCloseable {
                 return su;
             }
         } catch (IOException e) {
-            Logger.showException("Failed to load smart YAML: " + file, e);
+            Logger.error("Failed to load smart YAML: " + file, e);
             return null;
         }
     }
@@ -465,7 +468,7 @@ public class SnakeUtils implements AutoCloseable {
 
             return sectionUtils;
         } catch (IOException e) {
-            Logger.showException("Failed to create section SnakeUtils for key: " + key, e);
+            Logger.error("Failed to create section SnakeUtils for key: " + key, e);
             return null;
         }
     }
@@ -904,7 +907,7 @@ public class SnakeUtils implements AutoCloseable {
         try {
             return new SnakeUtils(file);
         } catch (IOException e) {
-            Logger.showException("Failed to load YAML file: " + file, e);
+            Logger.error("Failed to load YAML file: " + file, e);
             return null;
         }
     }
@@ -1002,7 +1005,7 @@ public class SnakeUtils implements AutoCloseable {
         try {
             File parentDir = file.getParentFile();
             if (parentDir != null && !parentDir.exists() && !parentDir.mkdirs()) {
-                Logger.debug("Failed to create parent directories for file: " + file, LogType.ERROR);
+                Logger.debug("Failed to create parent directories for file: " + file);
                 return false;
             }
 
@@ -1015,7 +1018,7 @@ public class SnakeUtils implements AutoCloseable {
             }
             return true;
         } catch (IOException e) {
-            Logger.showException("Failed to save YAML file: " + file, e);
+            Logger.error("Failed to save YAML file: " + file, e);
             return false;
         }
     }
@@ -1045,7 +1048,7 @@ public class SnakeUtils implements AutoCloseable {
             Yaml yaml = new Yaml();
             return yaml.load(fis);
         } catch (IOException e) {
-            Logger.showException("Failed to load YAML file: " + file, e);
+            Logger.error("Failed to load YAML file: " + file, e);
             return null;
         }
     }

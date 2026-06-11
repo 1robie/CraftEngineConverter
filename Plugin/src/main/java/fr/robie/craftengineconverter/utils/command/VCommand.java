@@ -2,9 +2,12 @@ package fr.robie.craftengineconverter.utils.command;
 
 import fr.robie.craftengineconverter.CraftEngineConverter;
 import fr.robie.craftengineconverter.api.format.Message;
-import fr.robie.craftengineconverter.api.logger.Logger;
+
 import fr.robie.craftengineconverter.common.permission.Permission;
 import fr.robie.craftengineconverter.utils.collection.CollectionBiConsumer;
+import fr.robie.messageflow.formatter.MessageFormatter;
+import fr.robie.messageflow.formatter.Placeholder;
+import fr.robie.messageflow.logger.Logger;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
@@ -36,6 +39,7 @@ public abstract class VCommand extends Arguments {
     }
 
     protected final CraftEngineConverter plugin;
+    protected final MessageFormatter<?,?> messageFormatter;
 
     /**
      * Permission used for the command, if it is a null then everyone can
@@ -92,6 +96,7 @@ public abstract class VCommand extends Arguments {
     public VCommand(CraftEngineConverter plugin) {
         super();
         this.plugin = plugin;
+        this.messageFormatter = plugin.getMessageFormatter();
     }
 
     //
@@ -340,7 +345,7 @@ public abstract class VCommand extends Arguments {
      * @return
      */
     protected VCommand setDescription(Message description) {
-        this.description = description.getMessage();
+        this.description = description.firstLine();
         return this;
     }
 
@@ -455,7 +460,7 @@ public abstract class VCommand extends Arguments {
         if (type == String.class) {
             return "string";
         }
-        return type.getSimpleName().toLowerCase();
+        return type.getSimpleName().toLowerCase(Locale.ROOT);
     }
 
 
@@ -496,7 +501,7 @@ public abstract class VCommand extends Arguments {
 
         if (defaultString != null) {
             for (VCommand subCommand : this.subVCommands) {
-                if (subCommand.getSubCommands().contains(defaultString.toLowerCase())) {
+                if (subCommand.getSubCommands().contains(defaultString.toLowerCase(Locale.ROOT))) {
                     return CommandType.CONTINUE;
                 }
             }
@@ -519,7 +524,7 @@ public abstract class VCommand extends Arguments {
         try {
             return this.perform(plugin);
         } catch (Exception e) {
-            Logger.showException("An error occurred while executing command: " + this.getSyntax(), e);
+            Logger.error("An error occurred while executing command: " + this.getSyntax(), e);
             return CommandType.SYNTAX_ERROR;
         }
     }
@@ -673,12 +678,12 @@ public abstract class VCommand extends Arguments {
             return Collections.emptyList();
         }
 
-        String lowerFilter = filter.toLowerCase();
+        String lowerFilter = filter.toLowerCase(Locale.ROOT);
 
         return this.flagsArgs.stream()
                 .map(f -> f.flag)
                 .filter(flag -> !usedFlags.contains(flag))
-                .filter(flag -> filter.isEmpty() || flag.toLowerCase().startsWith(lowerFilter))
+                .filter(flag -> filter.isEmpty() || flag.toLowerCase(Locale.ROOT).startsWith(lowerFilter))
                 .collect(Collectors.toList());
     }
 
@@ -756,8 +761,8 @@ public abstract class VCommand extends Arguments {
         List<String> newList = new ArrayList<>();
         for (String str : defaultList) {
             if (startWith.isEmpty()
-                    || (tab.equals(Tab.START) ? str.toLowerCase().startsWith(startWith.toLowerCase())
-                    : str.toLowerCase().contains(startWith.toLowerCase()))) {
+                    || (tab.equals(Tab.START) ? str.toLowerCase(Locale.ROOT).startsWith(startWith.toLowerCase(Locale.ROOT))
+                    : str.toLowerCase(Locale.ROOT).contains(startWith.toLowerCase(Locale.ROOT)))) {
                 newList.add(str);
             }
         }
@@ -822,8 +827,8 @@ public abstract class VCommand extends Arguments {
     public void syntaxMessage() {
         this.subVCommands.forEach(command -> {
             if (command.getPermission() == null || this.hasPermission(this.sender, command.getPermission())) {
-                this.message(this.plugin, this.sender, Message.COMMAND__SYNTAX__HELP, "syntax", command.getSyntax(), "description",
-                        command.getDescription());
+                this.messageFormatter.sendMessage(Message.COMMAND__SYNTAX__HELP, this.sender, Placeholder.of("syntax", command.getSyntax(), "description",
+                        command.getDescription()));
             }
         });
     }

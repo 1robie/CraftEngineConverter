@@ -6,6 +6,7 @@ import org.bukkit.configuration.ConfigurationSection;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 public class Placement {
@@ -44,7 +45,7 @@ public class Placement {
     public Rules getRules() { return this.rules; }
 
     public void serialize(ConfigurationSection placementSection) {
-        ConfigurationSection typeSection = placementSection.createSection(this.type.name().toLowerCase());
+        ConfigurationSection typeSection = placementSection.createSection(this.type.name().toLowerCase(Locale.ROOT));
 
         if (this.entityCulling)
             typeSection.set("entity-culling", true);

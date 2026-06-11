@@ -1,10 +1,12 @@
 package fr.robie.craftengineconverter.api.configuration.item.behavior.block.states.properties;
 
 import fr.robie.craftengineconverter.api.configuration.item.behavior.block.states.BlockStateProperty;
-import net.momirealms.craftengine.core.block.properties.type.StairsShape;
+import net.momirealms.craftengine.core.block.property.type.StairsShape;
 import org.bukkit.configuration.ConfigurationSection;
 import org.jetbrains.annotations.NotNull;
 import org.jspecify.annotations.NonNull;
+
+import java.util.Locale;
 
 public class StairsShapeBlockStateProperty implements BlockStateProperty<StairsShape> {
     private final String name;
@@ -29,6 +31,6 @@ public class StairsShapeBlockStateProperty implements BlockStateProperty<StairsS
     public void serialize(@NotNull ConfigurationSection propertiesSection) {
         ConfigurationSection section = propertiesSection.createSection(this.name);
         section.set("type", "stairs_shape");
-        section.set("default", this.value.name().toLowerCase());
+        section.set("default", this.value.name().toLowerCase(Locale.ROOT));
     }
 }

@@ -12,22 +12,22 @@ import org.jetbrains.annotations.Nullable;
 public class BlockHistory {
     @Column(value = "id", autoIncrement = true)
     private final Long id;
-    @Column(value="world_name")
+    @Column("world_name")
     private final String world_name;
-    @Column(value="chunk_x")
-    private final Integer chunk_x;
-    @Column(value="chunk_z")
-    private final Integer chunk_z;
-    @Column(value="block_x")
-    private final Integer block_x;
-    @Column(value="block_y")
-    private final Integer block_y;
-    @Column(value="block_z")
-    private final Integer block_z;
+    @Column("chunk_x")
+    private final int chunk_x;
+    @Column("chunk_z")
+    private final int chunk_z;
+    @Column("block_x")
+    private final int block_x;
+    @Column("block_y")
+    private final int block_y;
+    @Column("block_z")
+    private final int block_z;
     @Column("original_block")
     private final String original_block;
     @Column("reverted")
-    private final Boolean reverted;
+    private final boolean reverted;
 
     /**
      * Constructs a new BlockHistory record.
@@ -42,7 +42,7 @@ public class BlockHistory {
      * @param original_block Block type before conversion.
      * @param reverted Whether the block was reverted to its original state.
      */
-    public BlockHistory(Long id, @NotNull String world_name, Integer chunk_x, Integer chunk_z, Integer block_x, Integer block_y, Integer block_z, @NotNull String original_block, Boolean reverted) {
+    public BlockHistory(Long id, @NotNull String world_name, int chunk_x, int chunk_z, int block_x, int block_y, int block_z, @NotNull String original_block, boolean reverted) {
         this.id = id;
         this.world_name = world_name;
         this.chunk_x = chunk_x;
@@ -74,40 +74,35 @@ public class BlockHistory {
     /**
      * @return Chunk X coordinate of the block's chunk.
      */
-    @Nullable
-    public Integer getChunkX() {
+    public int getChunkX() {
         return this.chunk_x;
     }
 
     /**
      * @return Chunk Z coordinate of the block's chunk.
      */
-    @Nullable
-    public Integer getChunkZ() {
+    public int getChunkZ() {
         return this.chunk_z;
     }
 
     /**
      * @return X coordinate of the block.
      */
-    @Nullable
-    public Integer getBlockX() {
+    public int getBlockX() {
         return this.block_x;
     }
 
     /**
      * @return Y coordinate of the block.
      */
-    @Nullable
-    public Integer getBlockY() {
+    public int getBlockY() {
         return this.block_y;
     }
 
     /**
      * @return Z coordinate of the block.
      */
-    @Nullable
-    public Integer getBlockZ() {
+    public int getBlockZ() {
         return this.block_z;
     }
 
@@ -120,10 +115,9 @@ public class BlockHistory {
     }
 
     /**
-     * @return True if reverted, false if not, null if unknown.
+     * @return True if reverted, false if not reverted yet.
      */
-    @Nullable
-    public Boolean isReverted() {
+    public boolean isReverted() {
         return this.reverted;
     }
 }

@@ -21,6 +21,7 @@ import fr.robie.craftengineconverter.api.format.Message;
 import fr.robie.craftengineconverter.api.logger.LogType;
 import fr.robie.craftengineconverter.api.logger.Logger;
 import fr.robie.craftengineconverter.api.manager.FileCacheManager;
+
 import fr.robie.craftengineconverter.api.progress.BukkitProgressBar;
 import fr.robie.craftengineconverter.api.utils.FileUtils;
 import fr.robie.craftengineconverter.common.BlockStatesMapper;
@@ -31,6 +32,8 @@ import fr.robie.craftengineconverter.common.utils.SnakeUtils;
 import fr.robie.craftengineconverter.converter.Converter;
 import fr.robie.craftengineconverter.utils.ConfigFile;
 import fr.robie.craftengineconverter.utils.JsonFileValidator;
+import fr.robie.messageflow.formatter.Placeholder;
+import fr.robie.messageflow.logger.Logger;
 import net.momirealms.craftengine.core.item.recipe.CookingRecipeCategory;
 import net.momirealms.craftengine.core.item.recipe.CraftingRecipeCategory;
 import org.bukkit.configuration.ConfigurationSection;
@@ -65,7 +68,7 @@ public class NexoConverter extends Converter {
         File outputBase = new File(this.plugin.getDataFolder(), "converted/" + this.converterName + "/CraftEngine/resources/craftengineconverter/configuration/items");
 
         if (!inputBase.exists() || !inputBase.isDirectory()) {
-            this.log(Message.WARNING__CONVERTER__ITEMS_DIRECTORY_NOT_FOUND, LogType.ERROR, "path", inputBase.getAbsolutePath());
+            this.log(Message.WARNING__CONVERTER__ITEMS_DIRECTORY_NOT_FOUND, Logger.LogType.ERROR, Placeholder.of("path", inputBase.getAbsolutePath()));
             return;
         }
 
@@ -74,7 +77,7 @@ public class NexoConverter extends Converter {
         }
 
         if (!outputBase.mkdirs()) {
-            this.logDebug(Message.ERROR__MKDIR_FAILURE, LogType.ERROR, "directory", outputBase.getName(), "path", outputBase.getAbsolutePath());
+            this.logDebug(Message.ERROR__MKDIR_FAILURE, Logger.LogType.ERROR, Placeholder.of("directory", outputBase.getName(), "path", outputBase.getAbsolutePath()));
             return;
         }
 
@@ -101,7 +104,7 @@ public class NexoConverter extends Converter {
             this.processConfigs(toConvert, outputBase, progress);
             toConvert.clear();
         } catch (Exception e) {
-            Logger.showException(Message.ERROR__CONVERTER__NEXO__ITEMS__CONVERSION_EXCEPTION, e);
+            Logger.error(Message.ERROR__CONVERTER__NEXO__ITEMS__CONVERSION_EXCEPTION, e);
         } finally {
             progress.stop();
         }
@@ -134,7 +137,7 @@ public class NexoConverter extends Converter {
         File outputEmojisFolder = new File(this.plugin.getDataFolder(), "converted/" + this.converterName + "/CraftEngine/resources/craftengineconverter/configuration/emojis");
 
         if (!inputEmojisFolder.exists() || !inputEmojisFolder.isDirectory()) {
-            this.logDebug(Message.WARNING__CONVERTER__EMOJIS_DIRECTORY_NOT_FOUND, LogType.INFO, "path", inputEmojisFolder.getAbsolutePath());
+            this.logDebug(Message.WARNING__CONVERTER__EMOJIS_DIRECTORY_NOT_FOUND, Logger.LogType.INFO, Placeholder.of("path", inputEmojisFolder.getAbsolutePath()));
             return;
         }
 
@@ -143,7 +146,7 @@ public class NexoConverter extends Converter {
         }
 
         if (!outputEmojisFolder.mkdirs()) {
-            this.logDebug(Message.ERROR__MKDIR_FAILURE, LogType.ERROR, "directory", outputEmojisFolder.getName(), "path", outputEmojisFolder.getAbsolutePath());
+            this.logDebug(Message.ERROR__MKDIR_FAILURE, Logger.LogType.ERROR, Placeholder.of("directory", outputEmojisFolder.getName(), "path", outputEmojisFolder.getAbsolutePath()));
             return;
         }
 
@@ -151,7 +154,7 @@ public class NexoConverter extends Converter {
         this.populateQueue(inputEmojisFolder, inputEmojisFolder, toConvert);
 
         if (toConvert.isEmpty()) {
-            this.log(Message.WARNING__CONVERTER__NO_EMOJIS_FOUND, LogType.INFO);
+            this.log(Message.WARNING__CONVERTER__NO_EMOJIS_FOUND, Logger.LogType.INFO, Placeholder.empty());
             return;
         }
 
@@ -168,7 +171,7 @@ public class NexoConverter extends Converter {
             this.processEmojisConfigs(toConvert, outputEmojisFolder, progress);
             toConvert.clear();
         } catch (Exception e) {
-            Logger.showException(Message.ERROR__CONVERTER__NEXO__EMOJIS__CONVERSION_EXCEPTION, e);
+            Logger.error(Message.ERROR__CONVERTER__NEXO__EMOJIS__CONVERSION_EXCEPTION, e);
         } finally {
             progress.stop();
         }
@@ -229,7 +232,7 @@ public class NexoConverter extends Converter {
                 CraftEngineImageUtils.register(key, new ImageConversion(finalKey, rows, columns));
                 convertedCount++;
             } catch (Exception e) {
-                this.logDebug(Message.ERROR__CONVERTER__FAILED_CONVERT_EMOJI, LogType.ERROR, "emoji", finalKey, "file", emojiFile.getAbsolutePath());
+                this.logDebug(Message.ERROR__CONVERTER__FAILED_CONVERT_EMOJI, Logger.LogType.ERROR, Placeholder.of("emoji", finalKey, "file", emojiFile.getAbsolutePath()));
             }
 
             progress.increment();
@@ -266,14 +269,14 @@ public class NexoConverter extends Converter {
         File recipesFolder = new File("plugins/" + this.converterName + "/recipes");
         File outputFolder = new File(this.plugin.getDataFolder(), "converted/" + this.converterName + "/CraftEngine/resources/craftengineconverter/configuration/recipes");
         if (!recipesFolder.exists() || !recipesFolder.isDirectory()) {
-            this.logDebug(Message.WARNING__CONVERTER__RECIPES_DIRECTORY_NOT_FOUND, LogType.INFO, "path", recipesFolder.getAbsolutePath());
+            this.logDebug(Message.WARNING__CONVERTER__RECIPES_DIRECTORY_NOT_FOUND, Logger.LogType.INFO, Placeholder.of("path", recipesFolder.getAbsolutePath()));
             return;
         }
         if (outputFolder.exists()) {
             FileUtils.deleteDirectory(outputFolder);
         }
         if (!outputFolder.mkdirs()) {
-            this.logDebug(Message.ERROR__MKDIR_FAILURE, LogType.ERROR, "directory", outputFolder.getName(), "path", outputFolder.getAbsolutePath());
+            this.logDebug(Message.ERROR__MKDIR_FAILURE, Logger.LogType.ERROR, Placeholder.of("directory", outputFolder.getName(), "path", outputFolder.getAbsolutePath()));
             return;
         }
         Map<RecipeType, List<ConfigFile>> toConvert = new HashMap<>();
@@ -294,7 +297,7 @@ public class NexoConverter extends Converter {
             this.processRecipeConfigs(toConvert, outputFolder, progress);
             toConvert.clear();
         } catch (Exception e) {
-            Logger.showException(Message.ERROR__CONVERTER__NEXO__RECIPES__CONVERSION_EXCEPTION, e);
+            Logger.error(Message.ERROR__CONVERTER__NEXO__RECIPES__CONVERSION_EXCEPTION, e);
         } finally {
             progress.stop();
         }
@@ -326,7 +329,7 @@ public class NexoConverter extends Converter {
                 try {
                     convertedConfig.save(new File(this.plugin.getDataFolder(), "converted/" + this.converterName + "/CraftEngine/config.yml"));
                 } catch (IOException e) {
-                    Logger.showException(Message.ERROR__CONVERTER__FAILED_SAVE_FILE, e, "file", recipeFile.getAbsolutePath());
+                    Logger.error(Message.ERROR__CONVERTER__FAILED_SAVE_FILE, e, Placeholder.of("file", recipeFile.getAbsolutePath()));
                 }
             }
             progress.increment();
@@ -345,7 +348,7 @@ public class NexoConverter extends Converter {
                 continue;
             }
 
-            String finalRecipeId = recipeType.name().toLowerCase() + ":" + key;
+            String finalRecipeId = recipeType.name().toLowerCase(Locale.ROOT) + ":" + key;
             ConfigurationSection ceRecipeSection = recipesSection.createSection(finalRecipeId);
             AbstractRecipe recipe = null;
 
@@ -496,8 +499,13 @@ public class NexoConverter extends Converter {
                     recipe = trim;
                 }
 
-                default ->
-                        this.logDebug(Message.ERROR__CONVERTER__NEXO__UNSUPPORTED_RECIPE_TYPE, LogType.WARNING, "type", recipeType, "recipe", finalRecipeId, "file", recipeFile.getAbsolutePath());
+                default -> {
+                    Placeholder.Builder placeholderBuilder = Placeholder.builder();
+                    placeholderBuilder.register("type", recipeType.name())
+                            .register("recipe", finalRecipeId)
+                            .register("file", recipeFile.getAbsolutePath());
+                    this.logDebug(Message.ERROR__CONVERTER__NEXO__UNSUPPORTED_RECIPE_TYPE, Logger.LogType.WARNING, placeholderBuilder.build());
+                }
             }
 
             if (recipe != null) {
@@ -528,7 +536,7 @@ public class NexoConverter extends Converter {
         String category = source.getString("category");
         if (this.isValidString(category)) {
             try {
-                target.setCategory(Enum.valueOf(enumClass, category.toUpperCase()));
+                target.setCategory(Enum.valueOf(enumClass, category.toUpperCase(Locale.ROOT)));
             } catch (IllegalArgumentException ignored) {
             }
         }
@@ -556,12 +564,12 @@ public class NexoConverter extends Converter {
 
             String minecraftType = section.getString("minecraft_type");
             if (this.isValidString(minecraftType)) {
-                return this.namespaced(minecraftType.toLowerCase());
+                return this.namespaced(minecraftType.toLowerCase(Locale.ROOT));
             }
 
             String minecraftItem = section.getString("minecraft_item");
             if (this.isValidString(minecraftItem)) {
-                return this.namespaced(minecraftItem.toLowerCase());
+                return this.namespaced(minecraftItem.toLowerCase(Locale.ROOT));
             }
 
             String nexoItem = section.getString("nexo_item");
@@ -570,7 +578,7 @@ public class NexoConverter extends Converter {
                 if (this.isValidString(newName)) {
                     return newName;
                 } else {
-                    this.logDebug(Message.WARNING__CONVERTER__NEXO__RECIPE__NO_MAPPING_INPUT, LogType.WARNING, "item", nexoItem, "recipe", finalRecipeId);
+                    this.logDebug(Message.WARNING__CONVERTER__NEXO__RECIPE__NO_MAPPING_INPUT, Logger.LogType.WARNING, Placeholder.of("item", nexoItem, "recipe", finalRecipeId));
                 }
             }
         }
@@ -585,12 +593,12 @@ public class NexoConverter extends Converter {
 
         String minecraftType = section.getString(key + ".minecraft_type");
         if (this.isValidString(minecraftType)) {
-            return this.namespaced(minecraftType.toLowerCase());
+            return this.namespaced(minecraftType.toLowerCase(Locale.ROOT));
         }
 
         String minecraftItem = section.getString(key + ".minecraft_item");
         if (this.isValidString(minecraftItem)) {
-            return this.namespaced(minecraftItem.toLowerCase());
+            return this.namespaced(minecraftItem.toLowerCase(Locale.ROOT));
         }
 
         String nexoItem = section.getString(key + ".nexo_item");
@@ -599,7 +607,7 @@ public class NexoConverter extends Converter {
             if (this.isValidString(newName)) {
                 return newName;
             } else {
-                this.logDebug(Message.WARNING__CONVERTER__NEXO__RECIPE__NO_MAPPING_INGREDIENT, LogType.WARNING, "item", nexoItem, "recipe", recipeId);
+                this.logDebug(Message.WARNING__CONVERTER__NEXO__RECIPE__NO_MAPPING_INGREDIENT, Logger.LogType.WARNING, Placeholder.of("item", nexoItem, "recipe", recipeId));
             }
         }
 
@@ -614,12 +622,12 @@ public class NexoConverter extends Converter {
 
             String minecraftType = resultSection.getString("minecraft_type");
             if (this.isValidString(minecraftType)) {
-                id = this.namespaced(minecraftType.toLowerCase());
+                id = this.namespaced(minecraftType.toLowerCase(Locale.ROOT));
             }
 
             String minecraftItem = resultSection.getString("minecraft_item");
             if (this.isValidString(minecraftItem)) {
-                id = this.namespaced(minecraftItem.toLowerCase());
+                id = this.namespaced(minecraftItem.toLowerCase(Locale.ROOT));
             }
 
             String nexoItem = resultSection.getString("nexo_item");
@@ -628,7 +636,7 @@ public class NexoConverter extends Converter {
                 if (this.isValidString(newName)) {
                     id = newName;
                 } else {
-                    this.logDebug(Message.WARNING__CONVERTER__NEXO__RECIPE__NO_MAPPING_RESULT, LogType.WARNING, "item", nexoItem, "recipe", finalRecipeId);
+                    this.logDebug(Message.WARNING__CONVERTER__NEXO__RECIPE__NO_MAPPING_RESULT, Logger.LogType.WARNING, Placeholder.of("item", nexoItem, "recipe", finalRecipeId));
                 }
             }
             if (this.isValidString(id)) {
@@ -665,10 +673,10 @@ public class NexoConverter extends Converter {
                         ConfigFile configFile = new ConfigFile(file, baseDir, entry.get().getData());
                         toConvert.computeIfAbsent(recipeType, k -> new ArrayList<>()).add(configFile);
                     } else {
-                        this.logDebug(Message.WARNING__CONVERTER__NEXO__RECIPE__COULD_NOT_DETERMINE_RECIPE_TYPE, LogType.WARNING, "file", file.getAbsolutePath());
+                        this.logDebug(Message.WARNING__CONVERTER__NEXO__RECIPE__COULD_NOT_DETERMINE_RECIPE_TYPE, Logger.LogType.WARNING, Placeholder.of("file", file.getAbsolutePath()));
                     }
                 } else {
-                    this.logDebug(Message.WARNING__CONVERTER__NEXO__RECIPE__ERROR__FAILED_LOAD_RECIPE_FILE, LogType.WARNING, "file", file.getAbsolutePath());
+                    this.logDebug(Message.WARNING__CONVERTER__NEXO__RECIPE__ERROR__FAILED_LOAD_RECIPE_FILE, Logger.LogType.WARNING, Placeholder.of("file", file.getAbsolutePath()));
                 }
             }
         }
@@ -682,7 +690,7 @@ public class NexoConverter extends Converter {
             return null;
         }
 
-        String recipeTypeName = pathParts[0].toUpperCase();
+        String recipeTypeName = pathParts[0].toUpperCase(Locale.ROOT);
 
         if (recipeTypeName.equalsIgnoreCase("SMITHING")) {
             return RecipeType.SMITHING_TRANSFORM;
@@ -700,20 +708,20 @@ public class NexoConverter extends Converter {
         File outputSoundFile = new File(this.plugin.getDataFolder(), "converted/" + this.converterName + "/CraftEngine/resources/craftengineconverter/configuration/sounds/sounds.yml");
 
         if (!inputSoundFile.exists() || !inputSoundFile.isFile()) {
-            this.logDebug(Message.WARNING__CONVERTER__NEXO__SOUND__FILE_NOT_FOUND, LogType.INFO, "path", inputSoundFile.getAbsolutePath());
+            this.logDebug(Message.WARNING__CONVERTER__NEXO__SOUND__FILE_NOT_FOUND, Logger.LogType.INFO, Placeholder.of("path", inputSoundFile.getAbsolutePath()));
             return;
         }
 
         if (!outputSoundFile.getParentFile().exists()) {
             if (!outputSoundFile.getParentFile().mkdirs()) {
-                this.log(Message.ERROR__MKDIR_FAILURE, LogType.ERROR, "directory", outputSoundFile.getName(), "path", outputSoundFile.getAbsolutePath());
+                this.log(Message.ERROR__MKDIR_FAILURE, Logger.LogType.ERROR, Placeholder.of("directory", outputSoundFile.getName(), "path", outputSoundFile.getAbsolutePath()));
                 return;
             }
         }
 
         try (SnakeUtils nexoSounds = new SnakeUtils(inputSoundFile)) {
             if (nexoSounds.isEmpty()) {
-                this.logDebug(Message.WARNING__CONVERTER__NEXO__SOUND__SOUNDS_FILE_EMPTY, LogType.INFO, "path", inputSoundFile.getAbsolutePath());
+                this.logDebug(Message.WARNING__CONVERTER__NEXO__SOUND__SOUNDS_FILE_EMPTY, Logger.LogType.INFO, Placeholder.of("path", inputSoundFile.getAbsolutePath()));
                 return;
             }
 
@@ -740,7 +748,7 @@ public class NexoConverter extends Converter {
                     } catch (Exception e) {
                         Object idObj = soundEntry.get("id");
                         String soundId = idObj != null ? idObj.toString() : "unknown";
-                        this.logDebug(Message.ERROR__CONVERTER__FAILED_CONVERT_SOUND, LogType.ERROR, "sound", soundId, "file", inputSoundFile);
+                        this.logDebug(Message.ERROR__CONVERTER__FAILED_CONVERT_SOUND, Logger.LogType.ERROR, Placeholder.of("sound", soundId, "file", String.valueOf(inputSoundFile)));
                         progress.increment();
                     }
                 }
@@ -755,13 +763,13 @@ public class NexoConverter extends Converter {
                     convertedConfig.save(outputSoundFile);
                 }
             } catch (Exception e) {
-                Logger.showException(Message.ERROR__CONVERTER__NEXO__SOUNDS__CONVERT_FAILURE, e, "file", inputSoundFile.getName());
+                Logger.error(Message.ERROR__CONVERTER__NEXO__SOUNDS__CONVERT_FAILURE, e, Placeholder.of("file", inputSoundFile.getName()));
             } finally {
                 nexoSounds.close();
                 progress.stop();
             }
         } catch (Exception e) {
-            Logger.showException(Message.ERROR__CONVERTER__NEXO__SOUNDS__LOAD_FAILURE, e, "file", inputSoundFile.getName());
+            Logger.error(Message.ERROR__CONVERTER__NEXO__SOUNDS__LOAD_FAILURE, e, Placeholder.of("file", inputSoundFile.getName()));
         }
     }
 
@@ -822,7 +830,7 @@ public class NexoConverter extends Converter {
                         double length = Double.parseDouble(durationStr.substring(0, durationStr.length() - 1));
                         jukeboxConfig.setLength(length);
                     } catch (NumberFormatException e) {
-                        this.logDebug(Message.ERROR__CONVERTER__NEXO__SOUND__INVALID_DURATION_FORMAT, LogType.INFO, "duration", durationStr, "sound", soundId);
+                        this.logDebug(Message.ERROR__CONVERTER__NEXO__SOUND__INVALID_DURATION_FORMAT, Logger.LogType.INFO, Placeholder.of("duration", durationStr, "sound", soundId));
                     }
                 }
             }
@@ -872,19 +880,19 @@ public class NexoConverter extends Converter {
         File outputFile = new File(this.plugin.getDataFolder(), "converted/" + this.converterName + "/CraftEngine/resources/craftengineconverter/configuration/languages/languages.yml");
 
         if (!languagesFile.exists() || !languagesFile.isFile()) {
-            this.logDebug(Message.WARNING__CONVERTER__LANGUAGES_FILE_NOT_FOUND, LogType.INFO, "path", languagesFile.getAbsolutePath());
+            this.logDebug(Message.WARNING__CONVERTER__LANGUAGES_FILE_NOT_FOUND, Logger.LogType.INFO, Placeholder.of("path", languagesFile.getAbsolutePath()));
             return;
         }
 
         try (SnakeUtils nexoLanguages = new SnakeUtils(languagesFile)) {
             if (nexoLanguages.isEmpty()) {
-                this.logDebug(Message.WARNING__CONVERTER__NEXO__LANGUAGE__LANGUAGES_FILE_EMPTY, LogType.INFO, "path", languagesFile.getAbsolutePath());
+                this.logDebug(Message.WARNING__CONVERTER__NEXO__LANGUAGE__LANGUAGES_FILE_EMPTY, Logger.LogType.INFO, Placeholder.of("path", languagesFile.getAbsolutePath()));
                 return;
             }
 
             Set<String> languageKeys = nexoLanguages.getKeys();
             if (languageKeys.isEmpty()) {
-                this.logDebug(Message.WARNING__CONVERTER__NEXO__LANGUAGE__NO_LANGUAGES_FOUND, LogType.INFO);
+                this.logDebug(Message.WARNING__CONVERTER__NEXO__LANGUAGE__NO_LANGUAGES_FOUND, Logger.LogType.INFO, Placeholder.empty());
                 return;
             }
 
@@ -897,7 +905,7 @@ public class NexoConverter extends Converter {
             }
 
             if (totalTranslations == 0) {
-                this.log(Message.WARNING__CONVERTER__NEXO__LANGUAGE__NO_LANGUAGES_FOUND, LogType.ERROR);
+                this.log(Message.WARNING__CONVERTER__NEXO__LANGUAGE__NO_LANGUAGES_FOUND, Logger.LogType.ERROR,Placeholder.empty());
                 return;
             }
 
@@ -914,7 +922,7 @@ public class NexoConverter extends Converter {
                         try {
                             this.convertLanguage(langKey, nexoLanguages, craftEngineLanguages, progress);
                         } catch (Exception e) {
-                            this.logDebug(Message.ERROR__CONVERTER__NEXO__LANGUAGE__FAILED_CONVERT_LANGUAGE, LogType.ERROR, "lang", langKey, "file", languagesFile.getAbsolutePath());
+                            this.logDebug(Message.ERROR__CONVERTER__NEXO__LANGUAGE__FAILED_CONVERT_LANGUAGE, Logger.LogType.ERROR, Placeholder.of("lang", langKey, "file", languagesFile.getAbsolutePath()));
                             Map<String, Object> langData = nexoLanguages.getMap(langKey);
                             if (langData != null) {
                                 progress.increment(langData.size());
@@ -926,12 +934,12 @@ public class NexoConverter extends Converter {
                     }
                 }
             } catch (Exception e) {
-                Logger.showException(Message.ERROR__CONVERTER__NEXO__LANGUAGES__CONVERT_FAILURE, e, "file", languagesFile.getName());
+                Logger.error(Message.ERROR__CONVERTER__NEXO__LANGUAGES__CONVERT_FAILURE, e, Placeholder.of("file", languagesFile.getName()));
             } finally {
                 progress.stop();
             }
         } catch (Exception e) {
-            Logger.showException(Message.ERROR__CONVERTER__NEXO__LANGUAGES__LOAD_FAILURE, e, "file", languagesFile.getName());
+            Logger.error(Message.ERROR__CONVERTER__NEXO__LANGUAGES__LOAD_FAILURE, e, Placeholder.of("file", languagesFile.getName()));
         }
     }
 
@@ -950,7 +958,7 @@ public class NexoConverter extends Converter {
                 String translationKey = "translations\\n" + craftEngineLangKey + "\\n" + entry.getKey();
                 craftEngineLanguages.addData(translationKey, entry.getValue(), "\\n");
             } catch (Exception e) {
-                this.logDebug(Message.ERROR__CONVERTER__NEXO__LANGUAGE__FAILED_CONVERT_TRANSLATION, LogType.ERROR, "key", entry.getKey(), "lang", langKey);
+                this.logDebug(Message.ERROR__CONVERTER__NEXO__LANGUAGE__FAILED_CONVERT_TRANSLATION, Logger.LogType.ERROR, Placeholder.of("key", entry.getKey(), "lang", langKey));
             }
 
             progress.increment();
@@ -963,7 +971,7 @@ public class NexoConverter extends Converter {
         File outputFolder = new File(this.plugin.getDataFolder(), "converted/" + this.converterName + "/CraftEngine/resources/craftengineconverter/configuration/images");
 
         if (!inputBase.exists() || !inputBase.isDirectory()) {
-            this.logDebug(Message.WARNING__CONVERTER__GLYPH_DIRECTORY_NOT_FOUND, LogType.INFO, "path", inputBase.getAbsolutePath());
+            this.logDebug(Message.WARNING__CONVERTER__GLYPH_DIRECTORY_NOT_FOUND, Logger.LogType.INFO, Placeholder.of("path", inputBase.getAbsolutePath()));
             return;
         }
 
@@ -972,7 +980,7 @@ public class NexoConverter extends Converter {
         }
 
         if (!outputFolder.mkdirs()) {
-            this.logDebug(Message.ERROR__MKDIR_FAILURE, LogType.ERROR, "directory", outputFolder.getName(), "path", outputFolder.getAbsolutePath());
+            this.logDebug(Message.ERROR__MKDIR_FAILURE, Logger.LogType.ERROR, Placeholder.of("directory", outputFolder.getName(), "path", outputFolder.getAbsolutePath()));
             return;
         }
 
@@ -980,7 +988,7 @@ public class NexoConverter extends Converter {
         this.populateQueue(inputBase, inputBase, toConvert);
 
         if (toConvert.isEmpty()) {
-            this.log(Message.WARNING__CONVERTER__NEXO__GLYPH__NO_GLYPHS_FOUND, LogType.INFO);
+            this.log(Message.WARNING__CONVERTER__NEXO__GLYPH__NO_GLYPHS_FOUND, Logger.LogType.INFO, Placeholder.empty());
             return;
         }
 
@@ -997,7 +1005,7 @@ public class NexoConverter extends Converter {
             this.processImagesConfigs(toConvert, outputFolder, progress);
             toConvert.clear();
         } catch (Exception e) {
-            Logger.showException(Message.ERROR__CONVERTER__NEXO__IMAGES__CONVERSION_EXCEPTION, e);
+            Logger.error(Message.ERROR__CONVERTER__NEXO__IMAGES__CONVERSION_EXCEPTION, e);
         } finally {
             progress.stop();
         }
@@ -1067,7 +1075,7 @@ public class NexoConverter extends Converter {
                 CraftEngineImageUtils.register(key, new ImageConversion(finalKey, rows, cols));
                 convertedCount++;
             } catch (Exception e) {
-                this.logDebug(Message.ERROR__CONVERTER__NEXO__GLYPH__FAILED_CONVERT, LogType.ERROR, "glyph", key, "file", fileName);
+                this.logDebug(Message.ERROR__CONVERTER__NEXO__GLYPH__FAILED_CONVERT, Logger.LogType.ERROR, Placeholder.of("glyph", key, "file", fileName));
             }
 
             progress.increment();
@@ -1082,15 +1090,15 @@ public class NexoConverter extends Converter {
 
                 if (!output.getParentFile().exists()) {
                     if (!output.getParentFile().mkdirs()) {
-                        this.logDebug(Message.ERROR__MKDIR_FAILURE, LogType.ERROR, "directory", output.getParentFile().getName(), "path", output.getParentFile().getAbsolutePath());
+                        this.logDebug(Message.ERROR__MKDIR_FAILURE, Logger.LogType.ERROR, Placeholder.of("directory", output.getParentFile().getName(), "path", output.getParentFile().getAbsolutePath()));
                     }
                 }
 
                 convertedConfig.save(output);
             } catch (IOException e) {
-                Logger.showException(Message.ERROR__CONVERTER__NEXO__IMAGES__SAVE_FAILURE, e, "file", fileName);
+                Logger.error(Message.ERROR__CONVERTER__NEXO__IMAGES__SAVE_FAILURE, e, Placeholder.of("file", fileName));
             } catch (IllegalArgumentException e) {
-                Logger.showException(Message.ERROR__CONVERTER__NEXO__IMAGES__RELATIVE_PATH_FAILURE, e, "file", configFile.sourceFile().getPath());
+                Logger.error(Message.ERROR__CONVERTER__NEXO__IMAGES__RELATIVE_PATH_FAILURE, e, Placeholder.of("file", configFile.sourceFile().getPath()));
             }
         }
     }
@@ -1116,7 +1124,7 @@ public class NexoConverter extends Converter {
                 zis.closeEntry();
             }
         } catch (IOException e) {
-            this.logDebug(Message.ERROR__FAILED_COUNT_FILES_ZIP, LogType.ERROR, "zip", zipFile.getName(), "message", e.getMessage());
+            this.logDebug(Message.ERROR__FAILED_COUNT_FILES_ZIP, Logger.LogType.ERROR, Placeholder.of("zip", zipFile.getName(), "message", e.getMessage()));
         }
 
         return count;
@@ -1129,7 +1137,7 @@ public class NexoConverter extends Converter {
             File outputPackFile = new File(this.plugin.getDataFolder(), "converted/" + this.converterName + "/CraftEngine/resources/craftengineconverter/resourcepack");
 
             if (!inputPackFile.exists() || !inputPackFile.isDirectory()) {
-                this.log(Message.WARNING__CONVERTER__PACK_DIRECTORY_NOT_FOUND, LogType.WARNING, inputPackFile.getAbsolutePath());
+                this.log(Message.WARNING__CONVERTER__PACK_DIRECTORY_NOT_FOUND, Logger.LogType.WARNING, Placeholder.of("path", inputPackFile.getAbsolutePath()));
                 return;
             }
 
@@ -1137,7 +1145,7 @@ public class NexoConverter extends Converter {
                 FileUtils.deleteDirectory(outputPackFile);
             }
             if (!outputPackFile.mkdirs()) {
-                this.logDebug(Message.ERROR__MKDIR_FAILURE, LogType.ERROR, "directory", outputPackFile.getName(), "path", outputPackFile.getAbsolutePath());
+                this.logDebug(Message.ERROR__MKDIR_FAILURE, Logger.LogType.ERROR, Placeholder.of("directory", outputPackFile.getName(), "path", outputPackFile.getAbsolutePath()));
                 return;
             }
 
@@ -1197,8 +1205,8 @@ public class NexoConverter extends Converter {
                     latch.countDown();
                     executor.shutdown();
                     if (!executor.awaitTermination(1, TimeUnit.HOURS)) {
-                        this.logDebug(Message.ERROR__FILE_OPERATIONS__TIMEOUT, LogType.ERROR);
-                        this.logDebug(Message.ERROR__FILE_OPERATIONS__FORCE_SHUTDOWN, LogType.ERROR);
+                        this.logDebug(Message.ERROR__FILE_OPERATIONS__TIMEOUT, Logger.LogType.ERROR, Placeholder.empty());
+                        this.logDebug(Message.ERROR__FILE_OPERATIONS__FORCE_SHUTDOWN, Logger.LogType.ERROR, Placeholder.empty());
                     }
                 }
 
@@ -1218,7 +1226,7 @@ public class NexoConverter extends Converter {
             jsonFileValidator.validateAllJsonFiles();
 
         } catch (Exception e) {
-            Logger.showException(Message.ERROR__PACK_CONVERSION__EXCEPTION, e, "plugin", this.converterName);
+            Logger.error(Message.ERROR__PACK_CONVERSION__EXCEPTION, e, Placeholder.of("plugin", this.converterName));
         } finally {
             if (executor != null && !executor.isShutdown()) {
                 executor.shutdownNow();
@@ -1233,7 +1241,7 @@ public class NexoConverter extends Converter {
         File tempDir = new File(this.plugin.getDataFolder(), "temp/zip_extract_" + System.currentTimeMillis());
 
         if (!this.settings.dryRunEnabled() && !tempDir.exists() && !tempDir.mkdirs()) {
-            this.logDebug(Message.ERROR__MKDIR_FAILURE, LogType.ERROR, "directory", tempDir.getName(), "path", tempDir.getAbsolutePath());
+            this.logDebug(Message.ERROR__MKDIR_FAILURE, Logger.LogType.ERROR, Placeholder.of("directory", tempDir.getName(), "path", tempDir.getAbsolutePath()));
             return;
         }
 
@@ -1244,14 +1252,14 @@ public class NexoConverter extends Converter {
             if (extractedAssetsFolder.exists() && extractedAssetsFolder.isDirectory()) {
                 this.copyAssetsFolder(extractedAssetsFolder, outputAssetsFolder, packName, progress, executor, latch, errorRef, useMultiThread);
             } else if (!this.settings.dryRunEnabled()) {
-                this.logDebug(Message.WARNING__NO_ASSETS_FOLDER, LogType.INFO, "zip", zipFile.getName());
+                this.logDebug(Message.WARNING__NO_ASSETS_FOLDER, Logger.LogType.INFO, Placeholder.of("zip", zipFile.getName()));
             }
 
             if (!this.settings.dryRunEnabled()) {
                 FileUtils.deleteDirectory(tempDir);
             }
         } catch (IOException e) {
-            Logger.showException(Message.ERROR__CONVERTER__NEXO__PACK__ZIP_EXTRACT_FAILURE, e, "file", zipFile.getName());
+            Logger.error(Message.ERROR__CONVERTER__NEXO__PACK__ZIP_EXTRACT_FAILURE, e, Placeholder.of("file", zipFile.getName()));
             errorRef.compareAndSet(null, e);
         } finally {
             if (!this.settings.dryRunEnabled() && tempDir.exists()) {
@@ -1318,7 +1326,11 @@ public class NexoConverter extends Converter {
                             }
                             progress.increment();
                         } catch (Exception e) {
-                            this.logDebug(Message.ERROR__EXTRACT_FILE_FROM_ZIP, LogType.ERROR, "file", entryName, "zip", zipPath.getFileName(), "message", e.getMessage());
+                            Placeholder.Builder placeholderBuilder = Placeholder.builder();
+                            placeholderBuilder.register("file", entryName)
+                                    .register("zip", zipPath.getFileName().toString())
+                                    .register("message", e.getMessage());
+                            this.logDebug(Message.ERROR__EXTRACT_FILE_FROM_ZIP, Logger.LogType.ERROR, placeholderBuilder.build());
                             errorRef.compareAndSet(null, e);
                         }
                     });

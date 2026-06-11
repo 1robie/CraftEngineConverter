@@ -5,7 +5,6 @@ import fr.robie.craftengineconverter.api.database.StorageManager;
 import fr.robie.craftengineconverter.api.enums.Plugins;
 import fr.robie.craftengineconverter.api.history.BlockHistory;
 import fr.robie.craftengineconverter.api.history.EntityHistory;
-import fr.robie.craftengineconverter.api.logger.Logger;
 import fr.robie.craftengineconverter.api.manager.FoliaCompatibilityManager;
 import fr.robie.craftengineconverter.api.profile.ServerProfile;
 import fr.robie.craftengineconverter.api.progress.BukkitProgressBar;
@@ -13,12 +12,11 @@ import fr.robie.craftengineconverter.common.BlockStatesMapper;
 import fr.robie.craftengineconverter.common.CraftEnginePlacementTracker;
 import fr.robie.craftengineconverter.common.converter.WorldConverter;
 import fr.robie.craftengineconverter.common.records.ChunkPosition;
+import fr.robie.messageflow.logger.Logger;
 import net.momirealms.craftengine.bukkit.api.CraftEngineBlocks;
-import org.bukkit.Bukkit;
-import org.bukkit.Chunk;
-import org.bukkit.Location;
-import org.bukkit.World;
+import org.bukkit.*;
 import org.bukkit.block.Block;
+import org.bukkit.block.data.BlockData;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.ItemDisplay;
@@ -57,7 +55,8 @@ public class WorldConverterManager implements Listener {
     private void processChunk(@NotNull Chunk chunk, @Nullable BukkitProgressBar progressBar) {
         int x = chunk.getX();
         int z = chunk.getZ();
-        String worldName = chunk.getWorld().getName();
+        World world = chunk.getWorld();
+        String worldName = world.getName();
         ChunkPosition position = new ChunkPosition(worldName, x, z);
         if (this.processedChunks.contains(position) || !chunk.isLoaded()) {
             if (progressBar != null) {
@@ -100,112 +99,99 @@ public class WorldConverterManager implements Listener {
             }
         }
 
-        record BlockData(Location location, org.bukkit.block.data.BlockData blockData) {
-        }
         record BlockConversion(Location location, String ceEquivalent, String originalBlock) {
         }
 
-        List<BlockData> blocksToCheck = new ArrayList<>();
-        World world = chunk.getWorld();
+        List<BlockConversion> conversions = new ArrayList<>();
+        BlockStatesMapper blockStatesMapper = BlockStatesMapper.getInstance();
+        
         int minHeight = world.getMinHeight();
         int maxHeight = world.getMaxHeight();
+        
+        List<Plugins> activePlugins = this.converters.stream().map(WorldConverter::getPlugin).toList();
+
+        ChunkSnapshot snapshot = chunk.getChunkSnapshot(false, false, false);
 
         for (int cx = 0; cx < 16; cx++) {
             for (int cy = minHeight; cy < maxHeight; cy++) {
                 for (int cz = 0; cz < 16; cz++) {
-                    Block block = chunk.getBlock(cx, cy, cz);
-                    if (CraftEngineBlocks.isCustomBlock(block)) {
-                        continue;
+                    if (snapshot.getBlockType(cx, cy, cz).isAir()) continue;
+
+                    BlockData bd = snapshot.getBlockData(cx, cy, cz);
+                    
+                    String foundCeEquivalent = null;
+                    for (Plugins pluginType : activePlugins) {
+                        foundCeEquivalent = blockStatesMapper.getCeEquivalent(pluginType, bd);
+                        if (foundCeEquivalent != null) break;
                     }
 
-                    blocksToCheck.add(new BlockData(
-                            block.getLocation().clone(),
-                            block.getBlockData().clone()
-                    ));
+                    if (foundCeEquivalent != null) {
+                        int bx = (x << 4) + cx;
+                        int bz = (z << 4) + cz;
+                        
+                        if (!this.serverProfile.isBlockConverted(worldName, bx, cy, bz)) {
+                            Block block = chunk.getBlock(cx, cy, cz);
+                            if (!CraftEngineBlocks.isCustomBlock(block)) {
+                                conversions.add(new BlockConversion(block.getLocation(), foundCeEquivalent, bd.getAsString()));
+                            }
+                        }
+                    }
                 }
             }
         }
 
-        if (blocksToCheck.isEmpty()) {
+        if (conversions.isEmpty()) {
             if (progressBar != null) {
                 progressBar.increment();
             }
             return;
         }
 
-        CompletableFuture<Void> completableFuture = this.foliaCompatibilityManager.runAsyncComplatable(() -> {
-            List<BlockConversion> conversions = new ArrayList<>();
-            BlockStatesMapper blockStatesMapper = BlockStatesMapper.getInstance();
+        final int BATCH_SIZE = 50;
+        List<CompletableFuture<Void>> batchFutures = new ArrayList<>();
 
-            for (BlockData blockData : blocksToCheck) {
-                Location loc = blockData.location();
-                boolean alreadyConverted = this.serverProfile.isBlockConverted(
-                        loc.getWorld().getName(),
-                        loc.getBlockX(),
-                        loc.getBlockY(),
-                        loc.getBlockZ()
-                );
+        for (int i = 0; i < conversions.size(); i += BATCH_SIZE) {
+            final int end = Math.min(i + BATCH_SIZE, conversions.size());
+            final List<BlockConversion> batch = new ArrayList<>(conversions.subList(i, end));
+            final long tickDelay = i / BATCH_SIZE;
 
-                if (alreadyConverted) {
-                    continue;
-                }
+            CompletableFuture<Void> batchFuture = this.foliaCompatibilityManager.runLaterComplatable(() -> {
+                for (BlockConversion conversion : batch) {
+                    try {
+                        this.placementTracker.placeBlock(conversion.ceEquivalent(), conversion.location());
 
-                for (var worldConverter : this.converters) {
-                    Plugins plugin = worldConverter.getPlugin();
-                    String ceEquivalent = blockStatesMapper.getCeEquivalent(plugin, blockData.blockData());
-                    if (ceEquivalent != null) {
-                        String originalBlock = blockData.blockData().getAsString();
-                        conversions.add(new BlockConversion(blockData.location(), ceEquivalent, originalBlock));
-                        break;
+                        if (this.storageManager.isEnabled()) {
+                            Location loc = conversion.location();
+                            BlockHistory history = new BlockHistory(
+                                    null,
+                                    loc.getWorld().getName(),
+                                    loc.getChunk().getX(),
+                                    loc.getChunk().getZ(),
+                                    loc.getBlockX(),
+                                    loc.getBlockY(),
+                                    loc.getBlockZ(),
+                                    conversion.originalBlock(),
+                                    false
+                            );
+                            this.serverProfile.addBlockHistory(history);
+                        }
+                    } catch (Exception e) {
+                        Logger.error("error placing converted block at " + conversion.location(), e);
                     }
                 }
-            }
+            }, tickDelay);
+            batchFutures.add(batchFuture);
+        }
 
-            if (!conversions.isEmpty()) {
-                final int BATCH_SIZE = 50;
-
-                for (int i = 0; i < conversions.size(); i += BATCH_SIZE) {
-                    final int end = Math.min(i + BATCH_SIZE, conversions.size());
-                    final List<BlockConversion> batch = conversions.subList(i, end);
-                    final long tickDelay = i / BATCH_SIZE;
-
-                    this.foliaCompatibilityManager.runLater(() -> {
-                        for (BlockConversion conversion : batch) {
-                            try {
-                                this.placementTracker.placeBlock(conversion.ceEquivalent(), conversion.location());
-
-                                if (this.storageManager.isEnabled()) {
-                                    Location loc = conversion.location();
-                                    BlockHistory history = new BlockHistory(
-                                            null,
-                                            loc.getWorld().getName(),
-                                            loc.getChunk().getX(),
-                                            loc.getChunk().getZ(),
-                                            loc.getBlockX(),
-                                            loc.getBlockY(),
-                                            loc.getBlockZ(),
-                                            conversion.originalBlock(),
-                                            false
-                                    );
-                                    this.serverProfile.addBlockHistory(history);
-                                }
-                            } catch (Exception e) {
-                                Logger.showException("error placing converted block at " + conversion.location(), e);
-                            }
-                        }
-                    }, tickDelay);
-                }
-            }
-        });
-
-        this.conversionTasks.add(completableFuture);
-        completableFuture.whenComplete((res, ex) -> {
-            this.conversionTasks.remove(completableFuture);
+        CompletableFuture<Void> allBatchesDone = CompletableFuture.allOf(batchFutures.toArray(new CompletableFuture[0]));
+        this.conversionTasks.add(allBatchesDone);
+        allBatchesDone.whenComplete((res, ex) -> {
+            this.conversionTasks.remove(allBatchesDone);
             if (progressBar != null) {
                 progressBar.increment();
             }
             if (ex != null) {
-                Logger.showException("[WorldConverterManager] Error during chunk conversion at " + position, ex);
+                Logger.error("[WorldConverterManager] Error during chunk conversion at " + position, ex);
             }
         });
     }
@@ -287,7 +273,7 @@ public class WorldConverterManager implements Listener {
 
         return CompletableFuture.allOf(tasksArray)
                 .exceptionally(ex -> {
-                    Logger.showException("Some conversion tasks failed", ex);
+                    Logger.error("Some conversion tasks failed", ex);
                     return null;
                 });
     }
@@ -308,7 +294,7 @@ public class WorldConverterManager implements Listener {
                 try {
                     task.cancel(true);
                 } catch (Exception e) {
-                    Logger.showException("Error while cancelling a conversion task", e);
+                    Logger.error("Error while cancelling a conversion task", e);
                 }
             }
         }

@@ -1,10 +1,13 @@
 package fr.robie.craftengineconverter.api.builder;
 
 import fr.robie.craftengineconverter.api.format.Message;
+import fr.robie.messageflow.formatter.Placeholder;
+import fr.robie.messageflow.logger.Logger;
 import org.jetbrains.annotations.Contract;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 public class TimerBuilder {
 
@@ -44,7 +47,7 @@ public class TimerBuilder {
         }
 
         public String getFormat(long value) {
-            return (value <= 1 ? this.singularFormat : this.pluralFormat).getMessage();
+            return (value <= 1 ? this.singularFormat : this.pluralFormat).firstLine();
         }
     }
 
@@ -64,15 +67,26 @@ public class TimerBuilder {
             remaining %= unit.getMilliseconds();
         }
 
-        String message = maxUnit.getTimeMessage().getMessage();
+        String message = maxUnit.getTimeMessage().firstLine();
 
+        Logger.info("Formatting time: " + milliseconds + " ms with max unit: " + maxUnit.name());
+        Logger.info("Calculated values: " + values);
+        Placeholder.Builder placeholderBuilder = new Placeholder.Builder();
         for (int i = 0; i < unitsToInclude.size(); i++) {
             TimeUnit unit = unitsToInclude.get(i);
-            String placeholder = "%" + unit.name().toLowerCase() + "%";
-            message = message.replace(placeholder, unit.getFormat(values.get(i)));
+            placeholderBuilder.register(unit.name().toLowerCase(Locale.ROOT), unit.getFormat(values.get(i)));
+            Logger.info("Registered placeholder: " + unit.name().toLowerCase(Locale.ROOT) + " -> " + unit.getFormat(values.get(i)));
         }
+        Placeholder placeholder = placeholderBuilder.build();
 
-        return format(String.format(message, values.toArray()));
+        String parsed = placeholder.parse(message);
+
+        try {
+            return format(String.format(parsed, values.toArray()));
+        } catch (Exception e) {
+            Logger.error("Error formatting time: " + e.getMessage(), e);
+            return format(parsed);
+        }
     }
 
     /**
@@ -80,6 +94,7 @@ public class TimerBuilder {
      */
     @Contract(pure = true)
     public static String formatTimeAuto(long milliseconds) {
+        Logger.info("Formatting time: " + milliseconds + " ms");
         long seconds = milliseconds / 1000L;
 
         if (milliseconds < 1000) {
@@ -151,8 +166,8 @@ public class TimerBuilder {
     @Contract(pure = true)
     public static String format(String message) {
         for (TimeUnit unit : TimeUnit.values()) {
-            message = message.replace(" 00 " + unit.singularFormat.getMessage(), "");
-            message = message.replace(" 00 " + unit.pluralFormat.getMessage(), "");
+            message = message.replace(" 00 " + unit.singularFormat.firstLine(), "");
+            message = message.replace(" 00 " + unit.pluralFormat.firstLine(), "");
         }
         message = message.replaceAll("\\s+", " ").trim();
 
@@ -168,7 +183,7 @@ public class TimerBuilder {
             return 0L;
         }
 
-        timeString = timeString.toLowerCase().trim();
+        timeString = timeString.toLowerCase(Locale.ROOT).trim();
 
         if (isNumeric(timeString)) {
             long value = Long.parseLong(timeString);
@@ -184,7 +199,7 @@ public class TimerBuilder {
         while (matcher.find()) {
             try {
                 long value = Long.parseLong(matcher.group(1));
-                String unit = matcher.group(2).toLowerCase();
+                String unit = matcher.group(2).toLowerCase(Locale.ROOT);
 
                 TimeUnit timeUnit = parseUnit(unit);
                 if (timeUnit != null) {
@@ -238,7 +253,7 @@ public class TimerBuilder {
             return 0L;
         }
 
-        timeString = timeString.toLowerCase().trim();
+        timeString = timeString.toLowerCase(Locale.ROOT).trim();
 
         // Check if it's a plain number (default to ticks)
         if (isNumeric(timeString)) {
@@ -255,7 +270,7 @@ public class TimerBuilder {
         while (matcher.find()) {
             try {
                 double value = Double.parseDouble(matcher.group(1));
-                String unit = matcher.group(2).toLowerCase();
+                String unit = matcher.group(2).toLowerCase(Locale.ROOT);
 
                 long ticks = parseUnitToTicks(unit, value);
                 totalTicks += ticks;

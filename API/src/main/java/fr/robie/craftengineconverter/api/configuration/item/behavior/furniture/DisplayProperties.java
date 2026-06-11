@@ -5,6 +5,7 @@ import net.momirealms.craftengine.core.entity.display.Billboard;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 public class DisplayProperties {
@@ -43,7 +44,7 @@ public class DisplayProperties {
 
     public void serialize(Map<String, Object> data) {
         if (this.billboard != Billboard.FIXED)
-            data.put("billboard", this.billboard.name().toLowerCase());
+            data.put("billboard", this.billboard.name().toLowerCase(Locale.ROOT));
         if (this.translation.isUpdated())
             data.put("translation", this.translation.toString());
         if (this.scale.isUpdated())
@@ -64,5 +65,11 @@ public class DisplayProperties {
             data.put("rotation", this.rotationEuler);
         else if (this.rotationQuaternion != null)
             data.put("rotation", this.rotationQuaternion);
+    }
+
+    public void addTranslation(float x, float y, float z) {
+        this.translation.addValue(0, x);
+        this.translation.addValue(1, y);
+        this.translation.addValue(2, z);
     }
 }

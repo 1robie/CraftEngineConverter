@@ -13,6 +13,7 @@ import org.bukkit.block.data.type.Tripwire;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -56,7 +57,7 @@ public class BlockStatesMapper {
             case BASS_GUITAR -> "bass";
             case FLUTE -> "flute";
 
-            default -> instrument.name().toLowerCase();
+            default -> instrument.name().toLowerCase(Locale.ROOT);
         };
         String dataString = "[instrument="
                 + instrumentName +

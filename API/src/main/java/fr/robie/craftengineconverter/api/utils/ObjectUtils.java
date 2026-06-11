@@ -6,6 +6,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Locale;
 
 public class ObjectUtils {
     @Contract("null -> null")
@@ -67,7 +68,7 @@ public class ObjectUtils {
         if (value instanceof Boolean) {
             return (Boolean) value;
         }
-        String str = value.toString().toLowerCase();
+        String str = value.toString().toLowerCase(Locale.ROOT);
         if ("true".equals(str) || "1".equals(str)) {
             return true;
         }

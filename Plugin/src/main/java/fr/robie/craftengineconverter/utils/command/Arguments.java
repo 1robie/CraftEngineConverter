@@ -11,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 public abstract class Arguments extends CraftEngineConverterUtils {
@@ -154,7 +155,7 @@ public abstract class Arguments extends CraftEngineConverterUtils {
      */
     protected Material argAsMaterial(int index) {
         try {
-            return Material.valueOf(this.argAsString(index).toUpperCase());
+            return Material.valueOf(this.argAsString(index).toUpperCase(Locale.ROOT));
         } catch (Exception e) {
             return null;
         }
@@ -203,7 +204,7 @@ public abstract class Arguments extends CraftEngineConverterUtils {
      * @return
      */
     protected EntityType argAsEntityType(int index) {
-        return EntityType.valueOf(this.argAsString(index).toUpperCase());
+        return EntityType.valueOf(this.argAsString(index).toUpperCase(Locale.ROOT));
     }
 
     /**
@@ -214,7 +215,7 @@ public abstract class Arguments extends CraftEngineConverterUtils {
      */
     protected EntityType argAsEntityType(int index, EntityType defaultValue) {
         try {
-            return EntityType.valueOf(this.argAsString(index).toUpperCase());
+            return EntityType.valueOf(this.argAsString(index).toUpperCase(Locale.ROOT));
         } catch (Exception e) {
             return defaultValue;
         }
@@ -252,7 +253,7 @@ public abstract class Arguments extends CraftEngineConverterUtils {
             if (s == null) {
                 return null;
             }
-            return Enum.valueOf(enumClass, s.toUpperCase());
+            return Enum.valueOf(enumClass, s.toUpperCase(Locale.ROOT));
         } catch (Exception e) {
             return null;
         }
@@ -264,7 +265,7 @@ public abstract class Arguments extends CraftEngineConverterUtils {
             if (s == null) {
                 return defaultValue;
             }
-            return Enum.valueOf(enumClass, s.toUpperCase());
+            return Enum.valueOf(enumClass, s.toUpperCase(Locale.ROOT));
         } catch (Exception e) {
             return defaultValue;
         }

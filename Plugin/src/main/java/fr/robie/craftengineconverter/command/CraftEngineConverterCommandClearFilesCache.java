@@ -7,6 +7,7 @@ import fr.robie.craftengineconverter.api.manager.FileCacheManager;
 import fr.robie.craftengineconverter.common.permission.Permission;
 import fr.robie.craftengineconverter.utils.command.CommandType;
 import fr.robie.craftengineconverter.utils.command.VCommand;
+import fr.robie.messageflow.formatter.Placeholder;
 
 public class CraftEngineConverterCommandClearFilesCache extends VCommand {
     public CraftEngineConverterCommandClearFilesCache(CraftEngineConverter plugin) {
@@ -28,7 +29,7 @@ public class CraftEngineConverterCommandClearFilesCache extends VCommand {
         } else {
             clearedFiles = FileCacheManager.cleanStaleEntries();
         }
-        this.message(this.plugin, this.sender, Message.COMMAND__CLEAR_FILES_CACHE__COMPLETE, "cleared_files", clearedFiles, "time", TimerBuilder.formatTimeAuto(System.currentTimeMillis() - startTime));
+        this.messageFormatter.sendMessage(Message.COMMAND__CLEAR_FILES_CACHE__COMPLETE,this.sender, Placeholder.of("cleared_files", String.valueOf(clearedFiles), "time", TimerBuilder.formatTimeAuto(System.currentTimeMillis() - startTime)));
         return CommandType.SUCCESS;
     }
 }

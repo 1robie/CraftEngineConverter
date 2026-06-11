@@ -1,5 +1,6 @@
 package fr.robie.craftengineconverter.api.configuration.functions.internal;
 
+import java.util.Locale;
 import java.util.Map;
 
 public class PlaySoundFunction extends AbstractEventFunction {
@@ -51,7 +52,7 @@ public class PlaySoundFunction extends AbstractEventFunction {
             map.put("z", this.z);
         }
         if (this.target != PlayerTarget.SELF) {
-            map.put("target", this.target.name().toLowerCase());
+            map.put("target", this.target.name().toLowerCase(Locale.ROOT));
         }
         if (this.pitch != null) {
             map.put("pitch", this.pitch);

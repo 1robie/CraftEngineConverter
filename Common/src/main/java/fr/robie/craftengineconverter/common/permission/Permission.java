@@ -1,5 +1,7 @@
 package fr.robie.craftengineconverter.common.permission;
 
+import java.util.Locale;
+
 public enum Permission {
     COMMAND_USE("Allows the user to use the main command of the plugin."),
     COMMAND_RELOAD("Allows the user to reload the plugin configuration."),
@@ -35,7 +37,7 @@ public enum Permission {
      * @return The permission string.
      */
     public String asPermission() {
-        return "craftengineconverter." + this.name().toLowerCase().replace("_", ".");
+        return "craftengineconverter." + this.name().toLowerCase(Locale.ROOT).replace("_", ".");
     }
 
     public String toPermission() {

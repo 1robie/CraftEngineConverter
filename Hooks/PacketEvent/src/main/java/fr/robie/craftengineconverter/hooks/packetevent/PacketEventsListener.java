@@ -8,12 +8,12 @@ import com.github.retrooper.packetevents.protocol.packettype.PacketTypeCommon;
 import com.github.retrooper.packetevents.wrapper.play.server.*;
 import fr.robie.craftengineconverter.api.configuration.Configuration;
 import fr.robie.craftengineconverter.api.configuration.ConfigurationKey;
-import fr.robie.craftengineconverter.api.format.ComponentMeta;
-import fr.robie.craftengineconverter.api.logger.Logger;
 import fr.robie.craftengineconverter.api.tag.ITagResolver;
 import fr.robie.craftengineconverter.common.CraftEngineConverterPlugin;
 import fr.robie.craftengineconverter.common.packet.PacketContent;
 import fr.robie.craftengineconverter.common.packet.PacketProcessor;
+import fr.robie.messageflow.formatter.AdventureMessageFormatter;
+import fr.robie.messageflow.logger.Logger;
 import net.kyori.adventure.text.Component;
 import org.jetbrains.annotations.NotNull;
 
@@ -22,14 +22,12 @@ import java.util.Map;
 import java.util.Optional;
 
 public class PacketEventsListener extends PacketListenerAbstract {
-    private final CraftEngineConverterPlugin plugin;
-    private final ComponentMeta componentMeta;
+    private final AdventureMessageFormatter<?> messageFormatter;
     private final ITagResolver tagResolverUtils;
     private final Map<PacketType.Play.Server, PacketProcessor<?>> packetTypeProcessors = new HashMap<>();
 
-    public PacketEventsListener(CraftEngineConverterPlugin plugin) {
+    public PacketEventsListener(CraftEngineConverterPlugin plugin, AdventureMessageFormatter<?> messageFormatter) {
         super(PacketListenerPriority.LOW);
-        this.plugin = plugin;
 
         if (Configuration.<Boolean>get(ConfigurationKey.PLUGIN_MESSAGE_FORMATTING)) {
             this.packetTypeProcessors.put(PacketType.Play.Server.SYSTEM_CHAT_MESSAGE, PacketEventsProcessor.SYSTEM_CHAT_MESSAGE);
@@ -48,8 +46,8 @@ public class PacketEventsListener extends PacketListenerAbstract {
             this.packetTypeProcessors.put(PacketType.Play.Server.OPEN_WINDOW, PacketEventsProcessor.OPEN_WINDOW);
         }
 
-        this.componentMeta = this.plugin.getMessageFormatter() instanceof ComponentMeta meta ? meta : new ComponentMeta(plugin);
-        this.tagResolverUtils = this.plugin.getTagResolver();
+        this.messageFormatter = messageFormatter;
+        this.tagResolverUtils = plugin.getTagResolver();
     }
 
     @Override
@@ -91,7 +89,7 @@ public class PacketEventsListener extends PacketListenerAbstract {
         try {
             packet = ((PacketProcessor<Object>) processor).unpack(wrappedPacket);
         } catch (final Exception ex) {
-            Logger.showException("Failed to unpack packet of type " + server, ex);
+            Logger.error("Failed to unpack packet of type " + server, ex);
             return;
         }
 
@@ -105,7 +103,7 @@ public class PacketEventsListener extends PacketListenerAbstract {
             return;
         }
 
-        final Component translated = this.componentMeta.getComponent(parsed.get());
+        final Component translated = this.messageFormatter.getComponent(parsed.get());
         if (translated.equals(Component.empty())) {
             event.setCancelled(true);
             return;

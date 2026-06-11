@@ -7,9 +7,11 @@ import fr.robie.craftengineconverter.api.configuration.item.behavior.block.state
 import fr.robie.craftengineconverter.api.configuration.item.behavior.block.states.properties.BooleanBlockStateProperty;
 import fr.robie.craftengineconverter.api.configuration.item.behavior.block.states.properties.HorizontalDirectionBlockStateProperty;
 import fr.robie.craftengineconverter.api.configuration.item.models.ModelConfiguration;
-import net.momirealms.craftengine.core.block.properties.type.AnchorType;
-import net.momirealms.craftengine.core.util.HorizontalDirection;
+import fr.robie.craftengineconverter.api.configuration.utils.HorizontalDirection;
+import net.momirealms.craftengine.core.block.property.type.AnchorType;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Locale;
 
 public class ButtonBlockState extends AbstractDefaultBlockState {
     public ButtonBlockState(@NotNull String baseBlock, @NotNull String pressedItem, @NotNull String notPressedItem, @NotNull ModelConfiguration model) {
@@ -24,8 +26,8 @@ public class ButtonBlockState extends AbstractDefaultBlockState {
         for (AnchorType face : AnchorType.values()) {
             for (HorizontalDirection facing : HorizontalDirection.values()) {
                 for (boolean powered : new boolean[]{false, true}) {
-                    String faceName = face.name().toLowerCase();
-                    String facingName = facing.name().toLowerCase();
+                    String faceName = face.name().toLowerCase(Locale.ROOT);
+                    String facingName = facing.name().toLowerCase(Locale.ROOT);
                     String appearanceName = String.format("face=%s,facing=%s,powered=%s", faceName, facingName, powered);
                     String state = String.format("%s[face=%s,facing=%s,powered=%s]", baseBlock, faceName, facingName, powered);
 

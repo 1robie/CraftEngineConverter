@@ -4,11 +4,13 @@ import fr.robie.craftengineconverter.api.configuration.item.behavior.block.state
 import fr.robie.craftengineconverter.api.configuration.item.behavior.block.states.BlockVariant;
 import fr.robie.craftengineconverter.api.configuration.item.behavior.block.states.properties.HorizontalDirectionBlockStateProperty;
 import fr.robie.craftengineconverter.api.configuration.item.models.ModelConfiguration;
+import fr.robie.craftengineconverter.api.configuration.utils.HorizontalDirection;
 import fr.robie.craftengineconverter.api.enums.CraftEngineBlockState;
 import fr.robie.craftengineconverter.api.enums.Plugins;
-import net.momirealms.craftengine.core.util.HorizontalDirection;
 import org.bukkit.configuration.ConfigurationSection;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Locale;
 
 public class HorizontalFacingBlockState extends AbstractDefaultBlockState {
     public HorizontalFacingBlockState(
@@ -21,7 +23,7 @@ public class HorizontalFacingBlockState extends AbstractDefaultBlockState {
         this.addProperty(facingProperty);
 
         for (HorizontalDirection facing : HorizontalDirection.values()) {
-            String facingName = facing.name().toLowerCase();
+            String facingName = facing.name().toLowerCase(Locale.ROOT);
 
             int y = switch (facing) {
                 case SOUTH -> 180;

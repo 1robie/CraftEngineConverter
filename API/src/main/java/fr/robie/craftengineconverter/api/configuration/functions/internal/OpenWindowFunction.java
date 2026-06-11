@@ -2,6 +2,7 @@ package fr.robie.craftengineconverter.api.configuration.functions.internal;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Locale;
 import java.util.Map;
 
 public class OpenWindowFunction extends AbstractEventFunction {
@@ -33,12 +34,12 @@ public class OpenWindowFunction extends AbstractEventFunction {
     @Override
     public Map<String, Object> serialize() {
         Map<String, Object> map = super.serialize();
-        map.put("gui", this.guiType.name().toLowerCase());
+        map.put("gui", this.guiType.name().toLowerCase(Locale.ROOT));
         if (this.title != null) {
             map.put("title", this.title);
         }
         if (this.target != PlayerTarget.SELF) {
-            map.put("target", this.target.name().toLowerCase());
+            map.put("target", this.target.name().toLowerCase(Locale.ROOT));
         }
         return map;
     }

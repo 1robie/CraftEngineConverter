@@ -6,10 +6,12 @@ import fr.robie.craftengineconverter.api.configuration.item.behavior.block.state
 import fr.robie.craftengineconverter.api.configuration.item.behavior.block.states.properties.HingeBlockStateProperty;
 import fr.robie.craftengineconverter.api.configuration.item.behavior.block.states.properties.HorizontalDirectionBlockStateProperty;
 import fr.robie.craftengineconverter.api.configuration.item.models.ModelConfiguration;
-import net.momirealms.craftengine.core.block.properties.type.DoubleBlockHalf;
-import net.momirealms.craftengine.core.util.HorizontalDirection;
+import fr.robie.craftengineconverter.api.configuration.utils.HorizontalDirection;
+import net.momirealms.craftengine.core.block.property.type.DoubleBlockHalf;
 import org.bukkit.block.data.type.Door;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Locale;
 
 public class DoorBlockState extends AbstractDefaultBlockState {
     public DoorBlockState(
@@ -40,16 +42,16 @@ public class DoorBlockState extends AbstractDefaultBlockState {
                 for (Door.Hinge hinge : Door.Hinge.values()) {
                     for (boolean open : new boolean[]{false, true}) {
                         String appearanceName = String.format("facing=%s,half=%s,hinge=%s,open=%s",
-                                facing.name().toLowerCase(),
-                                half.name().toLowerCase(),
-                                hinge.name().toLowerCase(),
+                                facing.name().toLowerCase(Locale.ROOT),
+                                half.name().toLowerCase(Locale.ROOT),
+                                hinge.name().toLowerCase(Locale.ROOT),
                                 open);
 
                         String state = String.format("%s[facing=%s,half=%s,hinge=%s,open=%s,powered=true]",
                                 baseBlock,
-                                facing.name().toLowerCase(),
-                                half.name().toLowerCase(),
-                                hinge.name().toLowerCase(),
+                                facing.name().toLowerCase(Locale.ROOT),
+                                half.name().toLowerCase(Locale.ROOT),
+                                hinge.name().toLowerCase(Locale.ROOT),
                                 open);
 
                         ModelConfiguration model;

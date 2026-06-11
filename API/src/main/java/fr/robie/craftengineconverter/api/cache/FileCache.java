@@ -3,7 +3,9 @@ package fr.robie.craftengineconverter.api.cache;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import fr.robie.craftengineconverter.api.format.Message;
-import fr.robie.craftengineconverter.api.logger.Logger;
+
+import fr.robie.messageflow.formatter.Placeholder;
+import fr.robie.messageflow.logger.Logger;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -41,7 +43,7 @@ public class FileCache<T> {
         try {
             T data = this.loader.apply(file);
             if (data == null) {
-                Logger.debug(Message.ERROR__CACHE__NULL_RESULT, "path", path.toString());
+                Logger.debug(Message.ERROR__CACHE__NULL_RESULT, Placeholder.of("path", path.toString()));
                 this.cache.invalidate(path);
                 return Optional.empty();
             }
@@ -49,7 +51,7 @@ public class FileCache<T> {
             this.cache.put(path, entry);
             return Optional.of(entry);
         } catch (Exception e) {
-            Logger.debug(Message.ERROR__CACHE__EXCEPTION, "path", path.toString(), "message", e.getMessage());
+            Logger.debug(Message.ERROR__CACHE__EXCEPTION, e, Placeholder.of("path", path.toString(), "message", e.getMessage()));
             this.cache.invalidate(path);
             return Optional.empty();
         }

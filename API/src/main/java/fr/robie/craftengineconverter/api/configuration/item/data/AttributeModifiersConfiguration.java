@@ -5,10 +5,7 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class AttributeModifiersConfiguration implements ItemConfigurationSerializable {
     private final List<AttributeModifier> attributeModifiers;
@@ -23,16 +20,16 @@ public class AttributeModifiersConfiguration implements ItemConfigurationSeriali
         List<Map<String, Object>> serializedModifiers = new ArrayList<>();
         for (AttributeModifier modifier : this.attributeModifiers) {
             Map<String, Object> serializedModifier = new HashMap<>();
-            serializedModifier.put("type", modifier.type().toLowerCase());
+            serializedModifier.put("type", modifier.type().toLowerCase(Locale.ROOT));
             serializedModifier.put("amount", modifier.amount());
             serializedModifier.put("operation", modifier.operation().id());
             if (modifier.id() != null) {
                 serializedModifier.put("id", modifier.id().asString());
             }
-            serializedModifier.put("slot", modifier.slot().name().toLowerCase());
+            serializedModifier.put("slot", modifier.slot().name().toLowerCase(Locale.ROOT));
             if (modifier.display() != null) {
                 serializedModifier.put("display", Map.of(
-                        "type", modifier.display().type().name().toLowerCase(),
+                        "type", modifier.display().type().name().toLowerCase(Locale.ROOT),
                         "value", modifier.display().value()
                 ));
             }

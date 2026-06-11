@@ -1,5 +1,6 @@
 package fr.robie.craftengineconverter.api.configuration.functions.internal;
 
+import java.util.Locale;
 import java.util.Map;
 
 public class PlayTotemAnimationFunction extends AbstractEventFunction {
@@ -52,7 +53,7 @@ public class PlayTotemAnimationFunction extends AbstractEventFunction {
             map.put("silent", this.silent);
         }
         if (this.target != PlayerTarget.SELF) {
-            map.put("target", this.target.name().toLowerCase());
+            map.put("target", this.target.name().toLowerCase(Locale.ROOT));
         }
         return map;
     }

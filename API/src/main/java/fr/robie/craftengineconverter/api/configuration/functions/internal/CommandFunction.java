@@ -1,5 +1,6 @@
 package fr.robie.craftengineconverter.api.configuration.functions.internal;
 
+import java.util.Locale;
 import java.util.Map;
 
 public class CommandFunction extends AbstractEventFunction {
@@ -56,7 +57,7 @@ public class CommandFunction extends AbstractEventFunction {
         Map<String, Object> map = super.serialize();
         map.put("command", this.command);
         if (this.target != PlayerTarget.SELF) {
-            map.put("target", this.target.name().toLowerCase());
+            map.put("target", this.target.name().toLowerCase(Locale.ROOT));
         }
         if (this.asPlayer) {
             map.put("as-player", true);

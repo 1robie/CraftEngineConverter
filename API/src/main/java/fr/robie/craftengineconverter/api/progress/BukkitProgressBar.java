@@ -3,9 +3,9 @@ package fr.robie.craftengineconverter.api.progress;
 import com.tcoded.folialib.wrapper.task.WrappedTask;
 import fr.robie.craftengineconverter.api.CraftEngineConverterPluginInterface;
 import fr.robie.craftengineconverter.api.builder.TimerBuilder;
-import fr.robie.craftengineconverter.api.logger.LogType;
-import fr.robie.craftengineconverter.api.logger.Logger;
+
 import fr.robie.craftengineconverter.api.utils.ObjectUtils;
+import fr.robie.messageflow.logger.Logger;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nullable;
@@ -42,7 +42,7 @@ public class BukkitProgressBar extends ObjectUtils {
     public BukkitProgressBar(CraftEngineConverterPluginInterface plugin, Builder builder) {
         this.plugin = plugin;
         this.total = builder.total > 0 ? builder.total : 1;
-        this.current = Math.max(0, Math.min(builder.current, this.total));
+        this.current = Math.clamp(builder.current, 0, this.total);
         this.progressChar = builder.progressChar;
         this.emptyChar = builder.emptyChar;
         this.barWidth = builder.barWidth > 0 ? builder.barWidth : 40;
@@ -66,7 +66,7 @@ public class BukkitProgressBar extends ObjectUtils {
      */
     public void start() {
         if (this.isNotNull(this.task)) {
-            Logger.info("BukkitProgressBar is already started!", LogType.WARNING);
+            Logger.warn("BukkitProgressBar is already started!");
             return;
         }
         this.task = this.plugin.getFoliaCompatibilityManager()
@@ -93,7 +93,7 @@ public class BukkitProgressBar extends ObjectUtils {
      */
     public void printProgress() {
         long currentTime = System.currentTimeMillis();
-        if (currentTime - this.lastUpdateTime < this.MIN_LOG_INTERVAL_MS && !this.isComplete()) {
+        if (currentTime - this.lastUpdateTime < MIN_LOG_INTERVAL_MS && !this.isComplete()) {
             return;
         }
         this.displayProgress();
