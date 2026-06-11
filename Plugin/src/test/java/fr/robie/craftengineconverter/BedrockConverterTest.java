@@ -12,7 +12,6 @@ public class BedrockConverterTest {
 
     @BeforeAll
     static void setup() {
-        new SystemLogger();
 
         ClassLoader classLoader = CraftEngineConverterPlugin.class.getClassLoader();
         RegistryHelper registryHelper = new RegistryHelper(classLoader);

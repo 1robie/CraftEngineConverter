@@ -9,8 +9,8 @@ import fr.robie.craftengineconverter.api.configuration.item.behavior.block.state
 import fr.robie.craftengineconverter.api.enums.ConverterOption;
 import fr.robie.craftengineconverter.api.enums.Plugins;
 import fr.robie.craftengineconverter.api.format.Message;
-import fr.robie.craftengineconverter.api.logger.LogType;
 import fr.robie.craftengineconverter.api.manager.FileCacheManager;
+import fr.robie.craftengineconverter.api.progress.BukkitProgressBar;
 import fr.robie.craftengineconverter.api.utils.ObjectUtils;
 import fr.robie.craftengineconverter.converter.settings.BasicConverterSettings;
 import fr.robie.craftengineconverter.utils.ConfigFile;

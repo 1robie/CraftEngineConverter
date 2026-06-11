@@ -1,9 +1,8 @@
 package fr.robie.craftengineconverter.api.configuration.loader.models.tints;
 
 import fr.robie.craftengineconverter.api.configuration.item.models.tints.TintConfiguration;
-import fr.robie.craftengineconverter.api.logger.LogType;
-import fr.robie.craftengineconverter.api.logger.Logger;
 import fr.robie.craftengineconverter.api.yaml.ConfigurationSection;
+import fr.robie.messageflow.logger.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,7 +28,7 @@ public class TintConfigurationRegistry {
         }
         String type = section.getString("type");
         if (type == null) {
-            Logger.info("Tint section is missing 'type' field, skipping.", LogType.WARNING);
+            Logger.warn("Tint section is missing 'type' field, skipping.");
             return null;
         }
         if (type.startsWith("minecraft:")) {
@@ -37,7 +36,7 @@ public class TintConfigurationRegistry {
         }
         TintConfigurationLoader loader = LOADERS.get(type);
         if (loader == null) {
-            Logger.info("Unknown tint type '" + type + "', skipping.", LogType.WARNING);
+            Logger.info("Unknown tint type '" + type + "', skipping.");
             return null;
         }
         return loader.load(section);

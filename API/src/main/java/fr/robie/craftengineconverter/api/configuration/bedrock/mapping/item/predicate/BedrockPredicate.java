@@ -31,7 +31,9 @@ public abstract class BedrockPredicate {
 
     public @NotNull JsonObject serialize() {
         JsonObject jsonObject = new JsonObject();
-        jsonObject.addProperty("type", this.type.name().toLowerCase());
+        if (this.type != null) {
+            jsonObject.addProperty("type", this.type.name().toLowerCase());
+        }
         jsonObject.addProperty("property", this.propertyName());
         if (!this.expected) {
             jsonObject.addProperty("expected", false);

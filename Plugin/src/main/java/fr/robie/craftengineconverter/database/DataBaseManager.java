@@ -8,7 +8,6 @@ import fr.robie.craftengineconverter.api.database.StorageManager;
 import fr.robie.craftengineconverter.api.database.StorageType;
 import fr.robie.craftengineconverter.api.history.BlockHistory;
 import fr.robie.craftengineconverter.api.history.EntityHistory;
-import fr.robie.craftengineconverter.api.logger.LogType;
 import fr.robie.craftengineconverter.api.manager.FileCacheManager;
 import fr.robie.craftengineconverter.common.CraftEngineConverterPlugin;
 import fr.robie.craftengineconverter.database.migrations.WorldBlockConverterHistorical;

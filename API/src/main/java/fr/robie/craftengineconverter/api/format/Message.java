@@ -236,6 +236,7 @@ public enum Message implements fr.robie.messageflow.model.Message {
     ERROR__FILE_OPERATIONS__FORCE_SHUTDOWN("error.file-operations.force-shutdown", "Forcing shutdown of file operation threads"),
     ERROR__JSON__MALFORMED_AUTO_FIXED("error.json.malformed-auto-fixed", "Malformed JSON detected in §e%file%§c, auto-fixed."),
     ERROR__JSON__LOAD_FAILURE("error.json.load-failure", "Unable to load JSON file '%file%': file not found or invalid JSON format"),
+    ERROR__JSON__SAVE_FAILURE("error.json.save-failure", "Unable to save JSON file '%file%': §e%message%§c"),
 
     ERROR__PACK_CONVERSION__EXCEPTION("error.pack-conversion.exception", "An error occurred during pack conversion for plugin §e%plugin%§c"),
     ERROR__PLUGIN__CONFIGURATION__TYPE_MISMATCH("error.plugin.configuration.type-mismatch", "§cType mismatch for §e%path%§c in configuration, expected §e%expected%§c but got §e%got%§c, using default value: §e%default%§c"),

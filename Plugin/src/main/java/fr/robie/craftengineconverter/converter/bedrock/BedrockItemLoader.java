@@ -12,8 +12,8 @@ import fr.robie.craftengineconverter.api.configuration.item.models.condition.Con
 import fr.robie.craftengineconverter.api.configuration.item.models.model.GenerationConfiguration;
 import fr.robie.craftengineconverter.api.configuration.item.models.model.SimpleModelConfiguration;
 import fr.robie.craftengineconverter.api.configuration.loader.models.ModelConfigurationRegistry;
-import fr.robie.craftengineconverter.api.logger.Logger;
 import fr.robie.craftengineconverter.api.yaml.ConfigurationSection;
+import fr.robie.messageflow.logger.Logger;
 import org.bukkit.Material;
 import org.jetbrains.annotations.NotNull;
 

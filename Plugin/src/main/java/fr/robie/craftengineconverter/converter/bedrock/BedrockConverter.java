@@ -4,11 +4,11 @@ import fr.robie.craftengineconverter.api.configuration.bedrock.ItemTextureConfig
 import fr.robie.craftengineconverter.api.configuration.bedrock.ManifestConfiguration;
 import fr.robie.craftengineconverter.api.configuration.bedrock.mapping.MappingsConfiguration;
 import fr.robie.craftengineconverter.api.configuration.bedrock.mapping.item.ItemMapping;
-import fr.robie.craftengineconverter.api.logger.Logger;
 import fr.robie.craftengineconverter.api.manager.FileCacheManager;
 import fr.robie.craftengineconverter.api.utils.FileUtils;
 import fr.robie.craftengineconverter.api.yaml.ConfigurationSection;
 import fr.robie.craftengineconverter.common.utils.yaml.file.YamlConfiguration;
+import fr.robie.messageflow.logger.Logger;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;

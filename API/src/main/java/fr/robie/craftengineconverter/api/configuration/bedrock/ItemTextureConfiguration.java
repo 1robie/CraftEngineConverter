@@ -2,8 +2,8 @@ package fr.robie.craftengineconverter.api.configuration.bedrock;
 
 import com.google.gson.JsonObject;
 import fr.robie.craftengineconverter.api.configuration.bedrock.texture.TextureData;
-import fr.robie.craftengineconverter.api.logger.Logger;
 import fr.robie.craftengineconverter.api.manager.FileCacheManager;
+import fr.robie.messageflow.logger.Logger;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Path;

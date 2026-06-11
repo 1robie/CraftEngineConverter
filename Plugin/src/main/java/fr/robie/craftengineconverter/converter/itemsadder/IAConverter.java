@@ -20,8 +20,6 @@ import fr.robie.craftengineconverter.api.enums.ConverterOption;
 import fr.robie.craftengineconverter.api.enums.Plugins;
 import fr.robie.craftengineconverter.api.enums.RecipeType;
 import fr.robie.craftengineconverter.api.format.Message;
-import fr.robie.craftengineconverter.api.logger.LogType;
-import fr.robie.craftengineconverter.api.logger.Logger;
 import fr.robie.craftengineconverter.api.manager.FileCacheManager;
 
 import fr.robie.craftengineconverter.api.progress.BukkitProgressBar;
@@ -600,7 +598,7 @@ public class IAConverter extends Converter {
             return;
         }
         if (outputFolder.exists()) {
-            this.deleteDirectory(outputFolder);
+            FileUtils.deleteDirectory(outputFolder);
         }
         if (!outputFolder.mkdirs()) {
             this.logDebug(Message.ERROR__CONVERTER__IA__OUTPUT_FOLDER_CREATION_FAILED, Logger.LogType.ERROR, Placeholder.of("path", outputFolder.getAbsolutePath()));

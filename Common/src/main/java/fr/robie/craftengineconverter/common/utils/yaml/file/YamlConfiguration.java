@@ -1,10 +1,10 @@
 package fr.robie.craftengineconverter.common.utils.yaml.file;
 
 import com.google.common.base.Preconditions;
-import fr.robie.craftengineconverter.api.logger.Logger;
 import fr.robie.craftengineconverter.api.yaml.ConfigurationSection;
 import fr.robie.craftengineconverter.common.utils.yaml.constructor.SmartConstructor;
 import fr.robie.craftengineconverter.common.utils.yaml.serialization.ConfigurationSerialization;
+import fr.robie.messageflow.logger.Logger;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.jetbrains.annotations.NotNull;
 import org.yaml.snakeyaml.DumperOptions;
@@ -278,7 +278,7 @@ public class YamlConfiguration extends FileConfiguration {
             config.load(file);
         } catch (FileNotFoundException ignored) {
         } catch (IOException | InvalidConfigurationException ex) {
-            Logger.showException("Cannot load configuration from file: " + file, ex);
+            Logger.error("Cannot load configuration from file: " + file, ex);
         }
 
         return config;
@@ -293,7 +293,7 @@ public class YamlConfiguration extends FileConfiguration {
         try {
             config.load(reader);
         } catch (IOException | InvalidConfigurationException ex) {
-            Logger.showException("Cannot load configuration from stream.", ex);
+            Logger.error("Cannot load configuration from stream.", ex);
         }
 
         return config;

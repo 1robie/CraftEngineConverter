@@ -1,8 +1,8 @@
 package fr.robie.craftengineconverter.api.utils;
 
 import fr.robie.craftengineconverter.api.format.Message;
-import fr.robie.craftengineconverter.api.logger.LogType;
-import fr.robie.craftengineconverter.api.logger.Logger;
+import fr.robie.messageflow.formatter.Placeholder;
+import fr.robie.messageflow.logger.Logger;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -19,12 +19,12 @@ public class FileUtils {
                 if (file.isDirectory()) {
                     deleteDirectory(file);
                 } else if (!file.delete()) {
-                    Logger.debug(Message.WARNING__FILE__DELETE_FAILURE, LogType.ERROR, "file", file.getName(), "path", file.getAbsolutePath());
+                    Logger.error(Message.WARNING__FILE__DELETE_FAILURE, Placeholder.of("file", file.getName(), "path", file.getAbsolutePath()));
                 }
             }
         }
         if (!directory.delete()) {
-            Logger.debug(Message.WARNING__FOLDER__DELETE_FAILURE, LogType.ERROR, "folder", directory.getName(), "path", directory.getAbsolutePath());
+            Logger.error(Message.WARNING__FOLDER__DELETE_FAILURE, Placeholder.of("folder", directory.getName(), "path", directory.getAbsolutePath()));
         }
     }
 
@@ -35,7 +35,7 @@ public class FileUtils {
         if (directory.mkdirs()) {
             return true;
         }
-        Logger.info(Message.ERROR__MKDIR_FAILURE, LogType.ERROR, "directory", directory.getName(), "path", directory.getAbsolutePath());
+        Logger.info(Message.ERROR__MKDIR_FAILURE, Placeholder.of("directory", directory.getName(), "path", directory.getAbsolutePath()));
         return false;
     }
 
@@ -91,7 +91,7 @@ public class FileUtils {
                     StandardCopyOption.REPLACE_EXISTING
             );
         } catch (IOException e) {
-            Logger.debug(Message.ERROR__FILE__COPY_EXCEPTION, "file", destination.getName(), "message", e.getMessage());
+            Logger.error(Message.ERROR__FILE__COPY_EXCEPTION, Placeholder.of("file", destination.getName(), "message", e.getMessage()));
         }
     }
 

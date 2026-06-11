@@ -1,11 +1,7 @@
 package fr.robie.craftengineconverter.common.utils;
 
-
-import fr.robie.craftengineconverter.common.utils.directive.SmartConstructor;
-import fr.robie.messageflow.logger.Logger;
-import fr.robie.craftengineconverter.api.logger.LogType;
-import fr.robie.craftengineconverter.api.logger.Logger;
 import fr.robie.craftengineconverter.common.utils.yaml.constructor.SmartConstructor;
+import fr.robie.messageflow.logger.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.yaml.snakeyaml.DumperOptions;

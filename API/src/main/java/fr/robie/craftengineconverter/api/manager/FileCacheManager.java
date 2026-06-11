@@ -4,10 +4,6 @@ import com.google.gson.*;
 import com.google.gson.stream.JsonReader;
 import fr.robie.craftengineconverter.api.cache.FileCache;
 import fr.robie.craftengineconverter.api.format.Message;
-import fr.robie.craftengineconverter.api.logger.LogType;
-import fr.robie.craftengineconverter.api.logger.Logger;
-
-import fr.robie.craftengineconverter.common.cache.FileCache;
 import fr.robie.messageflow.formatter.Placeholder;
 import fr.robie.messageflow.logger.Logger;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -75,7 +71,7 @@ public class FileCacheManager {
         try (var writer = Files.newBufferedWriter(path)) {
             GSON.toJson(json, writer);
         } catch (Exception e) {
-            Logger.showException(Message.ERROR__JSON__SAVE_FAILURE, e, "file", path.toString());
+            Logger.error(Message.ERROR__JSON__LOAD_FAILURE, e, Placeholder.of("file", path.toAbsolutePath().toString(), "message", e.getMessage()));
         }
     }
 

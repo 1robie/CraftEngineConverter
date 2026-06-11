@@ -13,10 +13,10 @@ import fr.robie.craftengineconverter.api.configuration.loader.models.range_dispa
 import fr.robie.craftengineconverter.api.configuration.loader.models.select.SelectModelConfigurationRegistry;
 import fr.robie.craftengineconverter.api.configuration.loader.models.tints.TintConfigurationLoader;
 import fr.robie.craftengineconverter.api.configuration.loader.models.tints.TintConfigurationRegistry;
-import fr.robie.craftengineconverter.api.logger.Logger;
 import fr.robie.craftengineconverter.api.reflections.ReflectionsCache;
 import fr.robie.craftengineconverter.api.utils.VersionFilter;
 import fr.robie.craftengineconverter.common.CraftEngineConverterPlugin;
+import fr.robie.messageflow.logger.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.reflections.Reflections;
 
@@ -66,9 +66,9 @@ public class RegistryHelper {
                 }
                 count++;
             } catch (ClassCastException e) {
-                Logger.showException("Class <aqua>" + clazz.getName() + "<reset> cannot be cast to ModelConfigurationLoader", e);
+                Logger.error("Class <aqua>" + clazz.getName() + "<reset> cannot be cast to ModelConfigurationLoader", e);
             } catch (Exception e) {
-                Logger.showException("Failed to load ModelConfigurationLoader <aqua>" + clazz.getName() + "<reset> for names " + Arrays.toString(annotation.value()), e);
+                Logger.error("Failed to load ModelConfigurationLoader <aqua>" + clazz.getName() + "<reset> for names " + Arrays.toString(annotation.value()), e);
             }
         }
 
@@ -101,7 +101,7 @@ public class RegistryHelper {
                 }
                 count++;
             } catch (Exception e) {
-                fr.robie.craftengineconverter.api.logger.Logger.showException("Failed to load TintConfigurationLoader <aqua>" + clazz.getName() + "<reset> for names " + java.util.Arrays.toString(annotation.value()), e);
+                Logger.error("Failed to load TintConfigurationLoader <aqua>" + clazz.getName() + "<reset> for names " + java.util.Arrays.toString(annotation.value()), e);
             }
         }
         Logger.info("Loaded <aqua>" + count + "<reset> TintConfigurationLoaders");
@@ -132,9 +132,9 @@ public class RegistryHelper {
                 }
                 count++;
             } catch (ClassCastException e) {
-                Logger.showException("Class <aqua>" + clazz.getName() + "<reset> cannot be cast to ModelConfigurationLoader", e);
+                Logger.error("Class <aqua>" + clazz.getName() + "<reset> cannot be cast to ModelConfigurationLoader", e);
             } catch (Exception e) {
-                Logger.showException("Failed to load SelectModelConfigurationLoader <aqua>" + clazz.getName() + "<reset> for names " + Arrays.toString(annotation.value()), e);
+                Logger.error("Failed to load SelectModelConfigurationLoader <aqua>" + clazz.getName() + "<reset> for names " + Arrays.toString(annotation.value()), e);
             }
         }
         Logger.info("Loaded <aqua>" + count + "<reset> SelectModelConfigurationLoaders");
@@ -164,9 +164,9 @@ public class RegistryHelper {
                 }
                 count++;
             } catch (ClassCastException e) {
-                Logger.showException("Class <aqua>" + clazz.getName() + "<reset> cannot be cast to ModelConfigurationLoader", e);
+                Logger.error("Class <aqua>" + clazz.getName() + "<reset> cannot be cast to ModelConfigurationLoader", e);
             } catch (Exception e) {
-                Logger.showException("Failed to load RangeDispatchModelConfigurationLoader <aqua>" + clazz.getName() + "<reset> for names " + Arrays.toString(annotation.value()), e);
+                Logger.error("Failed to load RangeDispatchModelConfigurationLoader <aqua>" + clazz.getName() + "<reset> for names " + Arrays.toString(annotation.value()), e);
             }
         }
 
