@@ -2,7 +2,6 @@ package fr.robie.craftengineconverter.api.configuration.functions.internal;
 
 import fr.robie.craftengineconverter.api.configuration.item.loottables.LootTable;
 import fr.robie.craftengineconverter.api.utils.ConfigurationSerializationUtils;
-import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.util.Map;
 

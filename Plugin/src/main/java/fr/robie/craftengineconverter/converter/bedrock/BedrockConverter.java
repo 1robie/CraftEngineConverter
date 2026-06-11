@@ -6,9 +6,9 @@ import fr.robie.craftengineconverter.api.configuration.bedrock.mapping.MappingsC
 import fr.robie.craftengineconverter.api.configuration.bedrock.mapping.item.ItemMapping;
 import fr.robie.craftengineconverter.api.manager.FileCacheManager;
 import fr.robie.craftengineconverter.api.utils.FileUtils;
-import fr.robie.craftengineconverter.api.yaml.ConfigurationSection;
-import fr.robie.craftengineconverter.common.utils.yaml.file.YamlConfiguration;
 import fr.robie.messageflow.logger.Logger;
+import fr.robie.yamllibrary.ConfigurationSection;
+import fr.robie.yamllibrary.file.YamlConfiguration;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;

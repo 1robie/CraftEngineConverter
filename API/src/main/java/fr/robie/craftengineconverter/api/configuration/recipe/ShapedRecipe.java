@@ -2,8 +2,8 @@ package fr.robie.craftengineconverter.api.configuration.recipe;
 
 import fr.robie.craftengineconverter.api.configuration.recipe.ingredient.CraftingIngredient;
 import fr.robie.craftengineconverter.api.enums.RecipeType;
+import fr.robie.yamllibrary.ConfigurationSection;
 import net.momirealms.craftengine.core.item.recipe.CraftingRecipeCategory;
-import org.bukkit.configuration.ConfigurationSection;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;

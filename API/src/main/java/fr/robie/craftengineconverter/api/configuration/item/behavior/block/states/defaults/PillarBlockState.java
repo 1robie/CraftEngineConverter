@@ -9,8 +9,8 @@ import fr.robie.craftengineconverter.api.configuration.item.models.model.Generat
 import fr.robie.craftengineconverter.api.configuration.item.models.model.SimpleModelConfiguration;
 import fr.robie.craftengineconverter.api.enums.CraftEngineBlockState;
 import fr.robie.craftengineconverter.api.enums.Plugins;
+import fr.robie.yamllibrary.ConfigurationSection;
 import net.momirealms.craftengine.core.util.Direction;
-import org.bukkit.configuration.ConfigurationSection;
 import org.jetbrains.annotations.NotNull;
 
 public class PillarBlockState extends MultiStateBlock {

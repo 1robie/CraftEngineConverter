@@ -2,7 +2,7 @@ package fr.robie.craftengineconverter.api.configuration.loader.models;
 
 import fr.robie.craftengineconverter.api.configuration.item.models.ModelConfiguration;
 import fr.robie.craftengineconverter.api.configuration.item.models.condition.ConditionModelConfiguration;
-import fr.robie.craftengineconverter.api.yaml.ConfigurationSection;
+import fr.robie.yamllibrary.ConfigurationSection;
 
 public abstract class AbstractConditionLoader implements ModelConfigurationLoader<ModelConfiguration> {
 

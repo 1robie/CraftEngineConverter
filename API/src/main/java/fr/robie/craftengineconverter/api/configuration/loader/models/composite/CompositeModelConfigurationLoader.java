@@ -5,7 +5,7 @@ import fr.robie.craftengineconverter.api.configuration.item.models.ModelConfigur
 import fr.robie.craftengineconverter.api.configuration.item.models.composite.CompositeModelConfiguration;
 import fr.robie.craftengineconverter.api.configuration.loader.models.ModelConfigurationLoader;
 import fr.robie.craftengineconverter.api.configuration.loader.models.ModelConfigurationRegistry;
-import fr.robie.craftengineconverter.api.yaml.ConfigurationSection;
+import fr.robie.yamllibrary.ConfigurationSection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

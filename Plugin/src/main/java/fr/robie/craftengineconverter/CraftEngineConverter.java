@@ -18,6 +18,8 @@ import fr.robie.craftengineconverter.command.CraftEngineConverterCommand;
 import fr.robie.craftengineconverter.common.CraftEngineConverterPlugin;
 import fr.robie.craftengineconverter.common.scanner.BlockStateMappingScanner;
 import fr.robie.craftengineconverter.common.utils.CraftEngineImageUtils;
+import fr.robie.craftengineconverter.common.utils.yaml.directive.PluginKeyDirective;
+import fr.robie.craftengineconverter.common.utils.yaml.directive.VersionKeyDirective;
 import fr.robie.craftengineconverter.converter.Converter;
 import fr.robie.craftengineconverter.converter.itemsadder.IAConverter;
 import fr.robie.craftengineconverter.converter.nexo.NexoConverter;
@@ -40,6 +42,7 @@ import fr.robie.messageflow.formatter.MessageFormatter;
 import fr.robie.messageflow.formatter.Placeholder;
 import fr.robie.messageflow.impl.MessageManager;
 import fr.robie.messageflow.logger.Logger;
+import fr.robie.yamllibrary.directive.KeyDirectiveRegistry;
 import org.bstats.bukkit.Metrics;
 
 import org.bukkit.event.Listener;
@@ -84,6 +87,8 @@ public final class CraftEngineConverter extends CraftEngineConverterPlugin {
             this.getServer().getPluginManager().disablePlugin(this);
             return;
         }
+        KeyDirectiveRegistry.register(new VersionKeyDirective());
+        KeyDirectiveRegistry.register(new PluginKeyDirective());
         this.reloadBlockStateMappings();
         this.reloadConfig();
         if (Plugins.PACKET_EVENTS.isPresent()) {

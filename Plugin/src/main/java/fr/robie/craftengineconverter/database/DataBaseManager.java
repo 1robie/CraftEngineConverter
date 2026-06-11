@@ -13,7 +13,7 @@ import fr.robie.craftengineconverter.common.CraftEngineConverterPlugin;
 import fr.robie.craftengineconverter.database.migrations.WorldBlockConverterHistorical;
 import fr.robie.craftengineconverter.database.migrations.WorldEntityConverterHistorical;
 import fr.robie.craftengineconverter.utils.TypedCache;
-import org.bukkit.configuration.file.YamlConfiguration;
+import fr.robie.yamllibrary.file.YamlConfiguration;
 import org.jetbrains.annotations.NotNull;
 import org.jspecify.annotations.NonNull;
 

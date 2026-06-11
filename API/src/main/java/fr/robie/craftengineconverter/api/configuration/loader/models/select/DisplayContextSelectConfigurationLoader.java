@@ -4,7 +4,7 @@ import fr.robie.craftengineconverter.api.annotations.AutoSelectModelConfiguratio
 import fr.robie.craftengineconverter.api.configuration.item.models.select.DisplayContent;
 import fr.robie.craftengineconverter.api.configuration.item.models.select.DisplayContentSelectConfiguration;
 import fr.robie.craftengineconverter.api.configuration.item.models.select.SelectModelConfiguration;
-import fr.robie.craftengineconverter.api.yaml.ConfigurationSection;
+import fr.robie.yamllibrary.ConfigurationSection;
 import org.jetbrains.annotations.NotNull;
 
 @AutoSelectModelConfigurationLoader({"display_context", "minecraft:display_context"})

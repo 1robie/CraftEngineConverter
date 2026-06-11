@@ -1,8 +1,8 @@
 package fr.robie.craftengineconverter.api.configuration.recipe;
 
 import fr.robie.craftengineconverter.api.enums.RecipeType;
+import fr.robie.yamllibrary.ConfigurationSection;
 import net.momirealms.craftengine.core.item.recipe.CookingRecipeCategory;
-import org.bukkit.configuration.ConfigurationSection;
 import org.jetbrains.annotations.NotNull;
 
 public class CookingRecipe extends CraftingAbstractRecipe<CookingRecipeCategory> {

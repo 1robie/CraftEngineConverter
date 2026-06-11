@@ -1,9 +1,9 @@
 package fr.robie.craftengineconverter.api.configuration.item.data;
 
 import fr.robie.craftengineconverter.api.configuration.item.ItemConfigurationSerializable;
+import fr.robie.yamllibrary.ConfigurationSection;
+import fr.robie.yamllibrary.file.YamlConfiguration;
 import org.bukkit.NamespacedKey;
-import org.bukkit.configuration.ConfigurationSection;
-import org.bukkit.configuration.file.YamlConfiguration;
 import org.jetbrains.annotations.NotNull;
 
 public class TooltipStyleConfiguration implements ItemConfigurationSerializable {

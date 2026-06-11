@@ -6,8 +6,8 @@ import fr.robie.craftengineconverter.api.enums.ConverterOption;
 import fr.robie.craftengineconverter.api.enums.Languages;
 import fr.robie.craftengineconverter.api.enums.LimitType;
 import fr.robie.craftengineconverter.api.utils.ConfigurationDeserializer;
+import fr.robie.yamllibrary.ConfigurationSection;
 import org.bukkit.Material;
-import org.bukkit.configuration.ConfigurationSection;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;

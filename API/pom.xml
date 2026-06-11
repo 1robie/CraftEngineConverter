@@ -52,5 +52,10 @@
             <artifactId>message-flow</artifactId>
             <scope>provided</scope>
         </dependency>
+
+        <dependency>
+            <groupId>fr.robie</groupId>
+            <artifactId>yamllibrary</artifactId>
+        </dependency>
     </dependencies>
 </project>

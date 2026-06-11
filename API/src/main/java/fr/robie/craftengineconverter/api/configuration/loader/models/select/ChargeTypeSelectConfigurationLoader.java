@@ -4,7 +4,7 @@ import fr.robie.craftengineconverter.api.annotations.AutoSelectModelConfiguratio
 import fr.robie.craftengineconverter.api.configuration.item.models.range_dispatch.ChargeType;
 import fr.robie.craftengineconverter.api.configuration.item.models.select.ChargeTypeSelectConfiguration;
 import fr.robie.craftengineconverter.api.configuration.item.models.select.SelectModelConfiguration;
-import fr.robie.craftengineconverter.api.yaml.ConfigurationSection;
+import fr.robie.yamllibrary.ConfigurationSection;
 import org.jetbrains.annotations.NotNull;
 
 @AutoSelectModelConfigurationLoader({"charge_type", "minecraft:charge_type"})

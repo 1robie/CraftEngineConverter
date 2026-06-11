@@ -1,7 +1,7 @@
 package fr.robie.craftengineconverter.api.configuration.recipe;
 
 import fr.robie.craftengineconverter.api.enums.RecipeType;
-import org.bukkit.configuration.ConfigurationSection;
+import fr.robie.yamllibrary.ConfigurationSection;
 import org.jetbrains.annotations.NotNull;
 
 public class BrewingRecipe extends AbstractRecipe {

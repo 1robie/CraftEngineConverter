@@ -2,9 +2,9 @@ package fr.robie.craftengineconverter.api.configuration;
 
 import fr.robie.craftengineconverter.api.configuration.item.ItemConfigurationSerializable;
 import fr.robie.craftengineconverter.api.configuration.item.models.ModelConfiguration;
+import fr.robie.yamllibrary.ConfigurationSection;
+import fr.robie.yamllibrary.file.YamlConfiguration;
 import org.bukkit.Material;
-import org.bukkit.configuration.ConfigurationSection;
-import org.bukkit.configuration.file.YamlConfiguration;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

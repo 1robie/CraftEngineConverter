@@ -1,7 +1,7 @@
 package fr.robie.craftengineconverter.converter;
 
 import fr.robie.craftengineconverter.api.utils.ObjectUtils;
-import org.bukkit.configuration.ConfigurationSection;
+import fr.robie.yamllibrary.ConfigurationSection;
 
 public class CraftEngineItemUtils extends ObjectUtils {
     private final ConfigurationSection craftEngineItemSection;

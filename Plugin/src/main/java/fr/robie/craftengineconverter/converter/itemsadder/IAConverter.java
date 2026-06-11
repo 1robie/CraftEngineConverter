@@ -21,7 +21,6 @@ import fr.robie.craftengineconverter.api.enums.Plugins;
 import fr.robie.craftengineconverter.api.enums.RecipeType;
 import fr.robie.craftengineconverter.api.format.Message;
 import fr.robie.craftengineconverter.api.manager.FileCacheManager;
-
 import fr.robie.craftengineconverter.api.progress.BukkitProgressBar;
 import fr.robie.craftengineconverter.api.utils.FileUtils;
 import fr.robie.craftengineconverter.common.BlockStatesMapper;
@@ -30,17 +29,16 @@ import fr.robie.craftengineconverter.common.enums.NmsVersion;
 import fr.robie.craftengineconverter.common.records.ImageConversion;
 import fr.robie.craftengineconverter.common.utils.CacheConversion;
 import fr.robie.craftengineconverter.common.utils.CraftEngineImageUtils;
-import fr.robie.craftengineconverter.common.utils.SnakeUtils;
 import fr.robie.craftengineconverter.common.utils.enums.ia.IARecipesTypes;
 import fr.robie.craftengineconverter.converter.Converter;
 import fr.robie.craftengineconverter.utils.ConfigFile;
 import fr.robie.craftengineconverter.utils.JsonFileValidator;
 import fr.robie.messageflow.formatter.Placeholder;
 import fr.robie.messageflow.logger.Logger;
+import fr.robie.yamllibrary.ConfigurationSection;
 import net.momirealms.craftengine.core.item.recipe.CookingRecipeCategory;
 import org.bukkit.Material;
-import org.bukkit.configuration.ConfigurationSection;
-import org.bukkit.configuration.file.YamlConfiguration;
+import fr.robie.yamllibrary.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
@@ -358,30 +356,28 @@ public class IAConverter extends Converter {
 
         int totalEntries = 0;
         for (ConfigFile configFile : toConvert) {
-            try (SnakeUtils config = new SnakeUtils(configFile.sourceFile())) {
-                SnakeUtils langSection = config.getSection("minecraft_lang_overwrite");
+            YamlConfiguration yamlConfiguration = YamlConfiguration.loadConfiguration(configFile.sourceFile());
+            if (yamlConfiguration.isConfigurationSection("minecraft_lang_overwrite")) {
+                ConfigurationSection langSection = yamlConfiguration.getConfigurationSection("minecraft_lang_overwrite");
                 if (langSection != null) {
-
-                    for (String translationKey : langSection.getKeys()) {
-                        SnakeUtils translationSection = langSection.getSection(translationKey);
+                    for (String translationKey : langSection.getKeys(false)) {
+                        ConfigurationSection translationSection = langSection.getConfigurationSection(translationKey);
                         if (translationSection == null) {
                             continue;
                         }
-
-                        Map<String, Object> entries = translationSection.getMap("entries");
+                        ConfigurationSection entries = translationSection.getConfigurationSection("entries");
                         List<String> languages = translationSection.getStringList("languages");
-
                         if (entries != null) {
-                            totalEntries += entries.size() * languages.size();
+                            totalEntries += entries.getKeys(false).size() * languages.size();
                         }
                     }
                 }
-                SnakeUtils dictionarySection = config.getSection("dictionary");
+            }
+            if (yamlConfiguration.isConfigurationSection("dictionary")) {
+                ConfigurationSection dictionarySection = yamlConfiguration.getConfigurationSection("dictionary");
                 if (dictionarySection != null) {
-                    totalEntries += dictionarySection.getKeys().size();
+                    totalEntries += dictionarySection.getKeys(false).size();
                 }
-            } catch (Exception e) {
-                this.logDebug(Message.ERROR__CONVERTER__IA__LANGUAGES__COUNT_FAILURE, Logger.LogType.ERROR, Placeholder.of("file", configFile.sourceFile().getName()));
             }
         }
 
@@ -395,19 +391,18 @@ public class IAConverter extends Converter {
         progressBar.start();
 
         try {
-            File tempOutputFile = File.createTempFile("craftengine_ia_languages", ".yml");
-            tempOutputFile.deleteOnExit();
+            YamlConfiguration yamlConfiguration = new YamlConfiguration();
+            yamlConfiguration.options().pathSeparator('\\');
 
-            try (SnakeUtils ceTranslation = SnakeUtils.createEmpty(tempOutputFile)) {
-                while (!toConvert.isEmpty()) {
-                    ConfigFile configFile = toConvert.poll();
-                    this.convertLanguageFile(configFile, ceTranslation, progressBar);
-                }
-
-                if (!this.settings.dryRunEnabled()) {
-                    ceTranslation.save(outputFolder);
-                }
+            while (!toConvert.isEmpty()) {
+                ConfigFile configFile = toConvert.poll();
+                this.convertLanguageFile(configFile, yamlConfiguration, progressBar);
             }
+
+            if (!this.settings.dryRunEnabled()) {
+                yamlConfiguration.save(outputFolder);
+            }
+
         } catch (Exception e) {
             Logger.error(Message.ERROR__CONVERTER__IA__LANGUAGES__CONVERSION_EXCEPTION, e);
         } finally {
@@ -415,62 +410,47 @@ public class IAConverter extends Converter {
         }
     }
 
-    private void convertLanguageFile(ConfigFile configFile, SnakeUtils ceTranslation, BukkitProgressBar progressBar) {
-        try (SnakeUtils toTranslate = new SnakeUtils(configFile.sourceFile())) {
-            SnakeUtils minecraftLangOverwrite = toTranslate.getSection("minecraft_lang_overwrite");
-            if (minecraftLangOverwrite != null) {
+    private void convertLanguageFile(ConfigFile configFile, YamlConfiguration ceTranslation, BukkitProgressBar progressBar) {
+        YamlConfiguration toTranslate = YamlConfiguration.loadConfiguration(configFile.sourceFile());
+        ConfigurationSection minecraftLangOverwrite = toTranslate.getConfigurationSection("minecraft_lang_overwrite");
+        if (minecraftLangOverwrite != null) {
+            for (String translationGroup : minecraftLangOverwrite.getKeys(false)) {
+                ConfigurationSection section = minecraftLangOverwrite.getConfigurationSection(translationGroup);
+                if (section == null) {
+                    continue;
+                }
 
-                for (String translationGroup : minecraftLangOverwrite.getKeys()) {
-                    SnakeUtils section = minecraftLangOverwrite.getSection(translationGroup);
-                    if (section == null) {
-                        continue;
-                    }
+                ConfigurationSection entries = section.getConfigurationSection("entries");
+                List<String> languages = section.getStringList("languages");
 
-                    Map<String, Object> entries = section.getMap("entries");
-                    List<String> languages = section.getStringList("languages");
-
-                    if (entries == null || entries.isEmpty() || languages.isEmpty()) {
-                        continue;
-                    }
-
+                if (entries != null) {
                     for (String langKey : languages) {
                         String ceLangKey = langKey.equalsIgnoreCase("ALL") ? "en" : langKey.toLowerCase(Locale.ROOT);
+                        this.writeTranslation(configFile, ceTranslation, progressBar, entries, ceLangKey);
+                    }
+                }
+            }
+        }
+        ConfigurationSection dictionarySection = toTranslate.getConfigurationSection("dictionary");
+        if (dictionarySection != null) {
+            String dictionaryLang = toTranslate.getString("info.dictionary-lang", "en").toLowerCase(Locale.ROOT);
+            this.writeTranslation(configFile, ceTranslation, progressBar, dictionarySection, dictionaryLang);
+        }
+    }
 
-                        for (Map.Entry<String, Object> entry : entries.entrySet()) {
-                            try {
-                                String translationKey = "translations\\n" + ceLangKey + "\\n" + entry.getKey();
-                                ceTranslation.addData(translationKey, entry.getValue(), "\\n");
-                            } catch (Exception e) {
-                                Placeholder.Builder placeholderBuilder = Placeholder.builder();
-                                placeholderBuilder.register("key", entry.getKey())
-                                        .register("lang", ceLangKey)
-                                        .register("file", configFile.sourceFile().getName());
-                                this.logDebug(Message.ERROR__CONVERTER__IA__LANGUAGES__KEY_CONVERSION_FAILURE, Logger.LogType.ERROR, placeholderBuilder.build());
-                            }
-                            progressBar.increment();
-                        }
-                    }
-                }
+    private void writeTranslation(ConfigFile configFile, YamlConfiguration ceTranslation, BukkitProgressBar progressBar, ConfigurationSection dictionarySection, String dictionaryLang) {
+        for (String dictKey : dictionarySection.getKeys(false)) {
+            try {
+                String ceDictKey = "translations\\" + dictionaryLang + "\\" + dictKey;
+                ceTranslation.set(ceDictKey, dictionarySection.getString(dictKey));
+            } catch (Exception e) {
+                Placeholder.Builder placeholderBuilder = Placeholder.builder();
+                placeholderBuilder.register("key", dictKey)
+                        .register("lang", dictionaryLang)
+                        .register("file", configFile.sourceFile().getName());
+                this.logDebug(Message.ERROR__CONVERTER__IA__LANGUAGES__KEY_CONVERSION_FAILURE, Logger.LogType.ERROR, placeholderBuilder.build());
             }
-            SnakeUtils dictionarySection = toTranslate.getSection("dictionary");
-            if (dictionarySection != null) {
-                String dictionaryLang = toTranslate.getString("info.dictionary-lang", "en").toLowerCase(Locale.ROOT);
-                for (String dictKey : dictionarySection.getKeys()) {
-                    try {
-                        String ceDictKey = "translations\\n" + dictionaryLang + "\\n" + dictKey;
-                        ceTranslation.addData(ceDictKey, dictionarySection.getString(dictKey), "\\n");
-                    } catch (Exception e) {
-                        Placeholder.Builder placeholderBuilder = Placeholder.builder();
-                        placeholderBuilder.register("key", dictKey)
-                                .register("lang", dictionaryLang)
-                                .register("file", configFile.sourceFile().getName());
-                        this.logDebug(Message.ERROR__CONVERTER__IA__LANGUAGES__KEY_CONVERSION_FAILURE, Logger.LogType.ERROR, placeholderBuilder.build());
-                    }
-                    progressBar.increment();
-                }
-            }
-        } catch (Exception e) {
-            Logger.error(Message.ERROR__CONVERTER__IA__LANGUAGES__FILE_CONVERSION_FAILURE, e, Placeholder.of("file", configFile.sourceFile().getName()));
+            progressBar.increment();
         }
     }
 

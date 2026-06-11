@@ -2,7 +2,7 @@ package fr.robie.craftengineconverter.api.configuration.item.behavior.furniture;
 
 import fr.robie.craftengineconverter.api.configuration.item.behavior.furniture.element.Element;
 import fr.robie.craftengineconverter.api.configuration.item.behavior.furniture.hitbox.Hitbox;
-import org.bukkit.configuration.ConfigurationSection;
+import fr.robie.yamllibrary.ConfigurationSection;
 
 import java.util.ArrayList;
 import java.util.List;

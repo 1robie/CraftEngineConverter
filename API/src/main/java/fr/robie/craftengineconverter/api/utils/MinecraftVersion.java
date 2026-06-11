@@ -25,7 +25,13 @@ public final class MinecraftVersion implements Comparable<MinecraftVersion> {
 
     public static MinecraftVersion getCurrentVersion() {
         if (currentVersion == null) {
-            currentVersion = parse(Bukkit.getBukkitVersion());
+            String bukkitVersion;
+            try {
+                bukkitVersion = Bukkit.getBukkitVersion();
+            } catch (NoClassDefFoundError | Exception e) { // In case we're running in an environment without Bukkit (e.g., during testing), we can't get the version, so we default to (0, 0, 0).
+                bukkitVersion = null;
+            }
+            currentVersion = parse(bukkitVersion);
         }
         return currentVersion;
     }

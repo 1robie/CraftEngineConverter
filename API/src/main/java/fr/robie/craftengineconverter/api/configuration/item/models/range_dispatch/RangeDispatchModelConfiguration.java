@@ -2,7 +2,7 @@ package fr.robie.craftengineconverter.api.configuration.item.models.range_dispat
 
 import fr.robie.craftengineconverter.api.configuration.item.models.ModelConfiguration;
 import fr.robie.craftengineconverter.api.utils.ConfigurationSerializationUtils;
-import org.bukkit.configuration.ConfigurationSection;
+import fr.robie.yamllibrary.ConfigurationSection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

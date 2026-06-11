@@ -4,7 +4,7 @@ import fr.robie.craftengineconverter.api.configuration.bedrock.mapping.item.pred
 import fr.robie.craftengineconverter.api.configuration.bedrock.mapping.item.predicate.condition.*;
 import fr.robie.craftengineconverter.api.configuration.item.models.ModelConfiguration;
 import fr.robie.craftengineconverter.api.utils.ConfigurationSerializationUtils;
-import org.bukkit.configuration.ConfigurationSection;
+import fr.robie.yamllibrary.ConfigurationSection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

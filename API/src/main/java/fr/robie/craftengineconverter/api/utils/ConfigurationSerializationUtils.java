@@ -1,7 +1,7 @@
 package fr.robie.craftengineconverter.api.utils;
 
 import fr.robie.craftengineconverter.api.configuration.SectionSerializable;
-import org.bukkit.configuration.file.YamlConfiguration;
+import fr.robie.yamllibrary.file.YamlConfiguration;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;

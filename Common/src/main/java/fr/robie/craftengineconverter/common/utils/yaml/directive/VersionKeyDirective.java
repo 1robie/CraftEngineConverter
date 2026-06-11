@@ -1,7 +1,8 @@
 package fr.robie.craftengineconverter.common.utils.yaml.directive;
 
 import fr.robie.craftengineconverter.api.utils.MinecraftVersion;
-import fr.robie.craftengineconverter.common.utils.yaml.constructor.SmartConstructor;
+import fr.robie.yamllibrary.constructor.SmartConstructor;
+import fr.robie.yamllibrary.directive.KeyDirective;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.yaml.snakeyaml.nodes.MappingNode;
@@ -12,7 +13,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class VersionKeyDirective implements KeyDirective {
-    private static final Pattern VERSION_PATTERN = Pattern.compile("^(>=|<=|>|<|!=|==)?([\\d][\\d.]*)(?:~([\\d][\\d.]*))?(?:#.*)?$");
+    private static final Pattern VERSION_PATTERN = Pattern.compile("^(>=|<=|>|<|!=|==)?(\\d[\\d.]*)(?:~(\\d[\\d.]*))?(?:#.*)?$");
 
     @Override
     public boolean matches(@NotNull String key) {

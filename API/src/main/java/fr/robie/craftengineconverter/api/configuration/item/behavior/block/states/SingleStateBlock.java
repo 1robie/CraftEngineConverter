@@ -3,7 +3,7 @@ package fr.robie.craftengineconverter.api.configuration.item.behavior.block.stat
 import fr.robie.craftengineconverter.api.configuration.item.models.ModelConfiguration;
 import fr.robie.craftengineconverter.api.enums.CraftEngineBlockState;
 import fr.robie.craftengineconverter.api.enums.Plugins;
-import org.bukkit.configuration.ConfigurationSection;
+import fr.robie.yamllibrary.ConfigurationSection;
 import org.jetbrains.annotations.NotNull;
 
 public class SingleStateBlock implements StateBlock {

@@ -1,7 +1,7 @@
 package fr.robie.craftengineconverter.api.configuration.item.behavior.furniture;
 
+import fr.robie.yamllibrary.ConfigurationSection;
 import net.momirealms.craftengine.core.entity.furniture.AlignmentRule;
-import org.bukkit.configuration.ConfigurationSection;
 import org.jetbrains.annotations.NotNull;
 
 public class Rules {

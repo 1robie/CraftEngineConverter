@@ -5,12 +5,11 @@ import fr.robie.craftengineconverter.api.configuration.bedrock.mapping.item.comp
 import fr.robie.craftengineconverter.api.configuration.item.AbstractEffectsConfiguration;
 import fr.robie.craftengineconverter.api.enums.item.component.ConsumableAnimation;
 import fr.robie.craftengineconverter.api.utils.item.component.ConsumeEffect;
-import org.bukkit.configuration.ConfigurationSection;
-import org.bukkit.configuration.file.YamlConfiguration;
+import fr.robie.yamllibrary.ConfigurationSection;
+import fr.robie.yamllibrary.file.YamlConfiguration;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
-import java.util.Locale;
 
 public class ConsumableConfiguration extends AbstractEffectsConfiguration implements BedrockComponent {
 

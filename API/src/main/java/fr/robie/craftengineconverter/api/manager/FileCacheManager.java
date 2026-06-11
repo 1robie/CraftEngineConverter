@@ -6,7 +6,7 @@ import fr.robie.craftengineconverter.api.cache.FileCache;
 import fr.robie.craftengineconverter.api.format.Message;
 import fr.robie.messageflow.formatter.Placeholder;
 import fr.robie.messageflow.logger.Logger;
-import org.bukkit.configuration.file.YamlConfiguration;
+import fr.robie.yamllibrary.file.YamlConfiguration;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Files;

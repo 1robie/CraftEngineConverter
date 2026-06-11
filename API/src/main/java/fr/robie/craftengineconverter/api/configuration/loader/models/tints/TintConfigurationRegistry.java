@@ -1,7 +1,7 @@
 package fr.robie.craftengineconverter.api.configuration.loader.models.tints;
 
 import fr.robie.craftengineconverter.api.configuration.item.models.tints.TintConfiguration;
-import fr.robie.craftengineconverter.api.yaml.ConfigurationSection;
+import fr.robie.yamllibrary.ConfigurationSection;
 import fr.robie.messageflow.logger.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

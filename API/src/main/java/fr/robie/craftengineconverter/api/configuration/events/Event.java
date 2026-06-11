@@ -1,6 +1,6 @@
 package fr.robie.craftengineconverter.api.configuration.events;
 
-import org.bukkit.configuration.ConfigurationSection;
+import fr.robie.yamllibrary.ConfigurationSection;
 import org.jetbrains.annotations.NotNull;
 
 public interface Event {

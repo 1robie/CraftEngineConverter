@@ -3,7 +3,7 @@ package fr.robie.craftengineconverter.api.configuration.loader.models.select;
 import fr.robie.craftengineconverter.api.annotations.AutoSelectModelConfigurationLoader;
 import fr.robie.craftengineconverter.api.configuration.item.models.select.LocalTimeSelectConfiguration;
 import fr.robie.craftengineconverter.api.configuration.item.models.select.SelectModelConfiguration;
-import fr.robie.craftengineconverter.api.yaml.ConfigurationSection;
+import fr.robie.yamllibrary.ConfigurationSection;
 import org.jetbrains.annotations.NotNull;
 
 @AutoSelectModelConfigurationLoader({"local_time", "minecraft:local_time"})

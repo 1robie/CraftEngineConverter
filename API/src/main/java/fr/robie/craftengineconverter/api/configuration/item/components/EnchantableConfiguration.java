@@ -3,8 +3,8 @@ package fr.robie.craftengineconverter.api.configuration.item.components;
 import com.google.gson.JsonObject;
 import fr.robie.craftengineconverter.api.configuration.bedrock.mapping.item.component.BedrockComponent;
 import fr.robie.craftengineconverter.api.configuration.item.ItemConfigurationSerializable;
-import org.bukkit.configuration.ConfigurationSection;
-import org.bukkit.configuration.file.YamlConfiguration;
+import fr.robie.yamllibrary.ConfigurationSection;
+import fr.robie.yamllibrary.file.YamlConfiguration;
 import org.jetbrains.annotations.NotNull;
 
 public class EnchantableConfiguration implements ItemConfigurationSerializable, BedrockComponent {

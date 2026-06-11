@@ -19,23 +19,21 @@ import fr.robie.craftengineconverter.api.enums.Plugins;
 import fr.robie.craftengineconverter.api.enums.RecipeType;
 import fr.robie.craftengineconverter.api.format.Message;
 import fr.robie.craftengineconverter.api.manager.FileCacheManager;
-
 import fr.robie.craftengineconverter.api.progress.BukkitProgressBar;
 import fr.robie.craftengineconverter.api.utils.FileUtils;
 import fr.robie.craftengineconverter.common.BlockStatesMapper;
 import fr.robie.craftengineconverter.common.PluginNameMapper;
 import fr.robie.craftengineconverter.common.records.ImageConversion;
 import fr.robie.craftengineconverter.common.utils.CraftEngineImageUtils;
-import fr.robie.craftengineconverter.common.utils.SnakeUtils;
 import fr.robie.craftengineconverter.converter.Converter;
 import fr.robie.craftengineconverter.utils.ConfigFile;
 import fr.robie.craftengineconverter.utils.JsonFileValidator;
 import fr.robie.messageflow.formatter.Placeholder;
 import fr.robie.messageflow.logger.Logger;
+import fr.robie.yamllibrary.ConfigurationSection;
+import fr.robie.yamllibrary.file.YamlConfiguration;
 import net.momirealms.craftengine.core.item.recipe.CookingRecipeCategory;
 import net.momirealms.craftengine.core.item.recipe.CraftingRecipeCategory;
-import org.bukkit.configuration.ConfigurationSection;
-import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.Nullable;
 
@@ -717,148 +715,114 @@ public class NexoConverter extends Converter {
             }
         }
 
-        try (SnakeUtils nexoSounds = new SnakeUtils(inputSoundFile)) {
-            if (nexoSounds.isEmpty()) {
-                this.logDebug(Message.WARNING__CONVERTER__NEXO__SOUND__SOUNDS_FILE_EMPTY, Logger.LogType.INFO, Placeholder.of("path", inputSoundFile.getAbsolutePath()));
-                return;
-            }
+        fr.robie.yamllibrary.file.YamlConfiguration configuration = fr.robie.yamllibrary.file.YamlConfiguration.loadConfiguration(inputSoundFile);
+        List<fr.robie.yamllibrary.ConfigurationSection> sounds = configuration.getSectionList("sounds");
 
-            List<Map<String, Object>> nexoSoundsList = nexoSounds.getListMap("sounds");
-            if (nexoSoundsList.isEmpty()) { // No sounds to convert
-                nexoSounds.close();
-                return;
-            }
+        int totalSounds = sounds.size();
 
-            int totalSounds = nexoSoundsList.size();
 
-            BukkitProgressBar progress = this.createProgressBar(player, totalSounds, "Converting Nexo sounds", "sounds", ConverterOption.SOUNDS);
+        BukkitProgressBar progress = this.createProgressBar(player, totalSounds, "Converting Nexo sounds", "sounds", ConverterOption.SOUNDS);
 
-            progress.start();
+        progress.start();
 
+        fr.robie.yamllibrary.file.YamlConfiguration convertedConfig = new fr.robie.yamllibrary.file.YamlConfiguration();
+        fr.robie.yamllibrary.ConfigurationSection soundsSection = convertedConfig.createSection("sounds");
+        fr.robie.yamllibrary.ConfigurationSection jukeboxSongsSection = convertedConfig.createSection("jukebox-songs");
+
+        for (fr.robie.yamllibrary.ConfigurationSection soundEntry : sounds) {
             try {
-                YamlConfiguration convertedConfig = new YamlConfiguration();
-                ConfigurationSection soundsSection = convertedConfig.createSection("sounds");
-                ConfigurationSection jukeboxSongsSection = convertedConfig.createSection("jukebox-songs");
+//                this.convertSoundEntry(soundEntry.getValues(false), soundsSection, jukeboxSongsSection, progress);
 
-                for (Map<String, Object> soundEntry : nexoSoundsList) {
-                    try {
-                        this.convertSoundEntry(soundEntry, soundsSection, jukeboxSongsSection, progress);
-                    } catch (Exception e) {
-                        Object idObj = soundEntry.get("id");
-                        String soundId = idObj != null ? idObj.toString() : "unknown";
-                        this.logDebug(Message.ERROR__CONVERTER__FAILED_CONVERT_SOUND, Logger.LogType.ERROR, Placeholder.of("sound", soundId, "file", String.valueOf(inputSoundFile)));
-                        progress.increment();
+                String id = soundEntry.getString("id");
+                if (id == null || id.isEmpty()) {
+                    progress.increment();
+                    continue;
+                }
+
+                SoundConfiguration soundConfiguration = new SoundConfiguration()
+                        .setReplace(soundEntry.getBoolean("replace", false));
+
+                String sound = soundEntry.getString("sound");
+                if (sound != null && !sound.isEmpty()) {
+                    soundConfiguration.addSound(this.createSound(sound, soundEntry));
+                }
+
+                List<?> soundsList = soundEntry.getList("sounds");
+                for (Object soundObj : soundsList) {
+                    if (soundObj instanceof ConfigurationSection soundSection) {
+                        String name = soundSection.getString("name");
+                        if (name != null && !name.isEmpty()) {
+                            soundConfiguration.addSound(this.createSound(name, soundSection));
+                        }
+                    } else if (soundObj instanceof String soundName) {
+                        soundConfiguration.addSound(this.createSound(soundName, soundEntry));
                     }
                 }
 
-                if (!this.settings.dryRunEnabled()) {
-                    if (jukeboxSongsSection.getKeys(false).isEmpty()) {
-                        convertedConfig.set("jukebox-songs", null);
+                fr.robie.yamllibrary.ConfigurationSection soundIdSection = soundsSection.createSection(id);
+                soundConfiguration.serialize(soundIdSection);
+
+                fr.robie.yamllibrary.ConfigurationSection jukeboxPlayable = soundEntry.getConfigurationSection("jukebox_playable");
+                if (jukeboxPlayable != null) {
+                    fr.robie.yamllibrary.ConfigurationSection jukeboxSoundSectionId = jukeboxSongsSection.createSection(id);
+                    JukeboxSongConfiguration jukeboxConfig = new JukeboxSongConfiguration()
+                            .setSound(id);
+
+                    String durationStr = jukeboxPlayable.getString("duration");
+                    if (durationStr != null && durationStr.endsWith("s")) {
+                        try {
+                            double length = Double.parseDouble(durationStr.substring(0, durationStr.length() - 1));
+                            jukeboxConfig.setLength(length);
+                        } catch (NumberFormatException e) {
+                            this.logDebug(Message.ERROR__CONVERTER__NEXO__SOUND__INVALID_DURATION_FORMAT, Logger.LogType.INFO, Placeholder.of("duration", durationStr, "sound", id));
+                        }
                     }
-                    if (soundsSection.getKeys(false).isEmpty()) {
-                        convertedConfig.set("sounds", null);
+                    String description = jukeboxPlayable.getString("description");
+                    if (description != null) {
+                        jukeboxConfig.setDescription(description);
                     }
-                    convertedConfig.save(outputSoundFile);
+                    int comparatorOutput = jukeboxPlayable.getInt("comparator_output", 15);
+                    jukeboxConfig.setComparatorOutput(comparatorOutput);
+
+                    int range = jukeboxPlayable.getInt("range", 32);
+                    jukeboxConfig.setRange(range);
+
+                    jukeboxConfig.serialize(jukeboxSoundSectionId);
                 }
+
+                progress.increment();
+
             } catch (Exception e) {
-                Logger.error(Message.ERROR__CONVERTER__NEXO__SOUNDS__CONVERT_FAILURE, e, Placeholder.of("file", inputSoundFile.getName()));
-            } finally {
-                nexoSounds.close();
-                progress.stop();
+                Object idObj = soundEntry.get("id");
+                String soundId = idObj != null ? idObj.toString() : "unknown";
+                this.logDebug(Message.ERROR__CONVERTER__FAILED_CONVERT_SOUND, Logger.LogType.ERROR, Placeholder.of("sound", soundId, "file", String.valueOf(inputSoundFile)));
+                progress.increment();
             }
-        } catch (Exception e) {
-            Logger.error(Message.ERROR__CONVERTER__NEXO__SOUNDS__LOAD_FAILURE, e, Placeholder.of("file", inputSoundFile.getName()));
         }
+
+        if (!this.settings.dryRunEnabled()) {
+            if (jukeboxSongsSection.getKeys(false).isEmpty()) {
+                convertedConfig.set("jukebox-songs", null);
+            }
+            if (soundsSection.getKeys(false).isEmpty()) {
+                convertedConfig.set("sounds", null);
+            }
+            try {
+                convertedConfig.save(outputSoundFile);
+            } catch (IOException e) {
+                Logger.error(Message.ERROR__CONVERTER__FAILED_SAVE_FILE, e, Placeholder.of("file", outputSoundFile.getAbsolutePath()));
+            }
+        }
+        progress.stop();
     }
 
-    private void convertSoundEntry(Map<String, Object> soundEntry, ConfigurationSection soundsSection,
-                                   ConfigurationSection jukeboxSongsSection, BukkitProgressBar progress) {
-        Object idObj = soundEntry.get("id");
-        if (idObj == null) {
-            progress.increment();
-            return;
-        }
-
-        String soundId = idObj.toString();
-        if (soundId.isEmpty()) {
-            progress.increment();
-            return;
-        }
-
-        SoundConfiguration soundConfig = new SoundConfiguration()
-                .setReplace(this.parseBoolean(soundEntry.get("replace")));
-
-        Object singleSound = soundEntry.get("sound");
-        if (singleSound != null && this.isValidString(singleSound.toString())) {
-            soundConfig.addSound(this.createSound(singleSound.toString(), soundEntry));
-        }
-
-        Object soundsListObj = soundEntry.get("sounds");
-        if (soundsListObj instanceof List<?> soundsList) {
-            for (Object soundObj : soundsList) {
-                if (soundObj instanceof Map<?, ?> soundMap) {
-                    @SuppressWarnings("unchecked")
-                    Map<String, Object> finalSoundMap = (Map<String, Object>) soundMap;
-                    Object nameObj = finalSoundMap.get("name");
-                    if (nameObj != null) {
-                        soundConfig.addSound(this.createSound(nameObj.toString(), finalSoundMap));
-                    }
-                } else if (soundObj instanceof String soundName) {
-                    soundConfig.addSound(this.createSound(soundName, soundEntry));
-                }
-            }
-        }
-
-        ConfigurationSection soundIdSection = soundsSection.createSection(soundId);
-        soundConfig.serialize(soundIdSection);
-
-        Object jukeboxPlayable = soundEntry.get("jukebox_playable");
-        if (jukeboxPlayable instanceof Map<?, ?> jukeboxMap) {
-            @SuppressWarnings("unchecked")
-            Map<String, Object> finalJukeboxMap = (Map<String, Object>) jukeboxMap;
-            ConfigurationSection jukeboxSongSection = jukeboxSongsSection.createSection(soundId);
-            JukeboxSongConfiguration jukeboxConfig = new JukeboxSongConfiguration()
-                    .setSound(soundId);
-
-            Object durationObj = finalJukeboxMap.get("duration");
-            if (durationObj != null) {
-                String durationStr = durationObj.toString();
-                if (durationStr.endsWith("s")) {
-                    try {
-                        double length = Double.parseDouble(durationStr.substring(0, durationStr.length() - 1));
-                        jukeboxConfig.setLength(length);
-                    } catch (NumberFormatException e) {
-                        this.logDebug(Message.ERROR__CONVERTER__NEXO__SOUND__INVALID_DURATION_FORMAT, Logger.LogType.INFO, Placeholder.of("duration", durationStr, "sound", soundId));
-                    }
-                }
-            }
-
-            Object descriptionObj = finalJukeboxMap.get("description");
-            if (descriptionObj != null) {
-                jukeboxConfig.setDescription(descriptionObj.toString());
-            }
-
-            int comparatorOutput = this.parseInt(finalJukeboxMap.get("comparator_output"), 15);
-            jukeboxConfig.setComparatorOutput(comparatorOutput);
-
-            Object rangeObj = finalJukeboxMap.get("range");
-            if (rangeObj != null) {
-                jukeboxConfig.setRange(this.parseInt(rangeObj, 32));
-            }
-
-            jukeboxConfig.serialize(jukeboxSongSection);
-        }
-
-        progress.increment();
-    }
-
-    private Sound createSound(String soundName, Map<String, Object> properties) {
-        boolean stream = this.parseBoolean(properties.get("stream"));
-        boolean preload = this.parseBoolean(properties.get("preload"));
-        float volume = (float) this.parseDouble(properties.get("volume"), 1.0);
-        float pitch = (float) this.parseDouble(properties.get("pitch"), 1.0);
-        int weight = this.parseInt(properties.get("weight"), 1);
-        int attenuationDistance = this.parseInt(properties.get("attenuation_distance"), 16);
+    private Sound createSound(String soundName, fr.robie.yamllibrary.ConfigurationSection configurationSection) {
+        boolean stream = configurationSection.getBoolean("stream");
+        boolean preload = configurationSection.getBoolean("preload");
+        float volume = (float) configurationSection.getDouble("volume",1.0);
+        float pitch = (float) configurationSection.getDouble("pitch", 1.0);
+        int weight = configurationSection.getInt("weight",1);
+        int attenuationDistance = configurationSection.getInt("attenuation_distance",16);
 
         if (!stream && !preload && volume == 1.0f && pitch == 1.0f && weight == 1 && attenuationDistance == 16) {
             return new SimpleSound(soundName);
@@ -882,84 +846,54 @@ public class NexoConverter extends Converter {
             return;
         }
 
-        try (SnakeUtils nexoLanguages = new SnakeUtils(languagesFile)) {
-            if (nexoLanguages.isEmpty()) {
-                this.logDebug(Message.WARNING__CONVERTER__NEXO__LANGUAGE__LANGUAGES_FILE_EMPTY, Logger.LogType.INFO, Placeholder.of("path", languagesFile.getAbsolutePath()));
-                return;
+        YamlConfiguration yamlConfiguration = YamlConfiguration.loadConfiguration(languagesFile);
+        Set<String> languagesKeys = yamlConfiguration.getKeys(false);
+
+        int totalTranslations = 0;
+        for (String langKey : languagesKeys) {
+            ConfigurationSection langSection = yamlConfiguration.getConfigurationSection(langKey);
+            if (langSection != null) {
+                totalTranslations += langSection.getKeys(false).size();
             }
-
-            Set<String> languageKeys = nexoLanguages.getKeys();
-            if (languageKeys.isEmpty()) {
-                this.logDebug(Message.WARNING__CONVERTER__NEXO__LANGUAGE__NO_LANGUAGES_FOUND, Logger.LogType.INFO, Placeholder.empty());
-                return;
-            }
-
-            int totalTranslations = 0;
-            for (String langKey : languageKeys) {
-                Map<String, Object> langData = nexoLanguages.getMap(langKey);
-                if (langData != null) {
-                    totalTranslations += langData.size();
-                }
-            }
-
-            if (totalTranslations == 0) {
-                this.log(Message.WARNING__CONVERTER__NEXO__LANGUAGE__NO_LANGUAGES_FOUND, Logger.LogType.ERROR,Placeholder.empty());
-                return;
-            }
-
-            BukkitProgressBar progress = this.createProgressBar(player, totalTranslations, "Converting Nexo languages", "translations", ConverterOption.LANGUAGES);
-
-            progress.start();
-
-            try {
-                File tempOutputFile = File.createTempFile("craftengine_languages", ".yml");
-                tempOutputFile.deleteOnExit();
-
-                try (SnakeUtils craftEngineLanguages = SnakeUtils.createEmpty(tempOutputFile)) {
-                    for (String langKey : languageKeys) {
-                        try {
-                            this.convertLanguage(langKey, nexoLanguages, craftEngineLanguages, progress);
-                        } catch (Exception e) {
-                            this.logDebug(Message.ERROR__CONVERTER__NEXO__LANGUAGE__FAILED_CONVERT_LANGUAGE, Logger.LogType.ERROR, Placeholder.of("lang", langKey, "file", languagesFile.getAbsolutePath()));
-                            Map<String, Object> langData = nexoLanguages.getMap(langKey);
-                            if (langData != null) {
-                                progress.increment(langData.size());
-                            }
-                        }
-                    }
-                    if (!this.settings.dryRunEnabled()) {
-                        craftEngineLanguages.save(outputFile);
-                    }
-                }
-            } catch (Exception e) {
-                Logger.error(Message.ERROR__CONVERTER__NEXO__LANGUAGES__CONVERT_FAILURE, e, Placeholder.of("file", languagesFile.getName()));
-            } finally {
-                progress.stop();
-            }
-        } catch (Exception e) {
-            Logger.error(Message.ERROR__CONVERTER__NEXO__LANGUAGES__LOAD_FAILURE, e, Placeholder.of("file", languagesFile.getName()));
         }
-    }
 
-    private void convertLanguage(String langKey, SnakeUtils nexoLanguages,
-                                 SnakeUtils craftEngineLanguages, BukkitProgressBar progress) {
-        Map<String, Object> nexoLangData = nexoLanguages.getMap(langKey);
-
-        if (nexoLangData == null || nexoLangData.isEmpty()) {
+        if (totalTranslations == 0) {
+            this.log(Message.WARNING__CONVERTER__NEXO__LANGUAGE__NO_LANGUAGES_FOUND, Logger.LogType.INFO, Placeholder.empty());
             return;
         }
 
-        String craftEngineLangKey = langKey.equals("global") ? "en" : langKey;
+        BukkitProgressBar progress = this.createProgressBar(player, totalTranslations, "Converting Nexo languages", "translations", ConverterOption.LANGUAGES);
+        progress.start();
 
-        for (Map.Entry<String, Object> entry : nexoLangData.entrySet()) {
-            try {
-                String translationKey = "translations\\n" + craftEngineLangKey + "\\n" + entry.getKey();
-                craftEngineLanguages.addData(translationKey, entry.getValue(), "\\n");
-            } catch (Exception e) {
-                this.logDebug(Message.ERROR__CONVERTER__NEXO__LANGUAGE__FAILED_CONVERT_TRANSLATION, Logger.LogType.ERROR, Placeholder.of("key", entry.getKey(), "lang", langKey));
+        try {
+            YamlConfiguration craftEngineLanguages = new YamlConfiguration();
+            craftEngineLanguages.options().pathSeparator('\\');
+
+            for (String langKey : languagesKeys) {
+                ConfigurationSection langSection = yamlConfiguration.getConfigurationSection(langKey);
+                if (langSection == null) {
+                    continue;
+                }
+
+                for (String translationKey : langSection.getKeys(false)) {
+                    try {
+                        String translationValue = langSection.getString(translationKey, "");
+                        String craftEngineLangKey = langKey.equals("global") ? "en" : langKey;
+                        String finalTranslationKey = "translations\\" + craftEngineLangKey + "\\" + translationKey;
+                        craftEngineLanguages.set(finalTranslationKey, translationValue);
+                    } catch (Exception e) {
+                        this.logDebug(Message.ERROR__CONVERTER__NEXO__LANGUAGE__FAILED_CONVERT_TRANSLATION, Logger.LogType.ERROR, Placeholder.of("key", translationKey, "lang", langKey));
+                    }
+                    progress.increment();
+                }
             }
 
-            progress.increment();
+            if (!this.settings.dryRunEnabled()) {
+                craftEngineLanguages.save(outputFile);
+            }
+        } catch (IOException ignored) {
+        } finally {
+            progress.stop();
         }
     }
 

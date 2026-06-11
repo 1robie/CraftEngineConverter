@@ -1,6 +1,6 @@
 package fr.robie.craftengineconverter.utils;
 
-import org.bukkit.configuration.file.YamlConfiguration;
+import fr.robie.yamllibrary.file.YamlConfiguration;
 
 import java.io.File;
 

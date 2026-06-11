@@ -1,6 +1,6 @@
 package fr.robie.craftengineconverter.api.configuration.image;
 
-import org.bukkit.configuration.ConfigurationSection;
+import fr.robie.yamllibrary.ConfigurationSection;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;

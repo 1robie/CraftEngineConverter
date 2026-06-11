@@ -1,6 +1,7 @@
 package fr.robie.craftengineconverter.common.utils.yaml.directive;
 
-import fr.robie.craftengineconverter.common.utils.yaml.constructor.SmartConstructor;
+import fr.robie.yamllibrary.constructor.SmartConstructor;
+import fr.robie.yamllibrary.directive.KeyDirective;
 import org.bukkit.Bukkit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

@@ -1,7 +1,7 @@
 package fr.robie.craftengineconverter.api.configuration.item.behavior.block.states.properties;
 
 import fr.robie.craftengineconverter.api.configuration.item.behavior.block.states.BlockStateProperty;
-import org.bukkit.configuration.ConfigurationSection;
+import fr.robie.yamllibrary.ConfigurationSection;
 import org.jetbrains.annotations.NotNull;
 
 public class BooleanBlockStateProperty implements BlockStateProperty<Boolean> {

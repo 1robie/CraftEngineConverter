@@ -7,7 +7,7 @@ import fr.robie.craftengineconverter.api.configuration.item.behavior.block.state
 import fr.robie.craftengineconverter.api.configuration.recipe.ingredient.RecipeResult;
 import fr.robie.craftengineconverter.api.enums.RecipeType;
 import fr.robie.craftengineconverter.api.utils.ConfigurationSerializationUtils;
-import org.bukkit.configuration.ConfigurationSection;
+import fr.robie.yamllibrary.ConfigurationSection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

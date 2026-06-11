@@ -1,7 +1,7 @@
 package fr.robie.craftengineconverter.api.configuration.item.models.special;
 
 import fr.robie.craftengineconverter.api.configuration.item.models.ModelConfiguration;
-import org.bukkit.configuration.ConfigurationSection;
+import fr.robie.yamllibrary.ConfigurationSection;
 import org.jetbrains.annotations.NotNull;
 
 public class SpecialModelConfiguration implements ModelConfiguration {

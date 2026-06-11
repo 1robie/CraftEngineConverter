@@ -2,6 +2,7 @@ package fr.robie.craftengineconverter.api.configuration.loader.models.range_disp
 
 import fr.robie.craftengineconverter.api.configuration.item.models.range_dispatch.RangeDispatchModelConfiguration;
 import fr.robie.craftengineconverter.api.configuration.loader.models.ModelConfigurationLoader;
+import fr.robie.yamllibrary.ConfigurationSection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,7 +17,7 @@ public class RangeDispatchConfigurationRegistry {
     }
 
     @Nullable
-    public static RangeDispatchModelConfiguration load(@Nullable fr.robie.craftengineconverter.api.yaml.ConfigurationSection section) {
+    public static RangeDispatchModelConfiguration load(@Nullable ConfigurationSection section) {
         if (section == null) {
             return null;
         }

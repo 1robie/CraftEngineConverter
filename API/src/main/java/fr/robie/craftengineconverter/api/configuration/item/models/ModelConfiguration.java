@@ -1,7 +1,7 @@
 package fr.robie.craftengineconverter.api.configuration.item.models;
 
 import fr.robie.craftengineconverter.api.configuration.SectionSerializable;
-import org.bukkit.configuration.ConfigurationSection;
+import fr.robie.yamllibrary.ConfigurationSection;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

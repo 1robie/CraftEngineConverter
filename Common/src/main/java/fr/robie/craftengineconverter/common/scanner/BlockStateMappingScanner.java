@@ -1,7 +1,8 @@
 package fr.robie.craftengineconverter.common.scanner;
 
 import fr.robie.craftengineconverter.api.enums.CraftEngineBlockState;
-import fr.robie.craftengineconverter.common.utils.SnakeUtils;
+import fr.robie.yamllibrary.ConfigurationSection;
+import fr.robie.yamllibrary.file.YamlConfiguration;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.block.data.BlockData;
@@ -89,17 +90,14 @@ public class BlockStateMappingScanner {
     }
 
     private void processFile(File file) {
-        SnakeUtils yaml = SnakeUtils.loadSmart(file);
-        if (yaml == null) {
-            return;
-        }
+        YamlConfiguration configuration = YamlConfiguration.loadConfiguration(file);
 
         for (String mappingKey : MAPPING_KEYS) {
-            Map<String, Object> mappings = yaml.getMap(mappingKey);
-            if (mappings == null) {
-                continue;
+            ConfigurationSection configurationSection = configuration.getConfigurationSection(mappingKey);
+            if (configurationSection != null) {
+                Map<String, Object> mappings = configurationSection.getValues(true);
+                this.processMappings(mappings);
             }
-            this.processMappings(mappings);
         }
     }
 

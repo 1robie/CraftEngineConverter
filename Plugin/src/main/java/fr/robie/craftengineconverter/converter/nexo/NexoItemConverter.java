@@ -47,7 +47,6 @@ import fr.robie.craftengineconverter.api.configuration.item.settings.ProjectileS
 import fr.robie.craftengineconverter.api.enums.*;
 import fr.robie.craftengineconverter.api.enums.item.component.ConsumableAnimation;
 import fr.robie.craftengineconverter.api.format.Message;
-
 import fr.robie.craftengineconverter.api.utils.FloatsUtils;
 import fr.robie.craftengineconverter.api.utils.item.component.ConsumeEffect;
 import fr.robie.craftengineconverter.common.BlockStatesMapper;
@@ -64,6 +63,8 @@ import fr.robie.craftengineconverter.utils.loots.ItemLoot;
 import fr.robie.craftengineconverter.utils.loots.MinecraftItemLoot;
 import fr.robie.messageflow.formatter.Placeholder;
 import fr.robie.messageflow.logger.Logger;
+import fr.robie.yamllibrary.ConfigurationSection;
+import fr.robie.yamllibrary.file.YamlConfiguration;
 import net.momirealms.craftengine.core.entity.EquipmentSlot;
 import net.momirealms.craftengine.core.entity.display.Billboard;
 import net.momirealms.craftengine.core.item.setting.value.AnvilRepairItem;
@@ -75,8 +76,6 @@ import org.bukkit.block.BlockFace;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.block.data.MultipleFacing;
 import org.bukkit.block.data.type.Tripwire;
-import org.bukkit.configuration.ConfigurationSection;
-import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemFlag;
 

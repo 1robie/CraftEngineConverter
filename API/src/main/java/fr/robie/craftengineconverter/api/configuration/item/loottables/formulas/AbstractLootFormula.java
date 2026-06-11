@@ -1,6 +1,6 @@
 package fr.robie.craftengineconverter.api.configuration.item.loottables.formulas;
 
-import org.bukkit.configuration.ConfigurationSection;
+import fr.robie.yamllibrary.ConfigurationSection;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class AbstractLootFormula implements LootFormula {

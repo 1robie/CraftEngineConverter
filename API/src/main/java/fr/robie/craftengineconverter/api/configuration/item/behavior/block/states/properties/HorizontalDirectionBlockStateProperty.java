@@ -2,7 +2,7 @@ package fr.robie.craftengineconverter.api.configuration.item.behavior.block.stat
 
 import fr.robie.craftengineconverter.api.configuration.item.behavior.block.states.BlockStateProperty;
 import fr.robie.craftengineconverter.api.configuration.utils.HorizontalDirection;
-import org.bukkit.configuration.ConfigurationSection;
+import fr.robie.yamllibrary.ConfigurationSection;
 import org.jetbrains.annotations.NotNull;
 import org.jspecify.annotations.NonNull;
 

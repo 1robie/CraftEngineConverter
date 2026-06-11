@@ -1,7 +1,7 @@
 package fr.robie.craftengineconverter.api.configuration.conditions;
 
 import fr.robie.craftengineconverter.api.enums.Hand;
-import org.bukkit.configuration.ConfigurationSection;
+import fr.robie.yamllibrary.ConfigurationSection;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Locale;
