@@ -49,7 +49,7 @@ public class RegistryHelper {
             if (!ModelConfigurationLoader.class.isAssignableFrom(clazz)) {
                 continue;
             }
-            if (!VersionFilter.passes(clazz, clazz.getSimpleName())) {
+            if (!VersionFilter.passes(clazz)) {
                 continue;
             }
             AutoModelConfigurationLoader annotation = clazz.getAnnotation(AutoModelConfigurationLoader.class);
@@ -90,7 +90,7 @@ public class RegistryHelper {
             if (!TintConfigurationLoader.class.isAssignableFrom(clazz)) {
                 continue;
             }
-            if (!fr.robie.craftengineconverter.api.utils.VersionFilter.passes(clazz, clazz.getSimpleName())) {
+            if (!fr.robie.craftengineconverter.api.utils.VersionFilter.passes(clazz)) {
                 continue;
             }
             AutoTintConfigurationLoader annotation = clazz.getAnnotation(AutoTintConfigurationLoader.class);
@@ -116,7 +116,7 @@ public class RegistryHelper {
             if (!ModelConfigurationLoader.class.isAssignableFrom(clazz)) {
                 continue;
             }
-            if (!VersionFilter.passes(clazz, clazz.getSimpleName())) {
+            if (!VersionFilter.passes(clazz)) {
                 continue;
             }
             AutoSelectModelConfigurationLoader annotation = clazz.getAnnotation(AutoSelectModelConfigurationLoader.class);
@@ -148,7 +148,7 @@ public class RegistryHelper {
             if (!ModelConfigurationLoader.class.isAssignableFrom(clazz)) {
                 continue;
             }
-            if (!VersionFilter.passes(clazz, clazz.getSimpleName())) {
+            if (!VersionFilter.passes(clazz)) {
                 continue;
             }
             AutoRangeDispatchConfigurationLoader annotation = clazz.getAnnotation(AutoRangeDispatchConfigurationLoader.class);

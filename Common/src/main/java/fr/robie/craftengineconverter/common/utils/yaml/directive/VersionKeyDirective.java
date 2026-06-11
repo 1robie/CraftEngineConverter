@@ -53,7 +53,7 @@ public class VersionKeyDirective implements KeyDirective {
         String verA = m.group(2);
         String verB = m.group(3);
 
-        MinecraftVersion current = MinecraftVersion.current();
+        MinecraftVersion current = MinecraftVersion.getCurrentVersion();
 
         if (verB != null) {
             MinecraftVersion min = MinecraftVersion.parse(verA);

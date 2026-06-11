@@ -1,6 +1,6 @@
 package fr.robie.craftengineconverter.api.reflections;
 
-import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.NotNull;
 import org.reflections.Reflections;
 import org.reflections.scanners.Scanners;
@@ -25,7 +25,7 @@ public class ReflectionsCache {
         return instance;
     }
 
-    public Reflections getOrCreate(@NotNull JavaPlugin plugin, @NotNull String packageName) {
+    public Reflections getOrCreate(@NotNull Plugin plugin, @NotNull String packageName) {
         if (packageName.trim().isEmpty()) {
             throw new IllegalArgumentException("Package name cannot be empty");
         }

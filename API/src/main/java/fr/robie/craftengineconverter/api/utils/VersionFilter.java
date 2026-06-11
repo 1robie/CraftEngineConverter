@@ -1,18 +1,22 @@
 package fr.robie.craftengineconverter.api.utils;
 
-import fr.robie.craftengineconverter.api.annotations.PaperOnly;
-import fr.robie.craftengineconverter.api.annotations.SinceVersion;
-import fr.robie.craftengineconverter.api.annotations.SpigotOnly;
-import fr.robie.craftengineconverter.api.annotations.UntilVersion;
+import fr.robie.craftengineconverter.api.annotations.*;
+import fr.robie.craftengineconverter.api.loader.ClassRegistry;
 import fr.robie.craftengineconverter.api.manager.FoliaCompatibilityManager;
-import fr.robie.messageflow.logger.Logger;
+import fr.robie.craftengineconverter.api.reflections.ReflectionsCache;
+import org.bukkit.Bukkit;
+import org.bukkit.plugin.Plugin;
+import org.jetbrains.annotations.NotNull;
+import org.reflections.Reflections;
+
+import java.lang.annotation.Annotation;
 
 public final class VersionFilter {
 
     private VersionFilter() {
     }
 
-    public static boolean passes(Class<?> clazz, String label) {
+    public static boolean passes(Class<?> clazz) {
         if (clazz.isAnnotationPresent(PaperOnly.class) && !FoliaCompatibilityManager.getInstance().isPaperOrFolia()) {
             return false;
         }
@@ -20,12 +24,30 @@ public final class VersionFilter {
             return false;
         }
 
-        MinecraftVersion server = MinecraftVersion.current();
+        RequiresPlugin requiresPlugin = clazz.getAnnotation(RequiresPlugin.class);
+        if (requiresPlugin != null) {
+            Plugin plugin = Bukkit.getPluginManager().getPlugin(requiresPlugin.value());
+
+            if (plugin == null) return false;
+
+            if (requiresPlugin.checkMode() == RequiresPlugin.CheckMode.EXISTS_AND_ENABLED && !plugin.isEnabled()) return false;
+
+            String requiredVersionStr = requiresPlugin.version();
+            if (!requiredVersionStr.isEmpty()) {
+                PluginVersion pluginVersion = PluginVersion.parse(plugin.getDescription().getVersion());
+                PluginVersion requiredVersion = PluginVersion.parse(requiredVersionStr);
+                if (!requiresPlugin.type().compare(pluginVersion.compareTo(requiredVersion))) {
+                    return false;
+                }
+            }
+        }
+
+        MinecraftVersion serverVersion = MinecraftVersion.getCurrentVersion();
 
         SinceVersion since = clazz.getAnnotation(SinceVersion.class);
         if (since != null) {
             MinecraftVersion minimum = MinecraftVersion.parse(since.value());
-            if (!server.isAtLeast(minimum)) {
+            if (!serverVersion.isAtLeast(minimum)) {
                 return false;
             }
         }
@@ -33,9 +55,27 @@ public final class VersionFilter {
         UntilVersion until = clazz.getAnnotation(UntilVersion.class);
         if (until != null) {
             MinecraftVersion maximum = MinecraftVersion.parse(until.value());
-            return server.isAtMost(maximum);
+            return serverVersion.isAtMost(maximum);
         }
 
         return true;
+    }
+
+    public static <T, A extends Annotation, P extends Plugin> int scanAndRegister(
+            @NotNull String packageName,
+            @NotNull P plugin,
+            @NotNull Class<A> annotation,
+            @NotNull ClassRegistry<T, P> registry) {
+
+        Reflections reflection = ReflectionsCache.getInstance().getOrCreate(plugin, packageName);
+        int count = 0;
+
+        for (Class<?> clazz : reflection.getTypesAnnotatedWith(annotation)) {
+            if (!registry.getExpectedType().isAssignableFrom(clazz)) continue;
+            if (!passes(clazz)) continue;
+            if (registry.load(plugin, clazz)) count++;
+        }
+
+        return count;
     }
 }
