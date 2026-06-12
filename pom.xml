@@ -42,7 +42,7 @@
         <plugin.finalVersion>${project.version}${dev.suffix}</plugin.finalVersion>
         <dev.suffix/>
 
-        <dependency.craftengine.version>26.5-SNAPSHOT</dependency.craftengine.version>
+        <dependency.craftengine.version>26.6.2</dependency.craftengine.version>
     </properties>
 
     <dependencyManagement>
