@@ -67,7 +67,7 @@
             <dependency>
                 <groupId>com.github.1robie.MessageFlow</groupId>
                 <artifactId>message-flow</artifactId>
-                <version>main-SNAPSHOT</version>
+                <version>1.0.0</version>
                 <scope>compile</scope>
             </dependency>
 
