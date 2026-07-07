@@ -1,106 +1,47 @@
 package fr.robie.craftengineconverter.command;
 
+import com.mojang.brigadier.arguments.StringArgumentType;
 import fr.robie.craftengineconverter.CraftEngineConverter;
 import fr.robie.craftengineconverter.api.builder.TimerBuilder;
 import fr.robie.craftengineconverter.api.enums.ConverterOption;
 import fr.robie.craftengineconverter.api.enums.CraftEngineBlockState;
 import fr.robie.craftengineconverter.api.format.Message;
+import fr.robie.craftengineconverter.common.CraftEngineConverterPlugin;
 import fr.robie.craftengineconverter.common.permission.Permission;
 import fr.robie.craftengineconverter.converter.Converter;
-import fr.robie.craftengineconverter.utils.command.CommandType;
-import fr.robie.craftengineconverter.utils.command.VCommand;
+import fr.robie.messageflow.formatter.MessageFormatter;
 import fr.robie.messageflow.formatter.Placeholder;
+import fr.robie.paperdispatch.argument.EnumArgument;
+import fr.robie.paperdispatch.command.CommandDispatch;
+import fr.robie.paperdispatch.command.CommandResultType;
+import fr.robie.paperdispatch.command.SubCommand;
+import fr.robie.paperdispatch.flag.Flags;
+import io.papermc.paper.command.brigadier.Commands;
+import org.bukkit.command.CommandSender;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class CraftEngineConverterCommandConvert extends VCommand {
+public class CraftEngineConverterCommandConvert extends SubCommand<CraftEngineConverter> {
     private final List<CompletableFuture<Void>> conversionTasks = new ArrayList<>();
+    private final MessageFormatter<CraftEngineConverterPlugin, ?> messageFormatter;
 
     public CraftEngineConverterCommandConvert(CraftEngineConverter plugin) {
-        super(plugin);
-        this.setPermission(Permission.COMMAND_CONVERT);
-        this.setDescription(Message.COMMAND__CONVERTER__DESCRIPTION);
-        this.addSubCommand("convert");
-        this.addOptionalArg("plugin", (sender, args) -> this.plugin.getConverterNames());
-        this.addOptionalArg("type", (sender, args) -> {
-            Set<String> options = new HashSet<>();
-            for (ConverterOption o : ConverterOption.values()) {
-                options.add(o.name());
-            }
-            return options;
-        });
-        this.addFlag("--dryrun");
-        this.addFlag("--force");
-        this.addFlag("--threads", Integer.class, 1);
-        this.setTabCompletor();
-    }
+        super(plugin, "convert");
+        this.messageFormatter = plugin.getMessageFormatter();
+        this.setPermission(Permission.COMMAND_CONVERT.asPermission());
 
-    @Override
-    protected CommandType perform(CraftEngineConverter plugin) {
-        boolean forceConversion = this.containFlag("--force");
-        if (!this.conversionTasks.isEmpty() && !forceConversion) {
-            this.messageFormatter.sendMessage(Message.COMMAND__CONVERTER__ALREADY_RUNNING, this.sender);
-            return CommandType.SUCCESS;
-        }
+        this.addOptionalArgument(Commands.argument("plugin", StringArgumentType.word()).suggests(((context, builder) -> {
+            this.plugin.getConverterNames().stream().filter(name -> name.toLowerCase(Locale.ROOT).startsWith(builder.getRemaining())).forEach(builder::suggest);
+            return builder.buildFuture();
+        })));
+        this.addOptionalArgument(Commands.argument("type", new EnumArgument<>(ConverterOption.class)));
 
-        if (forceConversion) {
-            this.messageFormatter.sendMessage(Message.COMMAND__CONVERTER__FORCE_STOPPING, this.sender);
-            this.disableAllConversions();
-        }
-
-        String targetPlugin = this.argAsString(0);
-        ConverterOption converterOption = this.argAsEnum(1, ConverterOption.class, ConverterOption.ALL);
-        boolean dryRun = this.containFlag("--dryrun");
-        if (dryRun) {
-            this.messageFormatter.sendMessage(Message.COMMAND__CONVERTER__DRY_RUN_NOTE, this.sender);
-        }
-        int threads = this.getFlagValueAsInteger("--threads");
-        if (threads < 1) {
-            threads = 1;
-        } else if (threads > Runtime.getRuntime().availableProcessors()) {
-            int availableProcessors = Runtime.getRuntime().availableProcessors();
-            threads = availableProcessors;
-            this.messageFormatter.sendMessage(Message.COMMAND__CONVERTER__THREADS__ERROR_TOO_MANY, this.sender, Placeholder.of("max", String.valueOf(availableProcessors)));
-        }
-        this.messageFormatter.sendMessage(Message.COMMAND__CONVERTER__THREADS__INFO, this.sender, Placeholder.of("threads", String.valueOf(threads)));
-        CraftEngineBlockState.resetAllLimits();
-        if (targetPlugin == null) {
-            long startTime = System.currentTimeMillis();
-            this.messageFormatter.sendMessage(Message.COMMAND__CONVERTER__START__ALL,this.sender);
-            Collection<Converter> converters = plugin.getConverters();
-            AtomicInteger counter = new AtomicInteger(converters.size());
-            for (Converter converter : converters) {
-                CompletableFuture<Void> voidCompletableFuture = converter.convert(converterOption, Optional.ofNullable(this.player), dryRun, threads);
-                voidCompletableFuture.thenRun(() -> {
-                    int remaining = counter.decrementAndGet();
-                    if (remaining == 0) {
-                        long endTime = System.currentTimeMillis();
-                        this.messageFormatter.sendMessage(Message.COMMAND__CONVERTER__COMPLETE__ALL, this.sender, Placeholder.of("time", TimerBuilder.formatTimeAuto(endTime - startTime)));
-                    }
-                    this.conversionTasks.remove(voidCompletableFuture);
-                });
-                this.conversionTasks.add(voidCompletableFuture);
-            }
-        } else {
-            Optional<Converter> optionalConverter = plugin.getConverter(targetPlugin);
-            if (optionalConverter.isPresent()) {
-                long startTime = System.currentTimeMillis();
-                this.messageFormatter.sendMessage(Message.COMMAND__CONVERTER__START__SINGLE, this.sender, Placeholder.of("plugin", targetPlugin));
-                Converter converter = optionalConverter.get();
-                CompletableFuture<Void> voidCompletableFuture = converter.convert(converterOption, Optional.ofNullable(this.player), dryRun, threads);
-                voidCompletableFuture.thenRun(() -> {
-                    long endTime = System.currentTimeMillis();
-                    this.messageFormatter.sendMessage(Message.COMMAND__CONVERTER__COMPLETE__SINGLE, this.sender, Placeholder.of("plugin", targetPlugin, "time", TimerBuilder.formatTimeAuto(endTime - startTime)));
-                    this.conversionTasks.remove(voidCompletableFuture);
-                });
-                this.conversionTasks.add(voidCompletableFuture);
-            } else {
-                this.messageFormatter.sendMessage(Message.COMMAND__CONVERTER__NOT_SUPPORTED, this.sender, Placeholder.of("plugin", targetPlugin));
-            }
-        }
-        return CommandType.SUCCESS;
+        this.addFlag("dryrun");
+        this.addFlag("force");
+        this.addFlag(Flags.intFlag("threads").defaultTo(1));
     }
 
     private void disableAllConversions() {
@@ -113,7 +54,66 @@ public class CraftEngineConverterCommandConvert extends VCommand {
     }
 
     @Override
-    public void onDisable() {
-        this.disableAllConversions();
+    protected @NotNull CommandResultType perform(@NotNull CommandDispatch<CraftEngineConverter> commandDispatch) {
+        CommandSender sender = commandDispatch.getSender();
+        boolean forceConversion = commandDispatch.hasFlag("force");
+        if (!this.conversionTasks.isEmpty() && !forceConversion) {
+            this.messageFormatter.sendMessage(Message.COMMAND__CONVERTER__ALREADY_RUNNING, sender);
+            return CommandResultType.SUCCESS;
+        }
+
+        if (forceConversion) {
+            this.messageFormatter.sendMessage(Message.COMMAND__CONVERTER__FORCE_STOPPING, sender);
+            this.disableAllConversions();
+        }
+
+        ConverterOption converterOption = commandDispatch.getArgument("type", ConverterOption.class, ConverterOption.ALL);
+        int threads = commandDispatch.getFlagValue("threads", Integer.class);
+        if (threads < 1) {
+            threads = 1;
+        } else if (threads > Runtime.getRuntime().availableProcessors()) {
+            int availableProcessors = Runtime.getRuntime().availableProcessors();
+            threads = availableProcessors;
+            this.messageFormatter.sendMessage(Message.COMMAND__CONVERTER__THREADS__ERROR_TOO_MANY, sender, Placeholder.of("max", String.valueOf(availableProcessors)));
+        }
+        this.messageFormatter.sendMessage(Message.COMMAND__CONVERTER__THREADS__INFO, sender, Placeholder.of("threads", String.valueOf(threads)));
+        CraftEngineBlockState.resetAllLimits();
+        Optional<String> optionalPlugin = commandDispatch.getOptionalArgument("plugin", String.class);
+        if (optionalPlugin.isPresent()) {
+            String targetPlugin = optionalPlugin.get();
+            Optional<Converter> optionalConverter = plugin.getConverter(targetPlugin);
+            if (optionalConverter.isPresent()) {
+                long startTime = System.currentTimeMillis();
+                this.messageFormatter.sendMessage(Message.COMMAND__CONVERTER__START__SINGLE, sender, Placeholder.of("plugin", targetPlugin));
+                Converter converter = optionalConverter.get();
+                CompletableFuture<Void> voidCompletableFuture = converter.convert(converterOption, Optional.ofNullable(commandDispatch.getPlayer()), commandDispatch.hasFlag("dryrun"), threads);
+                voidCompletableFuture.thenRun(() -> {
+                    long endTime = System.currentTimeMillis();
+                    this.messageFormatter.sendMessage(Message.COMMAND__CONVERTER__COMPLETE__SINGLE, sender, Placeholder.of("plugin", targetPlugin, "time", TimerBuilder.formatTimeAuto(endTime - startTime)));
+                    this.conversionTasks.remove(voidCompletableFuture);
+                });
+                this.conversionTasks.add(voidCompletableFuture);
+            } else {
+                this.messageFormatter.sendMessage(Message.COMMAND__CONVERTER__NOT_SUPPORTED, sender, Placeholder.of("plugin", targetPlugin));
+            }
+        } else {
+            long startTime = System.currentTimeMillis();
+            this.messageFormatter.sendMessage(Message.COMMAND__CONVERTER__START__ALL,sender);
+            Collection<Converter> converters = plugin.getConverters();
+            AtomicInteger counter = new AtomicInteger(converters.size());
+            for (Converter converter : converters) {
+                CompletableFuture<Void> voidCompletableFuture = converter.convert(converterOption, Optional.ofNullable(commandDispatch.getPlayer()), commandDispatch.hasFlag("dryrun"), threads);
+                voidCompletableFuture.thenRun(() -> {
+                    int remaining = counter.decrementAndGet();
+                    if (remaining == 0) {
+                        long endTime = System.currentTimeMillis();
+                        this.messageFormatter.sendMessage(Message.COMMAND__CONVERTER__COMPLETE__ALL, sender, Placeholder.of("time", TimerBuilder.formatTimeAuto(endTime - startTime)));
+                    }
+                    this.conversionTasks.remove(voidCompletableFuture);
+                });
+                this.conversionTasks.add(voidCompletableFuture);
+            }
+        }
+        return CommandResultType.SUCCESS;
     }
 }

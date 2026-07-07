@@ -1,0 +1,24 @@
+name: ${project.parent.artifactId}
+version: ${plugin.finalVersion}
+authors: [ ${plugin.author} ]
+description: ${plugin.description}
+api-version: ${plugin.apiVersion}
+main: ${plugin.mainClass}
+bootstrapper: ${plugin.bootstrapper}
+loader: ${plugin.loader}
+dependencies:
+  server:
+    CraftEngine:
+      load: BEFORE
+      required: true
+      join-classpath: true
+
+    packetevents:
+      load: BEFORE
+      required: false
+      join-classpath: true
+
+    PlaceholderAPI:
+      load: BEFORE
+      required: false
+      join-classpath: true

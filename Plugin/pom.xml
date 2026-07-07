@@ -119,6 +119,12 @@
             <scope>compile</scope>
         </dependency>
 
+        <dependency>
+            <groupId>com.github.1robie.paper-dispatch</groupId>
+            <artifactId>paper-dispatch</artifactId>
+            <scope>compile</scope>
+        </dependency>
+
         <!-- Test dependencies -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>

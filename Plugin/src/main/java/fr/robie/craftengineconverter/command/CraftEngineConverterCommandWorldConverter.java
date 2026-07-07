@@ -1,26 +1,24 @@
 package fr.robie.craftengineconverter.command;
 
 import fr.robie.craftengineconverter.CraftEngineConverter;
-import fr.robie.craftengineconverter.api.format.Message;
 import fr.robie.craftengineconverter.common.permission.Permission;
-import fr.robie.craftengineconverter.utils.command.CommandType;
-import fr.robie.craftengineconverter.utils.command.VCommand;
+import fr.robie.paperdispatch.command.CommandDispatch;
+import fr.robie.paperdispatch.command.CommandResultType;
+import fr.robie.paperdispatch.command.SubCommand;
+import org.jetbrains.annotations.NotNull;
 
-public class CraftEngineConverterCommandWorldConverter extends VCommand {
+public class CraftEngineConverterCommandWorldConverter extends SubCommand<CraftEngineConverter> {
 
     public CraftEngineConverterCommandWorldConverter(CraftEngineConverter plugin) {
-        super(plugin);
-        this.setPermission(Permission.COMMAND_WORLDCONVERTER);
-        this.setDescription(Message.COMMAND__WORLD_CONVERTER__DESCRIPTION);
-        this.addSubCommand("worldconverter", "wc");
+        super(plugin, "worldconverter", "wc");
+        this.setPermission(Permission.COMMAND_WORLDCONVERTER.asPermission());
         this.addSubCommand(new CraftEngineConverterCommandWorldConverterClearCachedChunks(plugin));
         this.addSubCommand(new CraftEngineConverterCommandWorldConverterStart(plugin));
         this.addSubCommand(new CraftEngineConverterCommandWorldConverterRestore(plugin));
     }
 
     @Override
-    protected CommandType perform(CraftEngineConverter plugin) {
-        this.syntaxMessage();
-        return CommandType.SUCCESS;
+    protected @NotNull CommandResultType perform(@NotNull CommandDispatch<CraftEngineConverter> commandDispatch) {
+        return CommandResultType.SUCCESS;
     }
 }

@@ -3,34 +3,41 @@ package fr.robie.craftengineconverter.command;
 import fr.robie.craftengineconverter.CraftEngineConverter;
 import fr.robie.craftengineconverter.api.builder.TimerBuilder;
 import fr.robie.craftengineconverter.api.format.Message;
-
+import fr.robie.craftengineconverter.common.CraftEngineConverterPlugin;
 import fr.robie.craftengineconverter.common.permission.Permission;
-import fr.robie.craftengineconverter.utils.command.CommandType;
-import fr.robie.craftengineconverter.utils.command.VCommand;
+import fr.robie.messageflow.formatter.MessageFormatter;
 import fr.robie.messageflow.formatter.Placeholder;
 import fr.robie.messageflow.logger.Logger;
+import fr.robie.paperdispatch.command.CommandDispatch;
+import fr.robie.paperdispatch.command.CommandResultType;
+import fr.robie.paperdispatch.command.SubCommand;
+import org.bukkit.command.CommandSender;
+import org.jetbrains.annotations.NotNull;
 
-public class CraftEngineConverterCommandReload extends VCommand {
+public class CraftEngineConverterCommandReload extends SubCommand<CraftEngineConverter> {
+    private final MessageFormatter<CraftEngineConverterPlugin, ?> messageFormatter;
+
     public CraftEngineConverterCommandReload(CraftEngineConverter plugin) {
-        super(plugin);
-        this.addSubCommand("reload", "rl");
-        this.setPermission(Permission.COMMAND_RELOAD);
-        this.setDescription(Message.COMMAND__RELOAD__DESCRIPTION);
+        super(plugin, "reload", "rl");
+        this.messageFormatter = plugin.getMessageFormatter();
+        this.setPermission(Permission.COMMAND_RELOAD.asPermission());
     }
 
     @Override
-    protected CommandType perform(CraftEngineConverter plugin) {
+    protected fr.robie.paperdispatch.command.@NotNull CommandResultType perform(@NotNull CommandDispatch<CraftEngineConverter> commandDispatch) {
+        CommandSender sender = commandDispatch.getSender();
         try {
             long startTime = System.currentTimeMillis();
-            plugin.reloadBlockStateMappings();
-            plugin.reloadConfig();
-            plugin.reloadMessages();
+            commandDispatch.getPlugin().reloadBlockStateMappings();
+            commandDispatch.getPlugin().reloadConfig();
+            commandDispatch.getPlugin().reloadMessages();
             long endTime = System.currentTimeMillis();
-            this.messageFormatter.sendMessage(Message.COMMAND__RELOAD__SUCCESS, this.sender, Placeholder.of("time", TimerBuilder.formatTimeAuto(endTime - startTime)));
+            this.messageFormatter.sendMessage(Message.COMMAND__RELOAD__SUCCESS, sender, Placeholder.of("time", TimerBuilder.formatTimeAuto(endTime - startTime)));
+            return CommandResultType.SUCCESS;
         } catch (Exception e) {
             Logger.error("An error occurred while reloading the plugin.", e);
-            this.messageFormatter.sendMessage(Message.COMMAND__RELOAD__FAILURE, this.sender);
+            this.messageFormatter.sendMessage(Message.COMMAND__RELOAD__FAILURE, sender);
+            return CommandResultType.FAILURE;
         }
-        return CommandType.SUCCESS;
     }
 }

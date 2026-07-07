@@ -5,51 +5,61 @@ import fr.robie.craftengineconverter.api.builder.TimerBuilder;
 import fr.robie.craftengineconverter.api.configuration.Configuration;
 import fr.robie.craftengineconverter.api.format.Message;
 import fr.robie.craftengineconverter.api.progress.BukkitProgressBar;
+import fr.robie.craftengineconverter.common.CraftEngineConverterPlugin;
 import fr.robie.craftengineconverter.common.permission.Permission;
 import fr.robie.craftengineconverter.listener.WorldConverterManager;
-import fr.robie.craftengineconverter.utils.command.CommandType;
-import fr.robie.craftengineconverter.utils.command.VCommand;
+import fr.robie.messageflow.formatter.MessageFormatter;
 import fr.robie.messageflow.formatter.Placeholder;
+import fr.robie.paperdispatch.command.CommandDispatch;
+import fr.robie.paperdispatch.command.CommandResultType;
+import fr.robie.paperdispatch.command.SubCommand;
+import fr.robie.paperdispatch.flag.Flags;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
+import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
-public class CraftEngineConverterCommandWorldConverterStart extends VCommand {
+public class CraftEngineConverterCommandWorldConverterStart extends SubCommand<CraftEngineConverter> {
+    private final MessageFormatter<CraftEngineConverterPlugin, ?> messageFormatter;
     private CompletableFuture<Void> currentConversion = null;
 
     public CraftEngineConverterCommandWorldConverterStart(CraftEngineConverter plugin) {
-        super(plugin);
-        this.setPermission(Permission.COMMAND_WORLDCONVERTER_START);
-        this.addSubCommand("start");
-        this.addFlag("--force");
-        this.addFlag("--chunks-per-tick", Integer.class, 10);
+        super(plugin, "start");
+        this.messageFormatter = plugin.getMessageFormatter();
+        this.setPermission(Permission.COMMAND_WORLDCONVERTER_START.asPermission());
+        this.addFlag("force");
+        this.addFlag(Flags.intFlag("chunks-per-tick", 1, 100).defaultTo(10));
+    }
+
+    public void onDisable() {
+        if (this.currentConversion != null && !this.currentConversion.isDone()) {
+            this.currentConversion.cancel(true);
+        }
     }
 
     @Override
-    protected CommandType perform(CraftEngineConverter plugin) {
-        WorldConverterManager worldConverterManager = plugin.getWorldConverterManager();
+    protected @NotNull CommandResultType perform(@NotNull CommandDispatch<CraftEngineConverter> commandDispatch) {
+        WorldConverterManager worldConverterManager = this.plugin.getWorldConverterManager();
 
-        boolean forceConversion = this.containFlag("--force");
+        boolean forceConversion = commandDispatch.hasFlag("force");
 
+        CommandSender sender = commandDispatch.getSender();
         if (this.currentConversion != null && !this.currentConversion.isDone() && !forceConversion) {
-            this.messageFormatter.sendMessage(Message.COMMAND__WORLD_CONVERTER__ALREADY_RUNNING, this.sender);
-            return CommandType.SUCCESS;
+            this.messageFormatter.sendMessage(Message.COMMAND__WORLD_CONVERTER__ALREADY_RUNNING, sender);
+            return CommandResultType.SUCCESS;
         }
 
         if (forceConversion && this.currentConversion != null && !this.currentConversion.isDone()) {
-            this.messageFormatter.sendMessage(Message.COMMAND__WORLD_CONVERTER__FORCE_STOPPING, this.sender);
+            this.messageFormatter.sendMessage(Message.COMMAND__WORLD_CONVERTER__FORCE_STOPPING, sender);
             worldConverterManager.cancelAllConversions();
             this.currentConversion.cancel(true);
         }
 
-        int chunksPerTick = this.getFlagValueAsInteger("--chunks-per-tick");
-        if (chunksPerTick < 1) {
-            chunksPerTick = 1;
-        } else if (chunksPerTick > 100) {
-            chunksPerTick = 100;
-        }
+        int chunksPerTick = commandDispatch.getFlagValue("chunks-per-tick", Integer.class);
 
         List<World> worlds = Bukkit.getServer().getWorlds();
         int totalChunks = 0;
@@ -58,13 +68,14 @@ public class CraftEngineConverterCommandWorldConverterStart extends VCommand {
         }
 
         BukkitProgressBar.Builder builder = new BukkitProgressBar.Builder(totalChunks).options(Configuration.worldConverterProgressBarOptions).prefix("World Converter:").suffix("chunks").updateInterval(5000);
-        if (this.player != null) {
-            builder.player(this.player);
+        Player player = commandDispatch.getPlayer();
+        if (player != null) {
+            builder.player(player);
             builder.showBar(false);
         }
         BukkitProgressBar progressBar = builder.build(this.plugin);
 
-        this.messageFormatter.sendMessage(Message.COMMAND__WORLD_CONVERTER__START, this.sender, Placeholder.of("chunks", String.valueOf(totalChunks)));
+        this.messageFormatter.sendMessage(Message.COMMAND__WORLD_CONVERTER__START, sender, Placeholder.of("chunks", String.valueOf(totalChunks)));
 
         int oldConvertedBlocks = worldConverterManager.getPlacementTracker().getBlocksConverted();
         int oldConvertedFurniture = worldConverterManager.getPlacementTracker().getFurnitureConverted();
@@ -90,16 +101,8 @@ public class CraftEngineConverterCommandWorldConverterStart extends VCommand {
                     .register("furniture", String.valueOf(convertedFurniture - oldConvertedFurniture))
                     .register("time", TimerBuilder.formatTimeAuto(endTime - startTime));
 
-            this.messageFormatter.sendMessage(Message.COMMAND__WORLD_CONVERTER__COMPLETE, this.sender, placeholderBuilder.build());
+            this.messageFormatter.sendMessage(Message.COMMAND__WORLD_CONVERTER__COMPLETE, sender, placeholderBuilder.build());
         });
-
-        return CommandType.SUCCESS;
-    }
-
-    @Override
-    public void onDisable() {
-        if (this.currentConversion != null && !this.currentConversion.isDone()) {
-            this.currentConversion.cancel(true);
-        }
+        return CommandResultType.SUCCESS;
     }
 }

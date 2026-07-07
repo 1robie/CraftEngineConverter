@@ -38,6 +38,8 @@
         <plugin.description>A plugin to convert configurations to CraftEngine format</plugin.description>
         <plugin.apiVersion>1.21</plugin.apiVersion>
         <plugin.mainClass>fr.robie.craftengineconverter.CraftEngineConverter</plugin.mainClass>
+        <plugin.bootstrapper>fr.robie.craftengineconverter.CraftEngineConverterBootstrapper</plugin.bootstrapper>
+        <plugin.loader>fr.robie.craftengineconverter.CraftEngineConverterLoader</plugin.loader>
 
         <plugin.finalVersion>${project.version}${dev.suffix}</plugin.finalVersion>
         <dev.suffix/>
@@ -76,6 +78,12 @@
                 <artifactId>yamllibrary</artifactId>
                 <version>1.0-SNAPSHOT</version>
                 <scope>provided</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>com.github.1robie.paper-dispatch</groupId>
+                <artifactId>paper-dispatch</artifactId>
+                <version>1.0.1</version>
             </dependency>
 
             <!-- Paper -->
@@ -262,6 +270,12 @@
     </build>
 
     <repositories>
+        <!-- JitPack -->
+        <repository>
+            <id>jitpack.io</id>
+            <url>https://jitpack.io</url>
+        </repository>
+
         <!-- Paper -->
         <repository>
             <id>papermc-repo</id>
@@ -320,12 +334,6 @@
         <repository>
             <id>central-snapshots</id>
             <url>https://central.sonatype.com/repository/maven-snapshots/</url>
-        </repository>
-
-        <!-- JitPack -->
-        <repository>
-            <id>jitpack.io</id>
-            <url>https://jitpack.io</url>
         </repository>
     </repositories>
 </project>

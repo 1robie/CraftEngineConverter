@@ -35,13 +35,13 @@ import fr.robie.craftengineconverter.hooks.packetevent.PacketEventHook;
 import fr.robie.craftengineconverter.hooks.placeholderapi.PlaceholderAPIUtils;
 import fr.robie.craftengineconverter.listener.WorldConverterManager;
 import fr.robie.craftengineconverter.utils.TagResolver;
-import fr.robie.craftengineconverter.utils.command.CommandManager;
 import fr.robie.messageflow.configuration.ConfigurationManager;
 import fr.robie.messageflow.configuration.lang.EnumLanguageConfiguration;
 import fr.robie.messageflow.formatter.MessageFormatter;
 import fr.robie.messageflow.formatter.Placeholder;
 import fr.robie.messageflow.impl.MessageManager;
 import fr.robie.messageflow.logger.Logger;
+import fr.robie.paperdispatch.manager.ICommandManager;
 import fr.robie.yamllibrary.directive.KeyDirectiveRegistry;
 import org.bstats.bukkit.Metrics;
 
@@ -63,7 +63,7 @@ public final class CraftEngineConverter extends CraftEngineConverterPlugin {
     private final StorageManager storageManager = new DataBaseManager(this);
     private final ServerProfile serverProfile = new ServerProfileManager(this);
     private final FoliaCompatibilityManager foliaCompatibilityManager = new FoliaCompatibilityManager(this);
-    private final CommandManager commandManager = new CommandManager(this);
+    private final ICommandManager<CraftEngineConverter> commandManager = new fr.robie.paperdispatch.manager.CommandManager<>(this);
     private final WorldConverterManager worldConverterManager = new WorldConverterManager(this);
     private final ITagResolver tagResolver = new TagResolver();
     private final MessageManager<CraftEngineConverterPlugin, Languages> messageManager;
@@ -101,7 +101,7 @@ public final class CraftEngineConverter extends CraftEngineConverterPlugin {
             this.packetLoader.onLoad();
         }
 
-        this.commandManager.loadCommands();
+        this.commandManager.registerCommands();
 
         BehaviorRegister.init();
     }
@@ -126,11 +126,7 @@ public final class CraftEngineConverter extends CraftEngineConverterPlugin {
 
         new RegistryHelper(this).loadRegistries();
 
-        this.commandManager.registerCommand("craftengineconverter", new CraftEngineConverterCommand(this), "cengineconverter", "cec");
-
-        this.commandManager.validCommands();
-
-        this.commandManager.enableCommands();
+        this.commandManager.registerCommand(new CraftEngineConverterCommand(this));
 
         this.registerConverter(new NexoConverter(this));
         this.registerConverter(new IAConverter(this));
@@ -231,8 +227,6 @@ public final class CraftEngineConverter extends CraftEngineConverterPlugin {
 
         this.metrics.shutdown();
 
-        this.commandManager.disableCommands();
-
         if (this.placementTracker != null) {
             Logger.info("Conversion stats :");
             Logger.info("Total blocks converted : " + this.placementTracker.getBlocksConverted() + " (Failed : " + this.placementTracker.getBlocksFailed() + ", Success rate : " + String.format("%.2f", this.placementTracker.getBlocksSuccessRate()) + "%)");
@@ -249,10 +243,6 @@ public final class CraftEngineConverter extends CraftEngineConverterPlugin {
 
     private void registerListener(@NotNull Listener listener) {
         this.getServer().getPluginManager().registerEvents(listener, this);
-    }
-
-    public CommandManager getCommandManager() {
-        return this.commandManager;
     }
 
     @Override

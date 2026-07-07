@@ -2,14 +2,16 @@ package fr.robie.craftengineconverter.command;
 
 import fr.robie.craftengineconverter.CraftEngineConverter;
 import fr.robie.craftengineconverter.common.permission.Permission;
-import fr.robie.craftengineconverter.utils.command.CommandType;
-import fr.robie.craftengineconverter.utils.command.VCommand;
+import fr.robie.paperdispatch.command.BaseCommand;
+import fr.robie.paperdispatch.command.CommandDispatch;
+import fr.robie.paperdispatch.command.CommandResultType;
+import org.jetbrains.annotations.NotNull;
 
-public class CraftEngineConverterCommand extends VCommand {
+public class CraftEngineConverterCommand extends BaseCommand<CraftEngineConverter> {
 
     public CraftEngineConverterCommand(CraftEngineConverter craftEngineConverter) {
-        super(craftEngineConverter);
-        this.setPermission(Permission.COMMAND_USE);
+        super(craftEngineConverter, "craftengineconverter", "cengineconverter", "cec");
+        this.setPermission(Permission.COMMAND_USE.asPermission());
         this.addSubCommand(new CraftEngineConverterCommandReload(craftEngineConverter));
         this.addSubCommand(new CraftEngineConverterCommandConvert(craftEngineConverter));
         this.addSubCommand(new CraftEngineConverterCommandClearFilesCache(craftEngineConverter));
@@ -17,9 +19,7 @@ public class CraftEngineConverterCommand extends VCommand {
     }
 
     @Override
-    protected CommandType perform(CraftEngineConverter plugin) {
-        this.syntaxMessage();
-
-        return CommandType.SUCCESS;
+    protected @NotNull CommandResultType perform(@NotNull CommandDispatch<CraftEngineConverter> commandDispatch) {
+        return CommandResultType.SUCCESS;
     }
 }
