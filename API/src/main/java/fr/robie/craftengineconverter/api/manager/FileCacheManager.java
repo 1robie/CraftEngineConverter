@@ -16,6 +16,7 @@ public class FileCacheManager {
     private static final Gson GSON = new GsonBuilder()
             .setPrettyPrinting()
             .serializeNulls()
+            .disableHtmlEscaping()
             .create();
 
     private static final FileCache<YamlConfiguration> yamlCache = new FileCache<>(100, 30, YamlConfiguration::loadConfiguration);
