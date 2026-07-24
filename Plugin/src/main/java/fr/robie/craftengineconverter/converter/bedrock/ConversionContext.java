@@ -18,6 +18,7 @@ import fr.robie.craftengineconverter.converter.bedrock.animation.BedrockRenderCo
 import fr.robie.craftengineconverter.converter.bedrock.attachable.BedrockAttachableContext;
 import fr.robie.craftengineconverter.converter.bedrock.block.BedrockBlockMapper;
 import fr.robie.craftengineconverter.converter.bedrock.geometry.BedrockGeometry;
+import fr.robie.craftengineconverter.converter.bedrock.lang.LanguageMapper;
 import fr.robie.craftengineconverter.converter.bedrock.geometry.GeometryMapper;
 import fr.robie.craftengineconverter.converter.bedrock.geometry.JavaBlockModel;
 import fr.robie.craftengineconverter.converter.bedrock.sound.SoundMapper;
@@ -45,6 +46,7 @@ public class ConversionContext {
     private final Map<String, BedrockAnimation> animations = new HashMap<>();
     private final Map<String, BedrockAnimationController> animationControllers = new HashMap<>();
     private final SoundMapper soundMapper = new SoundMapper();
+    private final LanguageMapper languageMapper = new LanguageMapper();
     private ManifestConfiguration manifest;
     private final Path customMappingsDir;
     private final Path texturesDir;
@@ -232,6 +234,10 @@ public class ConversionContext {
         return this.blockMappings;
     }
 
+    public void addLangDirectory(File langDir, String namespace) {
+        this.languageMapper.addFromLangDirectory(langDir, namespace);
+    }
+
     public void convertSoundDefinitions(File javaSoundsJson, String namespace) {
         if (this.javaAssetsDir == null) return;
         fr.robie.craftengineconverter.api.manager.FileCacheManager.getJsonCache()
@@ -361,6 +367,8 @@ public class ConversionContext {
             this.flipbookConfig.save(this.texturesDir);
         }
         this.blockMappings.save(this.customMappingsDir);
+
+        this.languageMapper.save(this.packDir.resolve("texts"));
 
         if (!this.soundMapper.isEmpty()) {
             try {

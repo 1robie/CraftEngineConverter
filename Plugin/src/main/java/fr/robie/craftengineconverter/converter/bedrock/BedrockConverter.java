@@ -11,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Locale;
 
 
 public class BedrockConverter {
@@ -270,7 +271,13 @@ public class BedrockConverter {
 
         for (var file : listed) {
             if (file.isDirectory()) {
-
+                String name = file.getName().toLowerCase(Locale.ROOT);
+                switch (name) {
+                    case "lang" -> ctx.addLangDirectory(file, namespace);
+                    default -> {
+                        // Other directories can be handled here if needed
+                    }
+                }
             } else if (file.isFile()) {
                 if (FileUtils.isJsonFile(file)) {
                     String fileNameWithoutExtension = FileUtils.getFileNameWithoutExtension(file);
