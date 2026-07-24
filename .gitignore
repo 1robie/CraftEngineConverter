@@ -120,3 +120,6 @@ run/
 .gemini/
 gha-creds-*.json
 /GEMINI.md
+agent.yaml
+reflection/
+concepts/
