@@ -81,7 +81,7 @@ public class CraftEngineConverterCommandConvert extends SubCommand<CraftEngineCo
         Optional<String> optionalPlugin = commandDispatch.getOptionalArgument("plugin", String.class);
         if (optionalPlugin.isPresent()) {
             String targetPlugin = optionalPlugin.get();
-            Optional<Converter> optionalConverter = plugin.getConverter(targetPlugin);
+            Optional<Converter> optionalConverter = this.plugin.getConverter(targetPlugin);
             if (optionalConverter.isPresent()) {
                 long startTime = System.currentTimeMillis();
                 this.messageFormatter.sendMessage(Message.COMMAND__CONVERTER__START__SINGLE, sender, Placeholder.of("plugin", targetPlugin));
@@ -99,7 +99,7 @@ public class CraftEngineConverterCommandConvert extends SubCommand<CraftEngineCo
         } else {
             long startTime = System.currentTimeMillis();
             this.messageFormatter.sendMessage(Message.COMMAND__CONVERTER__START__ALL,sender);
-            Collection<Converter> converters = plugin.getConverters();
+            Collection<Converter> converters = this.plugin.getConverters();
             AtomicInteger counter = new AtomicInteger(converters.size());
             for (Converter converter : converters) {
                 CompletableFuture<Void> voidCompletableFuture = converter.convert(converterOption, Optional.ofNullable(commandDispatch.getPlayer()), commandDispatch.hasFlag("dryrun"), threads);

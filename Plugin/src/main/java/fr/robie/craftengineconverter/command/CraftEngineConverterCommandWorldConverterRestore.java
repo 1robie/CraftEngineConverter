@@ -121,7 +121,7 @@ public class CraftEngineConverterCommandWorldConverterRestore extends SubCommand
             final List<BlockHistory> batch = allHistory.subList(i, end);
             final long tickDelay = i / BATCH_SIZE;
 
-            plugin.getFoliaCompatibilityManager().runLater(() -> {
+            this.plugin.getFoliaCompatibilityManager().runLater(() -> {
                 for (BlockHistory history : batch) {
                     totalBlockCount.incrementAndGet();
 
@@ -160,7 +160,7 @@ public class CraftEngineConverterCommandWorldConverterRestore extends SubCommand
             final List<EntityHistory> batch = allEntityHistory.subList(i, end);
             final long tickDelay = (allHistory.size() / BATCH_SIZE) + (i / BATCH_SIZE);
 
-            plugin.getFoliaCompatibilityManager().runLater(() -> {
+            this.plugin.getFoliaCompatibilityManager().runLater(() -> {
                 for (EntityHistory entityHistory : batch) {
                     totalEntityCount.incrementAndGet();
 
@@ -195,7 +195,7 @@ public class CraftEngineConverterCommandWorldConverterRestore extends SubCommand
 
         long totalDelayTicks = (long) Math.ceil((double) (allHistory.size() + allEntityHistory.size()) / BATCH_SIZE);
 
-        plugin.getFoliaCompatibilityManager().runLater(() -> {
+        this.plugin.getFoliaCompatibilityManager().runLater(() -> {
 
             long endTime = System.currentTimeMillis();
 

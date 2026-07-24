@@ -13,6 +13,9 @@ public class ItemModelItemMapping extends ItemMapping {
         this.bedrockModelPath = bedrockModelPath;
     }
 
+    public String getBedrockModelPath() {
+        return this.bedrockModelPath;
+    }
 
     @Override
     public JsonObject serialize() {

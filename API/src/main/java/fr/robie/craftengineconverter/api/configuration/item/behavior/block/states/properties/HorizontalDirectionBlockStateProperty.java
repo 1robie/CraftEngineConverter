@@ -4,14 +4,11 @@ import fr.robie.craftengineconverter.api.configuration.item.behavior.block.state
 import fr.robie.craftengineconverter.api.configuration.utils.HorizontalDirection;
 import fr.robie.yamllibrary.ConfigurationSection;
 import org.jetbrains.annotations.NotNull;
-import org.jspecify.annotations.NonNull;
 
 import java.util.Locale;
 
-public class HorizontalDirectionBlockStateProperty implements BlockStateProperty<HorizontalDirection> {
-    private final String name;
-    private final HorizontalDirection value;
-
+public record HorizontalDirectionBlockStateProperty(String name,
+                                                    HorizontalDirection value) implements BlockStateProperty<HorizontalDirection> {
     public HorizontalDirectionBlockStateProperty(@NotNull String name, @NotNull HorizontalDirection value) {
         this.name = name;
         this.value = value;
@@ -20,11 +17,6 @@ public class HorizontalDirectionBlockStateProperty implements BlockStateProperty
     @Override
     public @NotNull String name() {
         return this.name;
-    }
-
-    @Override
-    public @NonNull HorizontalDirection value() {
-        return this.value;
     }
 
     @Override

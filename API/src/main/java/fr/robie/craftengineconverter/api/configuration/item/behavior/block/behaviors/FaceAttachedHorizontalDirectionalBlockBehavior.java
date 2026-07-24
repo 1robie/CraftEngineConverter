@@ -9,8 +9,8 @@ import java.util.Map;
 
 public class FaceAttachedHorizontalDirectionalBlockBehavior implements BlockBehavior {
     private Boolean blacklist;
-    private List<String> attachedBlocks;
-    private List<String> attachedBlockTags;
+    private final List<String> attachedBlocks;
+    private final List<String> attachedBlockTags;
 
     public FaceAttachedHorizontalDirectionalBlockBehavior() {
         this.attachedBlocks = new ArrayList<>();

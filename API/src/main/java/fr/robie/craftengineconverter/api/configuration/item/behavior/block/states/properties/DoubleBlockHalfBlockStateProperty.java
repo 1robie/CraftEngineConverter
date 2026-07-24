@@ -4,14 +4,11 @@ import fr.robie.craftengineconverter.api.configuration.item.behavior.block.state
 import fr.robie.yamllibrary.ConfigurationSection;
 import net.momirealms.craftengine.core.block.property.type.DoubleBlockHalf;
 import org.jetbrains.annotations.NotNull;
-import org.jspecify.annotations.NonNull;
 
 import java.util.Locale;
 
-public class DoubleBlockHalfBlockStateProperty implements BlockStateProperty<DoubleBlockHalf> {
-    private final String name;
-    private final DoubleBlockHalf value;
-
+public record DoubleBlockHalfBlockStateProperty(String name,
+                                                DoubleBlockHalf value) implements BlockStateProperty<DoubleBlockHalf> {
     public DoubleBlockHalfBlockStateProperty(@NotNull String name, @NotNull DoubleBlockHalf value) {
         this.name = name;
         this.value = value;
@@ -20,11 +17,6 @@ public class DoubleBlockHalfBlockStateProperty implements BlockStateProperty<Dou
     @Override
     public @NotNull String name() {
         return this.name;
-    }
-
-    @Override
-    public @NonNull DoubleBlockHalf value() {
-        return this.value;
     }
 
     @Override

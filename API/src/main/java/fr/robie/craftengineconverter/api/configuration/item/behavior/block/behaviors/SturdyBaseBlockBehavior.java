@@ -9,7 +9,7 @@ import java.util.Map;
 
 public class SturdyBaseBlockBehavior implements BlockBehavior {
     private String direction;
-    private List<String> supportTypes;
+    private final List<String> supportTypes;
 
     public SturdyBaseBlockBehavior() {
         this.supportTypes = new ArrayList<>();

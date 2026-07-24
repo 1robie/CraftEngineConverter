@@ -1,0 +1,219 @@
+templates#settings:
+  default:settings/solid_1x1x1:
+    is_suffocating: true
+    replaceable: false
+    is_view_blocking: true
+    is_redstone_conductor: true
+    can_occlude: true
+  default:settings/transparent_1x1x1:
+    is_suffocating: false
+    replaceable: false
+    is_view_blocking: false
+    is_redstone_conductor: false
+    can_occlude: false
+  default:settings/sapling:
+    burnable: false
+    template:
+      - default:hardness/none
+      - default:sound/grass
+    overrides:
+      push_reaction: destroy
+      map_color: plant
+      tags:
+        - minecraft:mineable/axe
+        - minecraft:saplings
+        - minecraft:sword_efficient
+  default:settings/leaves:
+    template:
+      - default:sound/grass
+      - default:burn_data/leaves
+      - default:hardness/leaves
+      - default:settings/transparent_1x1x1
+    overrides:
+      hardness: 0.2
+      resistance: 0.2
+      push_reaction: destroy
+      instrument: harp
+      map_color: plant
+      tags:
+        - minecraft:mineable/hoe
+        - minecraft:sword_efficient
+        - minecraft:leaves
+        - minecraft:replaceable_by_trees
+  default:settings/wood:
+    template:
+      - default:sound/wood
+      - default:burn_data/wood
+      - default:hardness/wood
+    overrides:
+      instrument: bass
+      tags:
+        - minecraft:mineable/axe
+        - minecraft:logs_that_burn
+        - minecraft:logs
+        - minecraft:completes_find_tree_tutorial
+      map_color: wood
+  default:settings/planks:
+    template:
+      - default:sound/wood
+      - default:burn_data/planks
+      - default:hardness/planks
+      - default:settings/solid_1x1x1
+    overrides:
+      instrument: bass
+      tags: ["minecraft:mineable/axe"]
+      map_color: wood
+  default:settings/ore:
+    template:
+      - default:sound/stone
+      - default:settings/solid_1x1x1
+    overrides:
+      hardness: 3.0
+      resistance: 3.0
+      instrument: basedrum
+      map_color: stone
+      tags: ["minecraft:mineable/pickaxe"]
+      correct_tools::template: default:pickaxe_power/level_${break_power}
+  default:settings/deepslate_ore:
+    template:
+      - default:sound/deepslate
+      - default:settings/solid_1x1x1
+      - default:hardness/deepslate
+    overrides:
+      hardness: 4.5
+      resistance: 3.0
+      instrument: basedrum
+      map_color: deepslate
+      tags: ["minecraft:mineable/pickaxe"]
+      correct_tools::template: default:pickaxe_power/level_${break_power}
+
+templates#hardness:
+  default:hardness/none:
+    hardness: 0
+    resistance: 0
+  default:hardness/leaves:
+    hardness: 0.2
+    resistance: 0.2
+  default:hardness/glass:
+    hardness: 0.3
+    resistance: 0.3
+  default:hardness/stone:
+    hardness: 1.5
+    resistance: 6.0
+  default:hardness/deepslate:
+    hardness: 3.0
+    resistance: 6.0
+  default:hardness/obsidian:
+    hardness: 50.0
+    resistance: 1200.0
+  default:hardness/wool:
+    hardness: 0.8
+    resistance: 0.8
+  default:hardness/wood:
+    hardness: 2.0
+    resistance: 2.0
+  default:hardness/planks:
+    hardness: 2.0
+    resistance: 3.0
+  default:hardness/button:
+    hardness: 0.5
+    resistance: 0.5
+  default:hardness/melon:
+    hardness: 1.0
+    resistance: 1.0
+
+templates#burn_data:
+  default:burn_data/leaves:
+    burnable: true
+    burn_chance: 30
+    fire_spread_chance: 60
+  default:burn_data/wood:
+    burnable: true
+    burn_chance: 5
+    fire_spread_chance: 5
+  default:burn_data/planks:
+    burnable: true
+    burn_chance: 5
+    fire_spread_chance: 20
+  default:burn_data/wool:
+    burnable: true
+    burn_chance: 30
+    fire_spread_chance: 60
+  default:burn_data/vine:
+    burnable: true
+    burn_chance: 15
+    fire_spread_chance: 100
+  default:burn_data/carpet:
+    burnable: true
+    burn_chance: 60
+    fire_spread_chance: 20
+  default:burn_data/coal:
+    burnable: true
+    burn_chance: 5
+    fire_spread_chance: 5
+  default:burn_data/grass:
+    burnable: true
+    burn_chance: 60
+    fire_spread_chance: 100
+
+templates#sounds:
+  default:sound/block_template:
+    sounds:
+      break: minecraft:block.${block_type}.break
+      step: minecraft:block.${block_type}.step
+      place: minecraft:block.${block_type}.place
+      hit: minecraft:block.${block_type}.hit
+      fall: minecraft:block.${block_type}.fall
+  default:sound/crop:
+    sounds:
+      break: minecraft:block.crop.break
+      step: minecraft:block.grass.step
+      place: minecraft:item.crop.plant
+      hit: minecraft:block.grass.hit
+      fall: minecraft:block.grass.fall
+  default:sound/stem_crop:
+    sounds:
+      break: minecraft:block.crop.break
+      step: minecraft:block.wood.step
+      place: minecraft:item.crop.plant
+      hit: minecraft:block.wood.hit
+      fall: minecraft:block.wood.fall
+  default:sound/grass:
+    template: default:sound/block_template
+    arguments::block_type: grass
+  default:sound/wood:
+    template: default:sound/block_template
+    arguments::block_type: wood
+  default:sound/stone:
+    template: default:sound/block_template
+    arguments::block_type: stone
+  default:sound/deepslate:
+    template: default:sound/block_template
+    arguments::block_type: deepslate
+  default:sound/glass:
+    template: default:sound/block_template
+    arguments::block_type: glass
+  default:sound/sand:
+    template: default:sound/block_template
+    arguments::block_type: sand
+  default:sound/gravel:
+    template: default:sound/block_template
+    arguments::block_type: gravel
+  default:sound/metal:
+    template: default:sound/block_template
+    arguments::block_type: metal
+  default:sound/snow:
+    template: default:sound/block_template
+    arguments::block_type: snow
+  default:sound/bamboo:
+    template: default:sound/block_template
+    arguments::block_type: bamboo
+  default:sound/vine:
+    template: default:sound/block_template
+    arguments::block_type: vine
+  default:sound/lantern:
+    template: default:sound/block_template
+    arguments::block_type: lantern
+  default:sound/amethyst_block:
+    template: default:sound/block_template
+    arguments::block_type: amethyst_block

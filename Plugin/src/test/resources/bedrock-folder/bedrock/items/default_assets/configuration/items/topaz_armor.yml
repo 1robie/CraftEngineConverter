@@ -1,0 +1,216 @@
+items:
+  default:topaz_helmet:
+    template:
+      - default:armor/topaz
+    arguments:
+      equipment_part: helmet
+      equipment_slot: head
+      equipment_material: topaz
+    overrides:
+      data:
+        item_name: <!i><#FF8C00><lang:item.${__NAMESPACE__}.${equipment_material}_${equipment_part}>
+        tooltip_style: minecraft:topaz
+  default:topaz_chestplate:
+    template:
+      - default:armor/topaz
+    arguments:
+      equipment_part: chestplate
+      equipment_slot: chest
+      equipment_material: topaz
+    overrides:
+      data:
+        item_name: <!i><#FF8C00><lang:item.${__NAMESPACE__}.${equipment_material}_${equipment_part}>
+        tooltip_style: minecraft:topaz
+  default:topaz_leggings:
+    template:
+      - default:armor/topaz
+    arguments:
+      equipment_part: leggings
+      equipment_slot: legs
+      equipment_material: topaz
+    overrides:
+      data:
+        item_name: <!i><#FF8C00><lang:item.${__NAMESPACE__}.${equipment_material}_${equipment_part}>
+        tooltip_style: minecraft:topaz
+  default:topaz_boots:
+    template:
+      - default:armor/topaz
+    arguments:
+      equipment_part: boots
+      equipment_slot: feet
+      equipment_material: topaz
+    overrides:
+      data:
+        item_name: <!i><#FF8C00><lang:item.${__NAMESPACE__}.${equipment_material}_${equipment_part}>
+        tooltip_style: minecraft:topaz
+equipments:
+  $$>=1.21.2:
+    default:topaz:
+      type: component
+      humanoid: minecraft:entity/equipment/humanoid/topaz
+      humanoid_leggings: minecraft:entity/equipment/humanoid_leggings/topaz
+  $$<1.21.2:
+    default:topaz:
+      type: trim
+      humanoid: minecraft:entity/equipment/humanoid/topaz
+      humanoid_leggings: minecraft:entity/equipment/humanoid_leggings/topaz
+recipes:
+  default:topaz_helmet:
+    type: shaped
+    category: equipment
+    pattern:
+      - AAA
+      - A A
+    ingredients:
+      A: default:topaz
+    result:
+      id: default:topaz_helmet
+      count: 1
+  default:topaz_chestplate:
+    type: shaped
+    category: equipment
+    pattern:
+      - A A
+      - AAA
+      - AAA
+    ingredients:
+      A: default:topaz
+    result:
+      id: default:topaz_chestplate
+      count: 1
+  default:topaz_leggings:
+    type: shaped
+    category: equipment
+    pattern:
+      - AAA
+      - A A
+      - A A
+    ingredients:
+      A: default:topaz
+    result:
+      id: default:topaz_leggings
+      count: 1
+  default:topaz_boots:
+    type: shaped
+    category: equipment
+    pattern:
+      - A A
+      - A A
+    ingredients:
+      A: default:topaz
+    result:
+      id: default:topaz_boots
+      count: 1
+templates:
+  default:armor/topaz:
+    material: chainmail_${equipment_part}
+    settings:
+      tags:
+        - default:${equipment_material}_tools
+        - minecraft:trimmable_armor
+      equipment:
+        asset_id: ${__NAMESPACE__}:${equipment_material}
+        $$>=1.21.2:
+          slot: ${equipment_slot}
+    model:
+      template: default:model/armor_trim
+      arguments:
+        equipment_texture: minecraft:item/custom/${equipment_material}_${equipment_part}
+  default:model/armor_trim:
+    type: minecraft:select
+    property: minecraft:trim_material
+    fallback:
+      path: ${__NAMESPACE__}:item/${equipment_material}_${equipment_part}
+      generation:
+        parent: minecraft:item/generated
+        textures:
+          layer0: ${equipment_texture}
+    cases:
+      - when: minecraft:quartz
+        model:
+          path: ${__NAMESPACE__}:item/${equipment_material}_${equipment_part}_quartz_trim
+          generation:
+            parent: minecraft:item/generated
+            textures:
+              layer0: ${equipment_texture}
+              layer1: minecraft:trims/items/${equipment_part}_trim_quartz
+      - when: minecraft:iron
+        model:
+          path: ${__NAMESPACE__}:item/${equipment_material}_${equipment_part}_iron_trim
+          generation:
+            parent: minecraft:item/generated
+            textures:
+              layer0: ${equipment_texture}
+              layer1: minecraft:trims/items/${equipment_part}_trim_iron
+      - when: minecraft:netherite
+        model:
+          path: ${__NAMESPACE__}:item/${equipment_material}_${equipment_part}_netherite_trim
+          generation:
+            parent: minecraft:item/generated
+            textures:
+              layer0: ${equipment_texture}
+              layer1: minecraft:trims/items/${equipment_part}_trim_netherite
+      - when: minecraft:redstone
+        model:
+          path: ${__NAMESPACE__}:item/${equipment_material}_${equipment_part}_redstone_trim
+          generation:
+            parent: minecraft:item/generated
+            textures:
+              layer0: ${equipment_texture}
+              layer1: minecraft:trims/items/${equipment_part}_trim_redstone
+      - when: minecraft:copper
+        model:
+          path: ${__NAMESPACE__}:item/${equipment_material}_${equipment_part}_copper_trim
+          generation:
+            parent: minecraft:item/generated
+            textures:
+              layer0: ${equipment_texture}
+              layer1: minecraft:trims/items/${equipment_part}_trim_copper
+      - when: minecraft:gold
+        model:
+          path: ${__NAMESPACE__}:item/${equipment_material}_${equipment_part}_gold_trim
+          generation:
+            parent: minecraft:item/generated
+            textures:
+              layer0: ${equipment_texture}
+              layer1: minecraft:trims/items/${equipment_part}_trim_gold
+      - when: minecraft:emerald
+        model:
+          path: ${__NAMESPACE__}:item/${equipment_material}_${equipment_part}_emerald_trim
+          generation:
+            parent: minecraft:item/generated
+            textures:
+              layer0: ${equipment_texture}
+              layer1: minecraft:trims/items/${equipment_part}_trim_emerald
+      - when: minecraft:diamond
+        model:
+          path: ${__NAMESPACE__}:item/${equipment_material}_${equipment_part}_diamond_trim
+          generation:
+            parent: minecraft:item/generated
+            textures:
+              layer0: ${equipment_texture}
+              layer1: minecraft:trims/items/${equipment_part}_trim_diamond
+      - when: minecraft:lapis
+        model:
+          path: ${__NAMESPACE__}:item/${equipment_material}_${equipment_part}_lapis_trim
+          generation:
+            parent: minecraft:item/generated
+            textures:
+              layer0: ${equipment_texture}
+              layer1: minecraft:trims/items/${equipment_part}_trim_lapis
+      - when: minecraft:amethyst
+        model:
+          path: ${__NAMESPACE__}:item/${equipment_material}_${equipment_part}_amethyst_trim
+          generation:
+            parent: minecraft:item/generated
+            textures:
+              layer0: ${equipment_texture}
+              layer1: minecraft:trims/items/${equipment_part}_trim_amethyst
+      - when: minecraft:resin
+        model:
+          path: ${__NAMESPACE__}:item/${equipment_material}_${equipment_part}_resin_trim
+          generation:
+            parent: minecraft:item/generated
+            textures:
+              layer0: ${equipment_texture}
+              layer1: minecraft:trims/items/${equipment_part}_trim_resin

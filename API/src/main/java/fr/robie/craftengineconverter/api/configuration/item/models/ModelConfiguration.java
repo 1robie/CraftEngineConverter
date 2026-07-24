@@ -10,7 +10,7 @@ public interface ModelConfiguration extends SectionSerializable {
 
     @Override
     void serialize(@NotNull ConfigurationSection section);
-
+    
     @Contract("!null -> !null; null -> null")
     default @Nullable String namespaced(String path) {
         return this.namespaced(path, "minecraft");

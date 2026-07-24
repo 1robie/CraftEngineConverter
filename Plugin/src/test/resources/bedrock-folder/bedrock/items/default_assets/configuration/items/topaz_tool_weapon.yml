@@ -1,0 +1,304 @@
+items:
+  default:topaz_rod:
+    material: fishing_rod
+    settings:
+      tags:
+        - default:topaz_tools
+    data:
+      item_name: <!i><#FF8C00><lang:item.default.topaz_rod>
+      tooltip_style: minecraft:topaz
+    textures:
+      - minecraft:item/custom/topaz_rod
+      - minecraft:item/custom/topaz_rod_cast
+  default:topaz_bow:
+    material: bow
+    settings:
+      tags:
+        - default:topaz_tools
+    data:
+      item_name: <!i><#FF8C00><lang:item.default.topaz_bow>
+      tooltip_style: minecraft:topaz
+    textures:
+      - minecraft:item/custom/topaz_bow
+      - minecraft:item/custom/topaz_bow_pulling_0
+      - minecraft:item/custom/topaz_bow_pulling_1
+      - minecraft:item/custom/topaz_bow_pulling_2
+  default:topaz_crossbow:
+    material: crossbow
+    settings:
+      tags:
+        - default:topaz_tools
+    data:
+      item_name: <!i><#FF8C00><lang:item.default.topaz_crossbow>
+      tooltip_style: minecraft:topaz
+    textures:
+      - minecraft:item/custom/topaz_crossbow
+      - minecraft:item/custom/topaz_crossbow_pulling_0
+      - minecraft:item/custom/topaz_crossbow_pulling_1
+      - minecraft:item/custom/topaz_crossbow_pulling_2
+      - minecraft:item/custom/topaz_crossbow_arrow
+      - minecraft:item/custom/topaz_crossbow_firework
+  default:topaz_pickaxe:
+    material: golden_pickaxe
+    settings:
+      tags:
+        - default:topaz_tools
+    data:
+      item_name: <!i><#FF8C00><lang:item.default.topaz_pickaxe>
+      tooltip_style: minecraft:topaz
+      max_damage: 64
+    texture: minecraft:item/custom/topaz_pickaxe
+  default:topaz_axe:
+    material: golden_axe
+    settings:
+      tags:
+        - default:topaz_tools
+    data:
+      item_name: <!i><#FF8C00><lang:item.default.topaz_axe>
+      tooltip_style: minecraft:topaz
+      max_damage: 64
+    texture: minecraft:item/custom/topaz_axe
+  default:topaz_hoe:
+    material: golden_hoe
+    settings:
+      tags:
+        - default:topaz_tools
+    data:
+      item_name: <!i><#FF8C00><lang:item.default.topaz_hoe>
+      tooltip_style: minecraft:topaz
+      max_damage: 64
+    texture: minecraft:item/custom/topaz_hoe
+  default:topaz_shovel:
+    material: golden_shovel
+    settings:
+      tags: ["default:topaz_tools"]
+    data:
+      item_name: <!i><#FF8C00><lang:item.default.topaz_shovel>
+      tooltip_style: minecraft:topaz
+      max_damage: 64
+    texture: minecraft:item/custom/topaz_shovel
+  default:topaz_sword:
+    material: golden_sword
+    settings:
+      tags: ["default:topaz_tools"]
+    data:
+      item_name: <!i><#FF8C00><lang:item.default.topaz_sword>
+      tooltip_style: minecraft:topaz
+      max_damage: 64
+    texture: minecraft:item/custom/topaz_sword
+  $$>=1.21.4#topaz_trident:
+    default:topaz_trident:
+      material: trident
+      settings:
+        projectile:
+          display:
+            item: default:topaz_trident
+            translation: 0,0,0
+            rotation: 1,1,1,1
+            display_transform: NONE
+            scale: 0.5
+          sounds:
+            throw: minecraft:item.trident.throw
+            hit_entity: minecraft:item.trident.hit
+            hit_block: minecraft:item.trident.hit_ground
+        tags:
+          - default:topaz_tools
+      data:
+        item_name: <!i><#FF8C00><lang:item.default.topaz_trident>
+        tooltip_style: minecraft:topaz
+        max_damage: 300
+      model:
+        type: minecraft:select
+        property: minecraft:display_context
+        cases:
+          - when:
+              - gui
+              - ground
+              - fixed
+              - on_shelf
+            model:
+              type: minecraft:model
+              path: minecraft:item/custom/topaz_trident
+              generation:
+                parent: minecraft:item/generated
+                textures:
+                  layer0: minecraft:item/custom/topaz_trident
+        fallback:
+          type: minecraft:condition
+          property: minecraft:using_item
+          on_true:
+            type: minecraft:model
+            path: minecraft:item/custom/topaz_trident_throwing
+          on_false:
+            type: minecraft:model
+            path: minecraft:item/custom/topaz_trident_in_hand
+      legacy_model:
+        path: minecraft:item/custom/topaz_trident_in_hand
+        overrides:
+          - path: minecraft:item/custom/topaz_trident_throwing
+            predicate:
+              throwing: 1
+  $$1.20.1~1.21.3#topaz_trident:
+    default:topaz_trident:
+      material: trident
+      client_bound_material:
+        $$1.20.1~1.21.1: bow
+        $$1.21.2~1.21.3: honey_bottle
+      data:
+        item_name: <!i><#FF8C00><lang:item.default.topaz_trident>
+        components:
+          minecraft:max_damage: 300
+      $$>=1.21.2:
+        client_bound_data:
+          components:
+            minecraft:consumable:
+              consume_seconds: 128000
+              animation: spear
+      settings:
+        projectile:
+          display:
+            item: default:topaz_trident
+            translation: 0,0,0
+            rotation: 1,1,1,1
+            display_transform: NONE
+            scale: 0.5
+          sounds:
+            throw: minecraft:item.trident.throw
+            hit_entity: minecraft:item.trident.hit
+            hit_block: minecraft:item.trident.hit_ground
+        tags:
+          - default:topaz_tools
+      model:
+        type: minecraft:condition
+        property: minecraft:using_item
+        on_true:
+          type: minecraft:model
+          path: minecraft:item/custom/topaz_trident_throwing
+        on_false:
+          type: minecraft:model
+          path: minecraft:item/custom/topaz_trident_in_hand
+  $$>=1.21.11#topaz_spear:
+    default:topaz_spear:
+      material: golden_spear
+      swap_animation_scale: 1.95
+      textures:
+        - minecraft:item/custom/topaz_spear
+        - minecraft:item/custom/topaz_spear_in_hand
+      settings:
+        tags: ["default:topaz_tools"]
+      data:
+        item_name: <!i><#FF8C00><lang:item.default.topaz_spear>
+        tooltip_style: minecraft:topaz
+        max_damage: 192
+recipes:
+  default:topaz_shovel:
+    type: shaped
+    category: equipment
+    pattern:
+      - A
+      - B
+      - B
+    ingredients:
+      A: default:topaz
+      B: minecraft:stick
+    result:
+      id: default:topaz_shovel
+      count: 1
+  default:topaz_axe:
+    type: shaped
+    category: equipment
+    pattern:
+      - 'AA'
+      - 'AB'
+      - ' B'
+    ingredients:
+      A: default:topaz
+      B: minecraft:stick
+    result:
+      id: default:topaz_axe
+      count: 1
+  default:topaz_sword:
+    type: shaped
+    category: equipment
+    pattern:
+      - A
+      - A
+      - B
+    ingredients:
+      A: default:topaz
+      B: minecraft:stick
+    result:
+      id: default:topaz_sword
+      count: 1
+  default:topaz_hoe:
+    type: shaped
+    category: equipment
+    pattern:
+      - 'AA'
+      - ' B'
+      - ' B'
+    ingredients:
+      A: default:topaz
+      B: minecraft:stick
+    result:
+      id: default:topaz_hoe
+      count: 1
+  default:topaz_pickaxe:
+    type: shaped
+    category: equipment
+    pattern:
+      - 'AAA'
+      - ' B '
+      - ' B '
+    ingredients:
+      A: default:topaz
+      B: minecraft:stick
+    result:
+      id: default:topaz_pickaxe
+      count: 1
+  default:topaz_bow:
+    type: smithing_transform
+    base: minecraft:bow
+    addition: default:topaz
+    template_type: default:topaz
+    result:
+      id: default:topaz_bow
+      count: 1
+  default:topaz_crossbow:
+    type: smithing_transform
+    base: minecraft:crossbow
+    addition: default:topaz
+    template_type: default:topaz
+    result:
+      id: default:topaz_crossbow
+      count: 1
+  default:topaz_rod:
+    type: smithing_transform
+    base: minecraft:fishing_rod
+    addition: default:topaz
+    template_type: default:topaz
+    result:
+      id: default:topaz_rod
+      count: 1
+  default:topaz_trident:
+    type: smithing_transform
+    base: minecraft:trident
+    addition: default:topaz
+    template_type: default:topaz
+    result:
+      id: default:topaz_trident
+      count: 1
+  $$>=1.21.11#topaz_spear:
+    default:topaz_spear:
+      type: shaped
+      category: equipment
+      pattern:
+        - '  A'
+        - ' B '
+        - 'B  '
+      ingredients:
+        A: default:topaz
+        B: minecraft:stick
+      result:
+        id: default:topaz_spear
+        count: 1

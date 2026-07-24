@@ -16,7 +16,9 @@ public enum Permission {
     NEXO_FURNITURE_INTERACT_CONVERSION("Allows the user to convert Nexo furniture on interaction"),
 
     ITEMSADDER_BLOCK_INTERACT_CONVERSION("Allows the user to convert ItemsAdder blocks on interaction"),
-    ITEMSADDER_FURNITURE_INTERACT_CONVERSION("Allows the user to convert ItemsAdder furniture on interaction");
+    ITEMSADDER_FURNITURE_INTERACT_CONVERSION("Allows the user to convert ItemsAdder furniture on interaction"),
+
+    COMMAND_BEDROCK_CONVERT("Allows the user to run the Bedrock Edition resource pack conversion");
     private final String description;
     private final String[] args;
 

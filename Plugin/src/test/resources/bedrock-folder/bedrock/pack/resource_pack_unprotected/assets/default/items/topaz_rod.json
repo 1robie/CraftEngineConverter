@@ -1,0 +1,1 @@
+{"oversized_in_gui":true,"model":{"type":"condition","on_true":{"type":"model","model":"default:item/topaz_rod_cast"},"on_false":{"type":"model","model":"default:item/topaz_rod"},"property":"fishing_rod/cast"}}

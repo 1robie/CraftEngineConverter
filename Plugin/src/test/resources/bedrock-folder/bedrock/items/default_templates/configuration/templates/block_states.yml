@@ -1,0 +1,2324 @@
+templates:
+  default:block_state/pillar:
+    properties:
+      axis:
+        type: axis
+        default: y
+    appearances:
+      axisY:
+        auto_state: solid
+        model:
+          path: ${pillar_model}
+          generation:
+            parent: minecraft:block/cube_column
+            textures:
+              end: ${pillar_texture_top}
+              side: ${pillar_texture_side}
+      axisX:
+        auto_state: solid
+        model:
+          x: 90
+          y: 90
+          path: ${pillar_model}_horizontal
+          generation:
+            parent: minecraft:block/cube_column_horizontal
+            textures:
+              end: ${pillar_texture_top}
+              side: ${pillar_texture_side}
+      axisZ:
+        auto_state: solid
+        model:
+          x: 90
+          path: ${pillar_model}_horizontal
+          generation:
+            parent: minecraft:block/cube_column_horizontal
+            textures:
+              end: ${pillar_texture_top}
+              side: ${pillar_texture_side}
+    variants:
+      axis=x:
+        appearance: axisX
+      axis=y:
+        appearance: axisY
+      axis=z:
+        appearance: axisZ
+  default:block_state/__leaves__:
+    properties:
+      waterlogged:
+        type: boolean
+        default: false
+      persistent:
+        type: boolean
+        default: true
+      distance:
+        type: int
+        default: ${leaves_max_distance:-7}
+        min: 1
+        max: ${leaves_max_distance:-7}
+    appearances:
+      default:
+        auto_state: ${auto_state}
+        model:
+          path: ${leaves_model:-"${leaves_texture}"}
+          generation:
+            parent: minecraft:block/${leaves_parent_model}
+            textures:
+              all: ${leaves_texture:-"${leaves_model}"}
+      waterlogged:
+        auto_state: waterlogged_${auto_state}
+        model:
+          path: ${leaves_model:-"${leaves_texture}"}
+    variants:
+      waterlogged=false:
+        appearance: default
+      waterlogged=true:
+        appearance: waterlogged
+        settings:
+          resistance: 1200.0
+          burnable: false
+          fluid_state: water
+  default:block_state/leaves:
+    template: default:block_state/${leaves_tint_type}_leaves
+    arguments:
+      leaves_tint_type:
+        type: condition
+        condition: ${leaves_tintable:-false}
+        on_true: tintable
+        on_false: non_tintable
+  default:block_state/tintable_leaves:
+    template: default:block_state/__leaves__
+    arguments:
+      auto_state: tintable_leaves
+      leaves_parent_model: leaves
+  default:block_state/non_tintable_leaves:
+    template: default:block_state/__leaves__
+    arguments:
+      auto_state: non_tintable_leaves
+      leaves_parent_model: cube_all
+  default:block_state/trapdoor:
+    properties:
+      waterlogged:
+        type: boolean
+        default: false
+      open:
+        type: boolean
+        default: false
+      powered:
+        type: boolean
+        default: false
+      facing:
+        type: horizontal_direction
+      half:
+        type: single_block_half
+    appearances:
+      facing=east,half=bottom,open=false,waterlogged=false:
+        state: ${trapdoor_base_block}[facing=east,half=bottom,open=false,powered=true,waterlogged=false]
+        model:
+          path: ${trapdoor_model}_bottom
+          y: 90
+          generation:
+            parent: minecraft:block/template_orientable_trapdoor_bottom
+            textures:
+              texture: ${trapdoor_texture}
+      facing=east,half=bottom,open=true,waterlogged=false:
+        state: ${trapdoor_base_block}[facing=east,half=bottom,open=true,powered=true,waterlogged=false]
+        model:
+          path: ${trapdoor_model}_open
+          y: 90
+          generation:
+            parent: minecraft:block/template_orientable_trapdoor_open
+            textures:
+              texture: ${trapdoor_texture}
+      facing=east,half=top,open=false,waterlogged=false:
+        state: ${trapdoor_base_block}[facing=east,half=top,open=false,powered=true,waterlogged=false]
+        model:
+          path: ${trapdoor_model}_top
+          y: 90
+          generation:
+            parent: minecraft:block/template_orientable_trapdoor_top
+            textures:
+              texture: ${trapdoor_texture}
+      facing=east,half=top,open=true,waterlogged=false:
+        state: ${trapdoor_base_block}[facing=east,half=top,open=true,powered=true,waterlogged=false]
+        model:
+          path: ${trapdoor_model}_open
+          x: 180
+          y: 270
+      facing=north,half=bottom,open=false,waterlogged=false:
+        state: ${trapdoor_base_block}[facing=north,half=bottom,open=false,powered=true,waterlogged=false]
+        model:
+          path: ${trapdoor_model}_bottom
+      facing=north,half=bottom,open=true,waterlogged=false:
+        state: ${trapdoor_base_block}[facing=north,half=bottom,open=true,powered=true,waterlogged=false]
+        model:
+          path: ${trapdoor_model}_open
+      facing=north,half=top,open=false,waterlogged=false:
+        state: ${trapdoor_base_block}[facing=north,half=top,open=false,powered=true,waterlogged=false]
+        model:
+          path: ${trapdoor_model}_top
+      facing=north,half=top,open=true,waterlogged=false:
+        state: ${trapdoor_base_block}[facing=north,half=top,open=true,powered=true,waterlogged=false]
+        model:
+          path: ${trapdoor_model}_open
+          x: 180
+          y: 180
+      facing=south,half=bottom,open=false,waterlogged=false:
+        state: ${trapdoor_base_block}[facing=south,half=bottom,open=false,powered=true,waterlogged=false]
+        model:
+          path: ${trapdoor_model}_bottom
+          y: 180
+      facing=south,half=bottom,open=true,waterlogged=false:
+        state: ${trapdoor_base_block}[facing=south,half=bottom,open=true,powered=true,waterlogged=false]
+        model:
+          path: ${trapdoor_model}_open
+          y: 180
+      facing=south,half=top,open=false,waterlogged=false:
+        state: ${trapdoor_base_block}[facing=south,half=top,open=false,powered=true,waterlogged=false]
+        model:
+          path: ${trapdoor_model}_top
+          y: 180
+      facing=south,half=top,open=true,waterlogged=false:
+        state: ${trapdoor_base_block}[facing=south,half=top,open=true,powered=true,waterlogged=false]
+        model:
+          path: ${trapdoor_model}_open
+          x: 180
+          y: 0
+      facing=west,half=bottom,open=false,waterlogged=false:
+        state: ${trapdoor_base_block}[facing=west,half=bottom,open=false,powered=true,waterlogged=false]
+        model:
+          path: ${trapdoor_model}_bottom
+          y: 270
+      facing=west,half=bottom,open=true,waterlogged=false:
+        state: ${trapdoor_base_block}[facing=west,half=bottom,open=true,powered=true,waterlogged=false]
+        model:
+          path: ${trapdoor_model}_open
+          y: 270
+      facing=west,half=top,open=false,waterlogged=false:
+        state: ${trapdoor_base_block}[facing=west,half=top,open=false,powered=true,waterlogged=false]
+        model:
+          path: ${trapdoor_model}_top
+          y: 270
+      facing=west,half=top,open=true,waterlogged=false:
+        state: ${trapdoor_base_block}[facing=west,half=top,open=true,powered=true,waterlogged=false]
+        model:
+          path: ${trapdoor_model}_open
+          x: 180
+          y: 90
+      facing=east,half=bottom,open=false,waterlogged=true:
+        state: ${trapdoor_base_block}[facing=east,half=bottom,open=false,powered=true,waterlogged=true]
+        model:
+          path: ${trapdoor_model}_bottom
+          y: 90
+      facing=east,half=bottom,open=true,waterlogged=true:
+        state: ${trapdoor_base_block}[facing=east,half=bottom,open=true,powered=true,waterlogged=true]
+        model:
+          path: ${trapdoor_model}_open
+          y: 90
+      facing=east,half=top,open=false,waterlogged=true:
+        state: ${trapdoor_base_block}[facing=east,half=top,open=false,powered=true,waterlogged=true]
+        model:
+          path: ${trapdoor_model}_top
+          y: 90
+      facing=east,half=top,open=true,waterlogged=true:
+        state: ${trapdoor_base_block}[facing=east,half=top,open=true,powered=true,waterlogged=true]
+        model:
+          path: ${trapdoor_model}_open
+          x: 180
+          y: 270
+      facing=north,half=bottom,open=false,waterlogged=true:
+        state: ${trapdoor_base_block}[facing=north,half=bottom,open=false,powered=true,waterlogged=true]
+        model:
+          path: ${trapdoor_model}_bottom
+      facing=north,half=bottom,open=true,waterlogged=true:
+        state: ${trapdoor_base_block}[facing=north,half=bottom,open=true,powered=true,waterlogged=true]
+        model:
+          path: ${trapdoor_model}_open
+      facing=north,half=top,open=false,waterlogged=true:
+        state: ${trapdoor_base_block}[facing=north,half=top,open=false,powered=true,waterlogged=true]
+        model:
+          path: ${trapdoor_model}_top
+      facing=north,half=top,open=true,waterlogged=true:
+        state: ${trapdoor_base_block}[facing=north,half=top,open=true,powered=true,waterlogged=true]
+        model:
+          path: ${trapdoor_model}_open
+          x: 180
+          y: 180
+      facing=south,half=bottom,open=false,waterlogged=true:
+        state: ${trapdoor_base_block}[facing=south,half=bottom,open=false,powered=true,waterlogged=true]
+        model:
+          path: ${trapdoor_model}_bottom
+          y: 180
+      facing=south,half=bottom,open=true,waterlogged=true:
+        state: ${trapdoor_base_block}[facing=south,half=bottom,open=true,powered=true,waterlogged=true]
+        model:
+          path: ${trapdoor_model}_open
+          y: 180
+      facing=south,half=top,open=false,waterlogged=true:
+        state: ${trapdoor_base_block}[facing=south,half=top,open=false,powered=true,waterlogged=true]
+        model:
+          path: ${trapdoor_model}_top
+          y: 180
+      facing=south,half=top,open=true,waterlogged=true:
+        state: ${trapdoor_base_block}[facing=south,half=top,open=true,powered=true,waterlogged=true]
+        model:
+          path: ${trapdoor_model}_open
+          x: 180
+          y: 0
+      facing=west,half=bottom,open=false,waterlogged=true:
+        state: ${trapdoor_base_block}[facing=west,half=bottom,open=false,powered=true,waterlogged=true]
+        model:
+          path: ${trapdoor_model}_bottom
+          y: 270
+      facing=west,half=bottom,open=true,waterlogged=true:
+        state: ${trapdoor_base_block}[facing=west,half=bottom,open=true,powered=true,waterlogged=true]
+        model:
+          path: ${trapdoor_model}_open
+          y: 270
+      facing=west,half=top,open=false,waterlogged=true:
+        state: ${trapdoor_base_block}[facing=west,half=top,open=false,powered=true,waterlogged=true]
+        model:
+          path: ${trapdoor_model}_top
+          y: 270
+      facing=west,half=top,open=true,waterlogged=true:
+        state: ${trapdoor_base_block}[facing=west,half=top,open=true,powered=true,waterlogged=true]
+        model:
+          path: ${trapdoor_model}_open
+          x: 180
+          y: 90
+    variants:
+      facing=east,half=bottom,open=false,waterlogged=false:
+        appearance: facing=east,half=bottom,open=false,waterlogged=false
+      facing=east,half=bottom,open=true,waterlogged=false:
+        appearance: facing=east,half=bottom,open=true,waterlogged=false
+      facing=east,half=top,open=false,waterlogged=false:
+        appearance: facing=east,half=top,open=false,waterlogged=false
+      facing=east,half=top,open=true,waterlogged=false:
+        appearance: facing=east,half=top,open=true,waterlogged=false
+      facing=north,half=bottom,open=false,waterlogged=false:
+        appearance: facing=north,half=bottom,open=false,waterlogged=false
+      facing=north,half=bottom,open=true,waterlogged=false:
+        appearance: facing=north,half=bottom,open=true,waterlogged=false
+      facing=north,half=top,open=false,waterlogged=false:
+        appearance: facing=north,half=top,open=false,waterlogged=false
+      facing=north,half=top,open=true,waterlogged=false:
+        appearance: facing=north,half=top,open=true,waterlogged=false
+      facing=south,half=bottom,open=false,waterlogged=false:
+        appearance: facing=south,half=bottom,open=false,waterlogged=false
+      facing=south,half=bottom,open=true,waterlogged=false:
+        appearance: facing=south,half=bottom,open=true,waterlogged=false
+      facing=south,half=top,open=false,waterlogged=false:
+        appearance: facing=south,half=top,open=false,waterlogged=false
+      facing=south,half=top,open=true,waterlogged=false:
+        appearance: facing=south,half=top,open=true,waterlogged=false
+      facing=west,half=bottom,open=false,waterlogged=false:
+        appearance: facing=west,half=bottom,open=false,waterlogged=false
+      facing=west,half=bottom,open=true,waterlogged=false:
+        appearance: facing=west,half=bottom,open=true,waterlogged=false
+      facing=west,half=top,open=false,waterlogged=false:
+        appearance: facing=west,half=top,open=false,waterlogged=false
+      facing=west,half=top,open=true,waterlogged=false:
+        appearance: facing=west,half=top,open=true,waterlogged=false
+      facing=east,half=bottom,open=false,waterlogged=true:
+        appearance: facing=east,half=bottom,open=false,waterlogged=true
+        settings:
+          resistance: 1200.0
+          burnable: false
+          fluid_state: water
+      facing=east,half=bottom,open=true,waterlogged=true:
+        appearance: facing=east,half=bottom,open=true,waterlogged=true
+        settings:
+          resistance: 1200.0
+          burnable: false
+          fluid_state: water
+      facing=east,half=top,open=false,waterlogged=true:
+        appearance: facing=east,half=top,open=false,waterlogged=true
+        settings:
+          resistance: 1200.0
+          burnable: false
+          fluid_state: water
+      facing=east,half=top,open=true,waterlogged=true:
+        appearance: facing=east,half=top,open=true,waterlogged=true
+        settings:
+          resistance: 1200.0
+          burnable: false
+          fluid_state: water
+      facing=north,half=bottom,open=false,waterlogged=true:
+        appearance: facing=north,half=bottom,open=false,waterlogged=true
+        settings:
+          resistance: 1200.0
+          burnable: false
+          fluid_state: water
+      facing=north,half=bottom,open=true,waterlogged=true:
+        appearance: facing=north,half=bottom,open=true,waterlogged=true
+        settings:
+          resistance: 1200.0
+          burnable: false
+          fluid_state: water
+      facing=north,half=top,open=false,waterlogged=true:
+        appearance: facing=north,half=top,open=false,waterlogged=true
+        settings:
+          resistance: 1200.0
+          burnable: false
+          fluid_state: water
+      facing=north,half=top,open=true,waterlogged=true:
+        appearance: facing=north,half=top,open=true,waterlogged=true
+        settings:
+          resistance: 1200.0
+          burnable: false
+          fluid_state: water
+      facing=south,half=bottom,open=false,waterlogged=true:
+        appearance: facing=south,half=bottom,open=false,waterlogged=true
+        settings:
+          resistance: 1200.0
+          burnable: false
+          fluid_state: water
+      facing=south,half=bottom,open=true,waterlogged=true:
+        appearance: facing=south,half=bottom,open=true,waterlogged=true
+        settings:
+          resistance: 1200.0
+          burnable: false
+          fluid_state: water
+      facing=south,half=top,open=false,waterlogged=true:
+        appearance: facing=south,half=top,open=false,waterlogged=true
+        settings:
+          resistance: 1200.0
+          burnable: false
+          fluid_state: water
+      facing=south,half=top,open=true,waterlogged=true:
+        appearance: facing=south,half=top,open=true,waterlogged=true
+        settings:
+          resistance: 1200.0
+          burnable: false
+          fluid_state: water
+      facing=west,half=bottom,open=false,waterlogged=true:
+        appearance: facing=west,half=bottom,open=false,waterlogged=true
+        settings:
+          resistance: 1200.0
+          burnable: false
+          fluid_state: water
+      facing=west,half=bottom,open=true,waterlogged=true:
+        appearance: facing=west,half=bottom,open=true,waterlogged=true
+        settings:
+          resistance: 1200.0
+          burnable: false
+          fluid_state: water
+      facing=west,half=top,open=false,waterlogged=true:
+        appearance: facing=west,half=top,open=false,waterlogged=true
+        settings:
+          resistance: 1200.0
+          burnable: false
+          fluid_state: water
+      facing=west,half=top,open=true,waterlogged=true:
+        appearance: facing=west,half=top,open=true,waterlogged=true
+        settings:
+          fluid_state: water
+  default:block_state/door:
+    properties:
+      facing:
+        type: horizontal_direction
+      half:
+        type: double_block_half
+      hinge:
+        type: hinge
+      open:
+        type: boolean
+        default: false
+      powered:
+        type: boolean
+        default: false
+    appearances:
+      facing=east,half=lower,hinge=left,open=false:
+        state: ${door_base_block}[facing=east,half=lower,hinge=left,open=false,powered=true]
+        model:
+          path: ${door_model}_bottom_left
+          generation:
+            parent: minecraft:block/door_bottom_left
+            textures:
+              bottom: ${door_texture_bottom}
+              top: ${door_texture_top}
+      facing=east,half=lower,hinge=left,open=true:
+        state: ${door_base_block}[facing=east,half=lower,hinge=left,open=true,powered=true]
+        model:
+          path: ${door_model}_bottom_left_open
+          y: 90
+          generation:
+            parent: minecraft:block/door_bottom_left_open
+            textures:
+              bottom: ${door_texture_bottom}
+              top: ${door_texture_top}
+      facing=east,half=lower,hinge=right,open=false:
+        state: ${door_base_block}[facing=east,half=lower,hinge=right,open=false,powered=true]
+        model:
+          path: ${door_model}_bottom_right
+          generation:
+            parent: minecraft:block/door_bottom_right
+            textures:
+              bottom: ${door_texture_bottom}
+              top: ${door_texture_top}
+      facing=east,half=lower,hinge=right,open=true:
+        state: ${door_base_block}[facing=east,half=lower,hinge=right,open=true,powered=true]
+        model:
+          path: ${door_model}_bottom_right_open
+          y: 270
+          generation:
+            parent: minecraft:block/door_bottom_right_open
+            textures:
+              bottom: ${door_texture_bottom}
+              top: ${door_texture_top}
+      facing=east,half=upper,hinge=left,open=false:
+        state: ${door_base_block}[facing=east,half=upper,hinge=left,open=false,powered=true]
+        model:
+          path: ${door_model}_top_left
+          generation:
+            parent: minecraft:block/door_top_left
+            textures:
+              bottom: ${door_texture_bottom}
+              top: ${door_texture_top}
+      facing=east,half=upper,hinge=left,open=true:
+        state: ${door_base_block}[facing=east,half=upper,hinge=left,open=true,powered=true]
+        model:
+          path: ${door_model}_top_left_open
+          y: 90
+          generation:
+            parent: minecraft:block/door_top_left_open
+            textures:
+              bottom: ${door_texture_bottom}
+              top: ${door_texture_top}
+      facing=east,half=upper,hinge=right,open=false:
+        state: ${door_base_block}[facing=east,half=upper,hinge=right,open=false,powered=true]
+        model:
+          path: ${door_model}_top_right
+          generation:
+            parent: minecraft:block/door_top_right
+            textures:
+              bottom: ${door_texture_bottom}
+              top: ${door_texture_top}
+      facing=east,half=upper,hinge=right,open=true:
+        state: ${door_base_block}[facing=east,half=upper,hinge=right,open=true,powered=true]
+        model:
+          path: ${door_model}_top_right_open
+          y: 270
+          generation:
+            parent: minecraft:block/door_top_right_open
+            textures:
+              bottom: ${door_texture_bottom}
+              top: ${door_texture_top}
+
+      facing=north,half=lower,hinge=left,open=false:
+        state: ${door_base_block}[facing=north,half=lower,hinge=left,open=false,powered=true]
+        model:
+          path: ${door_model}_bottom_left
+          y: 270
+      facing=north,half=lower,hinge=left,open=true:
+        state: ${door_base_block}[facing=north,half=lower,hinge=left,open=true,powered=true]
+        model:
+          path: ${door_model}_bottom_left_open
+      facing=north,half=lower,hinge=right,open=false:
+        state: ${door_base_block}[facing=north,half=lower,hinge=right,open=false,powered=true]
+        model:
+          path: ${door_model}_bottom_right
+          y: 270
+      facing=north,half=lower,hinge=right,open=true:
+        state: ${door_base_block}[facing=north,half=lower,hinge=right,open=true,powered=true]
+        model:
+          path: ${door_model}_bottom_right_open
+          y: 180
+      facing=north,half=upper,hinge=left,open=false:
+        state: ${door_base_block}[facing=north,half=upper,hinge=left,open=false,powered=true]
+        model:
+          path: ${door_model}_top_left
+          y: 270
+      facing=north,half=upper,hinge=left,open=true:
+        state: ${door_base_block}[facing=north,half=upper,hinge=left,open=true,powered=true]
+        model:
+          path: ${door_model}_top_left_open
+      facing=north,half=upper,hinge=right,open=false:
+        state: ${door_base_block}[facing=north,half=upper,hinge=right,open=false,powered=true]
+        model:
+          path: ${door_model}_top_right
+          y: 270
+      facing=north,half=upper,hinge=right,open=true:
+        state: ${door_base_block}[facing=north,half=upper,hinge=right,open=true,powered=true]
+        model:
+          path: ${door_model}_top_right_open
+          y: 180
+      facing=south,half=lower,hinge=left,open=false:
+        state: ${door_base_block}[facing=south,half=lower,hinge=left,open=false,powered=true]
+        model:
+          path: ${door_model}_bottom_left
+          y: 90
+      facing=south,half=lower,hinge=left,open=true:
+        state: ${door_base_block}[facing=south,half=lower,hinge=left,open=true,powered=true]
+        model:
+          path: ${door_model}_bottom_left_open
+          y: 180
+      facing=south,half=lower,hinge=right,open=false:
+        state: ${door_base_block}[facing=south,half=lower,hinge=right,open=false,powered=true]
+        model:
+          path: ${door_model}_bottom_right
+          y: 90
+      facing=south,half=lower,hinge=right,open=true:
+        state: ${door_base_block}[facing=south,half=lower,hinge=right,open=true,powered=true]
+        model:
+          path: ${door_model}_bottom_right_open
+      facing=south,half=upper,hinge=left,open=false:
+        state: ${door_base_block}[facing=south,half=upper,hinge=left,open=false,powered=true]
+        model:
+          path: ${door_model}_top_left
+          y: 90
+      facing=south,half=upper,hinge=left,open=true:
+        state: ${door_base_block}[facing=south,half=upper,hinge=left,open=true,powered=true]
+        model:
+          path: ${door_model}_top_left_open
+          y: 180
+      facing=south,half=upper,hinge=right,open=false:
+        state: ${door_base_block}[facing=south,half=upper,hinge=right,open=false,powered=true]
+        model:
+          path: ${door_model}_top_right
+          y: 90
+      facing=south,half=upper,hinge=right,open=true:
+        state: ${door_base_block}[facing=south,half=upper,hinge=right,open=true,powered=true]
+        model:
+          path: ${door_model}_top_right_open
+      facing=west,half=lower,hinge=left,open=false:
+        state: ${door_base_block}[facing=west,half=lower,hinge=left,open=false,powered=true]
+        model:
+          path: ${door_model}_bottom_left
+          y: 180
+      facing=west,half=lower,hinge=left,open=true:
+        state: ${door_base_block}[facing=west,half=lower,hinge=left,open=true,powered=true]
+        model:
+          path: ${door_model}_bottom_left_open
+          y: 270
+      facing=west,half=lower,hinge=right,open=false:
+        state: ${door_base_block}[facing=west,half=lower,hinge=right,open=false,powered=true]
+        model:
+          path: ${door_model}_bottom_right
+          y: 180
+      facing=west,half=lower,hinge=right,open=true:
+        state: ${door_base_block}[facing=west,half=lower,hinge=right,open=true,powered=true]
+        model:
+          path: ${door_model}_bottom_right_open
+          y: 90
+      facing=west,half=upper,hinge=left,open=false:
+        state: ${door_base_block}[facing=west,half=upper,hinge=left,open=false,powered=true]
+        model:
+          path: ${door_model}_top_left
+          y: 180
+      facing=west,half=upper,hinge=left,open=true:
+        state: ${door_base_block}[facing=west,half=upper,hinge=left,open=true,powered=true]
+        model:
+          path: ${door_model}_top_left_open
+          y: 270
+      facing=west,half=upper,hinge=right,open=false:
+        state: ${door_base_block}[facing=west,half=upper,hinge=right,open=false,powered=true]
+        model:
+          path: ${door_model}_top_right
+          y: 180
+      facing=west,half=upper,hinge=right,open=true:
+        state: ${door_base_block}[facing=west,half=upper,hinge=right,open=true,powered=true]
+        model:
+          path: ${door_model}_top_right_open
+          y: 90
+    variants:
+      facing=east,half=lower,hinge=left,open=false:
+        appearance: facing=east,half=lower,hinge=left,open=false
+      facing=east,half=lower,hinge=right,open=false:
+        appearance: facing=east,half=lower,hinge=right,open=false
+      facing=east,half=upper,hinge=left,open=false:
+        appearance: facing=east,half=upper,hinge=left,open=false
+      facing=east,half=upper,hinge=right,open=false:
+        appearance: facing=east,half=upper,hinge=right,open=false
+      facing=north,half=lower,hinge=left,open=false:
+        appearance: facing=north,half=lower,hinge=left,open=false
+      facing=north,half=lower,hinge=right,open=false:
+        appearance: facing=north,half=lower,hinge=right,open=false
+      facing=north,half=upper,hinge=left,open=false:
+        appearance: facing=north,half=upper,hinge=left,open=false
+      facing=north,half=upper,hinge=right,open=false:
+        appearance: facing=north,half=upper,hinge=right,open=false
+      facing=south,half=lower,hinge=left,open=false:
+        appearance: facing=south,half=lower,hinge=left,open=false
+      facing=south,half=lower,hinge=right,open=false:
+        appearance: facing=south,half=lower,hinge=right,open=false
+      facing=south,half=upper,hinge=left,open=false:
+        appearance: facing=south,half=upper,hinge=left,open=false
+      facing=south,half=upper,hinge=right,open=false:
+        appearance: facing=south,half=upper,hinge=right,open=false
+      facing=west,half=lower,hinge=left,open=false:
+        appearance: facing=west,half=lower,hinge=left,open=false
+      facing=west,half=lower,hinge=right,open=false:
+        appearance: facing=west,half=lower,hinge=right,open=false
+      facing=west,half=upper,hinge=left,open=false:
+        appearance: facing=west,half=upper,hinge=left,open=false
+      facing=west,half=upper,hinge=right,open=false:
+        appearance: facing=west,half=upper,hinge=right,open=false
+      facing=east,half=lower,hinge=left,open=true:
+        appearance: facing=east,half=lower,hinge=left,open=true
+      facing=east,half=lower,hinge=right,open=true:
+        appearance: facing=east,half=lower,hinge=right,open=true
+      facing=east,half=upper,hinge=left,open=true:
+        appearance: facing=east,half=upper,hinge=left,open=true
+      facing=east,half=upper,hinge=right,open=true:
+        appearance: facing=east,half=upper,hinge=right,open=true
+      facing=north,half=lower,hinge=left,open=true:
+        appearance: facing=north,half=lower,hinge=left,open=true
+      facing=north,half=lower,hinge=right,open=true:
+        appearance: facing=north,half=lower,hinge=right,open=true
+      facing=north,half=upper,hinge=left,open=true:
+        appearance: facing=north,half=upper,hinge=left,open=true
+      facing=north,half=upper,hinge=right,open=true:
+        appearance: facing=north,half=upper,hinge=right,open=true
+      facing=south,half=lower,hinge=left,open=true:
+        appearance: facing=south,half=lower,hinge=left,open=true
+      facing=south,half=lower,hinge=right,open=true:
+        appearance: facing=south,half=lower,hinge=right,open=true
+      facing=south,half=upper,hinge=left,open=true:
+        appearance: facing=south,half=upper,hinge=left,open=true
+      facing=south,half=upper,hinge=right,open=true:
+        appearance: facing=south,half=upper,hinge=right,open=true
+      facing=west,half=lower,hinge=left,open=true:
+        appearance: facing=west,half=lower,hinge=left,open=true
+      facing=west,half=lower,hinge=right,open=true:
+        appearance: facing=west,half=lower,hinge=right,open=true
+      facing=west,half=upper,hinge=left,open=true:
+        appearance: facing=west,half=upper,hinge=left,open=true
+      facing=west,half=upper,hinge=right,open=true:
+        appearance: facing=west,half=upper,hinge=right,open=true
+  default:block_state/fence_gate:
+    properties:
+      facing:
+        type: horizontal_direction
+      in_wall:
+        type: boolean
+        default: false
+      open:
+        type: boolean
+        default: false
+      powered:
+        type: boolean
+        default: false
+    appearances:
+      facing=east,in_wall=false,open=false:
+        state: ${fence_gate_base_block}[facing=east,in_wall=false,open=false,powered=true]
+        model:
+          path: ${fence_gate_model}
+          y: 270
+          uvlock: true
+          generation:
+            parent: minecraft:block/template_fence_gate
+            textures:
+              texture: ${fence_gate_texture}
+      facing=east,in_wall=false,open=true:
+        state: ${fence_gate_base_block}[facing=east,in_wall=false,open=true,powered=true]
+        model:
+          path: ${fence_gate_model}_open
+          y: 270
+          uvlock: true
+          generation:
+            parent: minecraft:block/template_fence_gate_open
+            textures:
+              texture: ${fence_gate_texture}
+      facing=east,in_wall=true,open=false:
+        state: ${fence_gate_base_block}[facing=east,in_wall=true,open=false,powered=true]
+        model:
+          path: ${fence_gate_model}_wall
+          y: 270
+          uvlock: true
+          generation:
+            parent: minecraft:block/template_fence_gate_wall
+            textures:
+              texture: ${fence_gate_texture}
+      facing=east,in_wall=true,open=true:
+        state: ${fence_gate_base_block}[facing=east,in_wall=true,open=true,powered=true]
+        model:
+          path: ${fence_gate_model}_wall_open
+          y: 270
+          uvlock: true
+          generation:
+            parent: minecraft:block/template_fence_gate_wall_open
+            textures:
+              texture: ${fence_gate_texture}
+      facing=north,in_wall=false,open=false:
+        state: ${fence_gate_base_block}[facing=north,in_wall=false,open=false,powered=true]
+        model:
+          path: ${fence_gate_model}
+          y: 180
+          uvlock: true
+      facing=north,in_wall=false,open=true:
+        state: ${fence_gate_base_block}[facing=north,in_wall=false,open=true,powered=true]
+        model:
+          path: ${fence_gate_model}_open
+          y: 180
+          uvlock: true
+      facing=north,in_wall=true,open=false:
+        state: ${fence_gate_base_block}[facing=north,in_wall=true,open=false,powered=true]
+        model:
+          path: ${fence_gate_model}_wall
+          y: 180
+          uvlock: true
+      facing=north,in_wall=true,open=true:
+        state: ${fence_gate_base_block}[facing=north,in_wall=true,open=true,powered=true]
+        model:
+          path: ${fence_gate_model}_wall_open
+          y: 180
+          uvlock: true
+      facing=south,in_wall=false,open=false:
+        state: ${fence_gate_base_block}[facing=south,in_wall=false,open=false,powered=true]
+        model:
+          path: ${fence_gate_model}
+          uvlock: true
+      facing=south,in_wall=false,open=true:
+        state: ${fence_gate_base_block}[facing=south,in_wall=false,open=true,powered=true]
+        model:
+          path: ${fence_gate_model}_open
+          uvlock: true
+      facing=south,in_wall=true,open=false:
+        state: ${fence_gate_base_block}[facing=south,in_wall=true,open=false,powered=true]
+        model:
+          path: ${fence_gate_model}_wall
+          uvlock: true
+      facing=south,in_wall=true,open=true:
+        state: ${fence_gate_base_block}[facing=south,in_wall=true,open=true,powered=true]
+        model:
+          path: ${fence_gate_model}_wall_open
+          uvlock: true
+      facing=west,in_wall=false,open=false:
+        state: ${fence_gate_base_block}[facing=west,in_wall=false,open=false,powered=true]
+        model:
+          path: ${fence_gate_model}
+          y: 90
+          uvlock: true
+      facing=west,in_wall=false,open=true:
+        state: ${fence_gate_base_block}[facing=west,in_wall=false,open=true,powered=true]
+        model:
+          path: ${fence_gate_model}_open
+          y: 90
+          uvlock: true
+      facing=west,in_wall=true,open=false:
+        state: ${fence_gate_base_block}[facing=west,in_wall=true,open=false,powered=true]
+        model:
+          path: ${fence_gate_model}_wall
+          y: 90
+          uvlock: true
+      facing=west,in_wall=true,open=true:
+        state: ${fence_gate_base_block}[facing=west,in_wall=true,open=true,powered=true]
+        model:
+          path: ${fence_gate_model}_wall_open
+          y: 90
+          uvlock: true
+    variants:
+      facing=east,in_wall=false,open=false,powered=true:
+        appearance: facing=east,in_wall=false,open=false
+      facing=east,in_wall=false,open=false,powered=false:
+        appearance: facing=east,in_wall=false,open=false
+      facing=east,in_wall=false,open=true,powered=true:
+        appearance: facing=east,in_wall=false,open=true
+      facing=east,in_wall=false,open=true,powered=false:
+        appearance: facing=east,in_wall=false,open=true
+      facing=east,in_wall=true,open=false,powered=true:
+        appearance: facing=east,in_wall=true,open=false
+      facing=east,in_wall=true,open=false,powered=false:
+        appearance: facing=east,in_wall=true,open=false
+      facing=east,in_wall=true,open=true,powered=true:
+        appearance: facing=east,in_wall=true,open=true
+      facing=east,in_wall=true,open=true,powered=false:
+        appearance: facing=east,in_wall=true,open=true
+      facing=south,in_wall=false,open=false,powered=true:
+        appearance: facing=south,in_wall=false,open=false
+      facing=south,in_wall=false,open=false,powered=false:
+        appearance: facing=south,in_wall=false,open=false
+      facing=south,in_wall=false,open=true,powered=true:
+        appearance: facing=south,in_wall=false,open=true
+      facing=south,in_wall=false,open=true,powered=false:
+        appearance: facing=south,in_wall=false,open=true
+      facing=south,in_wall=true,open=false,powered=true:
+        appearance: facing=south,in_wall=true,open=false
+      facing=south,in_wall=true,open=false,powered=false:
+        appearance: facing=south,in_wall=true,open=false
+      facing=south,in_wall=true,open=true,powered=true:
+        appearance: facing=south,in_wall=true,open=true
+      facing=south,in_wall=true,open=true,powered=false:
+        appearance: facing=south,in_wall=true,open=true
+      facing=west,in_wall=false,open=false,powered=true:
+        appearance: facing=west,in_wall=false,open=false
+      facing=west,in_wall=false,open=false,powered=false:
+        appearance: facing=west,in_wall=false,open=false
+      facing=west,in_wall=false,open=true,powered=true:
+        appearance: facing=west,in_wall=false,open=true
+      facing=west,in_wall=false,open=true,powered=false:
+        appearance: facing=west,in_wall=false,open=true
+      facing=west,in_wall=true,open=false,powered=true:
+        appearance: facing=west,in_wall=true,open=false
+      facing=west,in_wall=true,open=false,powered=false:
+        appearance: facing=west,in_wall=true,open=false
+      facing=west,in_wall=true,open=true,powered=true:
+        appearance: facing=west,in_wall=true,open=true
+      facing=west,in_wall=true,open=true,powered=false:
+        appearance: facing=west,in_wall=true,open=true
+      facing=north,in_wall=false,open=false,powered=true:
+        appearance: facing=north,in_wall=false,open=false
+      facing=north,in_wall=false,open=false,powered=false:
+        appearance: facing=north,in_wall=false,open=false
+      facing=north,in_wall=false,open=true,powered=true:
+        appearance: facing=north,in_wall=false,open=true
+      facing=north,in_wall=false,open=true,powered=false:
+        appearance: facing=north,in_wall=false,open=true
+      facing=north,in_wall=true,open=false,powered=true:
+        appearance: facing=north,in_wall=true,open=false
+      facing=north,in_wall=true,open=false,powered=false:
+        appearance: facing=north,in_wall=true,open=false
+      facing=north,in_wall=true,open=true,powered=true:
+        appearance: facing=north,in_wall=true,open=true
+      facing=north,in_wall=true,open=true,powered=false:
+        appearance: facing=north,in_wall=true,open=true
+  default:block_state/slab:
+    properties:
+      type:
+        type: slab_type
+        default: bottom
+      waterlogged:
+        type: boolean
+        default: false
+    appearances:
+      type=top,waterlogged=false:
+        state: ${slab_base_block}[type=top,waterlogged=false]
+        model:
+          path: ${slab_model}_top
+          generation:
+            parent: minecraft:block/slab_top
+            textures:
+              bottom: ${slab_texture_bottom:-"${slab_texture}"}
+              side: ${slab_texture_side:-"${slab_texture}"}
+              top: ${slab_texture_top:-"${slab_texture}"}
+      type=bottom,waterlogged=false:
+        state: ${slab_base_block}[type=bottom,waterlogged=false]
+        model:
+          path: ${slab_model}
+          generation:
+            parent: minecraft:block/slab
+            textures:
+              bottom: ${slab_texture_bottom:-"${slab_texture}"}
+              side: ${slab_texture_side:-"${slab_texture}"}
+              top: ${slab_texture_top:-"${slab_texture}"}
+      type=double,waterlogged=false:
+        state: ${slab_base_block}[type=double,waterlogged=false]
+        model:
+          path: ${planks_model}
+      type=top,waterlogged=true:
+        state: ${slab_base_block}[type=top,waterlogged=true]
+        model:
+          path: ${slab_model}_top
+      type=bottom,waterlogged=true:
+        state: ${slab_base_block}[type=bottom,waterlogged=true]
+        model:
+          path: ${slab_model}
+      type=double,waterlogged=true:
+        state: ${slab_base_block}[type=double,waterlogged=true]
+        model:
+          path: ${planks_model}
+    variants:
+      type=top,waterlogged=false:
+        appearance: type=top,waterlogged=false
+      type=bottom,waterlogged=false:
+        appearance: type=bottom,waterlogged=false
+      type=double,waterlogged=false:
+        appearance: type=double,waterlogged=false
+      type=top,waterlogged=true:
+        appearance: type=top,waterlogged=true
+        settings:
+          resistance: 1200.0
+          burnable: false
+          fluid_state: water
+      type=bottom,waterlogged=true:
+        appearance: type=bottom,waterlogged=true
+        settings:
+          resistance: 1200.0
+          burnable: false
+          fluid_state: water
+      type=double,waterlogged=true:
+        appearance: type=double,waterlogged=true
+        settings:
+          resistance: 1200.0
+          burnable: false
+          fluid_state: water
+  default:block_state/stairs:
+    properties:
+      facing:
+        type: horizontal_direction
+      half:
+        type: single_block_half
+      shape:
+        type: stairs_shape
+      waterlogged:
+        type: boolean
+        default: false
+    appearances:
+      facing=east,half=bottom,shape=inner_left,waterlogged=false:
+        state: ${stairs_base_block}[facing=east,half=bottom,shape=inner_left,waterlogged=false]
+        model:
+          path: ${stairs_model}_inner
+          uvlock: true
+          y: 270
+          generation:
+            parent: minecraft:block/inner_stairs
+            textures:
+              bottom: ${stairs_texture_bottom:-"${stairs_texture}"}
+              side: ${stairs_texture_side:-"${stairs_texture}"}
+              top: ${stairs_texture_top:-"${stairs_texture}"}
+      facing=east,half=bottom,shape=inner_right,waterlogged=false:
+        state: ${stairs_base_block}[facing=east,half=bottom,shape=inner_right,waterlogged=false]
+        model:
+          path: ${stairs_model}_inner
+      facing=east,half=bottom,shape=outer_left,waterlogged=false:
+        state: ${stairs_base_block}[facing=east,half=bottom,shape=outer_left,waterlogged=false]
+        model:
+          path: ${stairs_model}_outer
+          uvlock: true
+          y: 270
+          generation:
+            parent: minecraft:block/outer_stairs
+            textures:
+              bottom: ${stairs_texture_bottom:-"${stairs_texture}"}
+              side: ${stairs_texture_side:-"${stairs_texture}"}
+              top: ${stairs_texture_top:-"${stairs_texture}"}
+      facing=east,half=bottom,shape=outer_right,waterlogged=false:
+        state: ${stairs_base_block}[facing=east,half=bottom,shape=outer_right,waterlogged=false]
+        model:
+          path: ${stairs_model}_outer
+      facing=east,half=bottom,shape=straight,waterlogged=false:
+        state: ${stairs_base_block}[facing=east,half=bottom,shape=straight,waterlogged=false]
+        model:
+          path: ${stairs_model}
+          generation:
+            parent: minecraft:block/stairs
+            textures:
+              bottom: ${stairs_texture_bottom:-"${stairs_texture}"}
+              side: ${stairs_texture_side:-"${stairs_texture}"}
+              top: ${stairs_texture_top:-"${stairs_texture}"}
+      facing=east,half=top,shape=inner_left,waterlogged=false:
+        state: ${stairs_base_block}[facing=east,half=top,shape=inner_left,waterlogged=false]
+        model:
+          path: ${stairs_model}_inner
+          uvlock: true
+          x: 180
+      facing=east,half=top,shape=inner_right,waterlogged=false:
+        state: ${stairs_base_block}[facing=east,half=top,shape=inner_right,waterlogged=false]
+        model:
+          path: ${stairs_model}_inner
+          uvlock: true
+          x: 180
+          y: 90
+      facing=east,half=top,shape=outer_left,waterlogged=false:
+        state: ${stairs_base_block}[facing=east,half=top,shape=outer_left,waterlogged=false]
+        model:
+          path: ${stairs_model}_outer
+          uvlock: true
+          x: 180
+      facing=east,half=top,shape=outer_right,waterlogged=false:
+        state: ${stairs_base_block}[facing=east,half=top,shape=outer_right,waterlogged=false]
+        model:
+          path: ${stairs_model}_outer
+          uvlock: true
+          x: 180
+          y: 90
+      facing=east,half=top,shape=straight,waterlogged=false:
+        state: ${stairs_base_block}[facing=east,half=top,shape=straight,waterlogged=false]
+        model:
+          path: ${stairs_model}
+          uvlock: true
+          x: 180
+      facing=north,half=bottom,shape=inner_left,waterlogged=false:
+        state: ${stairs_base_block}[facing=north,half=bottom,shape=inner_left,waterlogged=false]
+        model:
+          path: ${stairs_model}_inner
+          uvlock: true
+          y: 180
+      facing=north,half=bottom,shape=inner_right,waterlogged=false:
+        state: ${stairs_base_block}[facing=north,half=bottom,shape=inner_right,waterlogged=false]
+        model:
+          path: ${stairs_model}_inner
+          uvlock: true
+          y: 270
+      facing=north,half=bottom,shape=outer_left,waterlogged=false:
+        state: ${stairs_base_block}[facing=north,half=bottom,shape=outer_left,waterlogged=false]
+        model:
+          path: ${stairs_model}_outer
+          uvlock: true
+          y: 180
+      facing=north,half=bottom,shape=outer_right,waterlogged=false:
+        state: ${stairs_base_block}[facing=north,half=bottom,shape=outer_right,waterlogged=false]
+        model:
+          path: ${stairs_model}_outer
+          uvlock: true
+          y: 270
+      facing=north,half=bottom,shape=straight,waterlogged=false:
+        state: ${stairs_base_block}[facing=north,half=bottom,shape=straight,waterlogged=false]
+        model:
+          path: ${stairs_model}
+          uvlock: true
+          y: 270
+      facing=north,half=top,shape=inner_left,waterlogged=false:
+        state: ${stairs_base_block}[facing=north,half=top,shape=inner_left,waterlogged=false]
+        model:
+          path: ${stairs_model}_inner
+          uvlock: true
+          x: 180
+          y: 270
+      facing=north,half=top,shape=inner_right,waterlogged=false:
+        state: ${stairs_base_block}[facing=north,half=top,shape=inner_right,waterlogged=false]
+        model:
+          path: ${stairs_model}_inner
+          uvlock: true
+          x: 180
+      facing=north,half=top,shape=outer_left,waterlogged=false:
+        state: ${stairs_base_block}[facing=north,half=top,shape=outer_left,waterlogged=false]
+        model:
+          path: ${stairs_model}_outer
+          uvlock: true
+          x: 180
+          y: 270
+      facing=north,half=top,shape=outer_right,waterlogged=false:
+        state: ${stairs_base_block}[facing=north,half=top,shape=outer_right,waterlogged=false]
+        model:
+          path: ${stairs_model}_outer
+          uvlock: true
+          x: 180
+      facing=north,half=top,shape=straight,waterlogged=false:
+        state: ${stairs_base_block}[facing=north,half=top,shape=straight,waterlogged=false]
+        model:
+          path: ${stairs_model}
+          uvlock: true
+          x: 180
+          y: 270
+      facing=south,half=bottom,shape=inner_left,waterlogged=false:
+        state: ${stairs_base_block}[facing=south,half=bottom,shape=inner_left,waterlogged=false]
+        model:
+          path: ${stairs_model}_inner
+      facing=south,half=bottom,shape=inner_right,waterlogged=false:
+        state: ${stairs_base_block}[facing=south,half=bottom,shape=inner_right,waterlogged=false]
+        model:
+          path: ${stairs_model}_inner
+          uvlock: true
+          y: 90
+      facing=south,half=bottom,shape=outer_left,waterlogged=false:
+        state: ${stairs_base_block}[facing=south,half=bottom,shape=outer_left,waterlogged=false]
+        model:
+          path: ${stairs_model}_outer
+      facing=south,half=bottom,shape=outer_right,waterlogged=false:
+        state: ${stairs_base_block}[facing=south,half=bottom,shape=outer_right,waterlogged=false]
+        model:
+          path: ${stairs_model}_outer
+          uvlock: true
+          y: 90
+      facing=south,half=bottom,shape=straight,waterlogged=false:
+        state: ${stairs_base_block}[facing=south,half=bottom,shape=straight,waterlogged=false]
+        model:
+          path: ${stairs_model}
+          uvlock: true
+          y: 90
+      facing=south,half=top,shape=inner_left,waterlogged=false:
+        state: ${stairs_base_block}[facing=south,half=top,shape=inner_left,waterlogged=false]
+        model:
+          path: ${stairs_model}_inner
+          uvlock: true
+          x: 180
+          y: 90
+      facing=south,half=top,shape=inner_right,waterlogged=false:
+        state: ${stairs_base_block}[facing=south,half=top,shape=inner_right,waterlogged=false]
+        model:
+          path: ${stairs_model}_inner
+          uvlock: true
+          x: 180
+          y: 180
+      facing=south,half=top,shape=outer_left,waterlogged=false:
+        state: ${stairs_base_block}[facing=south,half=top,shape=outer_left,waterlogged=false]
+        model:
+          path: ${stairs_model}_outer
+          uvlock: true
+          x: 180
+          y: 90
+      facing=south,half=top,shape=outer_right,waterlogged=false:
+        state: ${stairs_base_block}[facing=south,half=top,shape=outer_right,waterlogged=false]
+        model:
+          path: ${stairs_model}_outer
+          uvlock: true
+          x: 180
+          y: 180
+      facing=south,half=top,shape=straight,waterlogged=false:
+        state: ${stairs_base_block}[facing=south,half=top,shape=straight,waterlogged=false]
+        model:
+          path: ${stairs_model}
+          uvlock: true
+          x: 180
+          y: 90
+      facing=west,half=bottom,shape=inner_left,waterlogged=false:
+        state: ${stairs_base_block}[facing=west,half=bottom,shape=inner_left,waterlogged=false]
+        model:
+          path: ${stairs_model}_inner
+          uvlock: true
+          y: 90
+      facing=west,half=bottom,shape=inner_right,waterlogged=false:
+        state: ${stairs_base_block}[facing=west,half=bottom,shape=inner_right,waterlogged=false]
+        model:
+          path: ${stairs_model}_inner
+          uvlock: true
+          y: 180
+      facing=west,half=bottom,shape=outer_left,waterlogged=false:
+        state: ${stairs_base_block}[facing=west,half=bottom,shape=outer_left,waterlogged=false]
+        model:
+          path: ${stairs_model}_outer
+          uvlock: true
+          y: 90
+      facing=west,half=bottom,shape=outer_right,waterlogged=false:
+        state: ${stairs_base_block}[facing=west,half=bottom,shape=outer_right,waterlogged=false]
+        model:
+          path: ${stairs_model}_outer
+          uvlock: true
+          y: 180
+      facing=west,half=bottom,shape=straight,waterlogged=false:
+        state: ${stairs_base_block}[facing=west,half=bottom,shape=straight,waterlogged=false]
+        model:
+          path: ${stairs_model}
+          uvlock: true
+          y: 180
+      facing=west,half=top,shape=inner_left,waterlogged=false:
+        state: ${stairs_base_block}[facing=west,half=top,shape=inner_left,waterlogged=false]
+        model:
+          path: ${stairs_model}_inner
+          uvlock: true
+          x: 180
+          y: 180
+      facing=west,half=top,shape=inner_right,waterlogged=false:
+        state: ${stairs_base_block}[facing=west,half=top,shape=inner_right,waterlogged=false]
+        model:
+          path: ${stairs_model}_inner
+          uvlock: true
+          x: 180
+          y: 270
+      facing=west,half=top,shape=outer_left,waterlogged=false:
+        state: ${stairs_base_block}[facing=west,half=top,shape=outer_left,waterlogged=false]
+        model:
+          path: ${stairs_model}_outer
+          uvlock: true
+          x: 180
+          y: 180
+      facing=west,half=top,shape=outer_right,waterlogged=false:
+        state: ${stairs_base_block}[facing=west,half=top,shape=outer_right,waterlogged=false]
+        model:
+          path: ${stairs_model}_outer
+          uvlock: true
+          x: 180
+          y: 270
+      facing=west,half=top,shape=straight,waterlogged=false:
+        state: ${stairs_base_block}[facing=west,half=top,shape=straight,waterlogged=false]
+        model:
+          path: ${stairs_model}
+          uvlock: true
+          x: 180
+          y: 180
+      facing=east,half=bottom,shape=inner_left,waterlogged=true:
+        state: ${stairs_base_block}[facing=east,half=bottom,shape=inner_left,waterlogged=true]
+        model:
+          path: ${stairs_model}_inner
+          uvlock: true
+          y: 270
+      facing=east,half=bottom,shape=inner_right,waterlogged=true:
+        state: ${stairs_base_block}[facing=east,half=bottom,shape=inner_right,waterlogged=true]
+        model:
+          path: ${stairs_model}_inner
+      facing=east,half=bottom,shape=outer_left,waterlogged=true:
+        state: ${stairs_base_block}[facing=east,half=bottom,shape=outer_left,waterlogged=true]
+        model:
+          path: ${stairs_model}_outer
+          uvlock: true
+          y: 270
+      facing=east,half=bottom,shape=outer_right,waterlogged=true:
+        state: ${stairs_base_block}[facing=east,half=bottom,shape=outer_right,waterlogged=true]
+        model:
+          path: ${stairs_model}_outer
+      facing=east,half=bottom,shape=straight,waterlogged=true:
+        state: ${stairs_base_block}[facing=east,half=bottom,shape=straight,waterlogged=true]
+        model:
+          path: ${stairs_model}
+      facing=east,half=top,shape=inner_left,waterlogged=true:
+        state: ${stairs_base_block}[facing=east,half=top,shape=inner_left,waterlogged=true]
+        model:
+          path: ${stairs_model}_inner
+          uvlock: true
+          x: 180
+      facing=east,half=top,shape=inner_right,waterlogged=true:
+        state: ${stairs_base_block}[facing=east,half=top,shape=inner_right,waterlogged=true]
+        model:
+          path: ${stairs_model}_inner
+          uvlock: true
+          x: 180
+          y: 90
+      facing=east,half=top,shape=outer_left,waterlogged=true:
+        state: ${stairs_base_block}[facing=east,half=top,shape=outer_left,waterlogged=true]
+        model:
+          path: ${stairs_model}_outer
+          uvlock: true
+          x: 180
+      facing=east,half=top,shape=outer_right,waterlogged=true:
+        state: ${stairs_base_block}[facing=east,half=top,shape=outer_right,waterlogged=true]
+        model:
+          path: ${stairs_model}_outer
+          uvlock: true
+          x: 180
+          y: 90
+      facing=east,half=top,shape=straight,waterlogged=true:
+        state: ${stairs_base_block}[facing=east,half=top,shape=straight,waterlogged=true]
+        model:
+          path: ${stairs_model}
+          uvlock: true
+          x: 180
+      facing=north,half=bottom,shape=inner_left,waterlogged=true:
+        state: ${stairs_base_block}[facing=north,half=bottom,shape=inner_left,waterlogged=true]
+        model:
+          path: ${stairs_model}_inner
+          uvlock: true
+          y: 180
+      facing=north,half=bottom,shape=inner_right,waterlogged=true:
+        state: ${stairs_base_block}[facing=north,half=bottom,shape=inner_right,waterlogged=true]
+        model:
+          path: ${stairs_model}_inner
+          uvlock: true
+          y: 270
+      facing=north,half=bottom,shape=outer_left,waterlogged=true:
+        state: ${stairs_base_block}[facing=north,half=bottom,shape=outer_left,waterlogged=true]
+        model:
+          path: ${stairs_model}_outer
+          uvlock: true
+          y: 180
+      facing=north,half=bottom,shape=outer_right,waterlogged=true:
+        state: ${stairs_base_block}[facing=north,half=bottom,shape=outer_right,waterlogged=true]
+        model:
+          path: ${stairs_model}_outer
+          uvlock: true
+          y: 270
+      facing=north,half=bottom,shape=straight,waterlogged=true:
+        state: ${stairs_base_block}[facing=north,half=bottom,shape=straight,waterlogged=true]
+        model:
+          path: ${stairs_model}
+          uvlock: true
+          y: 270
+      facing=north,half=top,shape=inner_left,waterlogged=true:
+        state: ${stairs_base_block}[facing=north,half=top,shape=inner_left,waterlogged=true]
+        model:
+          path: ${stairs_model}_inner
+          uvlock: true
+          x: 180
+          y: 270
+      facing=north,half=top,shape=inner_right,waterlogged=true:
+        state: ${stairs_base_block}[facing=north,half=top,shape=inner_right,waterlogged=true]
+        model:
+          path: ${stairs_model}_inner
+          uvlock: true
+          x: 180
+      facing=north,half=top,shape=outer_left,waterlogged=true:
+        state: ${stairs_base_block}[facing=north,half=top,shape=outer_left,waterlogged=true]
+        model:
+          path: ${stairs_model}_outer
+          uvlock: true
+          x: 180
+          y: 270
+      facing=north,half=top,shape=outer_right,waterlogged=true:
+        state: ${stairs_base_block}[facing=north,half=top,shape=outer_right,waterlogged=true]
+        model:
+          path: ${stairs_model}_outer
+          uvlock: true
+          x: 180
+      facing=north,half=top,shape=straight,waterlogged=true:
+        state: ${stairs_base_block}[facing=north,half=top,shape=straight,waterlogged=true]
+        model:
+          path: ${stairs_model}
+          uvlock: true
+          x: 180
+          y: 270
+      facing=south,half=bottom,shape=inner_left,waterlogged=true:
+        state: ${stairs_base_block}[facing=south,half=bottom,shape=inner_left,waterlogged=true]
+        model:
+          path: ${stairs_model}_inner
+      facing=south,half=bottom,shape=inner_right,waterlogged=true:
+        state: ${stairs_base_block}[facing=south,half=bottom,shape=inner_right,waterlogged=true]
+        model:
+          path: ${stairs_model}_inner
+          uvlock: true
+          y: 90
+      facing=south,half=bottom,shape=outer_left,waterlogged=true:
+        state: ${stairs_base_block}[facing=south,half=bottom,shape=outer_left,waterlogged=true]
+        model:
+          path: ${stairs_model}_outer
+      facing=south,half=bottom,shape=outer_right,waterlogged=true:
+        state: ${stairs_base_block}[facing=south,half=bottom,shape=outer_right,waterlogged=true]
+        model:
+          path: ${stairs_model}_outer
+          uvlock: true
+          y: 90
+      facing=south,half=bottom,shape=straight,waterlogged=true:
+        state: ${stairs_base_block}[facing=south,half=bottom,shape=straight,waterlogged=true]
+        model:
+          path: ${stairs_model}
+          uvlock: true
+          y: 90
+      facing=south,half=top,shape=inner_left,waterlogged=true:
+        state: ${stairs_base_block}[facing=south,half=top,shape=inner_left,waterlogged=true]
+        model:
+          path: ${stairs_model}_inner
+          uvlock: true
+          x: 180
+          y: 90
+      facing=south,half=top,shape=inner_right,waterlogged=true:
+        state: ${stairs_base_block}[facing=south,half=top,shape=inner_right,waterlogged=true]
+        model:
+          path: ${stairs_model}_inner
+          uvlock: true
+          x: 180
+          y: 180
+      facing=south,half=top,shape=outer_left,waterlogged=true:
+        state: ${stairs_base_block}[facing=south,half=top,shape=outer_left,waterlogged=true]
+        model:
+          path: ${stairs_model}_outer
+          uvlock: true
+          x: 180
+          y: 90
+      facing=south,half=top,shape=outer_right,waterlogged=true:
+        state: ${stairs_base_block}[facing=south,half=top,shape=outer_right,waterlogged=true]
+        model:
+          path: ${stairs_model}_outer
+          uvlock: true
+          x: 180
+          y: 180
+      facing=south,half=top,shape=straight,waterlogged=true:
+        state: ${stairs_base_block}[facing=south,half=top,shape=straight,waterlogged=true]
+        model:
+          path: ${stairs_model}
+          uvlock: true
+          x: 180
+          y: 90
+      facing=west,half=bottom,shape=inner_left,waterlogged=true:
+        state: ${stairs_base_block}[facing=west,half=bottom,shape=inner_left,waterlogged=true]
+        model:
+          path: ${stairs_model}_inner
+          uvlock: true
+          y: 90
+      facing=west,half=bottom,shape=inner_right,waterlogged=true:
+        state: ${stairs_base_block}[facing=west,half=bottom,shape=inner_right,waterlogged=true]
+        model:
+          path: ${stairs_model}_inner
+          uvlock: true
+          y: 180
+      facing=west,half=bottom,shape=outer_left,waterlogged=true:
+        state: ${stairs_base_block}[facing=west,half=bottom,shape=outer_left,waterlogged=true]
+        model:
+          path: ${stairs_model}_outer
+          uvlock: true
+          y: 90
+      facing=west,half=bottom,shape=outer_right,waterlogged=true:
+        state: ${stairs_base_block}[facing=west,half=bottom,shape=outer_right,waterlogged=true]
+        model:
+          path: ${stairs_model}_outer
+          uvlock: true
+          y: 180
+      facing=west,half=bottom,shape=straight,waterlogged=true:
+        state: ${stairs_base_block}[facing=west,half=bottom,shape=straight,waterlogged=true]
+        model:
+          path: ${stairs_model}
+          uvlock: true
+          y: 180
+      facing=west,half=top,shape=inner_left,waterlogged=true:
+        state: ${stairs_base_block}[facing=west,half=top,shape=inner_left,waterlogged=true]
+        model:
+          path: ${stairs_model}_inner
+          uvlock: true
+          x: 180
+          y: 180
+      facing=west,half=top,shape=inner_right,waterlogged=true:
+        state: ${stairs_base_block}[facing=west,half=top,shape=inner_right,waterlogged=true]
+        model:
+          path: ${stairs_model}_inner
+          uvlock: true
+          x: 180
+          y: 270
+      facing=west,half=top,shape=outer_left,waterlogged=true:
+        state: ${stairs_base_block}[facing=west,half=top,shape=outer_left,waterlogged=true]
+        model:
+          path: ${stairs_model}_outer
+          uvlock: true
+          x: 180
+          y: 180
+      facing=west,half=top,shape=outer_right,waterlogged=true:
+        state: ${stairs_base_block}[facing=west,half=top,shape=outer_right,waterlogged=true]
+        model:
+          path: ${stairs_model}_outer
+          uvlock: true
+          x: 180
+          y: 270
+      facing=west,half=top,shape=straight,waterlogged=true:
+        state: ${stairs_base_block}[facing=west,half=top,shape=straight,waterlogged=true]
+        model:
+          path: ${stairs_model}
+          uvlock: true
+          x: 180
+          y: 180
+    variants:
+      waterlogged=true:
+        settings:
+          resistance: 1200.0
+          burnable: false
+          fluid_state: water
+      facing=east,half=bottom,shape=inner_left,waterlogged=false:
+        appearance: facing=east,half=bottom,shape=inner_left,waterlogged=false
+      facing=east,half=bottom,shape=inner_right,waterlogged=false:
+        appearance: facing=east,half=bottom,shape=inner_right,waterlogged=false
+      facing=east,half=bottom,shape=outer_left,waterlogged=false:
+        appearance: facing=east,half=bottom,shape=outer_left,waterlogged=false
+      facing=east,half=bottom,shape=outer_right,waterlogged=false:
+        appearance: facing=east,half=bottom,shape=outer_right,waterlogged=false
+      facing=east,half=bottom,shape=straight,waterlogged=false:
+        appearance: facing=east,half=bottom,shape=straight,waterlogged=false
+      facing=east,half=top,shape=inner_left,waterlogged=false:
+        appearance: facing=east,half=top,shape=inner_left,waterlogged=false
+      facing=east,half=top,shape=inner_right,waterlogged=false:
+        appearance: facing=east,half=top,shape=inner_right,waterlogged=false
+      facing=east,half=top,shape=outer_left,waterlogged=false:
+        appearance: facing=east,half=top,shape=outer_left,waterlogged=false
+      facing=east,half=top,shape=outer_right,waterlogged=false:
+        appearance: facing=east,half=top,shape=outer_right,waterlogged=false
+      facing=east,half=top,shape=straight,waterlogged=false:
+        appearance: facing=east,half=top,shape=straight,waterlogged=false
+      facing=north,half=bottom,shape=inner_left,waterlogged=false:
+        appearance: facing=north,half=bottom,shape=inner_left,waterlogged=false
+      facing=north,half=bottom,shape=inner_right,waterlogged=false:
+        appearance: facing=north,half=bottom,shape=inner_right,waterlogged=false
+      facing=north,half=bottom,shape=outer_left,waterlogged=false:
+        appearance: facing=north,half=bottom,shape=outer_left,waterlogged=false
+      facing=north,half=bottom,shape=outer_right,waterlogged=false:
+        appearance: facing=north,half=bottom,shape=outer_right,waterlogged=false
+      facing=north,half=bottom,shape=straight,waterlogged=false:
+        appearance: facing=north,half=bottom,shape=straight,waterlogged=false
+      facing=north,half=top,shape=inner_left,waterlogged=false:
+        appearance: facing=north,half=top,shape=inner_left,waterlogged=false
+      facing=north,half=top,shape=inner_right,waterlogged=false:
+        appearance: facing=north,half=top,shape=inner_right,waterlogged=false
+      facing=north,half=top,shape=outer_left,waterlogged=false:
+        appearance: facing=north,half=top,shape=outer_left,waterlogged=false
+      facing=north,half=top,shape=outer_right,waterlogged=false:
+        appearance: facing=north,half=top,shape=outer_right,waterlogged=false
+      facing=north,half=top,shape=straight,waterlogged=false:
+        appearance: facing=north,half=top,shape=straight,waterlogged=false
+      facing=south,half=bottom,shape=inner_left,waterlogged=false:
+        appearance: facing=south,half=bottom,shape=inner_left,waterlogged=false
+      facing=south,half=bottom,shape=inner_right,waterlogged=false:
+        appearance: facing=south,half=bottom,shape=inner_right,waterlogged=false
+      facing=south,half=bottom,shape=outer_left,waterlogged=false:
+        appearance: facing=south,half=bottom,shape=outer_left,waterlogged=false
+      facing=south,half=bottom,shape=outer_right,waterlogged=false:
+        appearance: facing=south,half=bottom,shape=outer_right,waterlogged=false
+      facing=south,half=bottom,shape=straight,waterlogged=false:
+        appearance: facing=south,half=bottom,shape=straight,waterlogged=false
+      facing=south,half=top,shape=inner_left,waterlogged=false:
+        appearance: facing=south,half=top,shape=inner_left,waterlogged=false
+      facing=south,half=top,shape=inner_right,waterlogged=false:
+        appearance: facing=south,half=top,shape=inner_right,waterlogged=false
+      facing=south,half=top,shape=outer_left,waterlogged=false:
+        appearance: facing=south,half=top,shape=outer_left,waterlogged=false
+      facing=south,half=top,shape=outer_right,waterlogged=false:
+        appearance: facing=south,half=top,shape=outer_right,waterlogged=false
+      facing=south,half=top,shape=straight,waterlogged=false:
+        appearance: facing=south,half=top,shape=straight,waterlogged=false
+      facing=west,half=bottom,shape=inner_left,waterlogged=false:
+        appearance: facing=west,half=bottom,shape=inner_left,waterlogged=false
+      facing=west,half=bottom,shape=inner_right,waterlogged=false:
+        appearance: facing=west,half=bottom,shape=inner_right,waterlogged=false
+      facing=west,half=bottom,shape=outer_left,waterlogged=false:
+        appearance: facing=west,half=bottom,shape=outer_left,waterlogged=false
+      facing=west,half=bottom,shape=outer_right,waterlogged=false:
+        appearance: facing=west,half=bottom,shape=outer_right,waterlogged=false
+      facing=west,half=bottom,shape=straight,waterlogged=false:
+        appearance: facing=west,half=bottom,shape=straight,waterlogged=false
+      facing=west,half=top,shape=inner_left,waterlogged=false:
+        appearance: facing=west,half=top,shape=inner_left,waterlogged=false
+      facing=west,half=top,shape=inner_right,waterlogged=false:
+        appearance: facing=west,half=top,shape=inner_right,waterlogged=false
+      facing=west,half=top,shape=outer_left,waterlogged=false:
+        appearance: facing=west,half=top,shape=outer_left,waterlogged=false
+      facing=west,half=top,shape=outer_right,waterlogged=false:
+        appearance: facing=west,half=top,shape=outer_right,waterlogged=false
+      facing=west,half=top,shape=straight,waterlogged=false:
+        appearance: facing=west,half=top,shape=straight,waterlogged=false
+      facing=east,half=bottom,shape=inner_left,waterlogged=true:
+        appearance: facing=east,half=bottom,shape=inner_left,waterlogged=true
+      facing=east,half=bottom,shape=inner_right,waterlogged=true:
+        appearance: facing=east,half=bottom,shape=inner_right,waterlogged=true
+      facing=east,half=bottom,shape=outer_left,waterlogged=true:
+        appearance: facing=east,half=bottom,shape=outer_left,waterlogged=true
+      facing=east,half=bottom,shape=outer_right,waterlogged=true:
+        appearance: facing=east,half=bottom,shape=outer_right,waterlogged=true
+      facing=east,half=bottom,shape=straight,waterlogged=true:
+        appearance: facing=east,half=bottom,shape=straight,waterlogged=true
+      facing=east,half=top,shape=inner_left,waterlogged=true:
+        appearance: facing=east,half=top,shape=inner_left,waterlogged=true
+      facing=east,half=top,shape=inner_right,waterlogged=true:
+        appearance: facing=east,half=top,shape=inner_right,waterlogged=true
+      facing=east,half=top,shape=outer_left,waterlogged=true:
+        appearance: facing=east,half=top,shape=outer_left,waterlogged=true
+      facing=east,half=top,shape=outer_right,waterlogged=true:
+        appearance: facing=east,half=top,shape=outer_right,waterlogged=true
+      facing=east,half=top,shape=straight,waterlogged=true:
+        appearance: facing=east,half=top,shape=straight,waterlogged=true
+      facing=north,half=bottom,shape=inner_left,waterlogged=true:
+        appearance: facing=north,half=bottom,shape=inner_left,waterlogged=true
+      facing=north,half=bottom,shape=inner_right,waterlogged=true:
+        appearance: facing=north,half=bottom,shape=inner_right,waterlogged=true
+      facing=north,half=bottom,shape=outer_left,waterlogged=true:
+        appearance: facing=north,half=bottom,shape=outer_left,waterlogged=true
+      facing=north,half=bottom,shape=outer_right,waterlogged=true:
+        appearance: facing=north,half=bottom,shape=outer_right,waterlogged=true
+      facing=north,half=bottom,shape=straight,waterlogged=true:
+        appearance: facing=north,half=bottom,shape=straight,waterlogged=true
+      facing=north,half=top,shape=inner_left,waterlogged=true:
+        appearance: facing=north,half=top,shape=inner_left,waterlogged=true
+      facing=north,half=top,shape=inner_right,waterlogged=true:
+        appearance: facing=north,half=top,shape=inner_right,waterlogged=true
+      facing=north,half=top,shape=outer_left,waterlogged=true:
+        appearance: facing=north,half=top,shape=outer_left,waterlogged=true
+      facing=north,half=top,shape=outer_right,waterlogged=true:
+        appearance: facing=north,half=top,shape=outer_right,waterlogged=true
+      facing=north,half=top,shape=straight,waterlogged=true:
+        appearance: facing=north,half=top,shape=straight,waterlogged=true
+      facing=south,half=bottom,shape=inner_left,waterlogged=true:
+        appearance: facing=south,half=bottom,shape=inner_left,waterlogged=true
+      facing=south,half=bottom,shape=inner_right,waterlogged=true:
+        appearance: facing=south,half=bottom,shape=inner_right,waterlogged=true
+      facing=south,half=bottom,shape=outer_left,waterlogged=true:
+        appearance: facing=south,half=bottom,shape=outer_left,waterlogged=true
+      facing=south,half=bottom,shape=outer_right,waterlogged=true:
+        appearance: facing=south,half=bottom,shape=outer_right,waterlogged=true
+      facing=south,half=bottom,shape=straight,waterlogged=true:
+        appearance: facing=south,half=bottom,shape=straight,waterlogged=true
+      facing=south,half=top,shape=inner_left,waterlogged=true:
+        appearance: facing=south,half=top,shape=inner_left,waterlogged=true
+      facing=south,half=top,shape=inner_right,waterlogged=true:
+        appearance: facing=south,half=top,shape=inner_right,waterlogged=true
+      facing=south,half=top,shape=outer_left,waterlogged=true:
+        appearance: facing=south,half=top,shape=outer_left,waterlogged=true
+      facing=south,half=top,shape=outer_right,waterlogged=true:
+        appearance: facing=south,half=top,shape=outer_right,waterlogged=true
+      facing=south,half=top,shape=straight,waterlogged=true:
+        appearance: facing=south,half=top,shape=straight,waterlogged=true
+      facing=west,half=bottom,shape=inner_left,waterlogged=true:
+        appearance: facing=west,half=bottom,shape=inner_left,waterlogged=true
+      facing=west,half=bottom,shape=inner_right,waterlogged=true:
+        appearance: facing=west,half=bottom,shape=inner_right,waterlogged=true
+      facing=west,half=bottom,shape=outer_left,waterlogged=true:
+        appearance: facing=west,half=bottom,shape=outer_left,waterlogged=true
+      facing=west,half=bottom,shape=outer_right,waterlogged=true:
+        appearance: facing=west,half=bottom,shape=outer_right,waterlogged=true
+      facing=west,half=bottom,shape=straight,waterlogged=true:
+        appearance: facing=west,half=bottom,shape=straight,waterlogged=true
+      facing=west,half=top,shape=inner_left,waterlogged=true:
+        appearance: facing=west,half=top,shape=inner_left,waterlogged=true
+      facing=west,half=top,shape=inner_right,waterlogged=true:
+        appearance: facing=west,half=top,shape=inner_right,waterlogged=true
+      facing=west,half=top,shape=outer_left,waterlogged=true:
+        appearance: facing=west,half=top,shape=outer_left,waterlogged=true
+      facing=west,half=top,shape=outer_right,waterlogged=true:
+        appearance: facing=west,half=top,shape=outer_right,waterlogged=true
+      facing=west,half=top,shape=straight,waterlogged=true:
+        appearance: facing=west,half=top,shape=straight,waterlogged=true
+  default:block_state/pressure_plate:
+    properties:
+      powered:
+        type: boolean
+        default: false
+    appearances:
+      normal:
+        auto_state: pressure_plate
+        model:
+          path: ${pressure_plate_model}
+          generation:
+            parent: minecraft:block/pressure_plate_up
+            textures:
+              texture: ${pressure_plate_texture}
+      powered:
+        auto_state: pressure_plate
+        model:
+          path: ${pressure_plate_model}_powered
+          generation:
+            parent: minecraft:block/pressure_plate_down
+            textures:
+              texture: ${pressure_plate_texture}
+    variants:
+      powered=false:
+        appearance: normal
+      powered=true:
+        appearance: powered
+  default:block_state/fence:
+    properties:
+      north:
+        type: boolean
+        default: false
+      east:
+        type: boolean
+        default: false
+      south:
+        type: boolean
+        default: false
+      west:
+        type: boolean
+        default: false
+      waterlogged:
+        type: boolean
+        default: false
+    appearances:
+      east=false,north=false,south=false,waterlogged=false,west=false:
+        state: ${fence_base_block}[east=false,north=false,south=false,waterlogged=false,west=false]
+        entity_renderer:
+          - item: ${fence_post_item}
+            rotation: 180
+            scale: 1.05,1.01,1.05
+            translation: 0,0.0001,0
+      east=true,north=false,south=false,waterlogged=false,west=false:
+        state: ${fence_base_block}[east=true,north=false,south=false,waterlogged=false,west=false]
+        entity_renderer:
+          - item: ${fence_post_item}
+            rotation: 180
+            scale: 1.05,1.01,1.05
+            translation: 0,0.0001,0
+          - item: ${fence_side_item}
+            rotation: 270
+      east=false,north=true,south=false,waterlogged=false,west=false:
+        state: ${fence_base_block}[east=false,north=true,south=false,waterlogged=false,west=false]
+        entity_renderer:
+          - item: ${fence_post_item}
+            rotation: 180
+            scale: 1.05,1.01,1.05
+            translation: 0,0.0001,0
+          - item: ${fence_side_item}
+            rotation: 180
+      east=false,north=false,south=true,waterlogged=false,west=false:
+        state: ${fence_base_block}[east=false,north=false,south=true,waterlogged=false,west=false]
+        entity_renderer:
+          - item: ${fence_post_item}
+            rotation: 180
+            scale: 1.05,1.01,1.05
+            translation: 0,0.0001,0
+          - item: ${fence_side_item}
+            rotation: 0
+      east=false,north=false,south=false,waterlogged=false,west=true:
+        state: ${fence_base_block}[east=false,north=false,south=false,waterlogged=false,west=true]
+        entity_renderer:
+          - item: ${fence_post_item}
+            rotation: 180
+            scale: 1.05,1.01,1.05
+            translation: 0,0.0001,0
+          - item: ${fence_side_item}
+            rotation: 90
+      east=true,north=true,south=false,waterlogged=false,west=false:
+        state: ${fence_base_block}[east=true,north=true,south=false,waterlogged=false,west=false]
+        entity_renderer:
+          - item: ${fence_post_item}
+            rotation: 180
+            scale: 1.05,1.01,1.05
+            translation: 0,0.0001,0
+          - item: ${fence_side_item}
+            rotation: 180
+          - item: ${fence_side_item}
+            rotation: 270
+      east=true,north=false,south=true,waterlogged=false,west=false:
+        state: ${fence_base_block}[east=true,north=false,south=true,waterlogged=false,west=false]
+        entity_renderer:
+          - item: ${fence_post_item}
+            rotation: 180
+            scale: 1.05,1.01,1.05
+            translation: 0,0.0001,0
+          - item: ${fence_side_item}
+            rotation: 0
+          - item: ${fence_side_item}
+            rotation: 270
+      east=true,north=false,south=false,waterlogged=false,west=true:
+        state: ${fence_base_block}[east=true,north=false,south=false,waterlogged=false,west=true]
+        entity_renderer:
+          - item: ${fence_post_item}
+            rotation: 180
+            scale: 1.05,1.01,1.05
+            translation: 0,0.0001,0
+          - item: ${fence_side_item}
+            rotation: 90
+          - item: ${fence_side_item}
+            rotation: 270
+      east=false,north=true,south=true,waterlogged=false,west=false:
+        state: ${fence_base_block}[east=false,north=true,south=true,waterlogged=false,west=false]
+        entity_renderer:
+          - item: ${fence_post_item}
+            rotation: 180
+            scale: 1.05,1.01,1.05
+            translation: 0,0.0001,0
+          - item: ${fence_side_item}
+            rotation: 0
+          - item: ${fence_side_item}
+            rotation: 180
+      east=false,north=true,south=false,waterlogged=false,west=true:
+        state: ${fence_base_block}[east=false,north=true,south=false,waterlogged=false,west=true]
+        entity_renderer:
+          - item: ${fence_post_item}
+            rotation: 180
+            scale: 1.05,1.01,1.05
+            translation: 0,0.0001,0
+          - item: ${fence_side_item}
+            rotation: 90
+          - item: ${fence_side_item}
+            rotation: 180
+      east=false,north=false,south=true,waterlogged=false,west=true:
+        state: ${fence_base_block}[east=false,north=false,south=true,waterlogged=false,west=true]
+        entity_renderer:
+          - item: ${fence_post_item}
+            rotation: 180
+            scale: 1.05,1.01,1.05
+            translation: 0,0.0001,0
+          - item: ${fence_side_item}
+            rotation: 0
+          - item: ${fence_side_item}
+            rotation: 90
+      east=true,north=true,south=true,waterlogged=false,west=false:
+        state: ${fence_base_block}[east=true,north=true,south=true,waterlogged=false,west=false]
+        entity_renderer:
+          - item: ${fence_post_item}
+            rotation: 180
+            scale: 1.05,1.01,1.05
+            translation: 0,0.0001,0
+          - item: ${fence_side_item}
+            rotation: 0
+          - item: ${fence_side_item}
+            rotation: 180
+          - item: ${fence_side_item}
+            rotation: 270
+      east=true,north=true,south=false,waterlogged=false,west=true:
+        state: ${fence_base_block}[east=true,north=true,south=false,waterlogged=false,west=true]
+        entity_renderer:
+          - item: ${fence_post_item}
+            rotation: 180
+            scale: 1.05,1.01,1.05
+            translation: 0,0.0001,0
+          - item: ${fence_side_item}
+            rotation: 90
+          - item: ${fence_side_item}
+            rotation: 180
+          - item: ${fence_side_item}
+            rotation: 270
+      east=true,north=false,south=true,waterlogged=false,west=true:
+        state: ${fence_base_block}[east=true,north=false,south=true,waterlogged=false,west=true]
+        entity_renderer:
+          - item: ${fence_post_item}
+            rotation: 180
+            scale: 1.05,1.01,1.05
+            translation: 0,0.0001,0
+          - item: ${fence_side_item}
+            rotation: 0
+          - item: ${fence_side_item}
+            rotation: 90
+          - item: ${fence_side_item}
+            rotation: 270
+      east=false,north=true,south=true,waterlogged=false,west=true:
+        state: ${fence_base_block}[east=false,north=true,south=true,waterlogged=false,west=true]
+        entity_renderer:
+          - item: ${fence_post_item}
+            rotation: 180
+            scale: 1.05,1.01,1.05
+            translation: 0,0.0001,0
+          - item: ${fence_side_item}
+            rotation: 0
+          - item: ${fence_side_item}
+            rotation: 90
+          - item: ${fence_side_item}
+            rotation: 180
+      east=true,north=true,south=true,waterlogged=false,west=true:
+        state: ${fence_base_block}[east=true,north=true,south=true,waterlogged=false,west=true]
+        entity_renderer:
+          - item: ${fence_post_item}
+            rotation: 180
+            scale: 1.05,1.01,1.05
+            translation: 0,0.0001,0
+          - item: ${fence_side_item}
+            rotation: 0
+          - item: ${fence_side_item}
+            rotation: 90
+          - item: ${fence_side_item}
+            rotation: 180
+          - item: ${fence_side_item}
+            rotation: 270
+      east=false,north=false,south=false,waterlogged=true,west=false:
+        state: ${fence_base_block}[east=false,north=false,south=false,waterlogged=true,west=false]
+        entity_renderer:
+          - item: ${fence_post_item}
+            rotation: 180
+            scale: 1.05,1.01,1.05
+            translation: 0,0.0001,0
+      east=true,north=false,south=false,waterlogged=true,west=false:
+        state: ${fence_base_block}[east=true,north=false,south=false,waterlogged=true,west=false]
+        entity_renderer:
+          - item: ${fence_post_item}
+            rotation: 180
+            scale: 1.05,1.01,1.05
+            translation: 0,0.0001,0
+          - item: ${fence_side_item}
+            rotation: 270
+      east=false,north=true,south=false,waterlogged=true,west=false:
+        state: ${fence_base_block}[east=false,north=true,south=false,waterlogged=true,west=false]
+        entity_renderer:
+          - item: ${fence_post_item}
+            rotation: 180
+            scale: 1.05,1.01,1.05
+            translation: 0,0.0001,0
+          - item: ${fence_side_item}
+            rotation: 180
+      east=false,north=false,south=true,waterlogged=true,west=false:
+        state: ${fence_base_block}[east=false,north=false,south=true,waterlogged=true,west=false]
+        entity_renderer:
+          - item: ${fence_post_item}
+            rotation: 180
+            scale: 1.05,1.01,1.05
+            translation: 0,0.0001,0
+          - item: ${fence_side_item}
+            rotation: 0
+      east=false,north=false,south=false,waterlogged=true,west=true:
+        state: ${fence_base_block}[east=false,north=false,south=false,waterlogged=true,west=true]
+        entity_renderer:
+          - item: ${fence_post_item}
+            rotation: 180
+            scale: 1.05,1.01,1.05
+            translation: 0,0.0001,0
+          - item: ${fence_side_item}
+            rotation: 90
+      east=true,north=true,south=false,waterlogged=true,west=false:
+        state: ${fence_base_block}[east=true,north=true,south=false,waterlogged=true,west=false]
+        entity_renderer:
+          - item: ${fence_post_item}
+            rotation: 180
+            scale: 1.05,1.01,1.05
+            translation: 0,0.0001,0
+          - item: ${fence_side_item}
+            rotation: 180
+          - item: ${fence_side_item}
+            rotation: 270
+      east=true,north=false,south=true,waterlogged=true,west=false:
+        state: ${fence_base_block}[east=true,north=false,south=true,waterlogged=true,west=false]
+        entity_renderer:
+          - item: ${fence_post_item}
+            rotation: 180
+            scale: 1.05,1.01,1.05
+            translation: 0,0.0001,0
+          - item: ${fence_side_item}
+            rotation: 0
+          - item: ${fence_side_item}
+            rotation: 270
+      east=true,north=false,south=false,waterlogged=true,west=true:
+        state: ${fence_base_block}[east=true,north=false,south=false,waterlogged=true,west=true]
+        entity_renderer:
+          - item: ${fence_post_item}
+            rotation: 180
+            scale: 1.05,1.01,1.05
+            translation: 0,0.0001,0
+          - item: ${fence_side_item}
+            rotation: 90
+          - item: ${fence_side_item}
+            rotation: 270
+      east=false,north=true,south=true,waterlogged=true,west=false:
+        state: ${fence_base_block}[east=false,north=true,south=true,waterlogged=true,west=false]
+        entity_renderer:
+          - item: ${fence_post_item}
+            rotation: 180
+            scale: 1.05,1.01,1.05
+            translation: 0,0.0001,0
+          - item: ${fence_side_item}
+            rotation: 0
+          - item: ${fence_side_item}
+            rotation: 180
+      east=false,north=true,south=false,waterlogged=true,west=true:
+        state: ${fence_base_block}[east=false,north=true,south=false,waterlogged=true,west=true]
+        entity_renderer:
+          - item: ${fence_post_item}
+            rotation: 180
+            scale: 1.05,1.01,1.05
+            translation: 0,0.0001,0
+          - item: ${fence_side_item}
+            rotation: 90
+          - item: ${fence_side_item}
+            rotation: 180
+      east=false,north=false,south=true,waterlogged=true,west=true:
+        state: ${fence_base_block}[east=false,north=false,south=true,waterlogged=true,west=true]
+        entity_renderer:
+          - item: ${fence_post_item}
+            rotation: 180
+            scale: 1.05,1.01,1.05
+            translation: 0,0.0001,0
+          - item: ${fence_side_item}
+            rotation: 0
+          - item: ${fence_side_item}
+            rotation: 90
+      east=true,north=true,south=true,waterlogged=true,west=false:
+        state: ${fence_base_block}[east=true,north=true,south=true,waterlogged=true,west=false]
+        entity_renderer:
+          - item: ${fence_post_item}
+            rotation: 180
+            scale: 1.05,1.01,1.05
+            translation: 0,0.0001,0
+          - item: ${fence_side_item}
+            rotation: 0
+          - item: ${fence_side_item}
+            rotation: 180
+          - item: ${fence_side_item}
+            rotation: 270
+      east=true,north=true,south=false,waterlogged=true,west=true:
+        state: ${fence_base_block}[east=true,north=true,south=false,waterlogged=true,west=true]
+        entity_renderer:
+          - item: ${fence_post_item}
+            rotation: 180
+            scale: 1.05,1.01,1.05
+            translation: 0,0.0001,0
+          - item: ${fence_side_item}
+            rotation: 90
+          - item: ${fence_side_item}
+            rotation: 180
+          - item: ${fence_side_item}
+            rotation: 270
+      east=true,north=false,south=true,waterlogged=true,west=true:
+        state: ${fence_base_block}[east=true,north=false,south=true,waterlogged=true,west=true]
+        entity_renderer:
+          - item: ${fence_post_item}
+            rotation: 180
+            scale: 1.05,1.01,1.05
+            translation: 0,0.0001,0
+          - item: ${fence_side_item}
+            rotation: 0
+          - item: ${fence_side_item}
+            rotation: 90
+          - item: ${fence_side_item}
+            rotation: 270
+      east=false,north=true,south=true,waterlogged=true,west=true:
+        state: ${fence_base_block}[east=false,north=true,south=true,waterlogged=true,west=true]
+        entity_renderer:
+          - item: ${fence_post_item}
+            rotation: 180
+            scale: 1.05,1.01,1.05
+            translation: 0,0.0001,0
+          - item: ${fence_side_item}
+            rotation: 0
+          - item: ${fence_side_item}
+            rotation: 90
+          - item: ${fence_side_item}
+            rotation: 180
+      east=true,north=true,south=true,waterlogged=true,west=true:
+        state: ${fence_base_block}[east=true,north=true,south=true,waterlogged=true,west=true]
+        entity_renderer:
+          - item: ${fence_post_item}
+            rotation: 180
+            scale: 1.05,1.01,1.05
+            translation: 0,0.0001,0
+          - item: ${fence_side_item}
+            rotation: 0
+          - item: ${fence_side_item}
+            rotation: 90
+          - item: ${fence_side_item}
+            rotation: 180
+          - item: ${fence_side_item}
+            rotation: 270
+    variants:
+      waterlogged=true:
+        settings:
+          resistance: 1200.0
+          burnable: false
+          fluid_state: water
+      east=false,north=false,south=false,waterlogged=false,west=false:
+        appearance: east=false,north=false,south=false,waterlogged=false,west=false
+      east=true,north=false,south=false,waterlogged=false,west=false:
+        appearance: east=true,north=false,south=false,waterlogged=false,west=false
+      east=false,north=true,south=false,waterlogged=false,west=false:
+        appearance: east=false,north=true,south=false,waterlogged=false,west=false
+      east=false,north=false,south=true,waterlogged=false,west=false:
+        appearance: east=false,north=false,south=true,waterlogged=false,west=false
+      east=false,north=false,south=false,waterlogged=false,west=true:
+        appearance: east=false,north=false,south=false,waterlogged=false,west=true
+      east=true,north=true,south=false,waterlogged=false,west=false:
+        appearance: east=true,north=true,south=false,waterlogged=false,west=false
+      east=true,north=false,south=true,waterlogged=false,west=false:
+        appearance: east=true,north=false,south=true,waterlogged=false,west=false
+      east=true,north=false,south=false,waterlogged=false,west=true:
+        appearance: east=true,north=false,south=false,waterlogged=false,west=true
+      east=false,north=true,south=true,waterlogged=false,west=false:
+        appearance: east=false,north=true,south=true,waterlogged=false,west=false
+      east=false,north=true,south=false,waterlogged=false,west=true:
+        appearance: east=false,north=true,south=false,waterlogged=false,west=true
+      east=false,north=false,south=true,waterlogged=false,west=true:
+        appearance: east=false,north=false,south=true,waterlogged=false,west=true
+      east=true,north=true,south=true,waterlogged=false,west=false:
+        appearance: east=true,north=true,south=true,waterlogged=false,west=false
+      east=true,north=true,south=false,waterlogged=false,west=true:
+        appearance: east=true,north=true,south=false,waterlogged=false,west=true
+      east=true,north=false,south=true,waterlogged=false,west=true:
+        appearance: east=true,north=false,south=true,waterlogged=false,west=true
+      east=false,north=true,south=true,waterlogged=false,west=true:
+        appearance: east=false,north=true,south=true,waterlogged=false,west=true
+      east=true,north=true,south=true,waterlogged=false,west=true:
+        appearance: east=true,north=true,south=true,waterlogged=false,west=true
+      east=false,north=false,south=false,waterlogged=true,west=false:
+        appearance: east=false,north=false,south=false,waterlogged=true,west=false
+      east=true,north=false,south=false,waterlogged=true,west=false:
+        appearance: east=true,north=false,south=false,waterlogged=true,west=false
+      east=false,north=true,south=false,waterlogged=true,west=false:
+        appearance: east=false,north=true,south=false,waterlogged=true,west=false
+      east=false,north=false,south=true,waterlogged=true,west=false:
+        appearance: east=false,north=false,south=true,waterlogged=true,west=false
+      east=false,north=false,south=false,waterlogged=true,west=true:
+        appearance: east=false,north=false,south=false,waterlogged=true,west=true
+      east=true,north=true,south=false,waterlogged=true,west=false:
+        appearance: east=true,north=true,south=false,waterlogged=true,west=false
+      east=true,north=false,south=true,waterlogged=true,west=false:
+        appearance: east=true,north=false,south=true,waterlogged=true,west=false
+      east=true,north=false,south=false,waterlogged=true,west=true:
+        appearance: east=true,north=false,south=false,waterlogged=true,west=true
+      east=false,north=true,south=true,waterlogged=true,west=false:
+        appearance: east=false,north=true,south=true,waterlogged=true,west=false
+      east=false,north=true,south=false,waterlogged=true,west=true:
+        appearance: east=false,north=true,south=false,waterlogged=true,west=true
+      east=false,north=false,south=true,waterlogged=true,west=true:
+        appearance: east=false,north=false,south=true,waterlogged=true,west=true
+      east=true,north=true,south=true,waterlogged=true,west=false:
+        appearance: east=true,north=true,south=true,waterlogged=true,west=false
+      east=true,north=true,south=false,waterlogged=true,west=true:
+        appearance: east=true,north=true,south=false,waterlogged=true,west=true
+      east=true,north=false,south=true,waterlogged=true,west=true:
+        appearance: east=true,north=false,south=true,waterlogged=true,west=true
+      east=false,north=true,south=true,waterlogged=true,west=true:
+        appearance: east=false,north=true,south=true,waterlogged=true,west=true
+      east=true,north=true,south=true,waterlogged=true,west=true:
+        appearance: east=true,north=true,south=true,waterlogged=true,west=true
+  default:block_state/button:
+    properties:
+      powered:
+        type: boolean
+        default: false
+      face:
+        type: anchor_type
+        default: floor
+      facing:
+        type: 4-direction
+        default: north
+    appearances:
+      face=floor,facing=east,powered=true:
+        state: ${button_base_block}[face=floor,facing=east,powered=true]
+        entity_renderer:
+          item: ${button_pressed_item}
+          rotation: 0,90,0
+          scale: 1.01
+          translation: 0,0.005,0
+      face=floor,facing=west,powered=true:
+        state: ${button_base_block}[face=floor,facing=west,powered=true]
+        entity_renderer:
+          item: ${button_pressed_item}
+          rotation: 0,-90,0
+          scale: 1.01
+          translation: 0,0.005,0
+      face=floor,facing=east,powered=false:
+        state: ${button_base_block}[face=floor,facing=east,powered=false]
+        entity_renderer:
+          item: ${button_not_pressed_item}
+          rotation: 0,90,0
+          scale: 1.01
+          translation: 0,0.005,0
+      face=floor,facing=west,powered=false:
+        state: ${button_base_block}[face=floor,facing=west,powered=false]
+        entity_renderer:
+          item: ${button_not_pressed_item}
+          rotation: 0,-90,0
+          scale: 1.01
+          translation: 0,0.005,0
+      face=floor,facing=south,powered=true:
+        state: ${button_base_block}[face=floor,facing=south,powered=true]
+        entity_renderer:
+          item: ${button_pressed_item}
+          scale: 1.01
+          translation: 0,0.005,0
+      face=floor,facing=north,powered=true:
+        state: ${button_base_block}[face=floor,facing=north,powered=true]
+        entity_renderer:
+          item: ${button_pressed_item}
+          rotation: 0,180,0
+          scale: 1.01
+          translation: 0,0.005,0
+      face=floor,facing=south,powered=false:
+        state: ${button_base_block}[face=floor,facing=south,powered=false]
+        entity_renderer:
+          item: ${button_not_pressed_item}
+          scale: 1.01
+          translation: 0,0.005,0
+      face=floor,facing=north,powered=false:
+        state: ${button_base_block}[face=floor,facing=north,powered=false]
+        entity_renderer:
+          item: ${button_not_pressed_item}
+          rotation: 0,180,0
+          scale: 1.01
+          translation: 0,0.005,0
+      face=wall,facing=north,powered=true:
+        state: ${button_base_block}[face=wall,facing=north,powered=true]
+        entity_renderer:
+          item: ${button_pressed_item}
+          rotation: -90,0,0
+          scale: 1.01
+          translation: 0,0,-0.005
+      face=wall,facing=south,powered=true:
+        state: ${button_base_block}[face=wall,facing=south,powered=true]
+        entity_renderer:
+          item: ${button_pressed_item}
+          rotation: 90,0,180
+          scale: 1.01
+          translation: 0,0,0.005
+      face=wall,facing=north,powered=false:
+        state: ${button_base_block}[face=wall,facing=north,powered=false]
+        entity_renderer:
+          item: ${button_not_pressed_item}
+          rotation: -90,0,0
+          scale: 1.01
+          translation: 0,0,-0.005
+      face=wall,facing=south,powered=false:
+        state: ${button_base_block}[face=wall,facing=south,powered=false]
+        entity_renderer:
+          item: ${button_not_pressed_item}
+          rotation: 90,0,180
+          scale: 1.01
+          translation: 0,0,0.005
+      face=wall,facing=west,powered=true:
+        state: ${button_base_block}[face=wall,facing=west,powered=true]
+        entity_renderer:
+          item: ${button_pressed_item}
+          rotation: 0,90,90
+          scale: 1.01
+          translation: -0.005,0,0
+      face=wall,facing=east,powered=true:
+        state: ${button_base_block}[face=wall,facing=east,powered=true]
+        entity_renderer:
+          item: ${button_pressed_item}
+          rotation: 0,270,-90
+          scale: 1.01
+          translation: 0.005,0,0
+      face=wall,facing=west,powered=false:
+        state: ${button_base_block}[face=wall,facing=west,powered=false]
+        entity_renderer:
+          item: ${button_not_pressed_item}
+          rotation: 0,90,90
+          scale: 1.01
+          translation: -0.005,0,0
+      face=wall,facing=east,powered=false:
+        state: ${button_base_block}[face=wall,facing=east,powered=false]
+        entity_renderer:
+          item: ${button_not_pressed_item}
+          rotation: 0,270,-90
+          scale: 1.01
+          translation: 0.005,0,0
+      face=ceiling,facing=north,powered=true:
+        state: ${button_base_block}[face=ceiling,facing=north,powered=true]
+        entity_renderer:
+          item: ${button_pressed_item}
+          rotation: 0,180,180
+          scale: 1.01
+          translation: 0,-0.005,0
+      face=ceiling,facing=south,powered=true:
+        state: ${button_base_block}[face=ceiling,facing=south,powered=true]
+        entity_renderer:
+          item: ${button_pressed_item}
+          rotation: 0,0,180
+          scale: 1.01
+          translation: 0,-0.005,0
+      face=ceiling,facing=north,powered=false:
+        state: ${button_base_block}[face=ceiling,facing=north,powered=false]
+        entity_renderer:
+          item: ${button_not_pressed_item}
+          rotation: 0,180,180
+          scale: 1.01
+          translation: 0,-0.005,0
+      face=ceiling,facing=south,powered=false:
+        state: ${button_base_block}[face=ceiling,facing=south,powered=false]
+        entity_renderer:
+          item: ${button_not_pressed_item}
+          rotation: 0,0,180
+          scale: 1.01
+          translation: 0,-0.005,0
+      face=ceiling,facing=west,powered=true:
+        state: ${button_base_block}[face=ceiling,facing=west,powered=true]
+        entity_renderer:
+          item: ${button_pressed_item}
+          rotation: 0,90,180
+          scale: 1.01
+          translation: 0,-0.005,0
+      face=ceiling,facing=east,powered=true:
+        state: ${button_base_block}[face=ceiling,facing=east,powered=true]
+        entity_renderer:
+          item: ${button_pressed_item}
+          rotation: -90,-90,-90
+          scale: 1.01
+          translation: 0,-0.005,0
+      face=ceiling,facing=west,powered=false:
+        state: ${button_base_block}[face=ceiling,facing=west,powered=false]
+        entity_renderer:
+          item: ${button_not_pressed_item}
+          rotation: 0,90,180
+          scale: 1.01
+          translation: 0,-0.005,0
+      face=ceiling,facing=east,powered=false:
+        state: ${button_base_block}[face=ceiling,facing=east,powered=false]
+        entity_renderer:
+          item: ${button_not_pressed_item}
+          rotation: -90,-90,-90
+          scale: 1.01
+          translation: 0,-0.005,0
+    variants:
+      face=floor,facing=east,powered=true:
+        appearance: face=floor,facing=east,powered=true
+      face=floor,facing=west,powered=true:
+        appearance: face=floor,facing=west,powered=true
+      face=floor,facing=east,powered=false:
+        appearance: face=floor,facing=east,powered=false
+      face=floor,facing=west,powered=false:
+        appearance: face=floor,facing=west,powered=false
+      face=floor,facing=south,powered=true:
+        appearance: face=floor,facing=south,powered=true
+      face=floor,facing=north,powered=true:
+        appearance: face=floor,facing=north,powered=true
+      face=floor,facing=south,powered=false:
+        appearance: face=floor,facing=south,powered=false
+      face=floor,facing=north,powered=false:
+        appearance: face=floor,facing=north,powered=false
+      face=wall,facing=north,powered=true:
+        appearance: face=wall,facing=north,powered=true
+      face=wall,facing=south,powered=true:
+        appearance: face=wall,facing=south,powered=true
+      face=wall,facing=north,powered=false:
+        appearance: face=wall,facing=north,powered=false
+      face=wall,facing=south,powered=false:
+        appearance: face=wall,facing=south,powered=false
+      face=wall,facing=west,powered=true:
+        appearance: face=wall,facing=west,powered=true
+      face=wall,facing=east,powered=true:
+        appearance: face=wall,facing=east,powered=true
+      face=wall,facing=west,powered=false:
+        appearance: face=wall,facing=west,powered=false
+      face=wall,facing=east,powered=false:
+        appearance: face=wall,facing=east,powered=false
+      face=ceiling,facing=north,powered=true:
+        appearance: face=ceiling,facing=north,powered=true
+      face=ceiling,facing=south,powered=true:
+        appearance: face=ceiling,facing=south,powered=true
+      face=ceiling,facing=north,powered=false:
+        appearance: face=ceiling,facing=north,powered=false
+      face=ceiling,facing=south,powered=false:
+        appearance: face=ceiling,facing=south,powered=false
+      face=ceiling,facing=west,powered=true:
+        appearance: face=ceiling,facing=west,powered=true
+      face=ceiling,facing=east,powered=true:
+        appearance: face=ceiling,facing=east,powered=true
+      face=ceiling,facing=west,powered=false:
+        appearance: face=ceiling,facing=west,powered=false
+      face=ceiling,facing=east,powered=false:
+        appearance: face=ceiling,facing=east,powered=false

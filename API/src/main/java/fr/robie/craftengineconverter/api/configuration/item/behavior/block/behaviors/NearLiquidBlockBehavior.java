@@ -10,7 +10,7 @@ import java.util.Map;
 public class NearLiquidBlockBehavior implements BlockBehavior {
     private String liquidType;
     private Boolean stackable;
-    private List<String> positions;
+    private final List<String> positions;
 
     public NearLiquidBlockBehavior() {
         this.positions = new ArrayList<>();

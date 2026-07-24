@@ -13,6 +13,11 @@ public class ComponentSelectConfiguration extends SelectModelConfiguration<Objec
         this.component = this.namespaced(Objects.requireNonNull(component, "component cannot be null"));
     }
 
+    @NotNull
+    public String getComponent() {
+        return this.component;
+    }
+
     @Override
     public void serialize(@NotNull ConfigurationSection section) {
         super.serialize(section);

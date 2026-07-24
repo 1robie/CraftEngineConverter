@@ -4,14 +4,10 @@ import fr.robie.craftengineconverter.api.configuration.item.behavior.block.state
 import fr.robie.yamllibrary.ConfigurationSection;
 import net.momirealms.craftengine.core.block.property.type.AnchorType;
 import org.jetbrains.annotations.NotNull;
-import org.jspecify.annotations.NonNull;
 
 import java.util.Locale;
 
-public class AnchorTypeBlockStateProperty implements BlockStateProperty<AnchorType> {
-    private final String name;
-    private final AnchorType value;
-
+public record AnchorTypeBlockStateProperty(String name, AnchorType value) implements BlockStateProperty<AnchorType> {
     public AnchorTypeBlockStateProperty(@NotNull String name, @NotNull AnchorType value) {
         this.name = name;
         this.value = value;
@@ -20,11 +16,6 @@ public class AnchorTypeBlockStateProperty implements BlockStateProperty<AnchorTy
     @Override
     public @NotNull String name() {
         return this.name;
-    }
-
-    @Override
-    public @NonNull AnchorType value() {
-        return this.value;
     }
 
     @Override

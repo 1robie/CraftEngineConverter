@@ -4,14 +4,10 @@ import fr.robie.craftengineconverter.api.configuration.item.behavior.block.state
 import fr.robie.yamllibrary.ConfigurationSection;
 import org.bukkit.block.data.type.Door;
 import org.jetbrains.annotations.NotNull;
-import org.jspecify.annotations.NonNull;
 
 import java.util.Locale;
 
-public class HingeBlockStateProperty implements BlockStateProperty<Door.Hinge> {
-    private final String name;
-    private final Door.Hinge value;
-
+public record HingeBlockStateProperty(String name, Door.Hinge value) implements BlockStateProperty<Door.Hinge> {
     public HingeBlockStateProperty(@NotNull String name, @NotNull Door.Hinge value) {
         this.name = name;
         this.value = value;
@@ -20,11 +16,6 @@ public class HingeBlockStateProperty implements BlockStateProperty<Door.Hinge> {
     @Override
     public @NotNull String name() {
         return this.name;
-    }
-
-    @Override
-    public Door.@NonNull Hinge value() {
-        return this.value;
     }
 
     @Override

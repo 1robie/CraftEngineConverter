@@ -1,0 +1,380 @@
+placed_features:
+  default:ender_pearl_flower:
+    dimension_type:
+      - minecraft:the_end
+    feature:
+      type: 'minecraft:random_patch'
+      config:
+        feature:
+          feature:
+            type: 'minecraft:simple_block'
+            config:
+              to_place:
+                type: 'minecraft:weighted_state_provider'
+                entries:
+                  - weight: 4
+                    data:
+                      Name: 'default:ender_pearl_flower'
+                      Properties:
+                        age: '0'
+                  - weight: 2
+                    data:
+                      Name: 'default:ender_pearl_flower'
+                      Properties:
+                        age: '1'
+                  - weight: 1
+                    data:
+                      Name: 'default:ender_pearl_flower'
+                      Properties:
+                        age: '2'
+          placement:
+            - type: 'minecraft:block_predicate_filter'
+              predicate:
+                type: 'minecraft:all_of'
+                predicates:
+                  - type: 'minecraft:matching_blocks'
+                    blocks: 'minecraft:air'
+                  - type: 'minecraft:matching_blocks'
+                    blocks: 'minecraft:end_stone'
+                    offset:
+                      - 0
+                      - -1
+                      - 0
+        tries: 96
+        xz_spread: 7
+        y_spread: 3
+    placement:
+      - type: 'minecraft:in_square'
+      - type: 'minecraft:rarity_filter'
+        chance: 24
+      - type: 'minecraft:height_range'
+        height:
+          type: 'minecraft:uniform'
+          min_inclusive:
+            absolute: 50
+          max_inclusive:
+            absolute: 70
+  default:fairy_flower:
+    dimension_type:
+      - minecraft:overworld
+    feature:
+      type: 'minecraft:random_patch'
+      config:
+        feature:
+          feature:
+            type: 'minecraft:simple_block'
+            config:
+              to_place:
+                type: 'minecraft:simple_state_provider'
+                state:
+                  Name: 'default:fairy_flower'
+          placement:
+            - type: 'minecraft:block_predicate_filter'
+              predicate:
+                type: 'minecraft:all_of'
+                predicates:
+                  - type: 'minecraft:replaceable'
+                  - type: 'minecraft:matching_fluids'
+                    fluids: 'minecraft:empty'
+                  - type: 'minecraft:matching_blocks'
+                    blocks: 'minecraft:grass_block'
+                    offset:
+                      - 0
+                      - -1
+                      - 0
+        tries: 64
+        xz_spread: 7
+        y_spread: 3
+    placement:
+      - type: 'minecraft:rarity_filter'
+        chance: 100
+      - type: 'minecraft:in_square'
+      - type: 'minecraft:heightmap'
+        heightmap: MOTION_BLOCKING
+  default:flame_cane:
+    dimension_type:
+      - minecraft:the_nether
+    feature:
+      type: 'minecraft:random_patch'
+      config:
+        feature:
+          feature:
+            type: 'minecraft:block_column'
+            config:
+              allowed_placement:
+                type: 'minecraft:matching_blocks'
+                blocks: 'minecraft:air'
+              direction: up
+              layers:
+                - height:
+                    type: 'minecraft:biased_to_bottom'
+                    $$<1.20.5:
+                      value:
+                        max_inclusive: 4
+                        min_inclusive: 2
+                    $$>=1.20.5:
+                      max_inclusive: 4
+                      min_inclusive: 2
+                  provider:
+                    type: 'minecraft:simple_state_provider'
+                    state:
+                      Name: 'default:flame_cane'
+                      Properties:
+                        age: '0'
+              prioritize_tip: false
+          placement:
+            - type: 'minecraft:block_predicate_filter'
+              predicate:
+                type: 'minecraft:all_of'
+                predicates:
+                  - type: 'minecraft:matching_blocks'
+                    blocks: 'minecraft:air'
+                  - type: 'minecraft:would_survive'
+                    state:
+                      Name: 'default:flame_cane'
+                      Properties:
+                        age: '0'
+                  - type: 'minecraft:any_of'
+                    predicates:
+                      - type: 'minecraft:matching_fluids'
+                        fluids:
+                          - 'minecraft:lava'
+                          - 'minecraft:flowing_lava'
+                        offset:
+                          - 1
+                          - -1
+                          - 0
+                      - type: 'minecraft:matching_fluids'
+                        fluids:
+                          - 'minecraft:lava'
+                          - 'minecraft:flowing_lava'
+                        offset:
+                          - -1
+                          - -1
+                          - 0
+                      - type: 'minecraft:matching_fluids'
+                        fluids:
+                          - 'minecraft:lava'
+                          - 'minecraft:flowing_lava'
+                        offset:
+                          - 0
+                          - -1
+                          - 1
+                      - type: 'minecraft:matching_fluids'
+                        fluids:
+                          - 'minecraft:lava'
+                          - 'minecraft:flowing_lava'
+                        offset:
+                          - 0
+                          - -1
+                          - -1
+        tries: 20
+        xz_spread: 4
+        y_spread: 0
+    placement:
+      - type: 'minecraft:rarity_filter'
+        chance: 6
+      - type: 'minecraft:in_square'
+      - type: 'minecraft:height_range'
+        height:
+          absolute: 32
+  default:hami_melon:
+    dimension_type:
+      - minecraft:overworld
+    feature:
+      type: 'minecraft:random_patch'
+      config:
+        feature:
+          feature:
+            type: 'minecraft:simple_block'
+            config:
+              to_place:
+                type: 'craftengine:simple_state_provider'
+                state:
+                  Name: 'default:hami_melon'
+          placement:
+            - type: 'minecraft:block_predicate_filter'
+              predicate:
+                type: 'minecraft:all_of'
+                predicates:
+                  - type: 'minecraft:matching_blocks'
+                    blocks: "minecraft:air"
+                  - type: 'minecraft:matching_blocks'
+                    blocks: 'minecraft:grass_block'
+                    offset:
+                      - 0
+                      - -1
+                      - 0
+        tries: 75
+        xz_spread: 7
+        y_spread: 3
+    placement:
+      - type: 'minecraft:rarity_filter'
+        chance: 300
+      - type: 'minecraft:in_square'
+      - type: 'minecraft:heightmap'
+        heightmap: MOTION_BLOCKING
+  default:magma_plant:
+    dimension_type:
+      - minecraft:the_nether
+    feature:
+      type: 'minecraft:random_patch'
+      config:
+        feature:
+          feature:
+            type: 'minecraft:simple_block'
+            config:
+              to_place:
+                type: 'minecraft:weighted_state_provider'
+                entries:
+                  - weight: 7
+                    data:
+                      Name: 'default:magma_plant'
+                      Properties:
+                        age: 0
+                  - weight: 5
+                    data:
+                      Name: 'default:magma_plant'
+                      Properties:
+                        age: 1
+                  - weight: 2
+                    data:
+                      Name: 'default:magma_plant'
+                      Properties:
+                        age: 2
+                  - weight: 1
+                    data:
+                      Name: 'default:magma_plant'
+                      Properties:
+                        age: 3
+          placement:
+            - type: 'minecraft:block_predicate_filter'
+              predicate:
+                type: 'minecraft:all_of'
+                predicates:
+                  - type: 'minecraft:replaceable'
+                  - type: 'minecraft:matching_fluids'
+                    fluids: 'minecraft:empty'
+                  - type: 'minecraft:matching_fluids'
+                    fluids: '#minecraft:lava'
+                    offset:
+                      - 0
+                      - -1
+                      - 0
+        tries: 32
+        xz_spread: 7
+        y_spread: 1
+    placement:
+      - type: 'minecraft:in_square'
+      - type: 'minecraft:random_offset'
+        xz_spread: 5
+        y_spread: 1
+      - type: 'minecraft:height_range'
+        height:
+          type: 'minecraft:uniform'
+          min_inclusive:
+            absolute: 10
+          max_inclusive:
+            absolute: 100
+  default:palm_tree:
+    biome:
+      - minecraft:beach
+    dimension_type:
+      - minecraft:overworld
+    feature: default:palm_tree
+    placement:
+      - type: 'minecraft:rarity_filter'
+        chance: 7
+      - type: 'minecraft:count'
+        count:
+          type: 'minecraft:weighted_list'
+          distribution:
+            - weight: 10
+              data: 1
+            - weight: 3
+              data: 2
+            - weight: 1
+              data: 3
+      - type: 'minecraft:in_square'
+      - type: 'minecraft:heightmap'
+        heightmap: WORLD_SURFACE
+      - type: 'minecraft:block_predicate_filter'
+        predicate:
+          type: 'minecraft:matching_blocks'
+          blocks: 'minecraft:air'
+      - type: 'minecraft:block_predicate_filter'
+        predicate:
+          type: 'minecraft:matching_blocks'
+          blocks: 'minecraft:sand'
+          offset: [ 0,-1,0 ]
+      - type: 'minecraft:biome'
+  default:reed:
+    biome:
+      - minecraft:river
+    dimension_type:
+      - minecraft:overworld
+    feature:
+      type: 'minecraft:random_patch'
+      config:
+        feature:
+          feature:
+            type: 'minecraft:simple_block'
+            config:
+              to_place:
+                type: 'craftengine:simple_state_provider'
+                state:
+                  Name: 'default:reed'
+          placement:
+            - type: 'minecraft:block_predicate_filter'
+              predicate:
+                type: 'minecraft:all_of'
+                predicates:
+                  - type: 'minecraft:replaceable'
+                  - type: 'minecraft:matching_fluids'
+                    fluids: 'minecraft:empty'
+                  - type: 'minecraft:matching_fluids'
+                    fluids: '#minecraft:water'
+                    offset:
+                      - 0
+                      - -1
+                      - 0
+        tries: 96
+        xz_spread: 7
+        y_spread: 1
+    placement:
+      - type: 'minecraft:rarity_filter'
+        chance: 48
+      - type: 'minecraft:in_square'
+      - type: 'minecraft:heightmap'
+        heightmap: WORLD_SURFACE
+      - type: 'minecraft:biome'
+  default:topaz_ore:
+    dimension_type:
+      - minecraft:overworld
+    feature:
+      type: minecraft:ore
+      config:
+        discard_chance_on_air_exposure: 0.0
+        size: 10
+        targets:
+          - state:
+              Name: default:topaz_ore
+            target:
+              predicate_type: minecraft:tag_match
+              tag: minecraft:stone_ore_replaceables
+          - state:
+              Name: default:deepslate_topaz_ore
+            target:
+              predicate_type: minecraft:tag_match
+              tag: minecraft:deepslate_ore_replaceables
+    placement:
+      - type: minecraft:count
+        count: 4
+      - type: minecraft:in_square
+      - type: minecraft:height_range
+        height:
+          type: minecraft:uniform
+          max_inclusive:
+            absolute: 112
+          min_inclusive:
+            absolute: -32

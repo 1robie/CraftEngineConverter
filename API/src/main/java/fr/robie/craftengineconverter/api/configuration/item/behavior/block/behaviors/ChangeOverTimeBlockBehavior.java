@@ -10,7 +10,7 @@ import java.util.Map;
 public class ChangeOverTimeBlockBehavior implements BlockBehavior {
     private Double changeSpeed;
     private String nextBlock;
-    private List<String> excludedProperties;
+    private final List<String> excludedProperties;
 
     public ChangeOverTimeBlockBehavior() {
         this.excludedProperties = new ArrayList<>();

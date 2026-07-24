@@ -23,6 +23,25 @@ public class MappingsConfiguration {
         return this;
     }
 
+    public List<ItemMapping> getMappings(@NotNull Material material) {
+        return this.itemMappings.get(material);
+    }
+
+    public boolean removeItemMapping(@NotNull Material material, @NotNull ItemMapping mapping) {
+        List<ItemMapping> list = this.itemMappings.get(material);
+        return list != null && list.remove(mapping);
+    }
+
+    public void replaceItemMapping(@NotNull Material material, @NotNull ItemMapping old, @NotNull ItemMapping replacement) {
+        List<ItemMapping> list = this.itemMappings.get(material);
+        if (list != null) {
+            int index = list.indexOf(old);
+            if (index >= 0) {
+                list.set(index, replacement);
+            }
+        }
+    }
+
     public void saveMappings(@NotNull Path directory) {
         JsonObject jsonObject = new JsonObject();
 
@@ -43,7 +62,7 @@ public class MappingsConfiguration {
 
         jsonObject.add("items", itemsObject);
 
-        Path mappingsFile = directory.resolve("items_mappings.json");
+        Path mappingsFile = directory.resolve("geyser_item_mappings.json");
         FileCacheManager.saveJsonToFile(mappingsFile, jsonObject);
     }
 }

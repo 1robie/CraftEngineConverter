@@ -4,10 +4,7 @@ import fr.robie.craftengineconverter.api.configuration.item.behavior.block.state
 import fr.robie.yamllibrary.ConfigurationSection;
 import org.jetbrains.annotations.NotNull;
 
-public class BooleanBlockStateProperty implements BlockStateProperty<Boolean> {
-    private final String name;
-    private final Boolean value;
-
+public record BooleanBlockStateProperty(String name, Boolean value) implements BlockStateProperty<Boolean> {
     public BooleanBlockStateProperty(@NotNull String name, Boolean value) {
         this.name = name;
         this.value = value;

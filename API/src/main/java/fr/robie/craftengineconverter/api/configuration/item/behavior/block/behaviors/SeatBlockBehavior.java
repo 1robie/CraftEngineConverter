@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Map;
 
 public class SeatBlockBehavior implements BlockBehavior {
-    private List<String> seats;
+    private final List<String> seats;
 
     public SeatBlockBehavior() {
         this.seats = new ArrayList<>();

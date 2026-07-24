@@ -22,7 +22,11 @@ public class TextureData {
     }
 
     public String getBedrockIdentifier() {
-        return this.bedrockIdentifier;
+        return this.bedrockIdentifier.replace(":", ".");
+    }
+
+    public List<String> getTextures() {
+        return this.textures;
     }
 
     public JsonObject serialize() {

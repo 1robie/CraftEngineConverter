@@ -25,37 +25,22 @@ public class BlockStateConfiguration implements ItemConfigurationSerializable {
         void serialize(ConfigurationSection dataSection);
     }
 
-    public static class CraftEngineBlockStateEntry implements BlockStateEntry {
-        private final String blockState;
-
-        public CraftEngineBlockStateEntry(String blockState) {
-            this.blockState = blockState;
-        }
-
-        public String getBlockState() {
-            return this.blockState;
-        }
+    public record CraftEngineBlockStateEntry(String blockState) implements BlockStateEntry {
 
         @Override
-        public void serialize(ConfigurationSection dataSection) {
-            dataSection.set("block-state", this.blockState);
-        }
-    }
-
-    public static class VanillaBlockStateEntry implements BlockStateEntry {
-        private final Map<String, Object> blockStateProperties;
-
-        public VanillaBlockStateEntry(@NotNull Map<String, Object> blockStateProperties) {
-            this.blockStateProperties = blockStateProperties;
+            public void serialize(ConfigurationSection dataSection) {
+                dataSection.set("block-state", this.blockState);
+            }
         }
 
-        public Map<String, Object> getBlockStateProperties() {
-            return this.blockStateProperties;
-        }
+    public record VanillaBlockStateEntry(Map<String, Object> blockStateProperties) implements BlockStateEntry {
+            public VanillaBlockStateEntry(@NotNull Map<String, Object> blockStateProperties) {
+                this.blockStateProperties = blockStateProperties;
+            }
 
-        @Override
-        public void serialize(ConfigurationSection dataSection) {
-            dataSection.createSection("block-state", this.blockStateProperties);
+            @Override
+            public void serialize(ConfigurationSection dataSection) {
+                dataSection.createSection("block-state", this.blockStateProperties);
+            }
         }
-    }
 }

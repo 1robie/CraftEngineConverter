@@ -1,0 +1,181 @@
+categories:
+  internal:all:
+    priority: -1000
+    name: <!i><white><l10n:category.internal.all></white>
+    icon: minecraft:command_block
+    conditions:
+      - type: permission
+        permission: craftengine.admin
+    all_items: true
+images:
+  internal:item_browser:
+    height: 140
+    ascent: 18
+    font: minecraft:gui
+    file: minecraft:font/gui/custom/item_browser.png
+  internal:category:
+    height: 140
+    ascent: 18
+    font: minecraft:gui
+    file: minecraft:font/gui/custom/category.png
+  internal:crafting_recipe:
+    height: 142
+    ascent: 20
+    font: minecraft:gui
+    file: minecraft:font/gui/custom/crafting_recipe.png
+  internal:cooking_recipe:
+    height: 138
+    ascent: 16
+    font: minecraft:gui
+    file: minecraft:font/gui/custom/cooking_recipe.png
+  internal:smelting:
+    height: 23
+    ascent: 20
+    font: minecraft:gui
+    file: minecraft:font/gui/custom/smelting.png
+  internal:smoking:
+    height: 23
+    ascent: 20
+    font: minecraft:gui
+    file: minecraft:font/gui/custom/smoking.png
+  internal:blasting:
+    height: 23
+    ascent: 20
+    font: minecraft:gui
+    file: minecraft:font/gui/custom/blasting.png
+  internal:campfire:
+    height: 23
+    ascent: 20
+    font: minecraft:gui
+    file: minecraft:font/gui/custom/campfire.png
+  internal:stonecutting_recipe:
+    height: 142
+    ascent: 20
+    font: minecraft:gui
+    file: minecraft:font/gui/custom/stonecutting_recipe.png
+  internal:smithing_transform_recipe:
+    height: 142
+    ascent: 20
+    font: minecraft:gui
+    file: minecraft:font/gui/custom/smithing_transform_recipe.png
+  internal:brewing_recipe:
+    height: 142
+    ascent: 20
+    font: minecraft:gui
+    file: minecraft:font/gui/custom/brewing_recipe.png
+  internal:no_recipe:
+    height: 140
+    ascent: 18
+    font: minecraft:gui
+    file: minecraft:font/gui/custom/no_recipe.png
+templates:
+  internal:icon/2d:
+    material: arrow
+    custom_model_data: ${model_data}
+    data:
+      item_name: ${name}
+      lore: ${lore}
+    model:
+      template: internal:model/simplified_generated
+      arguments:
+        path: minecraft:item/custom/gui/${texture}
+  internal:model/simplified_generated:
+    type: minecraft:model
+    path: ${path}
+    generation:
+      parent: minecraft:item/generated
+      textures:
+        layer0: ${path}
+items:
+  internal:next_page_0:
+    template: internal:icon/2d
+    arguments:
+      model_data: 1000
+      texture: next_page_0
+      name: <!i><#FAFAD2><l10n:internal.next_page>
+      lore:
+        - <!i><#F5F5F5><arg:current_page>/<arg:max_page>
+  internal:next_page_1:
+    template: internal:icon/2d
+    arguments:
+      model_data: 1001
+      texture: next_page_1
+      name: <!i><#808080><l10n:internal.next_page>
+      lore:
+        - <!i><#696969><arg:current_page>/<arg:max_page>
+  internal:previous_page_0:
+    template: internal:icon/2d
+    arguments:
+      model_data: 1002
+      texture: previous_page_0
+      name: <!i><#FAFAD2><l10n:internal.previous_page>
+      lore:
+        - <!i><#F5F5F5><arg:current_page>/<arg:max_page>
+  internal:previous_page_1:
+    template: internal:icon/2d
+    arguments:
+      model_data: 1003
+      texture: previous_page_1
+      name: <!i><#808080><l10n:internal.previous_page>
+      lore:
+        - <!i><#696969><arg:current_page>/<arg:max_page>
+  internal:return:
+    template: internal:icon/2d
+    arguments:
+      model_data: 1004
+      texture: return
+      name: <!i><#DAA520><l10n:internal.return>
+      lore: null
+  internal:next_recipe_0:
+    material: arrow
+    custom_model_data: 1000
+    data:
+      item_name: <!i><#FAFAD2><l10n:internal.next_recipe>
+      lore:
+        - <!i><#F5F5F5><arg:current_page>/<arg:max_page>
+  internal:next_recipe_1:
+    material: arrow
+    custom_model_data: 1001
+    data:
+      item_name: <!i><#808080><l10n:internal.next_recipe>
+      lore:
+        - <!i><#696969><arg:current_page>/<arg:max_page>
+  internal:previous_recipe_0:
+    material: arrow
+    custom_model_data: 1002
+    data:
+      item_name: <!i><#FAFAD2><l10n:internal.previous_recipe>
+      lore:
+        - <!i><#F5F5F5><arg:current_page>/<arg:max_page>
+  internal:previous_recipe_1:
+    material: arrow
+    custom_model_data: 1003
+    data:
+      item_name: <!i><#808080><l10n:internal.previous_recipe>
+      lore:
+        - <!i><#696969><arg:current_page>/<arg:max_page>
+  internal:get_item:
+    template: internal:icon/2d
+    arguments:
+      model_data: 1005
+      texture: get_item
+      name: <!i><#DAA520><l10n:internal.get_item>
+      lore:
+        - <!i><gray><l10n:internal.get_item.0>
+        - <!i><gray><l10n:internal.get_item.1>
+  internal:cooking_info:
+    template: internal:icon/2d
+    arguments:
+      model_data: 1006
+      texture: cooking_info
+      name: <!i><#FF8C00><l10n:internal.cooking_info>
+      lore:
+        - <!i><gray><l10n:internal.cooking_info.0:'<arg:cooking_time>'>
+        - <!i><gray><l10n:internal.cooking_info.1:'<arg:cooking_experience>'>
+  internal:exit:
+    template: internal:icon/2d
+    arguments:
+      model_data: 1007
+      texture: exit
+      name: <!i><#DAA520><l10n:internal.exit>
+      lore: null

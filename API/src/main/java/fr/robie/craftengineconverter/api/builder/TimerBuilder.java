@@ -69,13 +69,10 @@ public class TimerBuilder {
 
         String message = maxUnit.getTimeMessage().firstLine();
 
-        Logger.info("Formatting time: " + milliseconds + " ms with max unit: " + maxUnit.name());
-        Logger.info("Calculated values: " + values);
         Placeholder.Builder placeholderBuilder = new Placeholder.Builder();
         for (int i = 0; i < unitsToInclude.size(); i++) {
             TimeUnit unit = unitsToInclude.get(i);
             placeholderBuilder.register(unit.name().toLowerCase(Locale.ROOT), unit.getFormat(values.get(i)));
-            Logger.info("Registered placeholder: " + unit.name().toLowerCase(Locale.ROOT) + " -> " + unit.getFormat(values.get(i)));
         }
         Placeholder placeholder = placeholderBuilder.build();
 
@@ -94,7 +91,6 @@ public class TimerBuilder {
      */
     @Contract(pure = true)
     public static String formatTimeAuto(long milliseconds) {
-        Logger.info("Formatting time: " + milliseconds + " ms");
         long seconds = milliseconds / 1000L;
 
         if (milliseconds < 1000) {

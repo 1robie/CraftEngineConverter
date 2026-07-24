@@ -83,4 +83,12 @@ public class ConditionModelConfiguration implements ModelConfiguration {
         }
         return null;
     }
+
+    public boolean isConditionSupported() {
+        String propertyName = this.property.contains(":") ? this.property.split(":")[1] : this.property;
+        return switch (propertyName.toLowerCase(java.util.Locale.ROOT)) {
+            case "broken", "damaged", "fishing_rod/cast", "custom_model_data", "has_component" -> true;
+            default -> false;
+        };
+    }
 }

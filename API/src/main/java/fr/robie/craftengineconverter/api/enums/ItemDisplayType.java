@@ -9,5 +9,5 @@ public enum ItemDisplayType {
     HEAD,
     GUI,
     GROUND,
-    FIXED;
+    FIXED
 }

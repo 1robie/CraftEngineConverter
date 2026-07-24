@@ -1,5 +1,6 @@
 package fr.robie.craftengineconverter.api.configuration.item.models.model;
 
+import fr.robie.craftengineconverter.api.configuration.bedrock.mapping.item.ItemMapping;
 import fr.robie.craftengineconverter.api.configuration.item.models.ModelConfiguration;
 import fr.robie.craftengineconverter.api.configuration.item.models.tints.TintConfiguration;
 import fr.robie.craftengineconverter.api.utils.ConfigurationSerializationUtils;

@@ -9,7 +9,7 @@ import java.util.Map;
 
 public class OnLiquidBlockBehavior implements BlockBehavior {
     private Boolean stackable;
-    private List<String> liquidType;
+    private final List<String> liquidType;
 
     public OnLiquidBlockBehavior() {
         this.liquidType = new ArrayList<>();

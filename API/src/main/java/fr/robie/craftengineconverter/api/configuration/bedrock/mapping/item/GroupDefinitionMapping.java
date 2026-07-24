@@ -18,9 +18,21 @@ public class GroupDefinitionMapping extends ItemMapping {
         super(javaMaterial, bedrockIdentifier);
     }
 
+    public String getModel() {
+        return this.model;
+    }
+
     public GroupDefinitionMapping setModel(@Nullable String model) {
         this.model = model;
         return this;
+    }
+
+    public List<ItemMapping> getDefinitions() {
+        return this.definitions;
+    }
+
+    public boolean hasDefinitions() {
+        return !this.definitions.isEmpty();
     }
 
     public GroupDefinitionMapping addDefinition(@NotNull ItemMapping definition) {

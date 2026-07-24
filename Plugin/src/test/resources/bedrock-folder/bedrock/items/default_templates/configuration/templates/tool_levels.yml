@@ -1,0 +1,25 @@
+templates:
+  default:pickaxe_power/level_1:
+    - minecraft:wooden_pickaxe
+    - minecraft:stone_pickaxe
+    - minecraft:iron_pickaxe
+    - minecraft:golden_pickaxe
+    - minecraft:diamond_pickaxe
+    - minecraft:netherite_pickaxe
+    - default:topaz_pickaxe
+  default:pickaxe_power/level_2:
+    - minecraft:stone_pickaxe
+    - minecraft:iron_pickaxe
+    - minecraft:golden_pickaxe
+    - minecraft:diamond_pickaxe
+    - minecraft:netherite_pickaxe
+    - default:topaz_pickaxe
+  default:pickaxe_power/level_3:
+    - minecraft:iron_pickaxe
+    - minecraft:golden_pickaxe
+    - minecraft:diamond_pickaxe
+    - minecraft:netherite_pickaxe
+    - default:topaz_pickaxe
+  default:pickaxe_power/level_4:
+    - minecraft:diamond_pickaxe
+    - minecraft:netherite_pickaxe

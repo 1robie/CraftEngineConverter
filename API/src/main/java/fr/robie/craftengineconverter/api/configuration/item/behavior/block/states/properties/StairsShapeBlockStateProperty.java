@@ -4,14 +4,10 @@ import fr.robie.craftengineconverter.api.configuration.item.behavior.block.state
 import fr.robie.yamllibrary.ConfigurationSection;
 import net.momirealms.craftengine.core.block.property.type.StairsShape;
 import org.jetbrains.annotations.NotNull;
-import org.jspecify.annotations.NonNull;
 
 import java.util.Locale;
 
-public class StairsShapeBlockStateProperty implements BlockStateProperty<StairsShape> {
-    private final String name;
-    private final StairsShape value;
-
+public record StairsShapeBlockStateProperty(String name, StairsShape value) implements BlockStateProperty<StairsShape> {
     public StairsShapeBlockStateProperty(@NotNull String name, @NotNull StairsShape value) {
         this.name = name;
         this.value = value;
@@ -20,11 +16,6 @@ public class StairsShapeBlockStateProperty implements BlockStateProperty<StairsS
     @Override
     public @NotNull String name() {
         return this.name;
-    }
-
-    @Override
-    public @NonNull StairsShape value() {
-        return this.value;
     }
 
     @Override

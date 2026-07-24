@@ -1,0 +1,1 @@
+{"oversized_in_gui":true,"model":{"type":"condition","on_true":{"type":"model","model":"default:item/flame_elytra_broken"},"on_false":{"type":"model","model":"default:item/flame_elytra"},"property":"broken"}}

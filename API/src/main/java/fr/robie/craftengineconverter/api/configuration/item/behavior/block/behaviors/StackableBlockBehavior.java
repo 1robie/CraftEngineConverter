@@ -9,7 +9,7 @@ import java.util.Map;
 
 public class StackableBlockBehavior implements BlockBehavior {
     private String property;
-    private List<String> items;
+    private final List<String> items;
 
     public StackableBlockBehavior() {
         this.items = new ArrayList<>();

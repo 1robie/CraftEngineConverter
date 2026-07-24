@@ -1,0 +1,7 @@
+items:
+  default:topaz_sword:
+    material: golden_sword
+    data:
+      item_name: Topaz Sword
+      max_damage: 64
+    texture: minecraft:item/custom/topaz_sword

@@ -82,6 +82,11 @@ public class FileUtils {
         return extension.equalsIgnoreCase("yml") || extension.equalsIgnoreCase("yaml");
     }
 
+    public static boolean isJsonFile(File file) {
+        String extension = getFileExtension(file);
+        return extension.equalsIgnoreCase("json");
+    }
+
     public static void copyFile(@NotNull File source, @NotNull File destination) {
         try {
             mkdirs(destination.getParentFile());
@@ -94,5 +99,4 @@ public class FileUtils {
             Logger.error(Message.ERROR__FILE__COPY_EXCEPTION, Placeholder.of("file", destination.getName(), "message", e.getMessage()));
         }
     }
-
 }

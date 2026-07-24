@@ -1,0 +1,10 @@
+author: XiaoMoMi
+version: 1.0
+description: Default Feature Populator for CraftEngine
+namespace: default
+enable: false
+subpacks:
+  $$>=26.1:
+    26_1: true
+  $$fallback:
+    fallback: true

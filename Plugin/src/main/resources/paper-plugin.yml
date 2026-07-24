@@ -6,6 +6,7 @@ api-version: ${plugin.apiVersion}
 main: ${plugin.mainClass}
 bootstrapper: ${plugin.bootstrapper}
 loader: ${plugin.loader}
+folia-supported: true
 dependencies:
   server:
     CraftEngine:

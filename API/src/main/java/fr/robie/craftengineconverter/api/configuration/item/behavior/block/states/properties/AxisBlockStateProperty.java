@@ -4,14 +4,10 @@ import fr.robie.craftengineconverter.api.configuration.item.behavior.block.state
 import fr.robie.yamllibrary.ConfigurationSection;
 import net.momirealms.craftengine.core.util.Direction;
 import org.jetbrains.annotations.NotNull;
-import org.jspecify.annotations.NonNull;
 
 import java.util.Locale;
 
-public class AxisBlockStateProperty implements BlockStateProperty<Direction.Axis> {
-    private final String name;
-    private final Direction.Axis value;
-
+public record AxisBlockStateProperty(String name, Direction.Axis value) implements BlockStateProperty<Direction.Axis> {
     public AxisBlockStateProperty(@NotNull String name, @NotNull Direction.Axis value) {
         this.name = name;
         this.value = value;
@@ -20,11 +16,6 @@ public class AxisBlockStateProperty implements BlockStateProperty<Direction.Axis
     @Override
     public @NotNull String name() {
         return this.name;
-    }
-
-    @Override
-    public Direction.@NonNull Axis value() {
-        return this.value;
     }
 
     @Override

@@ -16,6 +16,7 @@ public class CraftEngineConverterCommand extends BaseCommand<CraftEngineConverte
         this.addSubCommand(new CraftEngineConverterCommandConvert(craftEngineConverter));
         this.addSubCommand(new CraftEngineConverterCommandClearFilesCache(craftEngineConverter));
         this.addSubCommand(new CraftEngineConverterCommandWorldConverter(craftEngineConverter));
+        this.addSubCommand(new CraftEngineConverterCommandBedrock(craftEngineConverter));
     }
 
     @Override

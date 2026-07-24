@@ -1,21 +1,6 @@
 package fr.robie.craftengineconverter.utils;
 
-public class Tuple<T> {
-    public final T first;
-    public final T second;
-
-    public Tuple(T first, T second) {
-        this.first = first;
-        this.second = second;
-    }
-
-    public T getFirst() {
-        return this.first;
-    }
-
-    public T getSecond() {
-        return this.second;
-    }
+public record Tuple<T>(T first, T second) {
 
     public static <T> Tuple<T> of(T first, T second) {
         return new Tuple<>(first, second);

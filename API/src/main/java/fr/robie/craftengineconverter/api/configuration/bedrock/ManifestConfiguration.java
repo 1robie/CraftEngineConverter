@@ -12,13 +12,13 @@ import java.util.List;
 import java.util.UUID;
 
 public class ManifestConfiguration {
-    private static final int formatVersion = 3;
+    private static final int formatVersion = 2;
 
     private final String packName;
     private String packDescription;
     private UUID packUUID;
-    private String packVersion;
-    private String minEngineVersion;
+    private int[] packVersion = {1, 0, 0};
+    private int[] minEngineVersion = {1, 21, 0};
     private PackScope scope;
 
     private UUID resourcePackUUID;
@@ -45,13 +45,35 @@ public class ManifestConfiguration {
     }
 
     public ManifestConfiguration setPackVersion(String packVersion) {
-        this.packVersion = packVersion;
+        this.packVersion = parseVersion(packVersion);
+        return this;
+    }
+
+    public ManifestConfiguration setPackVersion(int major, int minor, int patch) {
+        this.packVersion = new int[]{major, minor, patch};
         return this;
     }
 
     public ManifestConfiguration setMinEngineVersion(String minEngineVersion) {
-        this.minEngineVersion = minEngineVersion;
+        this.minEngineVersion = parseVersion(minEngineVersion);
         return this;
+    }
+
+    public ManifestConfiguration setMinEngineVersion(int major, int minor, int patch) {
+        this.minEngineVersion = new int[]{major, minor, patch};
+        return this;
+    }
+
+    private static int[] parseVersion(String version) {
+        String[] parts = version.split("\\.");
+        int major = parts.length > 0 ? safeParseInt(parts[0]) : 1;
+        int minor = parts.length > 1 ? safeParseInt(parts[1]) : 0;
+        int patch = parts.length > 2 ? safeParseInt(parts[2]) : 0;
+        return new int[]{major, minor, patch};
+    }
+
+    private static int safeParseInt(String s) {
+        try { return Integer.parseInt(s); } catch (NumberFormatException e) { return 0; }
     }
 
     public ManifestConfiguration setScope(PackScope scope) {
@@ -140,8 +162,8 @@ public class ManifestConfiguration {
             header.addProperty("description", this.packDescription);
         }
         header.addProperty("uuid", (this.packUUID != null ? this.packUUID : UUID.randomUUID()).toString());
-        header.addProperty("version", this.packVersion != null ? this.packVersion : "1.0.0");
-        header.addProperty("min_engine_version", this.minEngineVersion != null ? this.minEngineVersion : "1.26.10");
+        header.add("version", toJsonArray(this.packVersion));
+        header.add("min_engine_version", toJsonArray(this.minEngineVersion));
         if (this.scope != null) {
             header.addProperty("scope", this.scope.name().toLowerCase());
         }
@@ -159,8 +181,11 @@ public class ManifestConfiguration {
             } while (resourceUUID.equals(mainUUID));
         }
         module.addProperty("type", "resources");
+        if (this.packDescription != null) {
+            module.addProperty("description", this.packDescription);
+        }
         module.addProperty("uuid", resourceUUID.toString());
-        module.addProperty("version", this.resourcePackVersion != null ? this.resourcePackVersion : "1.0.0");
+        module.add("version", toJsonArray(this.packVersion));
         modules.add(module);
         return modules;
     }
@@ -219,6 +244,12 @@ public class ManifestConfiguration {
         }
 
         return configuration != null ? configuration : new ManifestConfiguration("Unnamed Pack");
+    }
+
+    private static com.google.gson.JsonArray toJsonArray(int[] values) {
+        com.google.gson.JsonArray arr = new com.google.gson.JsonArray();
+        for (int v : values) arr.add(v);
+        return arr;
     }
 
     public enum PackScope {

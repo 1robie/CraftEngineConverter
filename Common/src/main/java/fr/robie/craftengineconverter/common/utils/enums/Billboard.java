@@ -4,5 +4,5 @@ public enum Billboard {
     FIXED,
     VERTICAL,
     HORIZONTAL,
-    CENTER;
+    CENTER
 }

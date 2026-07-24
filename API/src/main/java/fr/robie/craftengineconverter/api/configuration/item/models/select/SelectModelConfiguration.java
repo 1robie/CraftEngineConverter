@@ -17,6 +17,21 @@ public class SelectModelConfiguration<T> implements ModelConfiguration {
         this.property = this.namespaced(property);
     }
 
+    @Nullable
+    public ModelConfiguration getFallback() {
+        return this.fallback;
+    }
+
+    @NotNull
+    public String getProperty() {
+        return this.property;
+    }
+
+    @NotNull
+    public List<Case> getCases() {
+        return this.cases;
+    }
+
     public void setFallback(@Nullable ModelConfiguration fallback) {
         this.fallback = fallback;
     }

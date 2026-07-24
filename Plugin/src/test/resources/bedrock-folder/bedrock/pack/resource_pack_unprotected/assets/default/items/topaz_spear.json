@@ -1,0 +1,1 @@
+{"oversized_in_gui":true,"swap_animation_scale":1.95,"model":{"type":"select","property":"display_context","cases":[{"when":["gui","ground","fixed","on_shelf"],"model":{"type":"model","model":"default:item/topaz_spear"}}],"fallback":{"type":"model","model":"default:item/topaz_spear_in_hand"}}}

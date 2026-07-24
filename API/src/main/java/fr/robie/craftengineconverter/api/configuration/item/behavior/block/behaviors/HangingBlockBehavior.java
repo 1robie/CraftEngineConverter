@@ -10,8 +10,8 @@ import java.util.Map;
 public class HangingBlockBehavior implements BlockBehavior {
     private Boolean stackable;
     private Boolean blacklist;
-    private List<String> aboveBlockTags;
-    private List<String> aboveBlocks;
+    private final List<String> aboveBlockTags;
+    private final List<String> aboveBlocks;
     private Integer delay;
 
     public HangingBlockBehavior() {

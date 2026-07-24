@@ -18,6 +18,26 @@ public class RangeDispatchModelConfiguration implements ModelConfiguration {
         this.property = this.namespaced(property);
     }
 
+    @NotNull
+    public String getProperty() {
+        return this.property;
+    }
+
+    @Nullable
+    public Float getScale() {
+        return this.scale;
+    }
+
+    @NotNull
+    public List<Entry> getEntries() {
+        return this.entries;
+    }
+
+    @Nullable
+    public ModelConfiguration getFallback() {
+        return this.fallback;
+    }
+
     public void setScale(@Nullable Float scale) {
         this.scale = scale;
     }

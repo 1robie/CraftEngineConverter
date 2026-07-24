@@ -4,14 +4,10 @@ import fr.robie.craftengineconverter.api.configuration.item.behavior.block.state
 import fr.robie.yamllibrary.ConfigurationSection;
 import net.momirealms.craftengine.core.block.property.type.SofaShape;
 import org.jetbrains.annotations.NotNull;
-import org.jspecify.annotations.NonNull;
 
 import java.util.Locale;
 
-public class SofaShapeBlockStateProperty implements BlockStateProperty<SofaShape> {
-    private final String name;
-    private final SofaShape value;
-
+public record SofaShapeBlockStateProperty(String name, SofaShape value) implements BlockStateProperty<SofaShape> {
     public SofaShapeBlockStateProperty(@NotNull String name, @NotNull SofaShape value) {
         this.name = name;
         this.value = value;
@@ -20,11 +16,6 @@ public class SofaShapeBlockStateProperty implements BlockStateProperty<SofaShape
     @Override
     public @NotNull String name() {
         return this.name;
-    }
-
-    @Override
-    public @NonNull SofaShape value() {
-        return this.value;
     }
 
     @Override

@@ -3,7 +3,6 @@ package fr.robie.craftengineconverter.api.configuration.bedrock;
 import com.google.gson.JsonObject;
 import fr.robie.craftengineconverter.api.configuration.bedrock.texture.TextureData;
 import fr.robie.craftengineconverter.api.manager.FileCacheManager;
-import fr.robie.messageflow.logger.Logger;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Path;
@@ -13,6 +12,7 @@ import java.util.List;
 public class ItemTextureConfiguration {
     private String resourcePackName;
     private String textureName;
+    private String fileName = "item_texture.json";
 
     private final List<TextureData> textures = new ArrayList<>();
 
@@ -24,6 +24,15 @@ public class ItemTextureConfiguration {
     public ItemTextureConfiguration setTextureName(String textureName) {
         this.textureName = textureName;
         return this;
+    }
+
+    public ItemTextureConfiguration setFileName(String fileName) {
+        this.fileName = fileName;
+        return this;
+    }
+
+    public boolean isEmpty() {
+        return this.textures.isEmpty();
     }
 
     public ItemTextureConfiguration addTextureData(@NotNull TextureData textureData) {
@@ -42,17 +51,15 @@ public class ItemTextureConfiguration {
             jsonObject.addProperty("texture_name", this.textureName);
         }
 
-        if (!this.textures.isEmpty()) {
-            JsonObject texturesObject = new JsonObject();
-            for (TextureData textureData : this.textures) {
+        JsonObject texturesObject = new JsonObject();
+        for (TextureData textureData : this.textures) {
+            if (!textureData.getTextures().isEmpty()) {
                 texturesObject.add(textureData.getBedrockIdentifier(), textureData.serialize());
             }
-            jsonObject.add("texture_data", texturesObject);
-        } else {
-            Logger.info("No textures added to the item texture configuration, skipping texture_data section.");
         }
+        jsonObject.add("texture_data", texturesObject);
 
-        FileCacheManager.saveJsonToFile(directory.resolve("item_texture.json"), jsonObject);
+        FileCacheManager.saveJsonToFile(directory.resolve(this.fileName), jsonObject);
     }
 
 }

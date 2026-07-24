@@ -1153,7 +1153,7 @@ public class NexoItemConverter extends ItemConverter {
                             Map<ArmorConverter, Set<String>> converterTextures = new HashMap<>();
 
                             for (var layer : layerTypeTuple.getValue()) {
-                                String originalKey = layer.getFirst();
+                                String originalKey = layer.first();
                                 String mobTexture = customArmorSection.getString(originalKey);
                                 String namespacedTexture = this.namespaced(mobTexture);
 
@@ -1161,7 +1161,7 @@ public class NexoItemConverter extends ItemConverter {
                                     String[] split = namespacedTexture.split(":", 2);
                                     String namespace = split[0];
                                     String path = split[1];
-                                    String equipmentFolder = layer.getSecond().replace("-", "_");
+                                    String equipmentFolder = layer.second().replace("-", "_");
 
                                     // For layer1 and layer2 (humanoid/humanoid-leggings)
                                     if (originalKey.equals("layer1") || originalKey.equals("layer2")) {

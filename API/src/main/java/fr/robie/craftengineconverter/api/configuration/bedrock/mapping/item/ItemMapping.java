@@ -20,7 +20,6 @@ public abstract class ItemMapping {
     private String displayName;
     private BedrockOptions bedrockOptions;
     private final List<BedrockPredicate> bedrockPredicates = new ArrayList<>();
-    private PredicateStrategy predicateStrategy = PredicateStrategy.AND;
 
     private final List<BedrockComponent> bedrockComponents = new ArrayList<>(0);
 
@@ -41,6 +40,10 @@ public abstract class ItemMapping {
         return this;
     }
 
+    public BedrockOptions getBedrockOptions() {
+        return this.bedrockOptions;
+    }
+
     public ItemMapping addBedrockComponent(@NotNull BedrockComponent component) {
         this.bedrockComponents.add(component);
         return this;
@@ -48,11 +51,6 @@ public abstract class ItemMapping {
 
     public ItemMapping addBedrockPredicate(BedrockPredicate bedrockPredicate) {
         this.bedrockPredicates.add(bedrockPredicate);
-        return this;
-    }
-
-    public ItemMapping setPredicateStrategy(@NotNull PredicateStrategy predicateStrategy) {
-        this.predicateStrategy = predicateStrategy;
         return this;
     }
 
@@ -68,6 +66,10 @@ public abstract class ItemMapping {
 
     public Material getJavaMaterial() {
         return this.javaMaterial;
+    }
+
+    public String getBedrockIdentifier() {
+        return this.bedrockIdentifier;
     }
 
     public JsonObject serialize() {
@@ -97,20 +99,14 @@ public abstract class ItemMapping {
             if (this.bedrockPredicates.size() == 1) {
                 jsonObject.add("predicate", this.bedrockPredicates.getFirst().serialize());
             } else {
-                jsonObject.addProperty("predicate_strategy", this.predicateStrategy.name().toLowerCase());
                 JsonArray predicateArray = new JsonArray();
                 for (BedrockPredicate predicate : this.bedrockPredicates) {
                     predicateArray.add(predicate.serialize());
                 }
-                jsonObject.add("predicates", predicateArray);
+                jsonObject.add("predicate", predicateArray);
             }
         }
 
         return jsonObject;
-    }
-
-    public enum PredicateStrategy {
-        AND,
-        OR
     }
 }

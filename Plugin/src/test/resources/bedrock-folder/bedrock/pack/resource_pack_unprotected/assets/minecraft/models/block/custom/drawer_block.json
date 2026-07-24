@@ -1,0 +1,1 @@
+{"parent":"block/cube","textures":{"down":"block/custom/drawer_block_bottom","up":"block/custom/drawer_block_top","north":"block/custom/drawer_block_front","east":"block/custom/drawer_block_side_left","south":"block/custom/drawer_block_back","west":"block/custom/drawer_block_side_right","particle":"block/custom/drawer_block_front"}}

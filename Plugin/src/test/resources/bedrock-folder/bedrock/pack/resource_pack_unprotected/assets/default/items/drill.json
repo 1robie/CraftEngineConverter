@@ -1,0 +1,1 @@
+{"oversized_in_gui":true,"model":{"type":"condition","on_true":{"type":"model","model":"item/custom/drill_selected"},"on_false":{"type":"model","model":"item/custom/drill"},"property":"selected"}}

@@ -60,22 +60,22 @@ public final class MinecraftVersion implements Comparable<MinecraftVersion> {
      * Returns {@code true} if this value is greater than or equal to {@code other}.
      */
     public boolean isAtLeast(MinecraftVersion other) {
-        return compareTo(other) >= 0;
+        return this.compareTo(other) >= 0;
     }
 
     /**
      * Returns {@code true} if this value is less than or equal to {@code other}.
      */
     public boolean isAtMost(MinecraftVersion other) {
-        return compareTo(other) <= 0;
+        return this.compareTo(other) <= 0;
     }
 
     public boolean isBefore(MinecraftVersion other) {
-        return compareTo(other) < 0;
+        return this.compareTo(other) < 0;
     }
 
     public boolean isAfter(MinecraftVersion other) {
-        return compareTo(other) > 0;
+        return this.compareTo(other) > 0;
     }
 
     public int getMajor() {
@@ -110,11 +110,11 @@ public final class MinecraftVersion implements Comparable<MinecraftVersion> {
 
     @Override
     public int hashCode() {
-        return 31 * (31 * major + minor) + patch;
+        return 31 * (31 * this.major + this.minor) + this.patch;
     }
 
     @Override
     public String toString() {
-        return major + "." + minor + (patch != 0 ? "." + patch : "");
+        return this.major + "." + this.minor + (this.patch != 0 ? "." + this.patch : "");
     }
 }

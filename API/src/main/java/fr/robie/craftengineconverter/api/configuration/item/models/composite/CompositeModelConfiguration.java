@@ -6,11 +6,17 @@ import fr.robie.yamllibrary.ConfigurationSection;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
 public class CompositeModelConfiguration implements ModelConfiguration {
     private final List<ModelConfiguration> models = new ArrayList<>();
+
+    @NotNull
+    public List<ModelConfiguration> getModels() {
+        return Collections.unmodifiableList(this.models);
+    }
 
     public CompositeModelConfiguration(@NotNull List<ModelConfiguration> models) {
         this.models.addAll(models);

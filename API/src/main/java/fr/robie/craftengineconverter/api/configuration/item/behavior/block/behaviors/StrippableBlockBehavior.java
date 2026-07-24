@@ -9,7 +9,7 @@ import java.util.Map;
 
 public class StrippableBlockBehavior implements BlockBehavior {
     private String stripped;
-    private List<String> excludedProperties;
+    private final List<String> excludedProperties;
 
     public StrippableBlockBehavior() {
         this.excludedProperties = new ArrayList<>();

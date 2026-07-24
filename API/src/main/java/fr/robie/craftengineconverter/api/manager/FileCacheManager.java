@@ -15,7 +15,6 @@ import java.nio.file.Path;
 public class FileCacheManager {
     private static final Gson GSON = new GsonBuilder()
             .setPrettyPrinting()
-            .serializeNulls()
             .disableHtmlEscaping()
             .create();
 

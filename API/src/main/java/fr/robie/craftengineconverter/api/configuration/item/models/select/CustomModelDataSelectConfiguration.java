@@ -11,6 +11,10 @@ public class CustomModelDataSelectConfiguration extends SelectModelConfiguration
         this.index = index;
     }
 
+    public int getIndex() {
+        return this.index;
+    }
+
     @Override
     public void serialize(@NotNull ConfigurationSection section) {
         super.serialize(section);

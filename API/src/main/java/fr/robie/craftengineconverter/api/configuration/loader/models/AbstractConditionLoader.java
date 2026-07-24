@@ -7,7 +7,12 @@ import fr.robie.yamllibrary.ConfigurationSection;
 public abstract class AbstractConditionLoader implements ModelConfigurationLoader<ModelConfiguration> {
 
     protected void loadBranches(ConditionModelConfiguration config, ConfigurationSection section) {
-        config.setOnTrue(ModelConfigurationRegistry.load(section.getConfigurationSection("on-true")));
-        config.setOnFalse(ModelConfigurationRegistry.load(section.getConfigurationSection("on-false")));
+        ConfigurationSection trueSection = section.getConfigurationSection("on-true");
+        if (trueSection == null) trueSection = section.getConfigurationSection("on_true");
+        config.setOnTrue(ModelConfigurationRegistry.load(trueSection));
+
+        ConfigurationSection falseSection = section.getConfigurationSection("on-false");
+        if (falseSection == null) falseSection = section.getConfigurationSection("on_false");
+        config.setOnFalse(ModelConfigurationRegistry.load(falseSection));
     }
 }

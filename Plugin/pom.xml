@@ -36,6 +36,7 @@
                                     <include>fr.maxlego08.sarah:sarah</include>
                                     <include>com.github.1robie.MessageFlow:message-flow</include>
                                     <include>fr.robie:yamllibrary</include>
+                                    <include>com.github.1robie.paper-dispatch:paper-dispatch</include>
                                 </includes>
                             </artifactSet>
                             <relocations>

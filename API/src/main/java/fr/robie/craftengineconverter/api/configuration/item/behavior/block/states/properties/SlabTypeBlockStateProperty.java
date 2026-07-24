@@ -4,14 +4,10 @@ import fr.robie.craftengineconverter.api.configuration.item.behavior.block.state
 import fr.robie.yamllibrary.ConfigurationSection;
 import net.momirealms.craftengine.core.block.property.type.SlabType;
 import org.jetbrains.annotations.NotNull;
-import org.jspecify.annotations.NonNull;
 
 import java.util.Locale;
 
-public class SlabTypeBlockStateProperty implements BlockStateProperty<SlabType> {
-    private final String name;
-    private final SlabType value;
-
+public record SlabTypeBlockStateProperty(String name, SlabType value) implements BlockStateProperty<SlabType> {
     public SlabTypeBlockStateProperty(@NotNull String name, @NotNull SlabType value) {
         this.name = name;
         this.value = value;
@@ -20,11 +16,6 @@ public class SlabTypeBlockStateProperty implements BlockStateProperty<SlabType> 
     @Override
     public @NotNull String name() {
         return this.name;
-    }
-
-    @Override
-    public @NonNull SlabType value() {
-        return this.value;
     }
 
     @Override
