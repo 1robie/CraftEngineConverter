@@ -1,5 +1,6 @@
 package fr.robie.craftengineconverter.api.configuration.bedrock.mapping.block;
 
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import fr.robie.craftengineconverter.api.manager.FileCacheManager;
 import org.jetbrains.annotations.NotNull;
@@ -79,7 +80,13 @@ public class BlockMappingConfiguration {
         public JsonObject serialize() {
             JsonObject obj = new JsonObject();
             obj.addProperty("name", this.name);
-            if (this.base != null) obj.add("base", this.base.serialize());
+            if (this.base != null) {
+                // Inline base properties (geometry, material_instances, etc.) at the top level —
+                // Geyser has no "base" key; these fields live directly on the block entry.
+                for (Map.Entry<String, JsonElement> e : this.base.serialize().entrySet()) {
+                    obj.add(e.getKey(), e.getValue());
+                }
+            }
             if (this.includeInCreativeInventory) obj.addProperty("included_in_creative_inventory", true);
             if (this.onlyOverrideStates) obj.addProperty("only_override_states", true);
             JsonObject overrides = new JsonObject();

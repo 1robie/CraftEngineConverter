@@ -4,20 +4,22 @@ import com.google.gson.JsonObject;
 import fr.robie.craftengineconverter.api.configuration.bedrock.ItemTextureConfiguration;
 import fr.robie.craftengineconverter.api.configuration.bedrock.ManifestConfiguration;
 import fr.robie.craftengineconverter.api.configuration.bedrock.mapping.MappingsConfiguration;
-import fr.robie.craftengineconverter.api.configuration.bedrock.mapping.block.BlockMappingConfiguration;
 import fr.robie.craftengineconverter.api.configuration.bedrock.mapping.item.GroupDefinitionMapping;
 import fr.robie.craftengineconverter.api.configuration.bedrock.mapping.item.ItemMapping;
 import fr.robie.craftengineconverter.api.configuration.bedrock.mapping.item.ItemModelItemMapping;
 import fr.robie.craftengineconverter.api.configuration.bedrock.mapping.item.option.BedrockOptions;
 import fr.robie.craftengineconverter.api.configuration.bedrock.texture.FlipbookTextureConfiguration;
+import fr.robie.craftengineconverter.api.configuration.bedrock.texture.FlipbookTextureData;
 import fr.robie.craftengineconverter.api.configuration.bedrock.texture.TextureData;
 import fr.robie.craftengineconverter.api.manager.FileCacheManager;
 import fr.robie.craftengineconverter.converter.bedrock.animation.BedrockAnimation;
 import fr.robie.craftengineconverter.converter.bedrock.animation.BedrockAnimationController;
 import fr.robie.craftengineconverter.converter.bedrock.animation.BedrockRenderControllers;
 import fr.robie.craftengineconverter.converter.bedrock.attachable.BedrockAttachableContext;
-import fr.robie.craftengineconverter.converter.bedrock.block.BedrockBlockMapper;
+import fr.robie.craftengineconverter.converter.bedrock.block.BlockStateMapper;
 import fr.robie.craftengineconverter.converter.bedrock.geometry.BedrockGeometry;
+import fr.robie.craftengineconverter.converter.bedrock.font.FontMapper;
+import fr.robie.craftengineconverter.converter.bedrock.waypoint.WaypointStyleMapper;
 import fr.robie.craftengineconverter.converter.bedrock.lang.LanguageMapper;
 import fr.robie.craftengineconverter.converter.bedrock.geometry.GeometryMapper;
 import fr.robie.craftengineconverter.converter.bedrock.geometry.JavaBlockModel;
@@ -38,7 +40,7 @@ public class ConversionContext {
     private final ItemTextureConfiguration texturesConfig = new ItemTextureConfiguration();
     private final ItemTextureConfiguration terrainTexturesConfig = new ItemTextureConfiguration();
     private final FlipbookTextureConfiguration flipbookConfig = new FlipbookTextureConfiguration();
-    private final BlockMappingConfiguration blockMappings = new BlockMappingConfiguration();
+    private final BlockStateMapper blockStateMapper = new BlockStateMapper();
     private final TexturePipeline texturePipeline = new TexturePipeline();
     private final Map<String, BedrockGeometry> collectedGeometry = new HashMap<>();
     private final Map<String, Object> collectedAttachables = new HashMap<>();
@@ -47,6 +49,8 @@ public class ConversionContext {
     private final Map<String, BedrockAnimationController> animationControllers = new HashMap<>();
     private final SoundMapper soundMapper = new SoundMapper();
     private final LanguageMapper languageMapper = new LanguageMapper();
+    private final FontMapper fontMapper = new FontMapper();
+    private final WaypointStyleMapper waypointStyleMapper = new WaypointStyleMapper();
     private ManifestConfiguration manifest;
     private final Path customMappingsDir;
     private final Path texturesDir;
@@ -230,12 +234,13 @@ public class ConversionContext {
         }
     }
 
-    public BlockMappingConfiguration blockMappings() {
-        return this.blockMappings;
-    }
-
     public void addLangDirectory(File langDir, String namespace) {
         this.languageMapper.addFromLangDirectory(langDir, namespace);
+    }
+
+    public void addFontDirectory(File fontDir, String namespace) {
+        if (this.javaAssetsDir == null) return;
+        this.fontMapper.addFromFontDirectory(fontDir, namespace, this.javaAssetsDir);
     }
 
     public void convertSoundDefinitions(File javaSoundsJson, String namespace) {
@@ -246,17 +251,13 @@ public class ConversionContext {
                         root, namespace, this.javaAssetsDir, this.packDir.resolve("sounds")));
     }
 
-    public void convertBlocks() {
+    public void addWaypointStyleDirectory(File dir, String namespace) {
+        this.waypointStyleMapper.addFromWaypointStyleDirectory(dir, namespace);
+    }
+
+    public void addBlockstatesDirectory(File blockstatesDir, String namespace) {
         if (this.javaAssetsDir == null) return;
-        BedrockBlockMapper mapper = new BedrockBlockMapper(this.javaAssetsDir);
-        mapper.mapAllBlocks();
-        BlockMappingConfiguration result = mapper.result();
-        if (!result.isEmpty()) {
-            for (var entry : result.entries().entrySet()) {
-                this.blockMappings.mapBlock(entry.getKey(), entry.getValue());
-            }
-            fr.robie.messageflow.logger.Logger.info("Mapped " + result.size() + " block states");
-        }
+        this.blockStateMapper.addFromBlockstatesDirectory(blockstatesDir, namespace, this.javaAssetsDir);
     }
 
     public void registerTextureData(String modelPath, String bedrockKey) {
@@ -273,12 +274,24 @@ public class ConversionContext {
     }
 
     public void registerTextureDataAsTerrain(String modelPath, String bedrockKey) {
-        this.registerTextureDataInternal(modelPath, bedrockKey, this.terrainTexturesConfig);
+        this.registerTextureDataAsTerrain(modelPath, bedrockKey, this.javaAssetsDir);
+    }
+
+    // Explicit assets dir overload: javaAssetsDir is reassigned per pack layer, so deferred
+    // callers (e.g. block textures resolved during the walk but registered in saveAll) must
+    // supply the dir that was active when the texture was discovered.
+    public void registerTextureDataAsTerrain(String modelPath, String bedrockKey, Path assetsDir) {
+        this.registerTextureDataInternal(modelPath, bedrockKey, this.terrainTexturesConfig, assetsDir);
     }
 
     private void registerTextureDataInternal(String modelPath, String bedrockKey, ItemTextureConfiguration targetConfig) {
-        if (this.javaAssetsDir == null) return;
-        Optional<CachedTextureInfo> resolved = this.texturePipeline.resolveTexture(modelPath, bedrockKey, this.javaAssetsDir);
+        this.registerTextureDataInternal(modelPath, bedrockKey, targetConfig, this.javaAssetsDir);
+    }
+
+    private void registerTextureDataInternal(String modelPath, String bedrockKey,
+                                             ItemTextureConfiguration targetConfig, Path assetsDir) {
+        if (assetsDir == null) return;
+        Optional<CachedTextureInfo> resolved = this.texturePipeline.resolveTexture(modelPath, bedrockKey, assetsDir);
         if (resolved.isEmpty()) {
             resolved = this.tryResolveTextureFromModel(modelPath, bedrockKey);
         }
@@ -357,18 +370,57 @@ public class ConversionContext {
         }
     }
 
+    // Registers a block texture in terrain_texture.json and, when animated (.mcmeta present),
+    // also adds a flipbook entry so Bedrock animates the full spritesheet directly.
+    private void registerBlockTerrainTexture(String textureRef, String shortname, Path assetsDir) {
+        if (assetsDir == null) return;
+        Optional<CachedTextureInfo> resolved = this.texturePipeline.resolveTexture(textureRef, shortname, assetsDir);
+        if (resolved.isEmpty()) {
+            resolved = this.tryResolveTextureFromModel(textureRef, shortname);
+        }
+        resolved.ifPresent(info -> {
+            this.texturePipeline.copyTexture(info, this.texturesDir);
+            this.terrainTexturesConfig.addTextureData(this.texturePipeline.toTextureData(info));
+            info.animation().ifPresent(anim -> {
+                java.util.List<Integer> frameIndices = anim.frames().stream()
+                        .map(CachedTextureInfo.FrameInfo::index)
+                        .toList();
+                this.flipbookConfig.addFlipbookTexture(new FlipbookTextureData(
+                        shortname,
+                        info.bedrockTexturePath(),
+                        anim.defaultTickTime(),
+                        frameIndices,
+                        1,
+                        true
+                ));
+            });
+        });
+    }
+
     public void saveAll() {
         this.mappings.saveMappings(this.customMappingsDir);
         this.texturesConfig.save(this.texturesDir);
+        // Copy block textures, register in terrain_texture.json, and add flipbook if animated
+        for (Map.Entry<String, Path> tex : this.blockStateMapper.getDiscoveredTextures().entrySet()) {
+            String textureRef = tex.getKey();
+            String shortname = textureRef.replace("minecraft:", "minecraft/").replace(":", "/");
+            this.registerBlockTerrainTexture(textureRef, shortname, tex.getValue());
+        }
         if (!this.terrainTexturesConfig.isEmpty()) {
             this.terrainTexturesConfig.save(this.texturesDir);
         }
         if (!this.flipbookConfig.isEmpty()) {
             this.flipbookConfig.save(this.texturesDir);
         }
-        this.blockMappings.save(this.customMappingsDir);
+        this.blockStateMapper.save(this.customMappingsDir);
 
         this.languageMapper.save(this.packDir.resolve("texts"));
+        this.fontMapper.save(this.packDir, this.texturesDir);
+
+        if (!this.waypointStyleMapper.isEmpty() && this.javaAssetsDir != null) {
+            this.waypointStyleMapper.save(this.customMappingsDir, this.texturesDir, this.javaAssetsDir);
+            fr.robie.messageflow.logger.Logger.info("Saved " + this.waypointStyleMapper.size() + " waypoint style(s)");
+        }
 
         if (!this.soundMapper.isEmpty()) {
             try {

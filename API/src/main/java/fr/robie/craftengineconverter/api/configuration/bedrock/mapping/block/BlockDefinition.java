@@ -33,7 +33,10 @@ public class BlockDefinition {
 
     public JsonObject serialize() {
         JsonObject obj = new JsonObject();
-        this.geometry().ifPresent(g -> obj.add("geometry", g.serialize()));
+        this.geometry().ifPresent(g -> {
+            obj.add("geometry", g.geometry().serialize());
+            obj.add("material_instances", g.materialInstances().serialize());
+        });
         this.friction.ifPresent(f -> obj.addProperty("friction", f));
         if (this.lightEmission > 0) obj.addProperty("light_emission", this.lightEmission);
         if (this.lightDampening > 0) obj.addProperty("light_dampening", this.lightDampening);

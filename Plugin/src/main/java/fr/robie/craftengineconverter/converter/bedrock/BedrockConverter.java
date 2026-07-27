@@ -84,7 +84,6 @@ public class BedrockConverter {
             this.convertItems(extra, ctx);
         }
 
-        ctx.convertBlocks();
         ctx.saveAll();
         this.createMcPack(packOut, outputFolder);
     }
@@ -273,7 +272,10 @@ public class BedrockConverter {
             if (file.isDirectory()) {
                 String name = file.getName().toLowerCase(Locale.ROOT);
                 switch (name) {
-                    case "lang" -> ctx.addLangDirectory(file, namespace);
+                    case "lang"           -> ctx.addLangDirectory(file, namespace);
+                    case "font"           -> ctx.addFontDirectory(file, namespace);
+                    case "blockstates"    -> ctx.addBlockstatesDirectory(file, namespace);
+                    case "waypoint_style" -> ctx.addWaypointStyleDirectory(file, namespace);
                     default -> {
                         // Other directories can be handled here if needed
                     }
