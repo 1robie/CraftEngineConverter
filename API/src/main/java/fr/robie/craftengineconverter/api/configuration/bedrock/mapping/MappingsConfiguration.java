@@ -8,15 +8,12 @@ import org.bukkit.Material;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class MappingsConfiguration {
     private static final int formatVersion = 2;
 
-    private final Map<Material, List<ItemMapping>> itemMappings = new HashMap<>();
+    private final Map<Material, List<ItemMapping>> itemMappings = new TreeMap<>(Comparator.comparing(Material::name));
 
     public MappingsConfiguration addItemMapping(@NotNull ItemMapping itemMapping) {
         this.itemMappings.computeIfAbsent(itemMapping.getJavaMaterial(), k -> new ArrayList<>()).add(itemMapping);
