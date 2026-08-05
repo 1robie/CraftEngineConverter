@@ -107,7 +107,6 @@ CraftEngineConverter/
 │   ├── packet/            # Packet handling
 │   └── tag/               # Tag processing system
 ├── Hooks/                  # Plugin hook implementations
-│   ├── BOM/               # Bill of Materials
 │   ├── PacketEvent/       # Packet event integration
 │   └── PlaceholderAPI/    # PlaceholderAPI integration
 └── Plugin/                 # Main plugin implementation
@@ -325,10 +324,12 @@ void testConvertItemWithValidInput() {
 ### Adding a New Hook
 
 1. Create module in `Hooks/` directory
-2. Add dependency in `pom.xml`
-3. Implement hook interface
-4. Add to BOM required to load the hook into `Plugin` module
-5. Test integration
+2. Add an `include(":Hooks:<Name>")` entry in `settings.gradle.kts`
+3. Apply `craftengineconverter.hook-conventions` in the module's `build.gradle.kts`
+4. Implement hook interface
+
+The hook is picked up by `:Plugin` automatically - it no longer needs to be listed anywhere, the
+old `Hooks/BOM` aggregator is gone.
 
 ## Reporting Bugs
 

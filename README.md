@@ -325,7 +325,6 @@ CraftEngineConverter/
 ├── API/                # Public API for other plugins
 ├── Common/             # Shared utilities and core logic
 ├── Hooks/              # Plugin integration modules
-│   ├── BOM/            # Bill of Materials
 │   ├── Nexo/           # Nexo plugin integration
 │   ├── ItemsAdder/     # ItemsAdder plugin integration
 │   ├── PacketEvents/   # PacketEvents integration

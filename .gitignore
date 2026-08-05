@@ -97,6 +97,15 @@ $RECYCLE.BIN/
 
 target/
 
+# Gradle
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.properties
+# `*.jar` above would otherwise swallow the wrapper jar, which MUST be committed so that
+# `./gradlew` works on a fresh clone.
+!gradle/wrapper/gradle-wrapper.jar
+
+# Maven leftovers (the build migrated to Gradle; the pom.xml files are gone)
 pom.xml.tag
 pom.xml.releaseBackup
 pom.xml.versionsBackup

@@ -1,0 +1,73 @@
+#
+# Central version catalog.
+#
+# This replaces the <properties> / <dependencyManagement> block of the old root pom.xml.
+# Every version used by the build lives here and nowhere else.
+#
+[versions]
+# Toolchain / language level (was maven.compiler.release)
+java = "21"
+
+# Paper. `paper` is used both for `paper-api` (non-paperweight modules) and for the
+# paperweight dev-bundle (the :Plugin module). Keep the two in sync.
+paper = "1.21.11-R0.1-SNAPSHOT"
+# Plain Minecraft version, used by the `runServer` development server.
+minecraft = "1.21.11"
+
+craftengine = "26.5-SNAPSHOT"
+
+adventure = "4.26.1"
+bstats = "3.2.1"
+folialib = "0.5.1"
+itemsadder = "4.0.10"
+junit = "6.0.3"
+messageflow = "main-SNAPSHOT"
+nexo = "1.20.1"
+packetevents = "2.11.2"
+paperdispatch = "1.0.2"
+placeholderapi = "2.12.2"
+reflections = "0.10.2"
+sarah = "1.23"
+snakeyaml = "2.6"
+yamllibrary = "1.0-SNAPSHOT"
+
+# Build plugins
+paperweight = "2.0.0-beta.21"
+runPaper = "3.0.2"
+shadow = "9.6.1"
+
+[libraries]
+# --- Paper -------------------------------------------------------------------
+paper-api = { module = "io.papermc.paper:paper-api", version.ref = "paper" }
+
+# --- CraftEngine -------------------------------------------------------------
+craftengine-core = { module = "net.momirealms:craft-engine-core", version.ref = "craftengine" }
+craftengine-bukkit = { module = "net.momirealms:craft-engine-bukkit", version.ref = "craftengine" }
+
+# --- Shaded at build time (relocated into the final jar) ----------------------
+bstats-base = { module = "org.bstats:bstats-base", version.ref = "bstats" }
+bstats-bukkit = { module = "org.bstats:bstats-bukkit", version.ref = "bstats" }
+folialib = { module = "com.tcoded:FoliaLib", version.ref = "folialib" }
+message-flow = { module = "com.github.1robie.MessageFlow:message-flow", version.ref = "messageflow" }
+paper-dispatch = { module = "com.github.1robie.paper-dispatch:paper-dispatch", version.ref = "paperdispatch" }
+sarah = { module = "fr.maxlego08.sarah:sarah", version.ref = "sarah" }
+yamllibrary = { module = "fr.robie:yamllibrary", version.ref = "yamllibrary" }
+
+# --- Provided by the server / by CraftEngine at runtime ----------------------
+adventure-api = { module = "net.kyori:adventure-api", version.ref = "adventure" }
+itemsadder = { module = "dev.lone:api-itemsadder", version.ref = "itemsadder" }
+nexo = { module = "com.nexomc:nexo", version.ref = "nexo" }
+packetevents-spigot = { module = "com.github.retrooper:packetevents-spigot", version.ref = "packetevents" }
+placeholderapi = { module = "me.clip:placeholderapi", version.ref = "placeholderapi" }
+reflections = { module = "org.reflections:reflections", version.ref = "reflections" }
+snakeyaml = { module = "org.yaml:snakeyaml", version.ref = "snakeyaml" }
+
+# --- Test --------------------------------------------------------------------
+junit-bom = { module = "org.junit:junit-bom", version.ref = "junit" }
+junit-jupiter = { module = "org.junit.jupiter:junit-jupiter" }
+junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher" }
+
+[plugins]
+paperweight-userdev = { id = "io.papermc.paperweight.userdev", version.ref = "paperweight" }
+run-paper = { id = "xyz.jpenilla.run-paper", version.ref = "runPaper" }
+shadow = { id = "com.gradleup.shadow", version.ref = "shadow" }
