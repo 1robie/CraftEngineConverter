@@ -131,6 +131,7 @@ tasks.withType<RunServer>().configureEach {
 
     jvmArgs(runServerJvmArgs.get())
     runServerJavaAgent.orNull?.let { agent ->
+        jvmArgs("-XX:HotswapAgent=external")
         val agentArgs = runServerJavaAgentArgs.orNull?.takeIf(String::isNotBlank)
         jvmArgs(if (agentArgs == null) "-javaagent:$agent" else "-javaagent:$agent=$agentArgs")
     }
