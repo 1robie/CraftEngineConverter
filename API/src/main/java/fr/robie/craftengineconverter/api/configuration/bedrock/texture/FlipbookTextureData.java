@@ -32,6 +32,9 @@ public class FlipbookTextureData {
 
     public String atlasTile() { return this.atlasTile; }
     public String flipbookTexture() { return this.flipbookTexture; }
+    public String getAtlasTile() {
+        return this.atlasTile;
+    }
 
     public JsonObject serialize() {
         JsonObject obj = new JsonObject();
