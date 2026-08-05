@@ -15,6 +15,42 @@ import java.util.*;
 public class TexturePipeline {
     private final Map<String, CachedTextureInfo> textureCache = new HashMap<>();
     private final List<CachedTextureInfo> processedTextures = new ArrayList<>();
+    private final Map<String, Boolean> transparencyCache = new HashMap<>();
+    /** Reported once each, because one texture is asked about once per state or variant that uses it. */
+    private final Set<String> missingTextures = new java.util.LinkedHashSet<>();
+    private final Set<String> trimFallbacks = new java.util.LinkedHashSet<>();
+    private fr.robie.craftengineconverter.converter.bedrock.asset.VanillaAssets vanillaAssets;
+
+    /**
+     * Supplies vanilla textures a pack references but does not ship. Consulted only after the pack's own assets
+     * miss, so a pack overriding a vanilla texture still wins.
+     */
+    public TexturePipeline withVanillaAssets(
+            fr.robie.craftengineconverter.converter.bedrock.asset.VanillaAssets vanillaAssets) {
+        this.vanillaAssets = vanillaAssets;
+        return this;
+    }
+
+    /**
+     * The modern per-slot trim sheet a legacy per-material trim texture maps onto, or {@code null} when the path is
+     * not a trim overlay at all.
+     * <p>
+     * {@code trims/items/helmet_trim_gold} to {@code trims/items/helmet_trim}. Matched on the directory as well as
+     * the suffix so an unrelated texture that happens to end in {@code _trim_something} is left alone.
+     */
+    private static String trimSheetFor(String textureFilePath) {
+        if (!textureFilePath.startsWith("trims/items/")) return null;
+        int trim = textureFilePath.lastIndexOf("_trim_");
+        return trim < 0 ? null : textureFilePath.substring(0, trim + "_trim".length());
+    }
+
+    /** One line about trim overlays that fell back to the greyscale sheet, rather than one per material. */
+    public void reportTrimFallbacks() {
+        if (this.trimFallbacks.isEmpty()) return;
+        Logger.info(this.trimFallbacks.size() + " armour trim overlay(s) fell back to vanilla's greyscale sheet"
+                + " - the pack names per-material files that vanilla no longer ships, so trims keep their shape"
+                + " but not their colour");
+    }
 
     public Optional<CachedTextureInfo> resolveTexture(String modelPath, String bedrockKey, Path javaAssetsDir) {
         String cacheKey = modelPath;
@@ -27,8 +63,43 @@ public class TexturePipeline {
         String namespace = this.extractNamespace(modelPath);
         Path sourceFile = javaAssetsDir.resolve(namespace + "/textures/" + textureFilePath + ".png");
         if (!Files.exists(sourceFile)) {
-            Logger.warn("Texture not found: " + sourceFile.toAbsolutePath());
-            return Optional.empty();
+            // A pack may reference a vanilla texture it does not ship — item/light for a light block, or the
+            // trims/items overlays for armour trims. Those live in the client jar.
+            Path vanilla = this.vanillaAssets == null
+                    ? null
+                    : this.vanillaAssets.resolve(namespace + "/textures/" + textureFilePath + ".png");
+
+            // Armour trim overlays were renamed. Vanilla used to ship one file per material
+            // (trims/items/helmet_trim_gold.png); it now ships a single greyscale sheet per slot
+            // (trims/items/helmet_trim.png) and tints it from a palette at render time. A pack written against
+            // the older layout names files that no longer exist — which was 50-odd warnings and a broken texture
+            // per trim. The sheet is the right shape, just not the right colour, which beats a missing texture.
+            if (vanilla == null) {
+                String sheet = trimSheetFor(textureFilePath);
+                if (sheet != null && this.vanillaAssets != null) {
+                    vanilla = this.vanillaAssets.resolve(namespace + "/textures/" + sheet + ".png");
+                    if (vanilla != null) {
+                        textureFilePath = sheet;
+                        this.trimFallbacks.add(sheet);
+                    }
+                }
+            }
+
+            if (vanilla == null) {
+                // Deduplicated: one model's texture is asked about once per state that uses it, and a pack
+                // missing a file would otherwise report it dozens of times.
+                if (this.missingTextures.add(textureFilePath)) {
+                    Logger.warn("Texture not found: " + sourceFile.toAbsolutePath());
+                }
+                return Optional.empty();
+            }
+            sourceFile = vanilla;
+
+            // Pull the .mcmeta out too, if there is one. detectAnimation below looks for it as a sibling of the
+            // png, which holds for a folder source but not for a jar: assets are extracted from an archive one at
+            // a time, on request, so a file nobody asks for never lands in the cache. Over 200 vanilla textures
+            // ship a .mcmeta, and without this every one of them a pack inherits arrives as a still image.
+            this.vanillaAssets.resolve(namespace + "/textures/" + textureFilePath + ".png.mcmeta");
         }
 
         Optional<CachedTextureInfo.AnimationInfo> animation = this.detectAnimation(sourceFile);
@@ -38,6 +109,42 @@ public class TexturePipeline {
         this.textureCache.put(cacheKey, info);
         this.processedTextures.add(info);
         return Optional.of(info);
+    }
+
+    /**
+     * Whether a texture has any pixel that is not fully opaque.
+     * <p>
+     * Decides a block's render method: a leaf or a ladder drawn with {@code opaque} shows its see-through pixels as
+     * solid, so a texture with alpha needs {@code alpha_test}. Cached per reference, since one texture is asked
+     * about once per block state that uses it.
+     */
+    public boolean hasTransparency(String textureRef, Path javaAssetsDir) {
+        Boolean cached = this.transparencyCache.get(textureRef);
+        if (cached != null) return cached;
+
+        boolean transparent = false;
+        Optional<CachedTextureInfo> resolved = this.resolveTexture(textureRef, textureRef, javaAssetsDir);
+        if (resolved.isPresent()) {
+            try {
+                BufferedImage image = ImageIO.read(resolved.get().sourcePath().toFile());
+                if (image != null && image.getColorModel().hasAlpha()) {
+                    outer:
+                    for (int y = 0; y < image.getHeight(); y++) {
+                        for (int x = 0; x < image.getWidth(); x++) {
+                            if ((image.getRGB(x, y) >>> 24) != 0xFF) {
+                                transparent = true;
+                                break outer;
+                            }
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                Logger.debug("Could not read " + textureRef + " to check for transparency: " + e.getMessage());
+            }
+        }
+
+        this.transparencyCache.put(textureRef, transparent);
+        return transparent;
     }
 
     public boolean copyTexture(CachedTextureInfo info, Path outputTexturesDir) {

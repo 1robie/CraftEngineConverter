@@ -7,6 +7,19 @@ import java.util.List;
 public class GeometryMapper {
     private static final float[] CENTRE_OFFSET = {8.0F, 0.0F, 8.0F};
 
+    /**
+     * The point a held item's pose animation turns it about: the model's own centre.
+     * <p>
+     * Java applies a {@code display} transform and then shifts the model by half a block, so the transform pivots
+     * on model coordinate {@code (8, 8, 8)} — the centre. Cubes here are written at Java minus
+     * {@link #CENTRE_OFFSET}, which puts that centre at {@code (0, 8, 0)} in bone space.
+     * <p>
+     * It has to be the same for every item geometry. The Java-model path used to set no pivot at all while the
+     * generated flat and lattice geometries set {@code (0, 8, -0.25)}, so one animation posed a 3D item and a 2D
+     * item about two different points.
+     */
+    private static final float[] ITEM_PIVOT = {0.0F, 8.0F, 0.0F};
+
     public BedrockGeometry mapGeometry(String identifier, JavaBlockModel model, int textureWidth, int textureHeight) {
         BedrockGeometry geo = new BedrockGeometry(identifier)
                 .withVisibleBoundsWidth(4.0F)
@@ -16,7 +29,8 @@ public class GeometryMapper {
                 .withTextureHeight(textureHeight);
 
         BedrockGeometry.Bone bone = geo.addBone("bone")
-                .withBinding("q.item_slot_to_bone_name(context.item_slot)");
+                .withBinding("q.item_slot_to_bone_name(context.item_slot)")
+                .withPivot(ITEM_PIVOT[0], ITEM_PIVOT[1], ITEM_PIVOT[2]);
 
         for (JavaBlockModel.Element element : model.elements()) {
             this.mapElement(element, bone, textureWidth, textureHeight);
@@ -25,7 +39,218 @@ public class GeometryMapper {
         return geo;
     }
 
+    /**
+     * The same conversion as {@link #mapGeometry}, for a <b>block</b> rather than a held item.
+     * <p>
+     * Two differences, both small and both necessary. The bone carries no binding: {@code item_slot_to_bone_name}
+     * is an attachable query and means nothing on a block. And each face is given a material instance named after
+     * the Java texture variable it uses, because that is how a block points its faces at different textures — a
+     * log's {@code end} on the top and bottom, {@code side} around it.
+     *
+     * @param instanceNames receives, per face, the Java texture variable that face samples (e.g. {@code "end"}),
+     *                      so the caller can build the matching {@code material_instances}
+     */
+    public BedrockGeometry mapBlockGeometry(String identifier, JavaBlockModel model,
+                                            java.util.Set<String> instanceNames) {
+        BedrockGeometry geo = new BedrockGeometry(identifier)
+                .withTextureWidth((int) JavaBlockModel.UV_SPACE)
+                .withTextureHeight((int) JavaBlockModel.UV_SPACE);
+
+        BedrockGeometry.Bone bone = geo.addBone("bone");
+
+        for (JavaBlockModel.Element element : model.elements()) {
+            this.mapElement(element, bone, (int) JavaBlockModel.UV_SPACE, (int) JavaBlockModel.UV_SPACE,
+                    model, instanceNames, false);
+        }
+
+        return geo;
+    }
+
+    /**
+     * A model with a blockstate's {@code x}/{@code y} rotation <b>baked into the cubes</b>.
+     * <p>
+     * The alternative is Geyser's {@code transformation}, and it cannot be trusted for a combined rotation: Java
+     * applies {@code x} then {@code y}, and composing the two in the other order negates the {@code y} turn. That is
+     * why a stair was right on two facings and showed its back on the other two — only its {@code half=top} variants
+     * carry {@code x: 180}. Baking removes the ordering question entirely, and as a bonus reproduces {@code uvlock}
+     * (which Geyser has no field for) because each face keeps the UV it was authored with.
+     * <p>
+     * Exact, because a blockstate rotation is always a multiple of 90 degrees: a box maps onto a box, and a face
+     * normal onto another axis.
+     */
+    public BedrockGeometry mapRotatedBlockGeometry(String identifier, JavaBlockModel model,
+                                                   java.util.Set<String> instanceNames, int rotX, int rotY) {
+        BedrockGeometry geo = new BedrockGeometry(identifier)
+                .withTextureWidth((int) JavaBlockModel.UV_SPACE)
+                .withTextureHeight((int) JavaBlockModel.UV_SPACE);
+
+        BedrockGeometry.Bone bone = geo.addBone("bone");
+        for (JavaBlockModel.Element element : rotateModel(model, rotX, rotY).elements()) {
+            this.mapElement(element, bone,
+                    (int) JavaBlockModel.UV_SPACE, (int) JavaBlockModel.UV_SPACE, model, instanceNames, false);
+        }
+        return geo;
+    }
+
+    /**
+     * The same model with every element turned, so callers that need the rotated <b>bounds</b> — the collision and
+     * selection boxes — measure exactly the shape that was drawn instead of repeating the rotation themselves.
+     */
+    public static JavaBlockModel rotateModel(JavaBlockModel model, int rotX, int rotY) {
+        if (rotX == 0 && rotY == 0) return model;
+        JavaBlockModel rotated = new JavaBlockModel(model.parent().orElse(null), model.ambientOcclusion());
+        rotated.setGuiLightFront(model.guiLightFront());
+        model.textures().forEach(rotated::addTexture);
+        for (JavaBlockModel.Element element : model.elements()) {
+            rotated.addElement(rotateElement(element, rotX, rotY));
+        }
+        return rotated;
+    }
+
+    /** Turns one element about the block centre, carrying each face round to the direction it now points. */
+    private static JavaBlockModel.Element rotateElement(JavaBlockModel.Element element, int rotX, int rotY) {
+        if (rotX == 0 && rotY == 0) return element;
+
+        float[] from = {element.fromX(), element.fromY(), element.fromZ()};
+        float[] to = {element.toX(), element.toY(), element.toZ()};
+
+        float[] min = {Float.MAX_VALUE, Float.MAX_VALUE, Float.MAX_VALUE};
+        float[] max = {-Float.MAX_VALUE, -Float.MAX_VALUE, -Float.MAX_VALUE};
+        for (float x : new float[]{from[0], to[0]}) {
+            for (float y : new float[]{from[1], to[1]}) {
+                for (float z : new float[]{from[2], to[2]}) {
+                    float[] p = {x - 8.0F, y - 8.0F, z - 8.0F};
+                    rotate(p, rotX, rotY);
+                    for (int axis = 0; axis < 3; axis++) {
+                        min[axis] = Math.min(min[axis], p[axis] + 8.0F);
+                        max[axis] = Math.max(max[axis], p[axis] + 8.0F);
+                    }
+                }
+            }
+        }
+
+        JavaBlockModel.Element rotated = new JavaBlockModel.Element(min[0], min[1], min[2], max[0], max[1], max[2]);
+        for (JavaBlockModel.Face face : element.faces()) {
+            rotated.addFace(rotatedDirection(face.direction(), rotX, rotY), face.texture(),
+                    face.u0(), face.v0(), face.u1(), face.v1(),
+                    rotatedFaceRotation(face.direction(), face.rotation(), rotY), face.tintIndex());
+        }
+        // The element's own rotation goes round with it. Its pivot is a point like any other, and its axis maps onto
+        // another axis because the turn is a multiple of 90 degrees; when that axis comes out pointing the other way
+        // the angle has to change sign with it, or the part would tilt the wrong way.
+        element.rotation().ifPresent(r -> {
+            float[] pivot = {r.ox() - 8.0F, r.oy() - 8.0F, r.oz() - 8.0F};
+            rotate(pivot, rotX, rotY);
+            float[] axis = switch (r.axis()) {
+                case "x" -> new float[]{1, 0, 0};
+                case "y" -> new float[]{0, 1, 0};
+                default -> new float[]{0, 0, 1};
+            };
+            rotate(axis, rotX, rotY);
+            int dominant = 0;
+            for (int i = 1; i < 3; i++) if (Math.abs(axis[i]) > Math.abs(axis[dominant])) dominant = i;
+            String newAxis = switch (dominant) {
+                case 0 -> "x";
+                case 1 -> "y";
+                default -> "z";
+            };
+            float angle = axis[dominant] < 0 ? -r.angle() : r.angle();
+            rotated.setRotation(pivot[0] + 8.0F, pivot[1] + 8.0F, pivot[2] + 8.0F, angle, newAxis, r.rescale());
+        });
+        return rotated;
+    }
+
+    /**
+     * A face's texture rotation after a variant's Y rotation is baked in.
+     * <p>
+     * Turning a block about Y carries the four side faces onto one another, and each keeps its own texture upright
+     * as it goes — so their {@code rotation} is unchanged. The top and bottom faces are the exception: the axis of
+     * the turn runs through them, so the turn happens <b>within</b> the face's own plane and shows up as a quarter
+     * turn of its texture. Down turns the opposite way to up, since it is seen from the other side.
+     * <p>
+     * Without this a glazed-terracotta-style block shows the same pattern orientation on top for all four of its
+     * facings, instead of the pattern following the block round.
+     */
+    public static int rotatedFaceRotation(String direction, int faceRotation, int rotY) {
+        int turn = switch (direction) {
+            case "up" -> rotY;
+            case "down" -> -rotY;
+            default -> 0;
+        };
+        return ((faceRotation + turn) % 360 + 360) % 360;
+    }
+
+    /**
+     * Where a face points after the rotation, found by turning its normal and snapping to the nearest axis. Derived
+     * rather than tabulated so it cannot disagree with how the corners moved.
+     */
+    public static String rotatedDirection(String direction, int rotX, int rotY) {
+        float[] normal = switch (direction) {
+            case "north" -> new float[]{0, 0, -1};
+            case "south" -> new float[]{0, 0, 1};
+            case "west" -> new float[]{-1, 0, 0};
+            case "east" -> new float[]{1, 0, 0};
+            case "up" -> new float[]{0, 1, 0};
+            case "down" -> new float[]{0, -1, 0};
+            default -> null;
+        };
+        if (normal == null) return direction;
+
+        rotate(normal, rotX, rotY);
+        int axis = 0;
+        for (int i = 1; i < 3; i++) {
+            if (Math.abs(normal[i]) > Math.abs(normal[axis])) axis = i;
+        }
+        boolean positive = normal[axis] > 0;
+        return switch (axis) {
+            case 0 -> positive ? "east" : "west";
+            case 1 -> positive ? "up" : "down";
+            default -> positive ? "south" : "north";
+        };
+    }
+
+    /**
+     * X then Y, the order a blockstate applies them in, and <b>negated</b>.
+     * <p>
+     * Vanilla builds a variant's rotation as {@code rotationYXZ(-y, -x, 0)}, so a blockstate's angles turn the model
+     * the opposite way round to a plain right-handed rotation. Two checks against vanilla agree: {@code block/stairs}
+     * has its raised step on the east and is the {@code facing=east} variant, while {@code facing=south} is
+     * {@code y: 90} — so {@code y: 90} must carry east to south, which only the negated form does. Applying them
+     * as given carried east to north, a 180-degree error on exactly two of the four facings, which is why a stair
+     * showed its back on two of them.
+     */
+    private static void rotate(float[] p, int rotX, int rotY) {
+        if (rotX != 0) {
+            double a = Math.toRadians(-rotX);
+            double y = p[1] * Math.cos(a) - p[2] * Math.sin(a);
+            double z = p[1] * Math.sin(a) + p[2] * Math.cos(a);
+            p[1] = (float) y;
+            p[2] = (float) z;
+        }
+        if (rotY != 0) {
+            double a = Math.toRadians(-rotY);
+            double x = p[0] * Math.cos(a) + p[2] * Math.sin(a);
+            double z = -p[0] * Math.sin(a) + p[2] * Math.cos(a);
+            p[0] = (float) x;
+            p[2] = (float) z;
+        }
+    }
+
     private void mapElement(JavaBlockModel.Element element, BedrockGeometry.Bone bone, int texW, int texH) {
+        this.mapElement(element, bone, texW, texH, null, null, true);
+    }
+
+    /**
+     * @param mirrorX whether to mirror the element along X.
+     *                <p>
+     *                True for a held item, because Bedrock entity models are authored mirrored relative to Java.
+     *                <b>False for a block</b>, which sits in world space where Bedrock's axes match Java's —
+     *                mirroring one moves it to the opposite side of its own block and reverses its texture, which
+     *                is what put doors in the wrong half of their frame and crossed a flower's 45-degree sheets the
+     *                wrong way. A symmetric shape such as a cactus hides the difference entirely.
+     */
+    private void mapElement(JavaBlockModel.Element element, BedrockGeometry.Bone bone, int texW, int texH,
+                            JavaBlockModel model, java.util.Set<String> instanceNames, boolean mirrorX) {
         float fromX = element.fromX();
         float fromY = element.fromY();
         float fromZ = element.fromZ();
@@ -47,26 +272,33 @@ public class GeometryMapper {
                 Math.abs(to[2] - from[2])
         };
 
-        origin[0] = -(origin[0] + size[0]);
+        if (mirrorX) origin[0] = -(origin[0] + size[0]);
 
         BedrockGeometry.Cube cube = bone.addCube(origin[0], origin[1], origin[2], size[0], size[1], size[2]);
 
         for (JavaBlockModel.Face face : element.faces()) {
-            this.mapFace(face, cube, texW, texH, from, to);
+            String instance = model == null ? null : materialInstanceFor(face, model);
+            if (instance != null && instanceNames != null) instanceNames.add(instance);
+            this.mapFace(face, cube, texW, texH, from, to, instance);
         }
 
         element.rotation().ifPresent(rot -> {
+            // A Java rotation origin is already in the same 0-16 model units as from/to, so it only needs
+            // recentring — dividing by 1/16 multiplied it by 16 and threw the pivot far outside the model,
+            // which visibly flung any rotated cube away from the rest of the item.
             float[] rotOrigin = {
-                    rot.ox() / 0.0625F - CENTRE_OFFSET[0],
-                    rot.oy() / 0.0625F - CENTRE_OFFSET[1],
-                    rot.oz() / 0.0625F - CENTRE_OFFSET[2]
+                    rot.ox() - CENTRE_OFFSET[0],
+                    rot.oy() - CENTRE_OFFSET[1],
+                    rot.oz() - CENTRE_OFFSET[2]
             };
-            rotOrigin[0] = -rotOrigin[0];
+            if (mirrorX) rotOrigin[0] = -rotOrigin[0];
             cube.withPivot(rotOrigin[0], rotOrigin[1], rotOrigin[2]);
 
+            // Blockbench's Java→Bedrock export negates X and Y rotation to compensate for its X-axis
+            // coordinate mirror. Items mirror X, so they need that compensation. Blocks do not mirror X
+            // (task #72), so their rotation passes through unchanged. Z is never negated.
             float bedrockAngle = switch (rot.axis()) {
-                case "x" -> -rot.angle();
-                case "y" -> rot.angle();
+                case "x", "y" -> mirrorX ? -rot.angle() : rot.angle();
                 case "z" -> rot.angle();
                 default -> rot.angle();
             };
@@ -77,11 +309,42 @@ public class GeometryMapper {
                 default -> new float[]{0, 0, 0};
             };
             cube.withRotation(rotVec[0], rotVec[1], rotVec[2]);
+
+            if (rot.rescale()) {
+                float scaleFactor = 1.0F / (float) Math.cos(Math.toRadians(rot.angle()));
+                float minDim = Math.min(size[0], Math.min(size[1], size[2]));
+                float inflate = (scaleFactor - 1.0F) * minDim / 2.0F;
+                if (inflate > 0.001F) cube.withInflate(inflate);
+            }
         });
+    }
+
+    /**
+     * The material instance a block face should use: the Java texture variable it names, with the {@code #}
+     * dropped. A face naming a literal texture rather than a variable has no instance to share and returns null.
+     */
+    private static String materialInstanceFor(JavaBlockModel.Face face, JavaBlockModel model) {
+        String texture = face.texture();
+        if (texture == null || !texture.startsWith("#")) return null;
+
+        String key = texture.substring(1);
+        // Follow the variable to make sure it actually binds to something; the name of the first bound key is
+        // what the material instance is called.
+        String value = model.textures().get(key);
+        for (int hop = 0; hop < 8 && value != null && value.startsWith("#"); hop++) {
+            key = value.substring(1);
+            value = model.textures().get(key);
+        }
+        return value == null ? null : key;
     }
 
     private void mapFace(JavaBlockModel.Face face, BedrockGeometry.Cube cube, int texW, int texH,
                          float[] from, float[] to) {
+        this.mapFace(face, cube, texW, texH, from, to, null);
+    }
+
+    private void mapFace(JavaBlockModel.Face face, BedrockGeometry.Cube cube, int texW, int texH,
+                         float[] from, float[] to, String materialInstance) {
         String dir = face.direction();
         float u0 = face.u0();
         float v0 = face.v0();
@@ -104,14 +367,18 @@ public class GeometryMapper {
             uvSizeV = v1 - v0;
         }
 
-        float widthMul = (float) texW / 16.0F;
-        float heightMul = (float) texH / 16.0F;
+        int uvRotation = ((face.rotation() % 360) + 360) % 360;
+
+        // Java UVs span 0-16 whatever the texture's resolution (see JavaBlockModel.UV_SPACE), so they are
+        // rescaled into whatever space this geometry declares.
+        float widthMul = texW / JavaBlockModel.UV_SPACE;
+        float heightMul = texH / JavaBlockModel.UV_SPACE;
         uvOriginU *= widthMul;
         uvOriginV *= heightMul;
         uvSizeU *= widthMul;
         uvSizeV *= heightMul;
 
-        cube.withFace(dir, uvOriginU, uvOriginV, uvSizeU, uvSizeV);
+        cube.withFace(dir, uvOriginU, uvOriginV, uvSizeU, uvSizeV, materialInstance, uvRotation);
     }
 
     public static String getMeaningfulMaterialInstanceName(String face, String texture, int elementIndex) {
@@ -122,6 +389,23 @@ public class GeometryMapper {
      * @deprecated kept only as a fallback for callers that cannot supply the source image
      * (e.g. the texture file failed to load). Produces the old zero-depth flat plane.
      * Prefer {@link #createFlatItemGeometry(String, BufferedImage)}.
+     */
+    /**
+     * A zero-depth, two-sided plane covering the whole texture rect.
+     * <p>
+     * The right shape for an item whose animation frames have <b>different silhouettes</b>. Extrusion bakes
+     * one silhouette into walls and slabs, but a single geometry serves every frame, so any frame that is
+     * not that shape renders wrong: pixels outside the baked mask have no face to draw on, and walls baked
+     * where a smaller frame has nothing stand away from the visible pixels, leaving the shape looking
+     * unclosed. A plane has no walls and no mask, so each frame's own alpha shapes it exactly.
+     */
+    public static BedrockGeometry createFlatItemPlane(String identifier, int textureWidth, int textureHeight) {
+        return createFlatItemGeometry(identifier, textureWidth, textureHeight);
+    }
+
+    /**
+     * @deprecated prefer {@link #createFlatItemGeometry(String, BufferedImage)} for still textures, or
+     *         {@link #createFlatItemPlane(String, int, int)} when frames change silhouette.
      */
     @Deprecated
     public static BedrockGeometry createFlatItemGeometry(String identifier, int textureWidth, int textureHeight) {
@@ -134,12 +418,70 @@ public class GeometryMapper {
 
         BedrockGeometry.Bone bone = geo.addBone("bone")
                 .withBinding("q.item_slot_to_bone_name(context.item_slot)")
-                .withPivot(0, 8.0F, -0.25F);
+                .withPivot(ITEM_PIVOT[0], ITEM_PIVOT[1], ITEM_PIVOT[2]);
 
         BedrockGeometry.Cube cube = bone.addCube(-8.0F, 0, -0.5F, 16.0F, 16.0F, 0);
 
         cube.withFace("north", textureWidth, 0, -textureWidth, textureHeight, "#layer0_north_0");
         cube.withFace("south", 0, 0, textureWidth, textureHeight, "#layer0_south_0");
+
+        return geo;
+    }
+
+    /**
+     * A grid of one 1-unit-deep cube per texture pixel, each cube UV-mapped to that single pixel on all
+     * six faces.
+     * <p>
+     * This is the only shape that is genuinely <b>correct for an animated item</b>. Extrusion
+     * ({@link #createFlatItemGeometry(String, BufferedImage)}) bakes one frame's silhouette into slabs and
+     * boundary walls, so every other frame renders wrong; a plane
+     * ({@link #createFlatItemPlane(String, int, int)}) is shape-agnostic but flat. Here every pixel owns a
+     * closed box, and a box whose pixel is transparent is discarded whole by the alpha-test material — so
+     * the silhouette comes from the texture at render time, per frame, in 3D, with real extruded sides.
+     * <p>
+     * Because nothing about the geometry depends on any particular texture, <b>one lattice serves every
+     * animated item of the same frame size</b> and the identifier should be derived from the size rather
+     * than the item.
+     * <p>
+     * Transparent pixels are deliberately <b>not</b> skipped: doing so would reintroduce the dependency on
+     * one frame's mask and defeat the entire point.
+     * <p>
+     * The bone name, binding, pivot and the 16×16×1 box it occupies match
+     * {@link #createFlatItemGeometry(String, BufferedImage)} exactly, so existing animations, render
+     * controllers and attachable scripts apply unchanged.
+     */
+    public static BedrockGeometry createPixelLatticeGeometry(String identifier, int texW, int texH) {
+        BedrockGeometry geo = new BedrockGeometry(identifier)
+                .withVisibleBoundsWidth(4.0F)
+                .withVisibleBoundsHeight(4.0F)
+                .withVisibleBoundsOffset(0.0F, 0.75F, 0.0F)
+                .withTextureWidth(texW)
+                .withTextureHeight(texH);
+
+        BedrockGeometry.Bone bone = geo.addBone("bone")
+                .withBinding("q.item_slot_to_bone_name(context.item_slot)")
+                .withPivot(ITEM_PIVOT[0], ITEM_PIVOT[1], ITEM_PIVOT[2]);
+
+        float unitX = 16.0F / texW;
+        float unitY = 16.0F / texH;
+        float depth = 1.0F;
+        float zOrigin = -depth / 2.0F;
+
+        for (int y = 0; y < texH; y++) {
+            for (int x = 0; x < texW; x++) {
+                BedrockGeometry.Cube cube = bone.addCube(
+                        -8.0F + x * unitX,
+                        16.0F - (y + 1) * unitY,
+                        zOrigin,
+                        unitX, unitY, depth);
+
+                for (String face : new String[]{"north", "south", "east", "west", "up"}) {
+                    cube.withFace(face, x, y, 1, 1, "#layer0_south_0");
+                }
+                // The down face samples the same pixel with V flipped, as vanilla-style item lattices do.
+                cube.withFace("down", x, y + 1, 1, -1, "#layer0_south_0");
+            }
+        }
 
         return geo;
     }
@@ -175,7 +517,7 @@ public class GeometryMapper {
 
         BedrockGeometry.Bone bone = geo.addBone("bone")
                 .withBinding("q.item_slot_to_bone_name(context.item_slot)")
-                .withPivot(0, 8.0F, -0.25F);
+                .withPivot(ITEM_PIVOT[0], ITEM_PIVOT[1], ITEM_PIVOT[2]);
 
         boolean[][] opaque = new boolean[texH][texW];
         for (int y = 0; y < texH; y++) {
