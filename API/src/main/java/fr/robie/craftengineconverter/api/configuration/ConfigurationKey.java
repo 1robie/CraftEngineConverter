@@ -1,6 +1,8 @@
 package fr.robie.craftengineconverter.api.configuration;
 
 import com.google.gson.reflect.TypeToken;
+import fr.robie.craftengineconverter.api.configuration.bedrock.mapping.item.option.CreativeGroupRules;
+import fr.robie.craftengineconverter.api.configuration.loader.ConfigurationTrees;
 import fr.robie.craftengineconverter.api.enums.ArmorConverter;
 import fr.robie.craftengineconverter.api.enums.ConverterOption;
 import fr.robie.craftengineconverter.api.enums.Languages;
@@ -41,8 +43,47 @@ public enum ConfigurationKey {
         }
         return d.get();
     }),
-    DEFAULT_MATERIAL("default-material", new TypeToken<>() {
-    }, () -> Material.PAPER),
+    DEFAULT_MATERIAL("default-material", new TypeToken<Object>() {
+    }, () -> (Object) "auto", (o, d) -> {
+        if (o instanceof Material material) return material;
+        if (o instanceof String name) {
+            if (name.isBlank() || name.equalsIgnoreCase("auto")) return "auto";
+            String value = name.contains(":") ? name.substring(name.indexOf(':') + 1) : name;
+            try {
+                return Material.valueOf(value.trim().toUpperCase(Locale.ROOT));
+            } catch (IllegalArgumentException ignored) {
+                return "auto";
+            }
+        }
+        return d.get();
+    }),
+    CREATIVE_GROUPS("creative-groups", new TypeToken<Object>() {
+    }, () -> (Object) new LinkedHashMap<String, Object>(), (o, d) -> {
+        if (o instanceof ConfigurationSection section) return CreativeGroupRules.parse(section);
+        return CreativeGroupRules.empty();
+    }),
+    VANILLA_ASSETS_DOWNLOAD("vanilla-assets.download", new TypeToken<>() {
+    }, () -> true),
+    VANILLA_ASSETS_VERSION("vanilla-assets.version", new TypeToken<>() {
+    }, () -> "auto"),
+    VANILLA_ASSETS_PATH("vanilla-assets.path", new TypeToken<>() {
+    }, () -> ""),
+    RENDER_ITEM_ICONS("render-item-icons", new TypeToken<>() {
+    }, () -> true),
+    ITEM_ICON_SIZE("item-icon-size", new TypeToken<>() {
+    }, () -> 64),
+    SHORTEN_PACK_PATHS("shorten-pack-paths", new TypeToken<>() {
+    }, () -> true),
+    HELD_ITEM_ANCHORS("held-item-anchors", new TypeToken<Object>() {
+    }, () -> (Object) new LinkedHashMap<String, Object>(), (o, d) -> {
+        if (o instanceof ConfigurationSection section) return section;
+        if (o instanceof Map<?, ?> map) {
+            Map<String, Object> copy = new LinkedHashMap<>();
+            map.forEach((key, value) -> copy.put(String.valueOf(key), value));
+            return ConfigurationTrees.toSection(copy);
+        }
+        return d.get();
+    }),
     DISABLE_DEFAULT_ITALIC("disable-default-italic", new TypeToken<>() {
     }, () -> true),
     ARMOR_CONVERTER_TYPE("armor-converter-type", new TypeToken<>() {

@@ -13,10 +13,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 public class FileCacheManager {
-    private static final Gson GSON = new GsonBuilder()
-            .setPrettyPrinting()
-            .disableHtmlEscaping()
-            .create();
+    private static final Gson GSON = createGsonBuilder(true).create();
+    private static final Gson COMPACT_GSON = createGsonBuilder(false).create();
 
     private static final FileCache<YamlConfiguration> yamlCache = new FileCache<>(100, 30, YamlConfiguration::loadConfiguration);
     private static final FileCache<JsonObject> jsonCache = new FileCache<>(100, 30, file -> {
@@ -67,12 +65,21 @@ public class FileCacheManager {
         return jsonCache;
     }
 
-    public static void saveJsonToFile(@NotNull Path path, @NotNull JsonElement json) {
+    public static void saveJsonToFile(@NotNull Path path, @NotNull JsonElement jsonElement) {
         try (var writer = Files.newBufferedWriter(path)) {
-            GSON.toJson(json, writer);
+            COMPACT_GSON.toJson(jsonElement, writer);
         } catch (Exception e) {
             Logger.error(Message.ERROR__JSON__LOAD_FAILURE, e, Placeholder.of("file", path.toAbsolutePath().toString(), "message", e.getMessage()));
         }
+    }
+
+    private static GsonBuilder createGsonBuilder(boolean prettyPrint) {
+        GsonBuilder builder = new GsonBuilder()
+                .disableHtmlEscaping();
+        if (prettyPrint) {
+            builder.setPrettyPrinting();
+        }
+        return builder;
     }
 
 }
