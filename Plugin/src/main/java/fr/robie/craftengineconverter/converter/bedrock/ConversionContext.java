@@ -20,35 +20,31 @@ import fr.robie.craftengineconverter.api.manager.FileCacheManager;
 import fr.robie.craftengineconverter.converter.bedrock.animation.BedrockAnimation;
 import fr.robie.craftengineconverter.converter.bedrock.animation.BedrockAnimationController;
 import fr.robie.craftengineconverter.converter.bedrock.animation.BedrockRenderControllers;
-import fr.robie.craftengineconverter.converter.bedrock.asset.VanillaAssets;
 import fr.robie.craftengineconverter.converter.bedrock.asset.VanillaAssetStore;
+import fr.robie.craftengineconverter.converter.bedrock.asset.VanillaAssets;
 import fr.robie.craftengineconverter.converter.bedrock.attachable.BedrockAttachableContext;
 import fr.robie.craftengineconverter.converter.bedrock.block.BlockStateMapper;
-import fr.robie.craftengineconverter.converter.bedrock.geometry.BedrockGeometry;
 import fr.robie.craftengineconverter.converter.bedrock.font.FontMapper;
+import fr.robie.craftengineconverter.converter.bedrock.geometry.BedrockGeometry;
+import fr.robie.craftengineconverter.converter.bedrock.geometry.GeometryMapper;
+import fr.robie.craftengineconverter.converter.bedrock.geometry.JavaBlockModel;
 import fr.robie.craftengineconverter.converter.bedrock.icon.ModelTextureTinter;
 import fr.robie.craftengineconverter.converter.bedrock.item.EquipmentAssetRegistry;
 import fr.robie.craftengineconverter.converter.bedrock.item.ItemModelDefinitionMapper;
-import fr.robie.craftengineconverter.converter.bedrock.waypoint.WaypointStyleMapper;
 import fr.robie.craftengineconverter.converter.bedrock.lang.LanguageMapper;
 import fr.robie.craftengineconverter.converter.bedrock.pack.PackPathShortener;
-import fr.robie.craftengineconverter.converter.bedrock.geometry.GeometryMapper;
-import fr.robie.craftengineconverter.converter.bedrock.geometry.JavaBlockModel;
 import fr.robie.craftengineconverter.converter.bedrock.sound.SoundMapper;
 import fr.robie.craftengineconverter.converter.bedrock.texture.ArmorTrimBaker;
 import fr.robie.craftengineconverter.converter.bedrock.texture.CachedTextureInfo;
 import fr.robie.craftengineconverter.converter.bedrock.texture.TexturePipeline;
+import fr.robie.craftengineconverter.converter.bedrock.waypoint.WaypointStyleMapper;
 import fr.robie.yamllibrary.ConfigurationSection;
 import org.bukkit.Material;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 public class ConversionContext {
     private final MappingsConfiguration mappings = new MappingsConfiguration();
@@ -102,8 +98,7 @@ public class ConversionContext {
         // Blocks read models through the same resolver as items, so they inherit the vanilla-asset fallback and
         // there is only one copy of the parent-chain logic to keep correct.
         this.blockStateMapper.withModelResolver(this.javaModelResolver).withTexturePipeline(this.texturePipeline);
-        this.manifest = new ManifestConfiguration("CraftEngineConverter Pack")
-                .setPackUUID(java.util.UUID.randomUUID());
+        this.manifest = ManifestConfiguration.resourcePack("CraftEngineConverter pack").build();
         this.texturesConfig.setResourcePackName("CraftEngineConverter")
                 .setTextureName("atlas.items");
         this.terrainTexturesConfig.setResourcePackName("CraftEngineConverter")
