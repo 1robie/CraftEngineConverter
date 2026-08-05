@@ -1,9 +1,8 @@
 package fr.robie.craftengineconverter.api.configuration.bedrock.mapping.item.predicate.condition;
 
 import com.google.gson.JsonObject;
-import fr.robie.craftengineconverter.api.configuration.bedrock.mapping.item.predicate.BedrockPredicate;
 
-public class HasComponentPredicate extends BedrockPredicate {
+public class HasComponentPredicate extends ConditionPredicate {
     private final String component;
 
     public HasComponentPredicate(String component) {

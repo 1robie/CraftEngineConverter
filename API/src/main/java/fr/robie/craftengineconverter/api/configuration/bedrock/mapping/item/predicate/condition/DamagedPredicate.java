@@ -1,8 +1,7 @@
 package fr.robie.craftengineconverter.api.configuration.bedrock.mapping.item.predicate.condition;
 
-import fr.robie.craftengineconverter.api.configuration.bedrock.mapping.item.predicate.BedrockPredicate;
 
-public class DamagedPredicate extends BedrockPredicate {
+public class DamagedPredicate extends ConditionPredicate {
     public DamagedPredicate() {
         super(true);
     }

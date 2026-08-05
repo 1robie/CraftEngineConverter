@@ -1,8 +1,7 @@
 package fr.robie.craftengineconverter.api.configuration.bedrock.mapping.item.predicate.condition;
 
-import fr.robie.craftengineconverter.api.configuration.bedrock.mapping.item.predicate.BedrockPredicate;
 
-public class FishingRodCastPredicate extends BedrockPredicate {
+public class FishingRodCastPredicate extends ConditionPredicate {
 
     public FishingRodCastPredicate() {
         super(true);

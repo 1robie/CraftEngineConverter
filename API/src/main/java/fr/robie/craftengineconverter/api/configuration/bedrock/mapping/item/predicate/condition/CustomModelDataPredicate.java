@@ -1,9 +1,8 @@
 package fr.robie.craftengineconverter.api.configuration.bedrock.mapping.item.predicate.condition;
 
 import com.google.gson.JsonObject;
-import fr.robie.craftengineconverter.api.configuration.bedrock.mapping.item.predicate.BedrockPredicate;
 
-public class CustomModelDataPredicate extends BedrockPredicate {
+public class CustomModelDataPredicate extends ConditionPredicate {
     private final int index;
 
     public CustomModelDataPredicate(int index) {
