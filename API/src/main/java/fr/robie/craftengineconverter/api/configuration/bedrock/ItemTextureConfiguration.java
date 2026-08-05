@@ -35,6 +35,10 @@ public class ItemTextureConfiguration {
         return this.textures.isEmpty();
     }
 
+    public List<TextureData> getTextures() {
+        return this.textures;
+    }
+
     public ItemTextureConfiguration addTextureData(@NotNull TextureData textureData) {
         this.textures.add(textureData);
         return this;

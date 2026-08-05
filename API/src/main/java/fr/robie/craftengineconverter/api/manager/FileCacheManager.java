@@ -67,7 +67,7 @@ public class FileCacheManager {
         return jsonCache;
     }
 
-    public static void saveJsonToFile(@NotNull Path path, @NotNull JsonObject json) {
+    public static void saveJsonToFile(@NotNull Path path, @NotNull JsonElement json) {
         try (var writer = Files.newBufferedWriter(path)) {
             GSON.toJson(json, writer);
         } catch (Exception e) {

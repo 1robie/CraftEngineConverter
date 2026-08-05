@@ -251,8 +251,8 @@ public class BedrockConverter {
                     FileUtils.copyFile(file, dest);
                 } else if (fileName.equalsIgnoreCase("pack.mcmeta")) {
                     FileCacheManager.getJsonCache().getEntryFile(file.toPath()).ifPresent(jsonObjectFileCacheEntry -> {
-                        ManifestConfiguration configuration = ManifestConfiguration.fromJavaPackFormat(jsonObjectFileCacheEntry.getData());
-                        ctx.withManifest(configuration);
+                        ManifestConfiguration.ResourcePackBuilder resourcePackBuilder = ManifestConfiguration.fromJavaPackFormat(jsonObjectFileCacheEntry.getData());
+                        ctx.withManifest(resourcePackBuilder.build());
                         hasManifest.set(true);
                     });
                 }
