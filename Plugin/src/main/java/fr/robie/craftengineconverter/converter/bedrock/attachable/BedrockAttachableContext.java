@@ -1,7 +1,9 @@
 package fr.robie.craftengineconverter.converter.bedrock.attachable;
 
 import fr.robie.craftengineconverter.converter.bedrock.animation.BedrockAnimationContext;
+import fr.robie.craftengineconverter.converter.bedrock.display.AttachableSlot;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -45,19 +47,26 @@ public record BedrockAttachableContext(Optional<BedrockAttachable> attachable, O
 
     public static BedrockAttachableContext createWithAnimations(String identifier, boolean hasGeometry, boolean hasAnimatedTexture, BedrockAnimationContext animCtx, String defaultTexture) {
         BedrockAttachableContext ctx = create(identifier, hasGeometry, hasAnimatedTexture, defaultTexture);
-        if (!animCtx.isEmpty()) {
-            ctx.attachable().ifPresent(att -> {
-                att.withAnimation("third_person", animCtx.thirdPersonAnimation());
-                att.withAnimation("first_person", animCtx.firstPersonAnimation());
-                att.withAnimation("head", animCtx.headAnimation());
-                att.withScript("animate", List.of(
-                        Map.of("first_person", "context.is_first_person == 1.0 && (context.item_slot == 'main_hand' || context.item_slot == 'off_hand')"),
-                        Map.of("third_person", "context.is_first_person == 0.0 && (context.item_slot == 'main_hand' || context.item_slot == 'off_hand')"),
-                        Map.of("head", "context.is_first_person == 0.0 && context.item_slot == 'head'")
-                ));
-            });
-        }
+        ctx.attachable().ifPresent(att -> applyPoseAnimations(att, animCtx));
         return ctx;
+    }
+
+    /**
+     * Points an attachable at its pose animations and writes the {@code scripts.animate} block that switches
+     * between them.
+     * <p>
+     * The one place this is done, so the animated-texture path cannot drift from the static one — it previously
+     * carried its own verbatim copy of the same block.
+     */
+    public static void applyPoseAnimations(BedrockAttachable attachable, BedrockAnimationContext animCtx) {
+        if (attachable == null || animCtx == null || animCtx.isEmpty()) return;
+
+        List<Map<String, String>> animate = new ArrayList<>();
+        for (Map.Entry<AttachableSlot, String> entry : animCtx.animationNames().entrySet()) {
+            attachable.withAnimation(entry.getKey().key(), entry.getValue());
+            animate.add(Map.of(entry.getKey().key(), entry.getKey().condition()));
+        }
+        attachable.withScript("animate", animate);
     }
 
     public static BedrockAttachableContext createWithAnimatedTexture(String identifier, String renderControllerName) {
@@ -111,9 +120,13 @@ public record BedrockAttachableContext(Optional<BedrockAttachable> attachable, O
         return new BedrockAttachableContext(att);
     }
 
-    public static BedrockAttachableContext createArmor(String identifier, String equipmentTexturePath) {
-        BedrockAttachable att = BedrockAttachable.equipment(identifier);
-        att.withTexture("default", equipmentTexturePath);
-        return new BedrockAttachableContext(Optional.of(att), Optional.of(equipmentTexturePath));
+    /**
+     * @param slot the wearable slot, which decides the armour geometry and which vanilla layer is hidden
+     * @param armorTexturePath the worn-model texture — <b>not</b> the item icon
+     */
+    public static BedrockAttachableContext createArmor(String identifier, String slot, String armorTexturePath) {
+        BedrockAttachable att = BedrockAttachable.equipment(identifier, slot);
+        att.withTexture("default", armorTexturePath);
+        return new BedrockAttachableContext(Optional.of(att), Optional.of(armorTexturePath));
     }
 }

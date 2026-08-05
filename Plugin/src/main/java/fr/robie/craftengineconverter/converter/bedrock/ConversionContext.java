@@ -11,22 +11,32 @@ import fr.robie.craftengineconverter.api.configuration.bedrock.mapping.item.opti
 import fr.robie.craftengineconverter.api.configuration.bedrock.texture.FlipbookTextureConfiguration;
 import fr.robie.craftengineconverter.api.configuration.bedrock.texture.FlipbookTextureData;
 import fr.robie.craftengineconverter.api.configuration.bedrock.texture.TextureData;
+import fr.robie.craftengineconverter.api.configuration.loader.ConfigurationTrees;
+import fr.robie.craftengineconverter.api.configuration.template.TemplateEngine;
+import fr.robie.craftengineconverter.api.configuration.template.TemplateException;
 import fr.robie.craftengineconverter.api.manager.FileCacheManager;
 import fr.robie.craftengineconverter.converter.bedrock.animation.BedrockAnimation;
 import fr.robie.craftengineconverter.converter.bedrock.animation.BedrockAnimationController;
 import fr.robie.craftengineconverter.converter.bedrock.animation.BedrockRenderControllers;
+import fr.robie.craftengineconverter.converter.bedrock.asset.VanillaAssetStore;
+import fr.robie.craftengineconverter.converter.bedrock.asset.VanillaAssets;
 import fr.robie.craftengineconverter.converter.bedrock.attachable.BedrockAttachableContext;
 import fr.robie.craftengineconverter.converter.bedrock.block.BlockStateMapper;
 import fr.robie.craftengineconverter.converter.bedrock.font.FontMapper;
 import fr.robie.craftengineconverter.converter.bedrock.geometry.BedrockGeometry;
 import fr.robie.craftengineconverter.converter.bedrock.geometry.GeometryMapper;
 import fr.robie.craftengineconverter.converter.bedrock.geometry.JavaBlockModel;
+import fr.robie.craftengineconverter.converter.bedrock.icon.ModelTextureTinter;
+import fr.robie.craftengineconverter.converter.bedrock.item.EquipmentAssetRegistry;
+import fr.robie.craftengineconverter.converter.bedrock.item.ItemModelDefinitionMapper;
 import fr.robie.craftengineconverter.converter.bedrock.lang.LanguageMapper;
 import fr.robie.craftengineconverter.converter.bedrock.sound.SoundMapper;
 import fr.robie.craftengineconverter.converter.bedrock.texture.CachedTextureInfo;
 import fr.robie.craftengineconverter.converter.bedrock.texture.TexturePipeline;
 import fr.robie.craftengineconverter.converter.bedrock.waypoint.WaypointStyleMapper;
+import fr.robie.yamllibrary.ConfigurationSection;
 import org.bukkit.Material;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -51,18 +61,39 @@ public class ConversionContext {
     private final LanguageMapper languageMapper = new LanguageMapper();
     private final FontMapper fontMapper = new FontMapper();
     private final WaypointStyleMapper waypointStyleMapper = new WaypointStyleMapper();
+    private final ItemModelDefinitionMapper itemModelDefinitions = new ItemModelDefinitionMapper();
+    private final TemplateEngine templates = new TemplateEngine();
+    private final EquipmentAssetRegistry equipmentAssets = new EquipmentAssetRegistry();
+    // Geyser forbids two custom item definitions sharing a bedrock_identifier anywhere in the pack, so
+    // uniqueness has to be tracked across every item rather than per BedrockItemLoader.
+    private final java.util.Set<String> usedBedrockIdentifiers = new java.util.HashSet<>();
+    // Shared so the parent chain of a model referenced by many items is only read from disk once.
+    private final fr.robie.craftengineconverter.converter.bedrock.geometry.JavaModelResolver javaModelResolver =
+            new fr.robie.craftengineconverter.converter.bedrock.geometry.JavaModelResolver();
+    // Icons drawn from a 3D model, by texture id. See registerRenderedIcon.
+    private final Map<String, java.awt.image.BufferedImage> renderedIcons = new HashMap<>();
+    // Areas to tint, by pack-relative texture path. See registerTintRegions.
+    private final Map<String, java.util.List<ModelTextureTinter.TintRegion>> tintRegions =
+            new java.util.LinkedHashMap<>();
+    private final Map<String, String> tintedTextureOwners = new HashMap<>();
     private ManifestConfiguration manifest;
     private final Path customMappingsDir;
     private final Path texturesDir;
     private final Path packDir;
     private Path javaAssetsDir;
+    // Needed to find CraftEngine's own config.yml, which sits in a sibling plugin folder.
+    private File pluginFolder;
+    private Material defaultMaterial;
+    private VanillaAssets vanillaAssets;
 
     public ConversionContext(Path customMappingsDir, Path texturesDir, Path packDir) {
         this.customMappingsDir = customMappingsDir;
         this.texturesDir = texturesDir;
         this.packDir = packDir;
+        // Blocks read models through the same resolver as items, so they inherit the vanilla-asset fallback and
+        // there is only one copy of the parent-chain logic to keep correct.
+        this.blockStateMapper.withModelResolver(this.javaModelResolver).withTexturePipeline(this.texturePipeline);
         this.manifest = ManifestConfiguration.resourcePack("CraftEngineConverter Pack").build();
-
         this.texturesConfig.setResourcePackName("CraftEngineConverter")
                 .setTextureName("atlas.items");
         this.terrainTexturesConfig.setResourcePackName("CraftEngineConverter")
@@ -73,6 +104,40 @@ public class ConversionContext {
     public ConversionContext withJavaAssetsDir(Path javaAssetsDir) {
         this.javaAssetsDir = javaAssetsDir;
         return this;
+    }
+
+    public ConversionContext withPluginFolder(File pluginFolder) {
+        this.pluginFolder = pluginFolder;
+        this.attachVanillaAssets();
+        return this;
+    }
+
+    /**
+     * Points the model and texture resolvers at the vanilla assets, so a parent or texture the pack inherits but
+     * does not ship — {@code block/cactus}, {@code block/anvil}, {@code item/light} — resolves for real instead of
+     * dead-ending.
+     * <p>
+     * Never downloads: doing so here would put network I/O on whatever thread started the conversion, which for a
+     * command is the server thread. {@link VanillaAssetStore#cacheDir} is where a prior download or the
+     * {@code vanilla-assets} command left the jar.
+     */
+    private void attachVanillaAssets() {
+        if (this.pluginFolder == null) return;
+
+        VanillaAssets assets = VanillaAssetStore.existing(this.pluginFolder);
+        this.vanillaAssets = assets;
+        this.javaModelResolver.withVanillaAssets(assets);
+        this.texturePipeline.withVanillaAssets(assets);
+
+        if (!assets.isAvailable()) {
+            fr.robie.messageflow.logger.Logger.info("No vanilla assets cached, so a block whose shape comes from a"
+                    + " vanilla parent falls back to a built-in cube."
+                    + " Run \"/cec bedrock vanilla-assets\" for the real shapes.");
+        }
+    }
+
+    public VanillaAssets vanillaAssets() {
+        return this.vanillaAssets;
     }
 
     public ConversionContext withManifest(ManifestConfiguration manifest) {
@@ -116,12 +181,16 @@ public class ConversionContext {
         return this.javaAssetsDir;
     }
 
+    public File pluginFolder() {
+        return this.pluginFolder;
+    }
+
     public Map<String, BedrockGeometry> collectedGeometry() {
         return this.collectedGeometry;
     }
 
-    public Map<String, Object> collectedAttachables() {
-        return this.collectedAttachables;
+    public BlockStateMapper blockStateMapper() {
+        return this.blockStateMapper;
     }
 
     public void acceptMapping(ItemMapping mapping) {
@@ -172,38 +241,180 @@ public class ConversionContext {
 
         this.mappings.addItemMapping(mapping);
 
-        if (!mapping.getTexturesData().isEmpty()) {
-            TextureData firstTd = mapping.getTexturesData().getFirst();
-            if (!firstTd.getTextures().isEmpty()) {
-                String firstTex = firstTd.getTextures().getFirst();
-                String iconTex;
-                if (firstTex.matches(".*_\\d+$")) {
-                    iconTex = firstTex.replaceAll("_\\d+$", "_icon");
-                } else {
-                    iconTex = firstTex + "_icon";
-                }
-
-                String iconId = mapping.getBedrockIdentifier() + "_icon";
-                TextureData iconTd = new TextureData(iconId);
-                iconTd.addTexture(iconTex);
-                this.texturesConfig.addTextureData(iconTd);
-
-                try {
-                    Path srcPng = this.texturesDir.resolve(firstTex.substring("textures/".length()) + ".png");
-                    Path dstPng = this.texturesDir.resolve(iconTex.substring("textures/".length()) + ".png");
-                    java.nio.file.Files.createDirectories(dstPng.getParent());
-                    java.nio.file.Files.copy(srcPng, dstPng, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
-                } catch (Exception e) {
-                    fr.robie.messageflow.logger.Logger.warn("Could not copy icon texture: " + e.getMessage());
-                }
-
-                BedrockOptions opts = mapping.getBedrockOptions();
-                if (opts == null) {
-                    opts = new BedrockOptions();
-                }
-                opts.setIcon(iconTd.getBedrockIdentifier());
-                mapping.setBedrockOptions(opts);
+        // Icons are assigned here rather than inline: the group and each of its definitions is a separate Bedrock
+        // item and each needs its own, or every predicate variant renders identically.
+        this.assignIcon(mapping);
+        if (mapping instanceof GroupDefinitionMapping group) {
+            for (ItemMapping definition : group.getDefinitions()) {
+                this.assignIcon(definition);
             }
+        }
+    }
+
+    /**
+     * Derives an {@code _icon} texture from a mapping's first texture and points its {@code bedrock_options.icon} at
+     * it.
+     * <p>
+     * When the item's model is three-dimensional the sprite is <b>rendered</b> from that model — see
+     * {@link #registerRenderedIcon}. Copying the model's texture is only right for an item whose texture already
+     * <i>is</i> its sprite; for a 3D model it is a UV atlas of unwrapped faces.
+     * <p>
+     * <b>An inventory icon cannot animate.</b> {@code flipbook_textures.json} drives {@code atlas.terrain} tiles
+     * only, and the attachable route covers the equipped render. So an animated item animates when held and shows a
+     * still sprite in the inventory.
+     */
+    private void assignIcon(ItemMapping mapping) {
+        if (mapping.getTexturesData().isEmpty()) return;
+        TextureData firstTd = mapping.getTexturesData().getFirst();
+        if (firstTd.getTextures().isEmpty()) return;
+
+        String firstTex = firstTd.getTextures().getFirst();
+        java.awt.image.BufferedImage rendered = this.renderedIcons.get(iconKey(firstTd.getBedrockIdentifier()));
+
+        // A rendered icon is named after the item, not its texture. Several items can share one texture and still
+        // have different models — sofa, sofa_inner and sleeper_sofa all use item/custom/sofa — so deriving the
+        // filename from the texture would have them overwrite each other's render.
+        String iconTex = rendered != null
+                ? "textures/item/icons/" + mapping.getBedrockIdentifier().replace(":", ".").replace("/", "_")
+                : firstTex.matches(".*_\\d+$")
+                  ? firstTex.replaceAll("_\\d+$", "_icon")
+                  : firstTex + "_icon";
+
+        String iconId = mapping.getBedrockIdentifier() + "_icon";
+        TextureData iconTd = new TextureData(iconId);
+        iconTd.addTexture(iconTex);
+        this.texturesConfig.addTextureData(iconTd);
+
+        try {
+            Path dstPng = this.texturesDir.resolve(iconTex.substring("textures/".length()) + ".png");
+            java.nio.file.Files.createDirectories(dstPng.getParent());
+
+            if (rendered != null) {
+                javax.imageio.ImageIO.write(rendered, "png", dstPng.toFile());
+            } else {
+                Path srcPng = this.texturesDir.resolve(firstTex.substring("textures/".length()) + ".png");
+                java.nio.file.Files.copy(srcPng, dstPng, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+            }
+        } catch (Exception e) {
+            fr.robie.messageflow.logger.Logger.warn("Could not write icon texture: " + e.getMessage());
+        }
+
+        BedrockOptions opts = mapping.getBedrockOptions();
+        if (opts == null) opts = new BedrockOptions();
+        opts.setIcon(iconTd.getBedrockIdentifier());
+        mapping.setBedrockOptions(opts);
+    }
+
+    public void registerRenderedIcon(String textureId, java.awt.image.BufferedImage icon) {
+        if (textureId == null || icon == null) return;
+        this.renderedIcons.put(iconKey(textureId), icon);
+    }
+
+    /**
+     * Records areas of a texture to tint, applied to the pack's copy once every texture has been written.
+     * <p>
+     * Bedrock cannot tint at runtime, so a dye colour only reaches the held and worn model by being painted into
+     * the texture. Deferred rather than applied immediately because the plain copy may not have happened yet and
+     * would overwrite the result.
+     * <p>
+     * Regions accumulate across items instead of one item's version winning: a sheet is routinely shared by
+     * several items that each tint their own part of it, so keeping only the first would leave every other
+     * item's areas plain.
+     *
+     * @param texturePath pack-relative, without extension, e.g. {@code textures/item/custom/sofa}
+     */
+    public void registerTintRegions(String texturePath, java.util.List<ModelTextureTinter.TintRegion> regions,
+                                    String itemId) {
+        if (texturePath == null || regions == null || regions.isEmpty()) return;
+
+        java.util.List<ModelTextureTinter.TintRegion> existing =
+                this.tintRegions.computeIfAbsent(texturePath, key -> new java.util.ArrayList<>());
+
+        for (ModelTextureTinter.TintRegion region : regions) {
+            // Two items wanting different colours on the same pixels cannot both be honoured — one texture holds
+            // one colour. Report it rather than let the loser silently wear the winner's colour.
+            for (ModelTextureTinter.TintRegion other : existing) {
+                if (other.rgb() != region.rgb() && overlaps(other, region)) {
+                    String owner = this.tintedTextureOwners.getOrDefault(texturePath, "another item");
+                    fr.robie.messageflow.logger.Logger.warn(itemId + " and " + owner + " tint the same area of "
+                            + texturePath + " different colours, and Bedrock cannot tint at runtime, so one of"
+                            + " them will look wrong. Give them separate textures if both colours matter.");
+                    break;
+                }
+            }
+            existing.add(region);
+        }
+        this.tintedTextureOwners.putIfAbsent(texturePath, itemId);
+    }
+
+    private static boolean overlaps(ModelTextureTinter.TintRegion a, ModelTextureTinter.TintRegion b) {
+        return a.x0() < b.x1() && b.x0() < a.x1() && a.y0() < b.y1() && b.y0() < a.y1();
+    }
+
+    private void writeTintedTextures() {
+        for (Map.Entry<String, java.util.List<ModelTextureTinter.TintRegion>> entry : this.tintRegions.entrySet()) {
+            try {
+                Path png = this.texturesDir.resolve(entry.getKey().substring("textures/".length()) + ".png");
+                if (!java.nio.file.Files.exists(png)) continue;
+
+                java.awt.image.BufferedImage image = javax.imageio.ImageIO.read(png.toFile());
+                if (image == null) continue;
+
+                // Read images can be any type; force ARGB so the alpha survives the round trip.
+                java.awt.image.BufferedImage target = new java.awt.image.BufferedImage(
+                        image.getWidth(), image.getHeight(), java.awt.image.BufferedImage.TYPE_INT_ARGB);
+                target.createGraphics().drawImage(image, 0, 0, null);
+
+                for (ModelTextureTinter.TintRegion region : entry.getValue()) region.applyTo(target);
+                javax.imageio.ImageIO.write(target, "png", png.toFile());
+            } catch (Exception e) {
+                fr.robie.messageflow.logger.Logger.warn("Could not tint texture " + entry.getKey()
+                        + ": " + e.getMessage());
+            }
+        }
+    }
+
+    /**
+     * Normalises a texture id for the rendered-icon map. Callers hold it in either spelling — the item pipeline
+     * uses {@code default:sofa}, a {@code TextureData} identifier is the sanitised {@code default.sofa} — and a
+     * mismatch here is invisible: the icon simply falls back to the copied texture.
+     */
+    private static String iconKey(String textureId) {
+        return textureId.replace(":", ".").replace("/", "_");
+    }
+
+    /**
+     * Reports any {@code item_texture.json} entry whose PNG was never written.
+     * <p>
+     * Such an entry is the one failure mode that is completely invisible in the output: the mapping looks
+     * complete, Geyser resolves the shortname, and the item simply has no icon in game. It happens when a
+     * model reference cannot be resolved to a texture and the model path itself is used as a fallback — so
+     * naming the offender here is the difference between a five-minute fix and guesswork.
+     */
+    private void warnAboutMissingTextureFiles() {
+        int checked = 0;
+        int missing = 0;
+        for (TextureData data : this.texturesConfig.getTextures()) {
+            for (String texture : data.getTextures()) {
+                if (!texture.startsWith("textures/")) continue;
+                checked++;
+                Path png = this.texturesDir.resolve(texture.substring("textures/".length()) + ".png");
+                if (!java.nio.file.Files.exists(png)) {
+                    missing++;
+                    fr.robie.messageflow.logger.Logger.warn("Icon '" + data.getBedrockIdentifier()
+                            + "' points at " + texture + ".png, which was never written"
+                            + " - that item will have no icon. Its model textures could not be resolved.");
+                }
+            }
+        }
+        // Stated either way, because "no warnings" and "the check never ran" look identical in a log otherwise.
+        // This is the whole-pack integrity check that used to live in RenderedIconPackTest; running it on every
+        // real conversion is strictly better than running it only in CI.
+        if (missing == 0) {
+            fr.robie.messageflow.logger.Logger.debug("All " + checked + " icon references resolve to a file");
+        } else {
+            fr.robie.messageflow.logger.Logger.warn(missing + " of " + checked
+                    + " icon references point at a file that was never written");
         }
     }
 
@@ -246,6 +457,112 @@ public class ConversionContext {
                 .getData(javaSoundsJson.toPath())
                 .ifPresent(root -> this.soundMapper.addFromJavaSounds(
                         root, namespace, this.javaAssetsDir, this.packDir.resolve("sounds")));
+    }
+
+    public void addItemsDirectory(File itemsDir, String namespace) {
+        if (this.javaAssetsDir == null) return;
+        this.itemModelDefinitions.addFromItemsDirectory(itemsDir, namespace, this.javaAssetsDir);
+    }
+
+    /** The CraftEngine templates collected from the item configs. */
+    public TemplateEngine templates() {
+        return this.templates;
+    }
+
+    /** Equipment assets collected from the item configs, resolving armour asset ids to their textures. */
+    public EquipmentAssetRegistry equipmentAssets() {
+        return this.equipmentAssets;
+    }
+
+    /**
+     * Copies an equipment asset's worn-model texture into the pack, mirroring vanilla's {@code chain_1} /
+     * {@code chain_2} layer naming.
+     *
+     * @return the pack-relative, extension-less texture reference, or {@code null} if the source is missing
+     */
+    @Nullable
+    public String copyArmorTexture(EquipmentAssetRegistry.EquipmentAsset asset, String slot) {
+        String reference = asset.textureFor(slot);
+        Path assetsDir = asset.javaAssetsDir() != null ? asset.javaAssetsDir() : this.javaAssetsDir;
+        if (reference == null || assetsDir == null) return null;
+
+        int colon = reference.indexOf(':');
+        String namespace = colon < 0 ? "minecraft" : reference.substring(0, colon);
+        String path = colon < 0 ? reference : reference.substring(colon + 1);
+        Path source = assetsDir.resolve(namespace + "/textures/" + path + ".png");
+        if (!java.nio.file.Files.exists(source)) {
+            fr.robie.messageflow.logger.Logger.warn("Armour texture not found: " + source);
+            return null;
+        }
+
+        // "<assetNamespace>_<assetName>_<layer>" keeps two packs' assets of the same name apart.
+        String assetId = asset.id().replace(':', '_').replace('/', '_');
+        String name = assetId + "_" + asset.layerFor(slot);
+        String relative = "models/armor/" + name;
+        Path destination = this.texturesDir.resolve(relative + ".png");
+        try {
+            java.nio.file.Files.createDirectories(destination.getParent());
+            java.nio.file.Files.copy(source, destination, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+        } catch (Exception e) {
+            fr.robie.messageflow.logger.Logger.error("Failed to copy armour texture " + source, e);
+            return null;
+        }
+        return "textures/" + relative;
+    }
+
+
+    /**
+     * Applies templates to one item's config section.
+     * <p>
+     * Returns the section unchanged when the item uses no templates, so the common case allocates nothing.
+     * A template failure is contained to its own item — one unresolvable template should not abandon the
+     * rest of the pack — and is reported with the file it came from, since template ids give no hint where
+     * they were declared.
+     *
+     * @return the resolved section, or {@code null} if this item could not be resolved and must be skipped
+     */
+    public ConfigurationSection resolveTemplates(String itemId, ConfigurationSection itemSection, File sourceFile) {
+        if (this.templates.isEmpty()) return itemSection;
+        try {
+            Object resolved = this.templates.resolve(itemId, ConfigurationTrees.toMap(itemSection));
+            if (resolved instanceof Map<?, ?> map) {
+                //noinspection unchecked
+                return ConfigurationTrees.toSection((Map<String, Object>) map);
+            }
+            // An item that resolves to something other than a map is malformed; leave it as authored.
+            return itemSection;
+        } catch (TemplateException e) {
+            fr.robie.messageflow.logger.Logger.warn("Skipping item " + itemId + " in " + sourceFile.getName()
+                    + ": " + e.getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * The base Java item for a CraftEngine item that declares no {@code material:}.
+     * <p>
+     * Resolved once, then cached. See {@link DefaultMaterialResolver} for the precedence.
+     */
+    public Material defaultMaterial() {
+        if (this.defaultMaterial == null) {
+            this.defaultMaterial = DefaultMaterialResolver.resolve(this.pluginFolder);
+        }
+        return this.defaultMaterial;
+    }
+
+    /** Resolves Java model references to their {@code textures} maps, following {@code parent} chains. */
+    public fr.robie.craftengineconverter.converter.bedrock.geometry.JavaModelResolver javaModelResolver() {
+        return this.javaModelResolver;
+    }
+
+    /** Reserves a Bedrock item identifier, returning {@code false} if it was already taken. */
+    public boolean claimBedrockIdentifier(String identifier) {
+        return this.usedBedrockIdentifiers.add(identifier);
+    }
+
+    /** Java item model definitions discovered in {@code assets/<ns>/items/}, keyed by identifier. */
+    public ItemModelDefinitionMapper itemModelDefinitions() {
+        return this.itemModelDefinitions;
     }
 
     public void addWaypointStyleDirectory(File dir, String namespace) {
@@ -348,19 +665,40 @@ public class ConversionContext {
         } catch (Exception ignored) {}
     }
 
+    /**
+     * Maps a Java item model into held-item geometry, if it has any shape to map.
+     * <p>
+     * Loaded through the shared {@link #javaModelResolver} rather than straight off disk, so a model whose
+     * {@code elements} come from a {@code parent} gets real geometry. Reading the file directly meant such an item
+     * was given a rendered three-dimensional <i>icon</i> — {@code renderIconFromModel} does use the resolver — and
+     * a flat <i>held model</i>, from the same source file.
+     *
+     * @param texW the UV space the model's faces are written in. For an animated texture this is one <b>frame</b>,
+     *             not the whole sheet: Java animates by cycling frames through the same UV layout.
+     */
     public void registerGeometry(String modelPath, String bedrockKey, int texW, int texH) {
-        if (this.javaAssetsDir == null) return;
-        String[] parts = modelPath.split(":", 2);
-        String namespace = parts.length > 1 ? parts[0] : "minecraft";
-        String path = parts.length > 1 ? parts[1] : parts[0];
-        Path modelFile = this.javaAssetsDir.resolve(namespace + "/models/" + path + ".json");
-        if (!modelFile.toFile().exists()) return;
+        if (this.javaAssetsDir == null || modelPath == null) return;
 
         try {
-            JavaBlockModel javaModel = JavaBlockModel.load(modelFile);
+            JavaBlockModel javaModel = this.javaModelResolver.load(modelPath, this.javaAssetsDir);
+            if (javaModel == null) {
+                // Said out loud because the caller silently substitutes a flat extruded sprite, and an item
+                // rendering as a billboard of its own texture atlas is otherwise very hard to trace back here.
+                fr.robie.messageflow.logger.Logger.debug("No model at " + modelPath + " for " + bedrockKey
+                        + "; its held form will be an extruded sprite");
+                return;
+            }
+
             GeometryMapper mapper = new GeometryMapper();
             String safeKey = bedrockKey.replace(":", ".").replace("/", "_");
             BedrockGeometry geo = mapper.mapGeometry(safeKey, javaModel, texW, texH);
+
+            // A model that only names textures — parent: item/handheld or item/generated, with no
+            // "elements" — converts to bones with no cubes. Registering that would satisfy the
+            // has-geometry check downstream and suppress the generated flat model, leaving an attachable
+            // that points at nothing and an item that is invisible in hand.
+            if (geo.hasNoCubes()) return;
+
             this.collectedGeometry.put(bedrockKey, geo);
         } catch (Exception e) {
             fr.robie.messageflow.logger.Logger.error("Failed to map geometry for " + modelPath, e);
@@ -397,12 +735,19 @@ public class ConversionContext {
     public void saveAll() {
         this.mappings.saveMappings(this.customMappingsDir);
         this.texturesConfig.save(this.texturesDir);
+        this.warnAboutMissingTextureFiles();
+
         // Copy block textures, register in terrain_texture.json, and add flipbook if animated
         for (Map.Entry<String, Path> tex : this.blockStateMapper.getDiscoveredTextures().entrySet()) {
             String textureRef = tex.getKey();
             String shortname = textureRef.replace("minecraft:", "minecraft/").replace(":", "/");
             this.registerBlockTerrainTexture(textureRef, shortname, tex.getValue());
         }
+
+        // Last of all the texture writing, because every path above copies pristine source files into the pack and
+        // any one of them would overwrite a tint. One texture serving both an item and a block is enough to hit
+        // this: the sofa lost its dye the moment its texture was also registered as a block texture.
+        this.writeTintedTextures();
         if (!this.terrainTexturesConfig.isEmpty()) {
             this.terrainTexturesConfig.save(this.texturesDir);
         }
@@ -419,6 +764,8 @@ public class ConversionContext {
             fr.robie.messageflow.logger.Logger.info("Saved " + this.waypointStyleMapper.size() + " waypoint style(s)");
         }
 
+//        this.soundMapper.reportMissingSounds();
+        this.texturePipeline.reportTrimFallbacks();
         if (!this.soundMapper.isEmpty()) {
             try {
                 Path soundDefPath = this.packDir.resolve("sounds/sound_definitions.json");
@@ -445,6 +792,23 @@ public class ConversionContext {
             } catch (Exception e) {
                 fr.robie.messageflow.logger.Logger.error("Failed to save geometry for " + entry.getKey(), e);
             }
+        }
+
+        // Block geometry lives apart from entity geometry by convention, and the two are addressed differently:
+        // a block's identifier is baked into the mapping, so the file name follows it rather than a texture key.
+        Path blockGeoDir = this.packDir.resolve("models/blocks");
+        for (Map.Entry<String, BedrockGeometry> entry : this.blockStateMapper.getGeneratedGeometry().entrySet()) {
+            try {
+                java.nio.file.Files.createDirectories(blockGeoDir);
+                Path outPath = blockGeoDir.resolve(entry.getKey() + ".geo.json");
+                FileCacheManager.saveJsonToFile(outPath, entry.getValue().serialize());
+            } catch (Exception e) {
+                fr.robie.messageflow.logger.Logger.error("Failed to save block geometry " + entry.getKey(), e);
+            }
+        }
+        if (!this.blockStateMapper.getGeneratedGeometry().isEmpty()) {
+            fr.robie.messageflow.logger.Logger.info("Generated " + this.blockStateMapper.getGeneratedGeometry().size()
+                    + " block geometry file(s) for shapes Bedrock has no built-in model for");
         }
 
         Path animDir = this.packDir.resolve("animations");
@@ -508,6 +872,11 @@ public class ConversionContext {
                 });
             }
         }
+
+//        if ((boolean) Configuration.get(ConfigurationKey.SHORTEN_PACK_PATHS)) {
+//            PackPathShortener.shorten(this.packDir);
+//        }
+//        PackPathShortener.reportLongPaths(this.packDir);
     }
 
     private static void writeDefaultPackIcon(java.nio.file.Path dest) throws java.io.IOException {

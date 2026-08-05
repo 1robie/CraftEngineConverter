@@ -115,13 +115,48 @@ public class BedrockAttachable {
         return root;
     }
 
-    public static BedrockAttachable equipment(String identifier) {
+    /**
+     * An attachable for worn armour, shaped like vanilla's {@code chainmail_*} attachables.
+     * <p>
+     * Deliberately unlike {@link #geometry}: worn armour uses Bedrock's built-in humanoid armour model and
+     * the {@code armor} material, and carries <b>no animations</b>. A held-item attachable animates itself
+     * into the hand via {@code scripts.animate} keyed on {@code context.item_slot}, and those conditions
+     * never match an armour slot — the model then renders unposed at the body origin, which looks like the
+     * item's icon stuck inside the player.
+     * <p>
+     * {@code parent_setup} hides the vanilla armour layer for this slot so the custom model is not drawn on
+     * top of the default one.
+     *
+     * @param slot one of {@code head}, {@code chest}, {@code legs}, {@code feet}
+     */
+    public static BedrockAttachable equipment(String identifier, String slot) {
         BedrockAttachable a = new BedrockAttachable(identifier);
         a.withMaterial("default", "armor");
         a.withMaterial("enchanted", "armor_enchanted");
         a.withTexture("enchanted", "textures/misc/enchanted_actor_glint");
-        a.withRenderController("controller.armor");
+        a.withGeometry("default", armorGeometry(slot));
+        a.withScript("parent_setup", "variable." + layerVariable(slot) + "_layer_visible = 0.0;");
+        a.withRenderController("controller.render.armor");
         return a;
+    }
+
+    private static String armorGeometry(String slot) {
+        return "geometry.humanoid.armor." + switch (slot) {
+            case "head" -> "helmet";
+            case "chest" -> "chestplate";
+            case "legs" -> "leggings";
+            default -> "boots";
+        };
+    }
+
+    // The variable names are vanilla's and do not follow the slot names: chest/leg/boot, not chest/legs/feet.
+    private static String layerVariable(String slot) {
+        return switch (slot) {
+            case "head" -> "helmet";
+            case "chest" -> "chest";
+            case "legs" -> "leg";
+            default -> "boot";
+        };
     }
 
     public static BedrockAttachable geometry(String identifier, String geometryId) {

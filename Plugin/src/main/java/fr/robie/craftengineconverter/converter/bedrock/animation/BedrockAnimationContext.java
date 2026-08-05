@@ -1,47 +1,44 @@
 package fr.robie.craftengineconverter.converter.bedrock.animation;
 
+import fr.robie.craftengineconverter.converter.bedrock.display.AttachableSlot;
+
+import java.util.Collections;
+import java.util.EnumMap;
+import java.util.Map;
 import java.util.Optional;
 
-public class BedrockAnimationContext {
-    private final Optional<BedrockAnimation> animation;
-    private final String firstPersonAnimation;
-    private final String thirdPersonAnimation;
-    private final String headAnimation;
+/**
+ * The pose animations built for one item, and which slot each belongs to.
+ * <p>
+ * Keyed by {@link AttachableSlot} rather than exposing a fixed first/third/head triple, because the off-hand slots
+ * would otherwise have nowhere to go — the triple was the reason four of Java's display contexts had to be
+ * collapsed into two.
+ */
+public final class BedrockAnimationContext {
 
-    public BedrockAnimationContext(BedrockAnimation animation, String firstPerson, String thirdPerson, String head) {
-        this.animation = Optional.of(animation);
-        this.firstPersonAnimation = firstPerson;
-        this.thirdPersonAnimation = thirdPerson;
-        this.headAnimation = head;
-    }
+    public static final BedrockAnimationContext EMPTY = new BedrockAnimationContext(null, Map.of());
 
-    public static final BedrockAnimationContext EMPTY = new BedrockAnimationContext();
+    private final BedrockAnimation animation;
+    private final Map<AttachableSlot, String> animationNames;
 
-    private BedrockAnimationContext() {
-        this.animation = Optional.empty();
-        this.firstPersonAnimation = null;
-        this.thirdPersonAnimation = null;
-        this.headAnimation = null;
+    public BedrockAnimationContext(BedrockAnimation animation, Map<AttachableSlot, String> animationNames) {
+        this.animation = animation;
+        this.animationNames = animationNames.isEmpty()
+                ? Map.of()
+                : Collections.unmodifiableMap(new EnumMap<>(animationNames));
     }
 
     public Optional<BedrockAnimation> animation() {
-        return this.animation;
+        return Optional.ofNullable(this.animation);
     }
 
-    public String firstPersonAnimation() {
-        return this.firstPersonAnimation;
-    }
-
-    public String thirdPersonAnimation() {
-        return this.thirdPersonAnimation;
-    }
-
-    public String headAnimation() {
-        return this.headAnimation;
+    /** The animation names by slot, in slot declaration order. */
+    public Map<AttachableSlot, String> animationNames() {
+        return this.animationNames;
     }
 
     public boolean isEmpty() {
-        return this.animation.isEmpty();
+        return this.animation == null || this.animationNames.isEmpty();
     }
 
     public static BedrockAnimationContext empty() {

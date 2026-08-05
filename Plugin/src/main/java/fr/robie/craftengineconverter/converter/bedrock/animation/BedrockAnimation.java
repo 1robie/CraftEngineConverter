@@ -33,22 +33,35 @@ public class BedrockAnimation {
         JsonObject anim = new JsonObject();
         anim.addProperty("loop", true);
 
+        float[] position = round(pos);
+        float[] rotation = round(rot);
+        float[] scaling = round(scale);
+
         JsonObject bone = new JsonObject();
         JsonObject boneAnim = new JsonObject();
 
-        if (pos[0] != 0 || pos[1] != 0 || pos[2] != 0) {
-            boneAnim.add("position", toJsonArray(pos[0], pos[1], pos[2]));
+        if (position[0] != 0 || position[1] != 0 || position[2] != 0) {
+            boneAnim.add("position", toJsonArray(position[0], position[1], position[2]));
         }
-        if (rot[0] != 0 || rot[1] != 0 || rot[2] != 0) {
-            boneAnim.add("rotation", toJsonArray(rot[0], rot[1], rot[2]));
+        if (rotation[0] != 0 || rotation[1] != 0 || rotation[2] != 0) {
+            boneAnim.add("rotation", toJsonArray(rotation[0], rotation[1], rotation[2]));
         }
-        if (scale[0] != 1 || scale[1] != 1 || scale[2] != 1) {
-            boneAnim.add("scale", toJsonArray(scale[0], scale[1], scale[2]));
+        if (scaling[0] != 1 || scaling[1] != 1 || scaling[2] != 1) {
+            boneAnim.add("scale", toJsonArray(scaling[0], scaling[1], scaling[2]));
         }
 
         bone.add("bone", boneAnim);
         anim.add("bones", bone);
         return anim;
+    }
+
+    private static float[] round(float[] values) {
+        float[] rounded = new float[values.length];
+        for (int axis = 0; axis < values.length; axis++) {
+            float value = Math.round(values[axis] * 10000.0F) / 10000.0F;
+            rounded[axis] = value == 0.0F ? 0.0F : value;
+        }
+        return rounded;
     }
 
     private static JsonArray toJsonArray(float... values) {

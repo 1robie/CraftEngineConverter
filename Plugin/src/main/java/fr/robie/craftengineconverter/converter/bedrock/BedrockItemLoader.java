@@ -1,8 +1,5 @@
 package fr.robie.craftengineconverter.converter.bedrock;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
 import fr.robie.craftengineconverter.api.configuration.Configuration;
 import fr.robie.craftengineconverter.api.configuration.ConfigurationKey;
 import fr.robie.craftengineconverter.api.configuration.bedrock.mapping.item.GroupDefinitionMapping;
@@ -11,9 +8,12 @@ import fr.robie.craftengineconverter.api.configuration.bedrock.mapping.item.Item
 import fr.robie.craftengineconverter.api.configuration.bedrock.mapping.item.LegacyItemMapping;
 import fr.robie.craftengineconverter.api.configuration.bedrock.mapping.item.component.GenericBedrockComponent;
 import fr.robie.craftengineconverter.api.configuration.bedrock.mapping.item.option.BedrockOptions;
+import fr.robie.craftengineconverter.api.configuration.bedrock.mapping.item.option.CreativeGroupRules;
+import fr.robie.craftengineconverter.api.configuration.bedrock.mapping.item.option.VanillaItemGroups;
 import fr.robie.craftengineconverter.api.configuration.bedrock.mapping.item.predicate.BedrockPredicate;
 import fr.robie.craftengineconverter.api.configuration.bedrock.mapping.item.predicate.condition.HasComponentPredicate;
 import fr.robie.craftengineconverter.api.configuration.bedrock.mapping.item.predicate.match.ChargeTypePredicate;
+import fr.robie.craftengineconverter.api.configuration.bedrock.mapping.item.predicate.match.TrimMaterialPredicate;
 import fr.robie.craftengineconverter.api.configuration.bedrock.mapping.item.predicate.range_dispatch.BundleFullnessPredicate;
 import fr.robie.craftengineconverter.api.configuration.bedrock.mapping.item.predicate.range_dispatch.CountPredicate;
 import fr.robie.craftengineconverter.api.configuration.bedrock.mapping.item.predicate.range_dispatch.DamagePredicate;
@@ -24,17 +24,21 @@ import fr.robie.craftengineconverter.api.configuration.item.models.condition.Con
 import fr.robie.craftengineconverter.api.configuration.item.models.model.GenerationConfiguration;
 import fr.robie.craftengineconverter.api.configuration.item.models.model.SimpleModelConfiguration;
 import fr.robie.craftengineconverter.api.configuration.item.models.range_dispatch.RangeDispatchModelConfiguration;
-import fr.robie.craftengineconverter.api.configuration.item.models.select.ChargeTypeSelectConfiguration;
-import fr.robie.craftengineconverter.api.configuration.item.models.select.ComponentSelectConfiguration;
-import fr.robie.craftengineconverter.api.configuration.item.models.select.CustomModelDataSelectConfiguration;
-import fr.robie.craftengineconverter.api.configuration.item.models.select.SelectModelConfiguration;
+import fr.robie.craftengineconverter.api.configuration.item.models.select.*;
+import fr.robie.craftengineconverter.api.configuration.item.models.tints.TintConfiguration;
 import fr.robie.craftengineconverter.api.configuration.loader.models.ModelConfigurationRegistry;
 import fr.robie.craftengineconverter.converter.bedrock.animation.AnimationMapper;
 import fr.robie.craftengineconverter.converter.bedrock.animation.BedrockAnimationContext;
 import fr.robie.craftengineconverter.converter.bedrock.animation.BedrockRenderControllers;
 import fr.robie.craftengineconverter.converter.bedrock.attachable.BedrockAttachableContext;
+import fr.robie.craftengineconverter.converter.bedrock.display.DisplayPresets;
 import fr.robie.craftengineconverter.converter.bedrock.geometry.BedrockGeometry;
+import fr.robie.craftengineconverter.converter.bedrock.geometry.DisplayContext;
 import fr.robie.craftengineconverter.converter.bedrock.geometry.GeometryMapper;
+import fr.robie.craftengineconverter.converter.bedrock.geometry.JavaBlockModel;
+import fr.robie.craftengineconverter.converter.bedrock.icon.ItemIconRenderer;
+import fr.robie.craftengineconverter.converter.bedrock.icon.ModelTextureTinter;
+import fr.robie.craftengineconverter.converter.bedrock.item.ItemModelDefinitionMapper;
 import fr.robie.craftengineconverter.converter.bedrock.texture.CachedTextureInfo;
 import fr.robie.messageflow.logger.Logger;
 import fr.robie.yamllibrary.ConfigurationSection;
@@ -43,15 +47,24 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.image.BufferedImage;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.*;
 
 public class BedrockItemLoader {
+
+    /**
+     * Above this, a pixel lattice costs more cubes than it is worth — a 128×128 frame would be 16 384 of
+     * them — so such an item keeps the flat plane and simply does not look three-dimensional.
+     */
+    private static final int MAX_LATTICE_PIXELS = 4096;
+
     private final String itemId;
     private final ConfigurationSection itemSection;
     private final ConversionContext context;
     private final HashSet<String> processedModels = new HashSet<>();
+    // Guards the one-predicate-less-definition-per-model rule; see buildDefinitions.
+    private boolean emittedBaseDefinition;
+    // The predicate-less definition, i.e. the item's base appearance. Used for the group's own icon.
+    private ItemMapping baseDefinition;
     private final java.util.ArrayList<String> processedModelPaths = new java.util.ArrayList<>();
     private final java.util.HashMap<String, BedrockAnimationContext> animationContexts = new java.util.HashMap<>();
 
@@ -63,17 +76,44 @@ public class BedrockItemLoader {
 
     public ItemMapping load() {
         Material material = this.getMaterial();
-        ModelConfiguration modelConfiguration = ModelConfigurationRegistry.load(this.itemSection.getConfigurationSection("model"));
+
+
+        // Since Java 1.21.4 the variant logic lives in the resource pack, at
+        // assets/<ns>/items/<name>.json, and is far richer than the flat "textures:" list a
+        // CraftEngine item config carries — the latter says which textures exist but never when each
+        // applies. Prefer the pack definition; fall back to a YAML "model:" section for older packs.
+        String itemModel = this.itemSection.isString("item-model")
+                ? this.itemSection.getString("item-model")
+                : this.itemId;
+        ModelConfiguration modelConfiguration = this.context.itemModelDefinitions()
+                .get(itemModel)
+                .map(ItemModelDefinitionMapper.ItemDefinition::model)
+                .orElse(null);
+
+        if (modelConfiguration == null) {
+            modelConfiguration = ModelConfigurationRegistry.load(this.itemSection.getConfigurationSection("model"));
+        }
 
         if (modelConfiguration != null) {
             GroupDefinitionMapping rootGroup = new GroupDefinitionMapping(material, this.itemId);
-            if (this.itemSection.isString("item-model")) {
-                rootGroup.setModel(this.itemSection.getString("item-model"));
-            }
+            rootGroup.setModel(itemModel);
 
             List<BedrockPredicate> predicateStack = new ArrayList<>();
             this.buildDefinitions(rootGroup, modelConfiguration, material, this.itemId, predicateStack);
-            this.collectTextureData(modelConfiguration, rootGroup, this.itemId);
+
+            // The group needs a texture of its own for the icon Bedrock shows in the creative menu.
+            // Prefer the predicate-less definition — that is the item's base appearance. Falling back
+            // to the first definition would pick whichever variant the tree happened to list first
+            // (for a select, a case rather than the fallback).
+            ItemMapping iconSource = this.baseDefinition != null
+                    ? this.baseDefinition
+                    : rootGroup.getDefinitions().stream()
+                    .filter(definition -> !definition.getTexturesData().isEmpty())
+                    .findFirst().orElse(null);
+            if (rootGroup.getTexturesData().isEmpty() && iconSource != null
+                    && !iconSource.getTexturesData().isEmpty()) {
+                rootGroup.addTextureData(iconSource.getTexturesData().getFirst());
+            }
             this.convertItem(rootGroup);
             return rootGroup;
         }
@@ -106,9 +146,10 @@ public class BedrockItemLoader {
             String texturePath = this.itemSection.getString("texture");
             ItemModelItemMapping mapping = new ItemModelItemMapping(material, this.itemId, this.itemId);
             // Extract material display transforms for accurate tool/item positioning
-            this.extractMaterialDisplayTransforms(material, this.itemId);
-            // Register pipeline artifacts first (this resolves texture, detects animation, adds artifacts)
-            this.registerPipelineArtifacts(texturePath, this.itemId, this.isToolMaterial(material));
+            this.registerMaterialPoseAnimations(material, this.itemId);
+            // Register pipeline artifacts first (this resolves texture, detects animation, adds artifacts).
+            // No model path: a "texture:" item names only a texture, so its held form is an extruded sprite.
+            this.registerPipelineArtifacts(texturePath, null, this.itemId, this.isToolMaterial(material));
             // Add TextureData to the mapping for Geyser icon resolution
             String resolvedPath = this.resolveTexturePath(texturePath);
             if (this.context.texturePipeline().isAnimated(texturePath)) {
@@ -128,9 +169,10 @@ public class BedrockItemLoader {
         if (this.itemSection.isList("textures")) {
             List<String> texturePaths = this.itemSection.getStringList("textures");
             ItemModelItemMapping mapping = new ItemModelItemMapping(material, this.itemId, this.itemId);
-            this.extractMaterialDisplayTransforms(material, this.itemId);
+            this.registerMaterialPoseAnimations(material, this.itemId);
             for (String tex : texturePaths) {
-                this.registerPipelineArtifacts(tex, this.itemId, this.isToolMaterial(material));
+                // As above: a "textures:" list names no model, so there is no shape to convert.
+                this.registerPipelineArtifacts(tex, null, this.itemId, this.isToolMaterial(material));
             }
             if (!this.context.texturePipeline().isAnimated(texturePaths.getFirst())) {
                 TextureData td = new TextureData(this.itemId);
@@ -164,9 +206,33 @@ public class BedrockItemLoader {
             case CompositeModelConfiguration composite ->
                     this.traverseComposite(group, composite, material, textureId, predicateStack);
             default -> {
-                ItemModelItemMapping definition = new ItemModelItemMapping(material, textureId, textureId);
+                // Geyser allows only ONE predicate-less definition per Java item + item model pair.
+                // A branch whose property has no Bedrock equivalent yields no predicate, so a tree
+                // full of such branches would otherwise emit several indistinguishable definitions
+                // for the same model — which Geyser rejects. Keep the first as the base and drop the
+                // rest; createSelectPredicate / createRangePredicate have already warned why.
+                if (predicateStack.isEmpty()) {
+                    if (this.emittedBaseDefinition) return;
+                    this.emittedBaseDefinition = true;
+                }
+
+                // textureId is a synthesized per-variant name and is only valid as the Bedrock
+                // identifier, which must be unique. The Java "model" is the item model definition
+                // every variant shares, so it is left null here: Geyser has group members inherit the
+                // group's model, and writing a made-up value would point at a definition that does
+                // not exist.
+                ItemModelItemMapping definition =
+                        new ItemModelItemMapping(material, this.uniqueIdentifier(textureId), null);
                 for (BedrockPredicate pred : predicateStack) {
                     definition.addBedrockPredicate(pred);
+                }
+                // Register this leaf's texture against the definition itself, not the group, so each
+                // variant gets its own icon. Doing it here rather than in a second traversal also keeps
+                // one source of truth for the synthesized textureId — the two used to be computed
+                // separately and had already drifted apart for range_dispatch thresholds.
+                this.addTextureDataIfSimpleModel(modelConfiguration, definition, textureId, material);
+                if (predicateStack.isEmpty()) {
+                    this.baseDefinition = definition;
                 }
                 group.addDefinition(definition);
             }
@@ -178,9 +244,26 @@ public class BedrockItemLoader {
         if (!condition.isConditionSupported()) {
             Logger.warn("Unsupported condition property '" + condition.getProperty() + "' for item " + material + " - condition branches will be processed without predicates");
         }
-        String propertySuffix = "_" + condition.getProperty().replace(":", "_");
+        String propertySuffix = "_" + this.identifierSuffix(condition.getProperty());
 
         ModelConfiguration onFalse = condition.getOnFalse();
+        ModelConfiguration onTrue = condition.getOnTrue();
+
+        // When the condition itself cannot be expressed on Bedrock, both branches would produce
+        // indistinguishable predicate-less definitions and only the first survives. Prefer the animated
+        // branch in that case: an animated texture only ever renders through the attachable, so choosing
+        // the still branch guarantees no animation is ever seen, whereas the animated one at least plays.
+        if (!condition.isConditionSupported() && onFalse != null && onTrue != null) {
+            boolean falseAnimated = this.isBranchAnimated(onFalse);
+            boolean trueAnimated = this.isBranchAnimated(onTrue);
+            if (trueAnimated && !falseAnimated) {
+                Logger.info("Item " + this.itemId + " switches on '" + condition.getProperty()
+                        + "', which Bedrock cannot express - using its animated variant so the animation plays");
+                this.buildDefinitions(group, onTrue, material, baseTextureId, new ArrayList<>(predicateStack));
+                return;
+            }
+        }
+
         if (onFalse != null) {
             BedrockPredicate falsePredicate = condition.getOnFalsePredicate();
             List<BedrockPredicate> falseStack = new ArrayList<>(predicateStack);
@@ -190,7 +273,6 @@ public class BedrockItemLoader {
             this.buildDefinitions(group, onFalse, material, baseTextureId, falseStack);
         }
 
-        ModelConfiguration onTrue = condition.getOnTrue();
         String trueTextureId = baseTextureId + propertySuffix;
         if (onTrue != null) {
             BedrockPredicate truePredicate = condition.getOnTruePredicate();
@@ -202,10 +284,26 @@ public class BedrockItemLoader {
         }
     }
 
+    /** Whether a branch's leaf texture carries a Java {@code .mcmeta} animation. */
+    private boolean isBranchAnimated(@NotNull ModelConfiguration branch) {
+        if (!(branch instanceof SimpleModelConfiguration simple) || simple.getModel() == null) return false;
+        if (this.context.javaAssetsDir() == null) return false;
+
+        for (String ref : this.context.javaModelResolver().texturesOf(simple.getModel(), this.context.javaAssetsDir())) {
+            if (this.context.texturePipeline()
+                    .resolveTexture(ref, this.itemId, this.context.javaAssetsDir())
+                    .filter(info -> info.animation().isPresent())
+                    .isPresent()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private void traverseSelect(@NotNull GroupDefinitionMapping group, @NotNull SelectModelConfiguration<?> select, Material material, String baseTextureId, List<BedrockPredicate> predicateStack) {
         for (SelectModelConfiguration.Case caseEntry : select.getCases()) {
             String caseValue = this.caseValueToString(caseEntry.when());
-            String caseTextureId = baseTextureId + "_" + this.sanitizeTextureSuffix(caseValue);
+            String caseTextureId = baseTextureId + "_" + this.identifierSuffix(caseValue);
             BedrockPredicate casePredicate = this.createSelectPredicate(select, caseEntry);
 
             List<BedrockPredicate> caseStack = new ArrayList<>(predicateStack);
@@ -224,7 +322,12 @@ public class BedrockItemLoader {
         Float scale = range.getScale();
 
         for (RangeDispatchModelConfiguration.Entry entry : range.getEntries()) {
-            String entryTextureId = baseTextureId + "_" + (long) entry.threshold();
+            // Truncating to a long collapses distinct fractional thresholds onto the same name —
+            // a bow's 0.65 and 0.9 both became "_0" — so keep the decimal, with '.' made identifier-safe.
+            String entryTextureId = baseTextureId + "_"
+                    // Thresholds originate as floats, so render as float: widening to double first
+                    // turns 0.65 into 0.6499999761581421.
+                    + this.sanitizeTextureSuffix(Float.toString((float) entry.threshold()).replace('.', '_'));
             BedrockPredicate entryPredicate = this.createRangePredicate(range, entry, scale);
 
             List<BedrockPredicate> entryStack = new ArrayList<>(predicateStack);
@@ -260,10 +363,16 @@ public class BedrockItemLoader {
                 return new ChargeTypePredicate(chargeType);
             }
         }
+        if (select instanceof TrimMaterialSelectConfiguration) {
+            // Case values are resource locations, kept verbatim; Geyser matches on them as-is.
+            return new TrimMaterialPredicate(caseEntry.when().toString());
+        }
         if (select instanceof ComponentSelectConfiguration componentSelect) {
             String value = caseEntry.when().toString();
             return new HasComponentPredicate(componentSelect.getComponent(), true);
         }
+        Logger.warn("Item " + this.itemId + " selects on '" + select.getProperty()
+                + "', which has no Bedrock equivalent - those variants collapse to the base model");
         return null;
     }
 
@@ -284,6 +393,11 @@ public class BedrockItemLoader {
             case "custom_model_data":
                 return new fr.robie.craftengineconverter.api.configuration.bedrock.mapping.item.predicate.range_dispatch.CustomModelDataPredicate(entry.threshold(), scale);
         }
+        // Geyser's range_dispatch only covers damage, count, bundle_fullness and custom_model_data.
+        // Notably there is no draw-progress property, so bow and crossbow pull states (use_duration,
+        // crossbow/pull) cannot be represented and collapse onto the item's base model.
+        Logger.warn("Item " + this.itemId + " dispatches on range property '" + range.getProperty()
+                + "', which has no Bedrock equivalent - those variants collapse to the base model");
         return null;
     }
 
@@ -294,49 +408,52 @@ public class BedrockItemLoader {
         return when.toString();
     }
 
+    /**
+     * Makes a Bedrock identifier that no other definition in this pack uses.
+     * <p>
+     * A duplicate {@code bedrock_identifier} is a hard error in Geyser — it cannot be shared with any
+     * other definition — and the names are derived from model trees where two branches can easily
+     * sanitize down to the same string. The suffix schemes above try to keep names distinct and
+     * meaningful; this is the guarantee.
+     */
+    private String uniqueIdentifier(String candidate) {
+        // Keep the namespace separator, sanitize the path, so "a:b/c" stays "a:b_c" rather than "a_b_c".
+        int colon = candidate.indexOf(':');
+        String identifier = colon < 0
+                ? this.sanitizeTextureSuffix(candidate)
+                : candidate.substring(0, colon) + ":" + this.sanitizeTextureSuffix(candidate.substring(colon + 1));
+
+        if (this.context.claimBedrockIdentifier(identifier)) {
+            return identifier;
+        }
+        for (int suffix = 2; ; suffix++) {
+            String attempt = identifier + "_" + suffix;
+            if (this.context.claimBedrockIdentifier(attempt)) {
+                Logger.warn("Duplicate Bedrock identifier '" + identifier + "' for item " + this.itemId
+                        + " - emitted as '" + attempt + "'");
+                return attempt;
+            }
+        }
+    }
+
+    /**
+     * Sanitizes a value for use as an identifier suffix, dropping a redundant {@code minecraft}
+     * namespace.
+     * <p>
+     * Only for names — a predicate's <i>value</i> keeps its full resource location, because that is
+     * what Geyser matches against. Generated filenames concatenate several of these, and the pack is
+     * written under an already-deep output directory, so a path can pass Windows' 260-character limit
+     * and become unreadable to tools that resolve it absolutely.
+     */
+    private String identifierSuffix(String value) {
+        String trimmed = value.startsWith("minecraft:") ? value.substring("minecraft:".length()) : value;
+        return this.sanitizeTextureSuffix(trimmed);
+    }
+
     private String sanitizeTextureSuffix(String value) {
         return value.replace(":", "_").replace("/", "_").replace(" ", "_");
     }
 
-    private void collectTextureData(ModelConfiguration modelConfiguration, GroupDefinitionMapping rootGroup, String textureId) {
-        this.collectTextureData(modelConfiguration, rootGroup, textureId, null);
-    }
-
-    private void collectTextureData(ModelConfiguration modelConfiguration, GroupDefinitionMapping rootGroup, String textureId, Material material) {
-        if (modelConfiguration == null) return;
-
-        this.addTextureDataIfSimpleModel(modelConfiguration, rootGroup, textureId, material);
-
-        if (modelConfiguration instanceof ConditionModelConfiguration condition) {
-            String propertySuffix = "_" + condition.getProperty().replace(":", "_");
-            this.collectTextureData(condition.getOnFalse(), rootGroup, textureId, material);
-            this.collectTextureData(condition.getOnTrue(), rootGroup, textureId + propertySuffix, material);
-        } else if (modelConfiguration instanceof SelectModelConfiguration<?> select) {
-            for (SelectModelConfiguration.Case caseEntry : select.getCases()) {
-                String caseValue = this.caseValueToString(caseEntry.when());
-                String caseTextureId = textureId + "_" + this.sanitizeTextureSuffix(caseValue);
-                this.collectTextureData(caseEntry.model(), rootGroup, caseTextureId, material);
-            }
-            if (select.getFallback() != null) {
-                this.collectTextureData(select.getFallback(), rootGroup, textureId, material);
-            }
-        } else if (modelConfiguration instanceof RangeDispatchModelConfiguration range) {
-            for (RangeDispatchModelConfiguration.Entry entry : range.getEntries()) {
-                String entryTextureId = textureId + "_" + (long) entry.threshold();
-                this.collectTextureData(entry.model(), rootGroup, entryTextureId, material);
-            }
-            if (range.getFallback() != null) {
-                this.collectTextureData(range.getFallback(), rootGroup, textureId, material);
-            }
-        } else if (modelConfiguration instanceof CompositeModelConfiguration composite) {
-            int index = 0;
-            for (ModelConfiguration child : composite.getModels()) {
-                String childTextureId = textureId + "_" + index;
-                this.collectTextureData(child, rootGroup, childTextureId, material);
-                index++;
-            }
-        }
-    }
 
     private static final java.util.Set<String> SUPPORTED_COMPONENTS = java.util.Set.of(
             "minecraft:max_damage", "max_damage",
@@ -384,8 +501,22 @@ public class BedrockItemLoader {
             options.setDisplayHandheld(true);
         }
 
+        this.applyCreativeCategory(options, material);
+
         if (!options.serialize().isEmpty()) {
             itemMapping.setBedrockOptions(options);
+        }
+
+        // Only "model" is inherited from a group, so options have to be set on the definitions themselves.
+        // The category goes on the predicate-less one alone: every definition is a separate Bedrock item, so
+        // categorising them all would list each predicate variant separately — eleven trim variants of one
+        // pair of boots — where the item should appear once.
+        if (this.baseDefinition != null && this.baseDefinition != itemMapping) {
+            BedrockOptions baseOptions = this.baseDefinition.getBedrockOptions();
+            if (baseOptions == null) baseOptions = new BedrockOptions();
+            this.applyCreativeCategory(baseOptions, material);
+            if (this.isToolMaterial(material)) baseOptions.setDisplayHandheld(true);
+            if (!baseOptions.serialize().isEmpty()) this.baseDefinition.setBedrockOptions(baseOptions);
         }
 
         this.convertDirectProperties(itemMapping, material);
@@ -421,8 +552,15 @@ public class BedrockItemLoader {
 
         String type = behaviorSection.getString("type");
         if ("block_item".equals(type)) {
-//            mapping.addBedrockComponent(new GenericBedrockComponent("minecraft:block_placer",
-//                    java.util.Map.of("block", mapping.getBedrockIdentifier())));
+            // This component is what makes Bedrock draw the item as its block, in hand and in an item frame:
+            // "The block placer component will also give the item the 3D appearance of the block by default"
+            // (bedrock-wiki/blocks/blocks-as-items.md). Without it the item fell back to an attachable, and an
+            // attachable geometry has one texture per render pass — so a six-textured block like the drawer showed
+            // the same texture on every face, and the held form never matched the placed block. Block geometry has
+            // per-face material instances and gets it right, which is why the fix is to defer to it rather than to
+            // reproduce it. See emitHeldModel in addTextureDataIfSimpleModel for the other half.
+            mapping.addBedrockComponent(new GenericBedrockComponent("minecraft:block_placer",
+                    java.util.Map.of("block", mapping.getBedrockIdentifier())));
             // Also register textures as terrain textures for block items
             this.registerExistingTexturesAsTerrain(mapping);
         } else if ("furniture_item".equals(type)) {
@@ -453,25 +591,31 @@ public class BedrockItemLoader {
         }
         mapping.addBedrockComponent(new GenericBedrockComponent("minecraft:wearable", wearable));
 
-        String equipmentTexturePath = this.findEquipmentTexture(mapping);
-        if (equipmentTexturePath != null) {
-            String safeId = mapping.getBedrockIdentifier().replace(":", ".");
-            BedrockAttachableContext armorAttachable = BedrockAttachableContext.createArmor(
-                    mapping.getBedrockIdentifier(), equipmentTexturePath);
-            this.context.registerAttachable(safeId, armorAttachable);
+        // The worn model needs the armour texture the equipment asset names, not the inventory icon — an
+        // icon stretched over a humanoid model is unrecognisable.
+        String assetId = this.itemSection.getString("settings.equipment.asset_id");
+        if (assetId == null || assetId.isBlank()) {
+            // Distinguished from naming an asset that does not exist, because the fix is different: here the item
+            // declares no settings.equipment.asset_id at all. Reported as "asset 'null'", which read like a bug in
+            // the converter rather than a gap in the config.
+            Logger.debug("Armour item " + this.itemId + " declares no settings.equipment.asset_id,"
+                    + " so it renders with the vanilla armour texture for its material");
+            return;
         }
-    }
 
-    @Nullable
-    private String findEquipmentTexture(ItemMapping mapping) {
-        for (TextureData td : mapping.getTexturesData()) {
-            for (String tex : td.getTextures()) {
-                if (tex.startsWith("textures/")) {
-                    return tex;
-                }
-            }
+        var asset = this.context.equipmentAssets().get(assetId);
+        if (asset.isEmpty()) {
+            Logger.warn("Armour item " + this.itemId + " names equipment asset '" + assetId
+                    + "', which no equipments: section defines - it will render with no armour texture");
+            return;
         }
-        return null;
+
+        String armorTexture = this.context.copyArmorTexture(asset.get(), slotName);
+        if (armorTexture == null) return;
+
+        // Keyed exactly as the writer names the file, so two registrations can never quietly collide.
+        this.context.registerAttachable(mapping.getBedrockIdentifier(),
+                BedrockAttachableContext.createArmor(mapping.getBedrockIdentifier(), slotName, armorTexture));
     }
 
     private void collectComponentData(ItemMapping itemMapping) {
@@ -518,6 +662,52 @@ public class BedrockItemLoader {
         return null;
     }
 
+    /**
+     * Puts the item in the creative inventory.
+     * <p>
+     * The option defaults to {@code none}, which means the item appears nowhere in the creative menu, and
+     * Bedrock's recipe book additionally hides any item a recipe outputs unless a category is set. So a
+     * converted item is invisible to players browsing creative until this is filled in.
+     * <p>
+     * CraftEngine's own {@code category} is one of its custom GUI groups and has no Bedrock counterpart, so
+     * the category is derived from the base material instead.
+     */
+    private void applyCreativeCategory(BedrockOptions options, Material material) {
+        // An author-declared rule matching the item id wins: it is the only source that can know a
+        // "*_ore" item belongs with the ores, since the material it happens to be built on cannot say so.
+        CreativeGroupRules.Rule rule =
+                CreativeGroupRules.from(Configuration.get(ConfigurationKey.CREATIVE_GROUPS)).match(this.itemId);
+
+        BedrockOptions.CreativeCategory declaredCategory = rule == null ? null : rule.resolvedCategory();
+        if (declaredCategory != null) {
+            options.setCreativeCategory(declaredCategory);
+        } else {
+            String category = this.determineCreativeCategory(material);
+            if (category == null) return;
+            try {
+                options.setCreativeCategory(
+                        BedrockOptions.CreativeCategory.valueOf(category.toUpperCase(Locale.ROOT)));
+            } catch (IllegalArgumentException e) {
+                Logger.warn("Unknown creative category '" + category + "' for item " + this.itemId);
+                return;
+            }
+        }
+
+        if (rule != null) {
+            options.setCreativeGroup(rule.group());
+            return;
+        }
+
+        // Otherwise the base item's own group is the best guess: a custom pair of boots built on
+        // chainmail_boots belongs in the boots stack, both in the creative menu and for the recipe book.
+        // Left unset when the base item belongs to no vanilla family — inventing a group name would just be
+        // ignored, because custom groups need a behavior pack and Geyser cannot send those.
+        if (material != null) {
+            String group = VanillaItemGroups.groupFor(material.name());
+            if (group != null) options.setCreativeGroup(group);
+        }
+    }
+
     @Nullable
     private String determineCreativeCategory(Material material) {
         if (material == null) return null;
@@ -542,200 +732,293 @@ public class BedrockItemLoader {
         return stripped.isEmpty() ? null : stripped;
     }
 
-    private void addTextureDataIfSimpleModel(ModelConfiguration modelConfiguration, GroupDefinitionMapping groupDefinitionMapping, String textureId) {
-        this.addTextureDataIfSimpleModel(modelConfiguration, groupDefinitionMapping, textureId, null);
+    private void addTextureDataIfSimpleModel(ModelConfiguration modelConfiguration, ItemMapping target, String textureId) {
+        this.addTextureDataIfSimpleModel(modelConfiguration, target, textureId, null);
     }
 
-    private void addTextureDataIfSimpleModel(ModelConfiguration modelConfiguration, GroupDefinitionMapping groupDefinitionMapping, String textureId, Material mat) {
+    private void addTextureDataIfSimpleModel(ModelConfiguration modelConfiguration, ItemMapping target, String textureId, Material mat) {
         if (modelConfiguration instanceof SimpleModelConfiguration simpleModelConfiguration) {
             GenerationConfiguration generation = simpleModelConfiguration.getGeneration();
             boolean hasGenerationTexture = false;
             if (generation != null) {
                 TextureData textureData = generation.toTextureData(textureId);
                 if (textureData != null) {
-                    groupDefinitionMapping.addTextureData(textureData);
+                    target.addTextureData(textureData);
                     hasGenerationTexture = !textureData.getTextures().isEmpty();
                 }
-                this.handleGenerationDisplayTransforms(textureId);
             }
             String modelPath = simpleModelConfiguration.getModel();
+            // Before registerPipelineArtifacts below, which consumes the pose it registers.
+            this.registerPoseAnimations(modelPath, textureId);
             if (modelPath != null) {
+                // A Java item model definition names a MODEL, not a texture — "default:item/topaz_bow"
+                // resolves to models/item/topaz_bow.json, whose textures map holds the real reference
+                // ("item/custom/topaz_bow"). Treating the model path as a texture path drops the
+                // difference and yields files that do not exist, so resolve the indirection.
+                List<String> textureRefs = this.context.javaModelResolver()
+                        .texturesOf(modelPath, this.context.javaAssetsDir());
+                if (textureRefs.isEmpty()) {
+                    // No model file, or it declared no textures. CraftEngine often names a model after
+                    // its texture, so the path itself is the best remaining guess.
+                    textureRefs = List.of(modelPath);
+                }
+
+                // Two kinds of item build no held 3D model of their own, for the same reason: something else
+                // already draws them better than an attachable can.
+                //
+                // Armour's worn appearance comes from the armour attachable (see detectArmorItem), and a held
+                // piece falls back to its icon exactly as in vanilla. Emitting both also collided — the two
+                // attachables differ only in key separator but sanitise to the same filename, so one silently
+                // overwrote the other.
+                //
+                // A block item is drawn by Bedrock as its own block, via the minecraft:block_placer component
+                // added in detectBlockItem. That matters because block geometry carries per-face material
+                // instances and attachable geometry cannot: a six-textured block converted as an attachable came
+                // out with one texture on every face, and never matched the block once placed.
+                //
+                // The texture work still runs in both cases, because the inventory icon and its flipbook come
+                // from it.
+                boolean emitHeldModel = !this.isArmorMaterial(mat) && !this.isBlockItem();
+
+                // Artifacts first: resolving a texture is what populates the animation cache that
+                // isAnimated / getFrameBaseTexturePath below depend on.
+                // The first reference is the item's icon (layer0 of a generated item model), so it
+                // drives the artifacts; the rest still need copying for multi-layer models.
+                this.registerPipelineArtifacts(textureRefs.getFirst(), modelPath, textureId,
+                        this.isToolMaterial(mat), emitHeldModel);
+
+                this.renderIconFromModel(modelPath, textureId, simpleModelConfiguration);
+                for (int layer = 1; layer < textureRefs.size(); layer++) {
+                    // Only layer0 becomes an item. Bedrock renders a custom item's icon from a single
+                    // flat texture and cannot composite layers the way Java does for armour trims, so
+                    // the remaining layers get copied but generate no attachable, geometry, animation or
+                    // render-controller artifacts — those would be unreferenced files, and their long
+                    // generated names push paths past the Windows limit.
+                    this.context.copyTexture(textureRefs.get(layer), textureId + "_layer" + layer);
+                }
+
                 if (!hasGenerationTexture) {
-                    String texturePath = this.modelPathToTexturePath(modelPath);
-                    if (texturePath != null) {
-                        TextureData textureData = new TextureData(textureId);
-                        textureData.addTexture(texturePath);
-                        groupDefinitionMapping.addTextureData(textureData);
+                    TextureData textureData = new TextureData(textureId);
+                    for (String ref : textureRefs) {
+                        // An animated texture is split into per-frame files, so the un-framed path
+                        // names nothing on disk; point at frame 0 as the still icon.
+                        if (this.context.texturePipeline().isAnimated(ref)) {
+                            textureData.addTexture(
+                                    this.context.texturePipeline().getFrameBaseTexturePath(ref) + "_0");
+                            continue;
+                        }
+                        String resolved = this.resolveTexturePath(ref);
+                        if (resolved != null) textureData.addTexture(resolved);
+                    }
+                    if (!textureData.getTextures().isEmpty()) {
+                        target.addTextureData(textureData);
                     }
                 }
-                this.registerPipelineArtifacts(modelPath, textureId, this.isToolMaterial(mat));
             }
         }
     }
 
-    private void handleGenerationDisplayTransforms(String textureId) {
-        this.extractDisplayTransformsFromSection(this.itemSection, textureId);
+    /**
+     * Draws the inventory icon from the item's model, when that model is three-dimensional.
+     * <p>
+     * Java ships no icon for such an item — the client renders one from the cubes — while Bedrock can only show
+     * a flat sprite and has no way to render geometry into a slot. The fallback of using the model's texture as
+     * the sprite shows a UV atlas of unwrapped faces, so the sprite has to be drawn here instead. A model with
+     * no {@code elements} already <i>is</i> a sprite and is left alone.
+     */
+    private void renderIconFromModel(String modelPath, String textureId, SimpleModelConfiguration model) {
+        if (!(boolean) Configuration.get(ConfigurationKey.RENDER_ITEM_ICONS)) return;
+        if (this.context.javaAssetsDir() == null) return;
+
+        JavaBlockModel resolved = this.context.javaModelResolver().load(modelPath, this.context.javaAssetsDir());
+        if (resolved == null || resolved.elements().isEmpty()) return;
+
+        int size = Configuration.get(ConfigurationKey.ITEM_ICON_SIZE);
+        if (size <= 0) return;
+
+        java.util.Map<Integer, Integer> tints = this.resolveTints(model);
+        this.bakeTintsIntoTextures(resolved, tints);
+
+        BufferedImage icon = new ItemIconRenderer(this::loadModelTexture).render(resolved, tints, size);
+        if (icon == null) {
+            Logger.warn("Could not render an icon for " + this.itemId + " from " + modelPath
+                    + " - it will fall back to the model's texture, which is a UV atlas rather than a sprite");
+            return;
+        }
+        this.context.registerRenderedIcon(textureId, icon);
     }
 
-    private void extractDisplayTransformsFromSection(ConfigurationSection section, String textureId) {
-        ConfigurationSection modelSection = section.getConfigurationSection("model");
-        if (modelSection == null) return;
-        ConfigurationSection generationSection = modelSection.getConfigurationSection("generation");
-        if (generationSection == null) return;
-        ConfigurationSection displaySection = generationSection.getConfigurationSection("display");
-        if (displaySection == null) return;
+    /**
+     * Paints the model's dye tints into copies of its textures, so the held and worn model carries the colour
+     * the icon does.
+     * <p>
+     * Bedrock cannot tint at runtime — Geyser cannot send a {@code dyed_color} component and an attachable
+     * samples its texture as-is — so without this the same item is olive in the inventory and bare wood in hand.
+     * Baking the item's default tint makes both match an <b>undyed</b> Java item, which is as close as a client
+     * that cannot dye anything gets.
+     */
+    private void bakeTintsIntoTextures(JavaBlockModel model, java.util.Map<Integer, Integer> tints) {
+        if (tints.isEmpty()) return;
 
-        float[] fpRot = {0, 0, 0}, fpPos = {0, 0, 0}, fpScale = {1, 1, 1};
-        float[] tpRot = {0, 0, 0}, tpPos = {0, 0, 0}, tpScale = {1, 1, 1};
-        float[] headRot = {0, 0, 0}, headPos = {0, 0, 0}, headScale = {1, 1, 1};
-        boolean hasAnyTransform = false;
+        for (java.util.Map.Entry<String, java.util.List<ModelTextureTinter.TintRegion>> entry :
+                ModelTextureTinter.regions(model, this::loadModelTexture, tints).entrySet()) {
+            Optional<CachedTextureInfo> resolved = this.context.texturePipeline()
+                    .resolveTexture(entry.getKey(), this.itemId, this.context.javaAssetsDir());
+            resolved.ifPresent(info ->
+                    this.context.registerTintRegions(info.bedrockTextureDir(), entry.getValue(), this.itemId));
+        }
+    }
 
-        for (String viewKey : displaySection.getKeys(false)) {
-            ConfigurationSection view = displaySection.getConfigurationSection(viewKey);
-            if (view == null) continue;
+    /**
+     * Loads a Java texture reference from the source assets.
+     * <p>
+     * Reads the original rather than the copied pack file, because the copy may already have been split into
+     * animation frames. An animated source contributes only its <b>first frame</b>: a sprite is one still image,
+     * so the top {@code width}-tall square of the sheet is the representative frame, exactly as the icon
+     * naming already assumes.
+     */
+    private BufferedImage loadModelTexture(String reference) {
+        Optional<CachedTextureInfo> resolved = this.context.texturePipeline()
+                .resolveTexture(reference, this.itemId, this.context.javaAssetsDir());
+        if (resolved.isEmpty()) return null;
 
-            float[] rot = this.extractFloatArray(view, "rotation", 3);
-            float[] pos = this.extractFloatArray(view, "translation", 3);
-            float[] scale = this.extractFloatArray(view, "scale", 3, 1.0f);
+        try {
+            BufferedImage image = javax.imageio.ImageIO.read(resolved.get().sourcePath().toFile());
+            if (image == null) return null;
 
-            switch (viewKey) {
-                case "firstperson_righthand":
-                case "firstperson_lefthand":
-                    fpRot = rot; fpPos = pos; fpScale = scale;
-                    hasAnyTransform = true;
-                    break;
-                case "thirdperson_righthand":
-                case "thirdperson_lefthand":
-                    tpRot = rot; tpPos = pos; tpScale = scale;
-                    hasAnyTransform = true;
-                    break;
-                case "head":
-                case "fixed":
-                    headRot = rot; headPos = pos; headScale = scale;
-                    hasAnyTransform = true;
-                    break;
+            CachedTextureInfo info = resolved.get();
+            if (info.animation().isPresent()) {
+                int frameHeight = info.animation().get().frameHeight();
+                if (frameHeight > 0 && frameHeight < image.getHeight()) {
+                    return image.getSubimage(0, 0, info.animation().get().frameWidth(), frameHeight);
+                }
+            }
+            return image;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    /**
+     * The model's tints, by index, keeping only those that resolve to one fixed colour.
+     * <p>
+     * A sprite is a single image, so a tint that depends on runtime state — grass colour, team colour, a potion
+     * — has no answer that could be baked in. Those faces stay untinted rather than being given an invented
+     * colour.
+     */
+    private java.util.Map<Integer, Integer> resolveTints(SimpleModelConfiguration model) {
+        java.util.Map<Integer, Integer> tints = new java.util.HashMap<>();
+        List<TintConfiguration> configured = model.getTints();
+        for (int index = 0; index < configured.size(); index++) {
+            java.util.OptionalInt color = configured.get(index).constantColor();
+            if (color.isPresent()) {
+                tints.put(index, color.getAsInt());
+            } else {
+                Logger.debug("Tint " + index + " of " + this.itemId + " depends on runtime state"
+                        + " - the rendered icon leaves that face untinted");
             }
         }
-
-        if (!hasAnyTransform) return;
-
-        BedrockAnimationContext animCtx = AnimationMapper.mapDisplayTransforms(
-                textureId, "bone",
-                fpRot, fpPos, fpScale,
-                tpRot, tpPos, tpScale,
-                headRot, headPos, headScale
-        );
-
-        animCtx.animation().ifPresent(anim -> {
-            this.context.registerAnimation(textureId.replace(":", "."), anim);
-        });
-
-        if (!animCtx.isEmpty()) {
-            this.animationContexts.put(textureId, animCtx);
-        }
+        return tints;
     }
 
-    private void extractMaterialDisplayTransforms(Material material, String textureId) {
+    /**
+     * Builds and registers the animations that pose this item when it is held or worn on the head.
+     * <p>
+     * Two sources, layered. The model's own {@code display} block comes first, read through
+     * {@link fr.robie.craftengineconverter.converter.bedrock.geometry.JavaModelResolver} so its {@code parent}
+     * chain is already merged in — a model saying no more than {@code {"parent": "item/handheld"}} still arrives
+     * with the handheld pose, from the cached vanilla asset or from {@code DisplayPresets} when it is missing.
+     * <b>This source was previously ignored entirely</b>: the pose came only from CraftEngine's YAML or from the
+     * vanilla model of the underlying material, so a custom model's own pose never reached Bedrock.
+     * <p>
+     * CraftEngine's {@code model.generation.display} is overlaid on top, because a generated model may have no
+     * file on disk at all and because an author writing it there is being explicit.
+     */
+    private void registerPoseAnimations(String modelPath, String textureId) {
+        Map<String, JavaBlockModel.DisplayTransform> display = new HashMap<>();
+        String parent = null;
+
+        if (modelPath != null && this.context.javaAssetsDir() != null) {
+            JavaBlockModel resolved = this.context.javaModelResolver()
+                    .load(modelPath, this.context.javaAssetsDir());
+            if (resolved != null) {
+                display.putAll(resolved.display());
+                // Carried so a context the model declares nothing for falls back through the same preset the
+                // icon uses, rather than to item/generated's flat-sprite pose.
+                parent = resolved.parent().orElse(null);
+            }
+        }
+        display.putAll(this.readGenerationDisplay(this.itemSection));
+
+        if (display.isEmpty()) return;
+        this.registerPose(textureId, display, parent);
+    }
+
+    /**
+     * Poses an item that names no model of its own, from the vanilla model of the material it is built on — a
+     * custom item on {@code paper} is held the way paper is held.
+     */
+    private void registerMaterialPoseAnimations(Material material, String textureId) {
         if (this.context.javaAssetsDir() == null) return;
 
         String materialName = material.name().toLowerCase(Locale.ROOT);
-        Path modelFile = this.context.javaAssetsDir().resolve("minecraft/models/item/" + materialName + ".json");
-        if (!Files.exists(modelFile)) {
-            // Try alternate non-vanilla namespace
-            modelFile = this.context.javaAssetsDir().resolve(materialName.contains(":") ? materialName.replace(":", "/models/item/") : "minecraft/models/item/" + materialName + ".json");
-            if (!Files.exists(modelFile)) return;
-        }
+        JavaBlockModel resolved = this.context.javaModelResolver()
+                .load("minecraft:item/" + materialName, this.context.javaAssetsDir());
+        if (resolved == null || resolved.display().isEmpty()) return;
 
-        try {
-            Gson gson = new Gson();
-            JsonObject model = gson.fromJson(Files.newBufferedReader(modelFile), JsonObject.class);
-            if (model == null) return;
-
-            // Resolve parent model (one level deep)
-            if (model.has("parent") && !model.has("display")) {
-                String parent = model.get("parent").getAsString();
-                String parentPath = parent.replace(":", "/models/") + ".json";
-                Path parentFile = this.context.javaAssetsDir().resolve(parentPath);
-                if (Files.exists(parentFile)) {
-                    JsonObject parentModel = gson.fromJson(Files.newBufferedReader(parentFile), JsonObject.class);
-                    if (parentModel != null && parentModel.has("display")) {
-                        model = parentModel;
-                    }
-                }
-            }
-
-            JsonObject display = model.getAsJsonObject("display");
-            if (display == null) return;
-
-            float[] fpRot = {0, 0, 0}, fpPos = {0, 0, 0}, fpScale = {1, 1, 1};
-            float[] tpRot = {0, 0, 0}, tpPos = {0, 0, 0}, tpScale = {1, 1, 1};
-            float[] headRot = {0, 0, 0}, headPos = {0, 0, 0}, headScale = {1, 1, 1};
-            boolean hasAnyTransform = false;
-
-            for (String viewKey : display.keySet()) {
-                JsonObject view = display.getAsJsonObject(viewKey);
-                if (view == null) continue;
-
-                float[] rot = this.readJsonFloatArray(view, "rotation", 3);
-                float[] pos = this.readJsonFloatArray(view, "translation", 3);
-                float[] scale = this.readJsonFloatArray(view, "scale", 3, 1.0f);
-
-                switch (viewKey) {
-                    case "firstperson_righthand":
-                    case "firstperson_lefthand":
-                        fpRot = rot; fpPos = pos; fpScale = scale;
-                        hasAnyTransform = true;
-                        break;
-                    case "thirdperson_righthand":
-                    case "thirdperson_lefthand":
-                        tpRot = rot; tpPos = pos; tpScale = scale;
-                        hasAnyTransform = true;
-                        break;
-                    case "head":
-                    case "fixed":
-                        headRot = rot; headPos = pos; headScale = scale;
-                        hasAnyTransform = true;
-                        break;
-                }
-            }
-
-            if (!hasAnyTransform) return;
-
-            BedrockAnimationContext animCtx = AnimationMapper.mapDisplayTransforms(
-                    textureId, "bone",
-                    fpRot, fpPos, fpScale,
-                    tpRot, tpPos, tpScale,
-                    headRot, headPos, headScale
-            );
-
-            animCtx.animation().ifPresent(anim -> {
-                this.context.registerAnimation(textureId.replace(":", "."), anim);
-            });
-
-            if (!animCtx.isEmpty()) {
-                this.animationContexts.put(textureId, animCtx);
-            }
-        } catch (Exception e) {
-            Logger.warn("Could not read display transforms from material model " + materialName);
-        }
+        this.registerPose(textureId, resolved.display());
     }
 
-    private float[] readJsonFloatArray(JsonObject obj, String key, int size) {
-        return this.readJsonFloatArray(obj, key, size, 0.0f);
+    private void registerPose(String textureId, Map<String, JavaBlockModel.DisplayTransform> display) {
+        this.registerPose(textureId, display, null);
     }
 
-    private float[] readJsonFloatArray(JsonObject obj, String key, int size, float defaultValue) {
-        JsonArray arr = obj.getAsJsonArray(key);
-        if (arr == null || arr.size() < size) {
-            float[] result = new float[size];
-            java.util.Arrays.fill(result, defaultValue);
-            return result;
+    private void registerPose(String textureId, Map<String, JavaBlockModel.DisplayTransform> display,
+                              String parent) {
+        BedrockAnimationContext animCtx = AnimationMapper.fromDisplay(textureId, display, parent);
+        if (animCtx.isEmpty()) return;
+
+        animCtx.animation().ifPresent(anim -> this.context.registerAnimation(textureId.replace(":", "."), anim));
+        this.animationContexts.put(textureId, animCtx);
+    }
+
+    /**
+     * The pose a model with no {@code display} of its own falls back to.
+     * <p>
+     * Tools take {@code item/handheld}'s poses and everything else {@code item/generated}'s, which is the same
+     * distinction the hand-tuned tool constants drew — except that it is now the vanilla preset rather than a
+     * guess, and it applies to all five slots rather than three.
+     */
+    private BedrockAnimationContext defaultPose(String textureId, boolean isTool) {
+        BedrockAnimationContext animCtx = AnimationMapper.fromDisplay(textureId,
+                DisplayPresets.forParent(isTool ? "item/handheld" : "item/generated"));
+        animCtx.animation().ifPresent(anim -> this.context.registerAnimation(textureId.replace(":", "."), anim));
+        return animCtx;
+    }
+
+    /** CraftEngine's {@code model.generation.display}, in the same shape a Java model's {@code display} parses to. */
+    private Map<String, JavaBlockModel.DisplayTransform> readGenerationDisplay(ConfigurationSection section) {
+        ConfigurationSection modelSection = section == null ? null : section.getConfigurationSection("model");
+        ConfigurationSection generation = modelSection == null
+                ? null : modelSection.getConfigurationSection("generation");
+        ConfigurationSection displaySection = generation == null
+                ? null : generation.getConfigurationSection("display");
+        if (displaySection == null) return Map.of();
+
+        Map<String, JavaBlockModel.DisplayTransform> display = new HashMap<>();
+        for (String written : displaySection.getKeys(false)) {
+            ConfigurationSection view = displaySection.getConfigurationSection(written);
+            String context = DisplayContext.canonical(written);
+            if (view == null || context == null) continue;
+
+            display.put(context, new JavaBlockModel.DisplayTransform(
+                    this.extractFloatArray(view, "rotation", 3),
+                    this.extractFloatArray(view, "translation", 3),
+                    this.extractFloatArray(view, "scale", 3, 1.0f),
+                    this.extractFloatArray(view, "rotation_pivot", 3),
+                    this.extractFloatArray(view, "scale_pivot", 3)));
         }
-        float[] result = new float[size];
-        for (int i = 0; i < size && i < arr.size(); i++) {
-            result[i] = arr.get(i).getAsFloat();
-        }
-        return result;
+        return display;
     }
 
     private float[] extractFloatArray(ConfigurationSection section, String key, int size) {
@@ -756,27 +1039,55 @@ public class BedrockItemLoader {
         return result;
     }
 
-    private void registerPipelineArtifacts(String modelPath, String textureId) {
-        this.registerPipelineArtifacts(modelPath, textureId, false);
+    private void registerPipelineArtifacts(String textureRef, String modelPath, String textureId) {
+        this.registerPipelineArtifacts(textureRef, modelPath, textureId, false);
     }
 
-    private void registerPipelineArtifacts(String modelPath, String textureId, boolean isTool) {
+    private void registerPipelineArtifacts(String textureRef, String modelPath, String textureId, boolean isTool) {
+        this.registerPipelineArtifacts(textureRef, modelPath, textureId, isTool, true);
+    }
+
+    /**
+     * Builds everything the held form of an item needs: its texture, its geometry, its pose animations, a render
+     * controller and an attachable.
+     * <p>
+     * <b>{@code textureRef} and {@code modelPath} are different things and must stay apart.</b> They were one
+     * parameter, and since the caller had already resolved the model into its textures, what arrived was a texture
+     * reference — which {@code registerGeometry} then looked for under {@code models/}. That silently worked only
+     * for packs naming a model and its texture alike; otherwise the geometry either fell through to a flat
+     * extruded sprite (the anvil, whose first texture is {@code netherite_anvil_top}) or loaded a completely
+     * different model that happened to share the texture's name ({@code palm_button} rendering as
+     * {@code palm_planks}). The icon was unaffected because it is rendered from the real model, which is exactly
+     * why an item could look right in the inventory and wrong in the hand.
+     *
+     * @param textureRef     the Java texture reference, e.g. {@code item/custom/topaz_bow}
+     * @param modelPath      the Java model reference, e.g. {@code default:item/topaz_bow}; {@code null} for a
+     *                       texture-only item, which has no shape to convert
+     * @param emitHeldModel  whether to build the 3D held-item model — geometry, animations, render controller
+     *                       and attachable. False for armour, which is drawn by its own armour attachable;
+     *                       the texture work still has to happen either way, since the inventory icon and its
+     *                       flipbook come from it.
+     */
+    private void registerPipelineArtifacts(String textureRef, String modelPath, String textureId,
+                                           boolean isTool, boolean emitHeldModel) {
         if (!this.processedModels.add(textureId)) return;
         if (this.context.javaAssetsDir() == null) return;
 
-        this.processedModelPaths.add(modelPath);
+        this.processedModelPaths.add(textureRef);
 
         // Resolve texture first to populate the animation cache
-        Optional<CachedTextureInfo> resolved = this.context.texturePipeline().resolveTexture(modelPath, textureId, this.context.javaAssetsDir());
+        Optional<CachedTextureInfo> resolved = this.context.texturePipeline().resolveTexture(textureRef, textureId, this.context.javaAssetsDir());
 
         if (resolved.isPresent() && resolved.get().animation().isPresent()) {
-            this.registerAnimatedItemArtifacts(modelPath, textureId, resolved.get(), isTool);
+            this.registerAnimatedItemArtifacts(textureRef, modelPath, textureId, resolved.get(), isTool, emitHeldModel);
         } else {
-            this.registerStaticItemArtifacts(modelPath, textureId, isTool);
+            this.registerStaticItemArtifacts(textureRef, modelPath, textureId, isTool, emitHeldModel);
         }
     }
 
-    private void registerAnimatedItemArtifacts(String modelPath, String textureId, CachedTextureInfo info, boolean isTool) {
+    private void registerAnimatedItemArtifacts(String textureRef, String modelPath, String textureId,
+                                               CachedTextureInfo info,
+                                               boolean isTool, boolean emitHeldModel) {
         CachedTextureInfo.AnimationInfo anim = info.animation().get();
         int frameCount = anim.totalFrameCount();
         int frameW = anim.frameWidth();
@@ -785,60 +1096,99 @@ public class BedrockItemLoader {
         // Extract frame PNGs from spritesheet
         this.context.texturePipeline().extractAnimationFrames(info, this.context.texturesDir());
 
-        String frameBasePath = this.context.texturePipeline().getFrameBaseTexturePath(modelPath);
+        String frameBasePath = this.context.texturePipeline().getFrameBaseTexturePath(textureRef);
+
+        // Everything below builds the held 3D model, which armour does not use.
+        if (!emitHeldModel) return;
 
         // Create geometry for the item (use safeKey so geometry identifier matches attachable).
-        // Use frame 0's actual pixels so the extrusion follows that frame's silhouette.
+        //
+        // One geometry serves every frame, so it can only be extruded when the frames agree on their
+        // silhouette. When they do not, extruding any single frame's shape leaves the others wrong — pixels
+        // with no face to draw on, or walls standing where that frame is empty — so use a pixel lattice
+        // instead, which owns no silhouette at all and lets each frame's alpha shape itself in 3D.
         String safeKey = textureId.replace(":", ".").replace("/", "_");
-        BedrockGeometry geo = this.loadFirstFrame(info)
-                .map(image -> GeometryMapper.createFlatItemGeometry(safeKey, image))
-                .orElseGet(() -> GeometryMapper.createFlatItemGeometry(safeKey, frameW, frameH));
-        this.context.collectedGeometry().put(textureId, geo);
+        String latticeId = null;
 
-        // Create single render controller with all frame textures in an array
-        // The first texture (frame_0) is shown by default.
-        BedrockRenderControllers rc = BedrockRenderControllers.animated(textureId, frameCount);
+        // The model's own shape first. The silhouette and lattice geometries below exist for texture-only items,
+        // which have no shape to convert — but this branch used to reach them unconditionally, so a genuine 3D
+        // model whose texture happened to animate was thrown away and replaced by an extruded sprite. The UV space
+        // is one frame, because that is what the model's faces are written against.
+        this.context.registerGeometry(modelPath, textureId, frameW, frameH);
+        boolean hasModelGeometry = this.context.collectedGeometry().containsKey(textureId);
+
+        if (hasModelGeometry) {
+            // Nothing to generate: the frames drive the texture through the render controller below, and the
+            // geometry stays the author's.
+            latticeId = null;
+        } else if (this.framesShareSilhouette(info)) {
+            BedrockGeometry geo = this.loadFirstFrame(info)
+                    .map(image -> GeometryMapper.createFlatItemGeometry(safeKey, image))
+                    .orElseGet(() -> GeometryMapper.createFlatItemPlane(safeKey, frameW, frameH));
+            this.context.collectedGeometry().put(textureId, geo);
+        } else if (frameW * frameH > MAX_LATTICE_PIXELS) {
+            Logger.warn("Item " + this.itemId + " animates through frames with different shapes, but its "
+                    + frameW + "x" + frameH + " frames are too large for a pixel lattice"
+                    + " - using a flat model, so it will not look three-dimensional");
+            this.context.collectedGeometry().put(textureId, GeometryMapper.createFlatItemPlane(safeKey, frameW, frameH));
+        } else {
+            // Shared across every animated item of this frame size: the lattice describes the pixel grid,
+            // not this item, so registering it under a size-derived key writes exactly one model file.
+            latticeId = "craftengine_pixel_lattice_" + frameW + "x" + frameH;
+            this.context.collectedGeometry().computeIfAbsent(latticeId,
+                    key -> GeometryMapper.createPixelLatticeGeometry(key, frameW, frameH));
+        }
+
+        // Create single render controller with all frame textures in an array, one entry per tick so the
+        // .mcmeta frame times are honoured rather than every frame getting the same dwell.
+        int[] frameIndices = anim.frames().stream().mapToInt(CachedTextureInfo.FrameInfo::index).toArray();
+        int[] frameTicks = anim.frames().stream().mapToInt(CachedTextureInfo.FrameInfo::time).toArray();
+        BedrockRenderControllers rc = BedrockRenderControllers.animated(textureId, frameIndices, frameTicks);
         this.context.registerRenderController("controller.render." + safeKey, rc);
 
         // Create animated attachable referencing the single render controller
         BedrockAttachableContext attachCtx = BedrockAttachableContext.createAnimated(
                 textureId, frameCount, frameBasePath);
 
+        // A lattice is shared, so the attachable has to be pointed away from the per-item geometry id
+        // createAnimated assumes. Its cubes are closed boxes, so back faces are never visible and the
+        // cheaper one-sided material applies — unlike the flat plane, which needs both sides.
+        if (latticeId != null) {
+            final String sharedGeometry = "geometry." + latticeId;
+            attachCtx.attachable().ifPresent(att -> {
+                att.withGeometry("default", sharedGeometry);
+                att.withMaterial("default", "entity_alphatest_one_sided");
+            });
+        }
+
         // Add positioning animations to ensure the item is visible
         BedrockAnimationContext animCtx = this.animationContexts.get(textureId);
         if (animCtx == null || animCtx.isEmpty()) {
-            animCtx = isTool
-                    ? AnimationMapper.createToolAnimations(textureId, "bone")
-                    : AnimationMapper.createDefaultAnimations(textureId, "bone");
-            animCtx.animation().ifPresent(a ->
-                    this.context.registerAnimation(textureId.replace(":", "."), a)
-            );
+            animCtx = this.defaultPose(textureId, isTool);
         }
         final BedrockAnimationContext finalCtx = animCtx;
-        attachCtx.attachable().ifPresent(att -> {
-            att.withAnimation("third_person", finalCtx.thirdPersonAnimation());
-            att.withAnimation("first_person", finalCtx.firstPersonAnimation());
-            att.withAnimation("head", finalCtx.headAnimation());
-            att.withScript("animate", java.util.List.of(
-                    java.util.Map.of("first_person", "context.is_first_person == 1.0 && (context.item_slot == 'main_hand' || context.item_slot == 'off_hand')"),
-                    java.util.Map.of("third_person", "context.is_first_person == 0.0 && (context.item_slot == 'main_hand' || context.item_slot == 'off_hand')"),
-                    java.util.Map.of("head", "context.is_first_person == 0.0 && context.item_slot == 'head'")
-            ));
-        });
+        attachCtx.attachable().ifPresent(att ->
+                BedrockAttachableContext.applyPoseAnimations(att, finalCtx));
 
         this.context.registerAttachable(textureId, attachCtx);
     }
 
-    private void registerStaticItemArtifacts(String modelPath, String textureId, boolean isTool) {
-        this.context.copyTexture(modelPath, textureId);
+    private void registerStaticItemArtifacts(String textureRef, String modelPath, String textureId,
+                                             boolean isTool, boolean emitHeldModel) {
+        this.context.copyTexture(textureRef, textureId);
+
+        // Everything below builds the held 3D model, which armour does not use.
+        if (!emitHeldModel) return;
+
         this.context.registerGeometry(modelPath, textureId, 16, 16);
 
         boolean hasGeometry = this.context.collectedGeometry().containsKey(textureId);
 
-        // Create default flat geometry when no Java model file exists (texture-only items)
+        // Create default flat geometry when the model has no shape of its own — a sprite item, whose model is
+        // nothing but a textures block. Extruding its silhouette is the best available stand-in.
         if (!hasGeometry) {
             String safeKey = textureId.replace(":", ".").replace("/", "_");
-            BedrockGeometry fallbackGeo = this.loadStaticTexture(modelPath, textureId)
+            BedrockGeometry fallbackGeo = this.loadStaticTexture(textureRef, textureId)
                     .map(image -> GeometryMapper.createFlatItemGeometry(safeKey, image))
                     .orElseGet(() -> GeometryMapper.createFlatItemGeometry(safeKey, 16, 16));
             this.context.collectedGeometry().put(textureId, fallbackGeo);
@@ -847,22 +1197,15 @@ public class BedrockItemLoader {
 
         BedrockAnimationContext animCtx = this.animationContexts.get(textureId);
 
-        String defaultTexture = this.resolveTexturePath(modelPath);
+        String defaultTexture = this.resolveTexturePath(textureRef);
 
         BedrockAttachableContext attachable;
 
-        if (animCtx != null && !animCtx.isEmpty()) {
-            attachable = BedrockAttachableContext.createWithAnimations(textureId, hasGeometry, false, animCtx, defaultTexture);
-        } else {
-            // Create default positioning animations so the item renders at a visible position
-            BedrockAnimationContext defaultCtx = isTool
-                    ? AnimationMapper.createToolAnimations(textureId, "bone")
-                    : AnimationMapper.createDefaultAnimations(textureId, "bone");
-            defaultCtx.animation().ifPresent(anim ->
-                    this.context.registerAnimation(textureId.replace(":", "."), anim)
-            );
-            attachable = BedrockAttachableContext.createWithAnimations(textureId, hasGeometry, false, defaultCtx, defaultTexture);
+        if (animCtx == null || animCtx.isEmpty()) {
+            // So the item renders posed rather than sitting unrotated at the bone's origin.
+            animCtx = this.defaultPose(textureId, isTool);
         }
+        attachable = BedrockAttachableContext.createWithAnimations(textureId, hasGeometry, false, animCtx, defaultTexture);
 
         // Register per-item render controller for this static item
         String safeKey = textureId.replace(":", ".").replace("/", "_");
@@ -883,6 +1226,50 @@ public class BedrockItemLoader {
      * on output-directory naming.
      */
     @NotNull
+    /**
+     * Whether every animation frame has the same alpha silhouette.
+     * <p>
+     * Decides how the held model is built. Extrusion bakes one silhouette into slabs and boundary walls,
+     * and a single geometry serves all frames, so it is only correct when the frames agree on their shape —
+     * a rotating or flickering sprite whose outline changes cannot be extruded without artefacts on some
+     * frame. Compares alpha only; colour differences between frames are irrelevant to the shape.
+     *
+     * @return {@code true} when extrusion is safe, {@code false} when a flat plane is required
+     */
+    private boolean framesShareSilhouette(@NotNull CachedTextureInfo info) {
+        if (info.animation().isEmpty()) return true;
+        try {
+            BufferedImage sheet = javax.imageio.ImageIO.read(info.sourcePath().toFile());
+            if (sheet == null) return true;
+
+            CachedTextureInfo.AnimationInfo anim = info.animation().get();
+            int frameW = anim.frameWidth();
+            int frameH = anim.frameHeight();
+            int cols = Math.max(1, sheet.getWidth() / frameW);
+            int rows = Math.max(1, sheet.getHeight() / frameH);
+            if (cols * rows < 2) return true;
+
+            for (int index = 1; index < cols * rows; index++) {
+                int sx = (index % cols) * frameW;
+                int sy = (index / cols) * frameH;
+                if (sx + frameW > sheet.getWidth() || sy + frameH > sheet.getHeight()) continue;
+
+                for (int y = 0; y < frameH; y++) {
+                    for (int x = 0; x < frameW; x++) {
+                        boolean first = (sheet.getRGB(x, y) >>> 24) != 0;
+                        boolean other = (sheet.getRGB(sx + x, sy + y) >>> 24) != 0;
+                        if (first != other) return false;
+                    }
+                }
+            }
+            return true;
+        } catch (java.io.IOException e) {
+            Logger.warn("Failed to read texture " + info.sourcePath()
+                    + " while checking animation silhouettes: " + e.getMessage());
+            return true;
+        }
+    }
+
     private Optional<BufferedImage> loadFirstFrame(@NotNull CachedTextureInfo info) {
         try {
             BufferedImage sheet = javax.imageio.ImageIO.read(info.sourcePath().toFile());
@@ -959,6 +1346,8 @@ public class BedrockItemLoader {
             } catch (IllegalArgumentException ignored) {
             }
         }
-        return Configuration.get(ConfigurationKey.DEFAULT_MATERIAL);
+        // Resolved from CraftEngine's own config where possible — a wrong guess here silently files the
+        // item under the wrong Java item.
+        return this.context.defaultMaterial();
     }
 }

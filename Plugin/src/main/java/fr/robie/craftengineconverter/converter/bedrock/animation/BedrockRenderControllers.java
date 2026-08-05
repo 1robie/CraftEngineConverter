@@ -44,25 +44,62 @@ public class BedrockRenderControllers {
         return c;
     }
 
-    public static JsonObject animatedController(int frameCount, String texturePrefix, int entriesPerFrame) {
-        JsonObject c = new JsonObject();
+    /**
+     * Above this the frame array stops being worth its size, so the timeline is compressed to fit. A
+     * {@code frametime} of 100 over 16 frames would otherwise want 1600 entries to say what 16 can.
+     */
+    private static final int MAX_FRAME_ENTRIES = 512;
 
-        int totalEntries = frameCount * entriesPerFrame;
+    /**
+     * Cycles a texture through its animation frames by indexing an array with the entity's age.
+     * <p>
+     * Bedrock has no flipbook for item textures — Mojang have said so directly
+     * ({@code bedrock-wiki/meta/blocks-items-qna.md}: "the flipbook stuff is more deeply intertwined with blocks
+     * such that it's probably not super easy to adapt to items") — so the frames become separate textures and a
+     * Molang expression picks one.
+     * <p>
+     * The array holds <b>one entry per tick</b>, so a frame that Java shows for three ticks occupies three
+     * entries and {@code q.life_time * 20} indexes it directly. That is what makes {@code .mcmeta}'s
+     * {@code frametime} and its per-frame {@code time} overrides actually take effect: they were parsed and then
+     * dropped in favour of a flat ten ticks per frame.
+     * <p>
+     * {@code frameIndices} is honoured rather than assumed to be {@code 0..n}, because {@code .mcmeta} may list a
+     * custom order — a back-and-forth animation names the same frame twice.
+     *
+     * @param frameIndices which frame image each step shows
+     * @param frameTicks   how long each step lasts, in ticks, parallel to {@code frameIndices}
+     * @return the controller, or {@code null} when there is nothing to animate
+     */
+    public static JsonObject animatedController(int[] frameIndices, int[] frameTicks, String texturePrefix) {
+        if (frameIndices == null || frameIndices.length == 0) return null;
 
-        JsonObject arrays = new JsonObject();
-        JsonObject textureArrays = new JsonObject();
+        int totalTicks = 0;
+        for (int ticks : frameTicks) totalTicks += Math.max(1, ticks);
+
+        // Compressing the timeline keeps the relative durations and slows the clock to match, so the animation
+        // still runs at the right speed - just quantised more coarsely.
+        int divisor = Math.max(1, (int) Math.ceil(totalTicks / (double) MAX_FRAME_ENTRIES));
+
         JsonArray framesArray = new JsonArray();
-        for (int i = 0; i < frameCount; i++) {
-            for (int j = 0; j < entriesPerFrame; j++) {
-                framesArray.add("Texture." + texturePrefix + "_" + i);
+        for (int step = 0; step < frameIndices.length; step++) {
+            int ticks = step < frameTicks.length ? Math.max(1, frameTicks[step]) : 1;
+            int entries = Math.max(1, Math.round(ticks / (float) divisor));
+            for (int entry = 0; entry < entries; entry++) {
+                framesArray.add("Texture." + texturePrefix + "_" + frameIndices[step]);
             }
         }
+
+        JsonObject textureArrays = new JsonObject();
         textureArrays.add("Array.frames", framesArray);
+        JsonObject arrays = new JsonObject();
         arrays.add("textures", textureArrays);
+
+        JsonObject c = new JsonObject();
         c.add("arrays", arrays);
 
         JsonArray tex = new JsonArray();
-        tex.add("Array.frames[math.mod(math.floor(q.life_time * 20.0), " + totalEntries + ")]");
+        tex.add("Array.frames[math.mod(math.floor(q.life_time * " + (20.0F / divisor) + "), "
+                + framesArray.size() + ")]");
         tex.add("Texture.enchanted");
         c.add("textures", tex);
 
@@ -98,15 +135,14 @@ public class BedrockRenderControllers {
         return new BedrockRenderControllers().withController("controller.render.item_default", itemDefaultController());
     }
 
-    public static BedrockRenderControllers animated(String identifier, int frameCount) {
-        return animated(identifier, frameCount, 10);
-    }
+    /**
+     * @return the controllers, or an empty set when the frames describe nothing to animate
+     */
+    public static BedrockRenderControllers animated(String identifier, int[] frameIndices, int[] frameTicks) {
+        JsonObject controller = animatedController(frameIndices, frameTicks, "frame");
+        if (controller == null) return new BedrockRenderControllers();
 
-    public static BedrockRenderControllers animated(String identifier, int frameCount, int entriesPerFrame) {
         String safeName = identifier.replace(":", ".").replace("/", "_");
-        return new BedrockRenderControllers().withController(
-                "controller.render." + safeName,
-                animatedController(frameCount, "frame", entriesPerFrame)
-        );
+        return new BedrockRenderControllers().withController("controller.render." + safeName, controller);
     }
 }

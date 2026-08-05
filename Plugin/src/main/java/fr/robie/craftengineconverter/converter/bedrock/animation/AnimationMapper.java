@@ -1,133 +1,82 @@
 package fr.robie.craftengineconverter.converter.bedrock.animation;
 
-public class AnimationMapper {
-    private static final float[] TOOL_FP_POS = {0f, 8f, 12f};
-    private static final float[] TOOL_FP_ROT = {25.7519f, 13.8142f, 188.2874f};
-    private static final float[] TOOL_FP_SCALE = {1f, 1f, 1f};
+import fr.robie.craftengineconverter.converter.bedrock.display.AttachableSlot;
+import fr.robie.craftengineconverter.converter.bedrock.display.DisplayPoses;
+import fr.robie.craftengineconverter.converter.bedrock.display.HandAnchors;
+import fr.robie.craftengineconverter.converter.bedrock.display.Transform;
+import fr.robie.craftengineconverter.converter.bedrock.geometry.JavaBlockModel;
 
-    private static final float[] TOOL_TP_POS = {-0.0f, 13.0f, -6.0f};
-    private static final float[] TOOL_TP_ROT = {90.0f, -55.0f + 90f, 90.0f};
-    private static final float[] TOOL_TP_SCALE = {0.85f, 0.85f, 0.85f};
+import java.util.EnumMap;
+import java.util.Map;
 
-    private static final float[] TOOL_H_POS = {0.0f, 28.515f, 4.585f};
-    private static final float[] TOOL_H_ROT = {-0.0f, -180.0f, 0.0f};
-    private static final float[] TOOL_H_SCALE = {0.655f, 0.655f, 0.655f};
+/**
+ * Builds the animations that pose a held custom item, from the Java model's {@code display} block.
+ * <p>
+ * Bedrock has no {@code display} block for items — {@code item_display_transforms} is a block-geometry field, and
+ * Geyser's item mapping has no pose lever of its own — so a held item's pose is an <b>animation</b> per render
+ * context, selected by the attachable's {@code scripts.animate} conditions. That is a presentation difference, not
+ * a semantic one: the pose is still the model's Java {@code display} entry, composed with wherever the engine puts
+ * the item.
+ * <p>
+ * That composition is the whole job here, and it is why this is matrix work rather than arithmetic. Rotating by the
+ * hand's angle and then by the model's is not the sum of the two angles, so the per-axis formulas this replaced
+ * ({@code {90, -r[2], -r[1]}} and friends) could only be right while one of the two rotations was trivial — and
+ * they silently discarded the axes that did not fit. See {@link Transform} for the rules, all ported from
+ * Blockbench, and {@link HandAnchors} for the constants.
+ */
+public final class AnimationMapper {
 
-    public static BedrockAnimationContext mapDisplayTransforms(String identifier, String bone,
-                                                                 float[] firstPersonRot, float[] firstPersonPos, float[] firstPersonScale,
-                                                                 float[] thirdPersonRot, float[] thirdPersonPos, float[] thirdPersonScale,
-                                                                 float[] headRot, float[] headPos, float[] headScale) {
-        float[] fpRot = convertFirstPersonRotation(firstPersonRot);
-        float[] fpPos = convertFirstPersonPosition(firstPersonPos);
-        float[] fpScale = firstPersonScale;
+    private AnimationMapper() {
+        throw new UnsupportedOperationException("AnimationMapper is a utility class and cannot be instantiated.");
+    }
 
-        float[] tpRot = convertThirdPersonRotation(thirdPersonRot);
-        float[] tpPos = convertThirdPersonPosition(thirdPersonPos);
-        float[] tpScale = thirdPersonScale;
+    /**
+     * Poses an item from its resolved Java model.
+     *
+     * @param identifier the item id, which names the animations
+     * @param model      the model with its {@code parent} chain already merged in, so inherited poses are present
+     */
+    public static BedrockAnimationContext fromModel(String identifier, JavaBlockModel model) {
+        return model == null
+                ? fromDisplay(identifier, Map.of())
+                : fromDisplay(identifier, model.display(), model.parent().orElse(null));
+    }
 
-        float[] hRot = convertHeadRotation(headRot);
-        float[] hPos = convertHeadPosition(headPos);
-        float[] hScale = headScale;
+    /**
+     * Poses an item from a {@code display} map directly.
+     * <p>
+     * Every slot gets an animation even when the model names no pose for it: {@link DisplayPoses#forSlot} falls
+     * back through the off-hand mirror to {@code item/generated}'s poses, so an item is never left unposed sitting
+     * at the bone's origin.
+     */
+    public static BedrockAnimationContext fromDisplay(String identifier,
+                                                      Map<String, JavaBlockModel.DisplayTransform> display) {
+        return fromDisplay(identifier, display, null);
+    }
 
+    /**
+     * @param parent the model's {@code parent}, so a context it declares nothing for falls back through the same
+     *               preset the icon uses — see {@link DisplayPoses#forSlot(AttachableSlot, Map, String)}
+     */
+    public static BedrockAnimationContext fromDisplay(String identifier,
+                                                      Map<String, JavaBlockModel.DisplayTransform> display,
+                                                      String parent) {
         String safeId = identifier.replace(":", ".").replace("/", "_");
 
-        BedrockAnimation anim = new BedrockAnimation()
-                .withAnimation("animation." + safeId + ".hold_first_person", BedrockAnimation.boneAnimation(fpPos, fpRot, fpScale))
-                .withAnimation("animation." + safeId + ".hold_third_person", BedrockAnimation.boneAnimation(tpPos, tpRot, tpScale))
-                .withAnimation("animation." + safeId + ".head", BedrockAnimation.boneAnimation(hPos, hRot, hScale));
+        BedrockAnimation animation = new BedrockAnimation();
+        Map<AttachableSlot, String> names = new EnumMap<>(AttachableSlot.class);
 
-        return new BedrockAnimationContext(
-                anim,
-                "animation." + safeId + ".hold_first_person",
-                "animation." + safeId + ".hold_third_person",
-                "animation." + safeId + ".head"
-        );
-    }
+        for (AttachableSlot slot : AttachableSlot.values()) {
+            Transform pose = Transform
+                    .compose(HandAnchors.forSlot(slot), DisplayPoses.forSlot(slot, display, parent))
+                    .toBedrock();
 
-    public static BedrockAnimationContext createDefaultAnimations(String identifier, String bone) {
-        return createAnimations(identifier, bone,
-                new float[]{-3.2f, 13.63f, 1.13f},
-                new float[]{-180.0f, -25.0f, 0.0f},
-                new float[]{0.68f, 0.68f, 0.68f},
-                new float[]{-0.0f, 13.0f, -4.0f},
-                new float[]{90.0f, -55.0f, 90.0f},
-                new float[]{0.85f, 0.85f, 0.85f},
-                new float[]{0.0f, 28.515f, 4.585f},
-                new float[]{-0.0f, -180.0f, 0.0f},
-                new float[]{0.655f, 0.655f, 0.655f});
-    }
+            String name = "animation." + safeId + "." + slot.animationSuffix();
+            animation.withAnimation(name, BedrockAnimation.boneAnimation(
+                    pose.translation(), pose.rotation(), pose.scale()));
+            names.put(slot, name);
+        }
 
-    public static BedrockAnimationContext createToolAnimations(String identifier, String bone) {
-        return createAnimations(identifier, bone,
-                TOOL_FP_POS, TOOL_FP_ROT, TOOL_FP_SCALE,
-                TOOL_TP_POS, TOOL_TP_ROT, TOOL_TP_SCALE,
-                TOOL_H_POS, TOOL_H_ROT, TOOL_H_SCALE);
-    }
-
-    private static BedrockAnimationContext createAnimations(String identifier, String bone,
-                                                            float[] fpPos, float[] fpRot, float[] fpScale,
-                                                            float[] tpPos, float[] tpRot, float[] tpScale,
-                                                            float[] hPos, float[] hRot, float[] hScale) {
-        String safeId = identifier.replace(":", ".").replace("/", "_");
-
-        BedrockAnimation anim = new BedrockAnimation()
-                .withAnimation("animation." + safeId + ".hold_first_person", BedrockAnimation.boneAnimation(fpPos, fpRot, fpScale))
-                .withAnimation("animation." + safeId + ".hold_third_person", BedrockAnimation.boneAnimation(tpPos, tpRot, tpScale))
-                .withAnimation("animation." + safeId + ".head", BedrockAnimation.boneAnimation(hPos, hRot, hScale));
-
-        return new BedrockAnimationContext(
-                anim,
-                "animation." + safeId + ".hold_first_person",
-                "animation." + safeId + ".hold_third_person",
-                "animation." + safeId + ".head"
-        );
-    }
-
-    static float[] convertFirstPersonRotation(float[] javaRot) {
-        return new float[]{
-                -90.0F + javaRot[1],
-                -javaRot[2],
-                javaRot[0]
-        };
-    }
-
-    static float[] convertFirstPersonPosition(float[] javaTrans) {
-        return new float[]{
-                -javaTrans[1] / 0.0625F,
-                12.5F + javaTrans[2] / 0.0625F,
-                javaTrans[0] / 0.0625F
-        };
-    }
-
-    static float[] convertThirdPersonRotation(float[] javaRot) {
-        return new float[]{
-                90.0F,
-                -javaRot[2],
-                -javaRot[1]
-        };
-    }
-
-    static float[] convertThirdPersonPosition(float[] javaTrans) {
-        return new float[]{
-                -javaTrans[0] / 0.0625F,
-                12.5F + javaTrans[2] / 0.0625F,
-                -javaTrans[1] / 0.0625F
-        };
-    }
-
-    static float[] convertHeadRotation(float[] javaRot) {
-        return new float[]{
-                -javaRot[0],
-                -javaRot[1],
-                javaRot[2]
-        };
-    }
-
-    static float[] convertHeadPosition(float[] javaTrans) {
-        return new float[]{
-                -javaTrans[0] / 0.0625F * 0.655F,
-                20.0F + javaTrans[1] / 0.0625F * 0.655F,
-                javaTrans[2] / 0.0625F * 0.655F
-        };
+        return new BedrockAnimationContext(animation, names);
     }
 }
