@@ -113,7 +113,7 @@ public class BlockMappingConfiguration {
             }
             public BlockEntry build() {
                 return new BlockEntry(this.name, this.base, this.includeInCreativeInventory, this.onlyOverrideStates,
-                        Map.copyOf(this.stateOverrides));
+                        new LinkedHashMap<>(this.stateOverrides));
             }
         }
     }
