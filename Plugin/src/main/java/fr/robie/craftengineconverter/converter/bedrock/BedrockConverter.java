@@ -1,8 +1,10 @@
 package fr.robie.craftengineconverter.converter.bedrock;
 
 import fr.robie.craftengineconverter.api.configuration.bedrock.ManifestConfiguration;
+import fr.robie.craftengineconverter.api.configuration.loader.ConfigurationTrees;
 import fr.robie.craftengineconverter.api.manager.FileCacheManager;
 import fr.robie.craftengineconverter.api.utils.FileUtils;
+import fr.robie.craftengineconverter.converter.bedrock.item.ConfigFactoryExpander;
 import fr.robie.messageflow.logger.Logger;
 import fr.robie.yamllibrary.ConfigurationSection;
 import fr.robie.yamllibrary.file.YamlConfiguration;
@@ -12,6 +14,7 @@ import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Locale;
+import java.util.Map;
 
 
 public class BedrockConverter {
@@ -71,7 +74,8 @@ public class BedrockConverter {
             return;
         }
 
-        ConversionContext ctx = new ConversionContext(customMappings.toPath(), textures.toPath(), packOut.toPath());
+        ConversionContext ctx = new ConversionContext(customMappings.toPath(), textures.toPath(), packOut.toPath())
+                .withPluginFolder(this.pluginFolder);
 
         boolean isPrimaryPack = true;
         for (File packFolder : this.settings.allPackFolders()) {
@@ -118,10 +122,111 @@ public class BedrockConverter {
             return;
         }
 
+        // Templates must all be known before any item is resolved: a template is routinely declared in a
+        // different file from the items that use it, so a single interleaved pass would fail on whichever
+        // file happened to be walked first.
+        this.collectTemplates(inputFolder, ctx);
         this.convertItemsRecursive(inputFolder, ctx);
     }
 
+    /**
+     * Pass one: reads every {@code templates:} / {@code template:} block into the engine, and every
+     * {@code equipments:} block into the equipment registry.
+     * <p>
+     * Both are cross-file references — an item can use a template or name an equipment asset declared
+     * anywhere in the tree — so both have to be complete before any item is converted.
+     */
+    private void collectTemplates(@NotNull File folder, @NotNull ConversionContext ctx) {
+        this.walkItemConfigs(folder, ctx, false, (file, yaml) -> {
+            for (ConfigurationSection templates : sectionsOfType(yaml, "templates", "template")) {
+                for (String templateId : templates.getKeys(false)) {
+                    Object body = templates.get(templateId);
+                    ctx.templates().register(templateId, body instanceof ConfigurationSection nested
+                            ? ConfigurationTrees.toMap(nested)
+                            : body);
+                }
+            }
+
+            for (ConfigurationSection equipments : sectionsOfType(yaml, "equipments", "equipment")) {
+                ctx.equipmentAssets().addFromEquipmentsSection(equipments, ctx.javaAssetsDir());
+            }
+        });
+    }
+
+    /**
+     * Every top-level section of one of {@code types}, matching on the part before a {@code #}.
+     * <p>
+     * CraftEngine treats that prefix as the section type, so one file may hold several sections of the same
+     * kind — {@code config_factory#basic} beside {@code config_factory#extra}. Matching the key exactly
+     * would skip all of them.
+     */
+    @NotNull
+    private static java.util.List<ConfigurationSection> sectionsOfType(@NotNull YamlConfiguration yaml,
+                                                                       @NotNull String... types) {
+        java.util.List<ConfigurationSection> found = new java.util.ArrayList<>();
+        java.util.Set<String> wanted = java.util.Set.of(types);
+        for (String key : yaml.getKeys(false)) {
+            if (!wanted.contains(ConfigFactoryExpander.sectionType(key))) continue;
+            ConfigurationSection section = yaml.getConfigurationSection(key);
+            if (section != null) found.add(section);
+        }
+        return found;
+    }
+
+    /**
+     * Pass two: expands any {@code config_factory}, then resolves each item against the templates and
+     * converts it.
+     * <p>
+     * Factory expansion happens here rather than in pass one because a blueprint routinely uses templates,
+     * which are only complete once pass one has finished — the same ordering CraftEngine declares.
+     */
     private void convertItemsRecursive(@NotNull File folder, @NotNull ConversionContext ctx) {
+        ConfigFactoryExpander expander = new ConfigFactoryExpander(ctx.templates());
+
+        this.walkItemConfigs(folder, ctx, true, (file, yaml) -> {
+            // Literal sections first, then anything a factory generated.
+            for (ConfigurationSection items : sectionsOfType(yaml, "items", "item")) {
+                this.convertItemSection(items, file, ctx);
+            }
+
+            Map<String, java.util.List<Map<String, Object>>> expanded =
+                    expander.expand(ConfigurationTrees.toMap(yaml));
+            java.util.List<Map<String, Object>> generatedItems = expanded.get("items");
+            if (generatedItems == null) generatedItems = expanded.get("item");
+            if (generatedItems == null) return;
+
+            int count = 0;
+            for (Map<String, Object> section : generatedItems) {
+                this.convertItemSection(ConfigurationTrees.toSection(section), file, ctx);
+                count += section.size();
+            }
+            if (count > 0) {
+                Logger.info("Expanded " + count + " item(s) from config factories in " + file.getName());
+            }
+        });
+    }
+
+    private void convertItemSection(@NotNull ConfigurationSection items, @NotNull File file,
+                                    @NotNull ConversionContext ctx) {
+        for (String itemId : items.getKeys(false)) {
+            ConfigurationSection itemSection = items.getConfigurationSection(itemId);
+            if (itemSection == null) continue;
+            ConfigurationSection resolved = ctx.resolveTemplates(itemId, itemSection, file);
+            if (resolved == null) continue;
+            ctx.acceptMapping(new BedrockItemLoader(itemId, resolved, ctx).load());
+        }
+    }
+
+    /**
+     * Walks the item config tree, handing each YAML file to {@code handler}.
+     * <p>
+     * Both passes need the same traversal, and it has one quirk worth preserving: a {@code resourcepack/}
+     * directory is not item config at all but a nested resource pack, converted in place. Only the item
+     * pass should do that, hence {@code convertNestedPacks} — doing it in both would convert every nested
+     * pack twice.
+     */
+    private void walkItemConfigs(@NotNull File folder, @NotNull ConversionContext ctx,
+                                 boolean convertNestedPacks, @NotNull ItemConfigHandler handler) {
         File[] listed = folder.listFiles();
         if (listed == null) return;
 
@@ -129,26 +234,22 @@ public class BedrockConverter {
             if (file.isDirectory()) {
                 String name = file.getName().toLowerCase();
                 if (name.equals("resourcepack") || name.equals("resource_pack") || name.equals("resoucepack")) {
-                    this.convertPackDirectory(file, ctx.packDir().toFile(), ctx, false);
+                    if (convertNestedPacks) {
+                        this.convertPackDirectory(file, ctx.packDir().toFile(), ctx, false);
+                    }
                 } else {
-                    this.convertItemsRecursive(file, ctx);
+                    this.walkItemConfigs(file, ctx, convertNestedPacks, handler);
                 }
             } else if (file.isFile() && FileUtils.isYmlFile(file)) {
-                FileCacheManager.getYamlCache().getEntryFile(file.toPath()).ifPresent(yamlFileCacheEntry -> {
-                    YamlConfiguration yamlConfiguration = yamlFileCacheEntry.getData();
-                    ConfigurationSection items = yamlConfiguration.getConfigurationSection("items");
-                    if (items != null) {
-                        for (String itemId : items.getKeys(false)) {
-                            ConfigurationSection itemSection = items.getConfigurationSection(itemId);
-                            if (itemSection != null) {
-                                BedrockItemLoader itemLoader = new BedrockItemLoader(itemId, itemSection, ctx);
-                                ctx.acceptMapping(itemLoader.load());
-                            }
-                        }
-                    }
-                });
+                FileCacheManager.getYamlCache().getEntryFile(file.toPath())
+                        .ifPresent(entry -> handler.accept(file, entry.getData()));
             }
         }
+    }
+
+    @FunctionalInterface
+    private interface ItemConfigHandler {
+        void accept(File file, YamlConfiguration yaml);
     }
 
     private void convertPack(@NotNull File inputFile, @NotNull File outputPackFolder, @NotNull ConversionContext ctx, boolean isPrimary) {
@@ -246,7 +347,7 @@ public class BedrockConverter {
             } else {
                 String fileNameWithoutExtension = FileUtils.getFileNameWithoutExtension(file);
                 String extension = FileUtils.getFileExtension(file);
-                if (fileNameWithoutExtension.equalsIgnoreCase("pack")) {
+                if (fileNameWithoutExtension.equalsIgnoreCase("pack") && isImageExtension(extension)) {
                     File dest = new File(outputPackFolder, "pack_icon." + extension);
                     FileUtils.copyFile(file, dest);
                 } else if (fileName.equalsIgnoreCase("pack.mcmeta")) {
@@ -259,9 +360,18 @@ public class BedrockConverter {
             }
         }
 
-        if (!hasManifest.get()) {
+        if (!hasManifest.get() && isPrimary) {
             Logger.info("No pack.mcmeta found in input pack, using default manifest");
         }
+    }
+
+    /** Extensions Bedrock will accept as {@code pack_icon}. */
+    private static boolean isImageExtension(String extension) {
+        if (extension == null) return false;
+        return switch (extension.toLowerCase(java.util.Locale.ROOT)) {
+            case "png", "jpg", "jpeg", "tga" -> true;
+            default -> false;
+        };
     }
 
     private void convertNamespaceAssets(File namespaceDir, String namespace, ConversionContext ctx) {
@@ -276,6 +386,9 @@ public class BedrockConverter {
                     case "font"           -> ctx.addFontDirectory(file, namespace);
                     case "blockstates"    -> ctx.addBlockstatesDirectory(file, namespace);
                     case "waypoint_style" -> ctx.addWaypointStyleDirectory(file, namespace);
+                    // Java 1.21.4+ item model definitions. Every pack layer is scanned before
+                    // convertItems() runs below, so these are populated before any item is converted.
+                    case "items"          -> ctx.addItemsDirectory(file, namespace);
                     default -> {
                         // Other directories can be handled here if needed
                     }
