@@ -4,7 +4,6 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -237,6 +236,7 @@ public class BlockDefinition {
         }
 
         public static class Builder {
+            // Insertion-ordered, and copied as such in build(): Map.copyOf would salt the order per JVM run.
             private final Map<String, Instance> instances = new java.util.LinkedHashMap<>();
             public Builder withInstance(String key, String texture, String renderMethod, boolean faceDimming, boolean ambientOcclusion) {
                 this.instances.put(key, new Instance(texture, renderMethod, faceDimming, ambientOcclusion));
@@ -252,6 +252,8 @@ public class BlockDefinition {
                 JsonObject obj = new JsonObject();
                 if (this.texture != null) obj.addProperty("texture", this.texture);
                 obj.addProperty("render_method", this.renderMethod);
+                // Both are always written. Geyser defaults them to false, so omitting a true meant the opposite
+                // of what the caller asked for and left every full block unshaded.
                 obj.addProperty("face_dimming", this.faceDimming);
                 obj.addProperty("ambient_occlusion", this.ambientOcclusion);
                 return obj;
@@ -260,7 +262,7 @@ public class BlockDefinition {
     }
 
     public record Transformation(float sx, float sy, float sz, float tx, float ty, float tz,
-                                 int rx, int ry, int rz) {
+                                  int rx, int ry, int rz) {
         public static final Transformation IDENTITY = new Transformation(1, 1, 1, 0, 0, 0, 0, 0, 0);
         public boolean isIdentity() { return this.equals(IDENTITY); }
         public JsonObject serialize() {

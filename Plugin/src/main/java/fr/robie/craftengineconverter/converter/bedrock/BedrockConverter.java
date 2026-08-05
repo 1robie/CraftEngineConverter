@@ -347,6 +347,10 @@ public class BedrockConverter {
             } else {
                 String fileNameWithoutExtension = FileUtils.getFileNameWithoutExtension(file);
                 String extension = FileUtils.getFileExtension(file);
+                // Only an image becomes the pack icon. This matched any file called "pack", so pack.mcmeta was
+                // copied to pack_icon.mcmeta — junk in the pack root — and, because this branch won and the
+                // manifest branch below is an else-if, the pack's own metadata was never read at all. That is why
+                // a pack with a perfectly good pack.mcmeta still reported "No pack.mcmeta found in input pack".
                 if (fileNameWithoutExtension.equalsIgnoreCase("pack") && isImageExtension(extension)) {
                     File dest = new File(outputPackFolder, "pack_icon." + extension);
                     FileUtils.copyFile(file, dest);
@@ -360,6 +364,9 @@ public class BedrockConverter {
             }
         }
 
+        // Only the primary pack is expected to carry one. This method also recurses into extracted zips and
+        // overlay directories, and those legitimately have no pack.mcmeta of their own — reporting for each made it
+        // look as though the real pack were missing its metadata.
         if (!hasManifest.get() && isPrimary) {
             Logger.info("No pack.mcmeta found in input pack, using default manifest");
         }

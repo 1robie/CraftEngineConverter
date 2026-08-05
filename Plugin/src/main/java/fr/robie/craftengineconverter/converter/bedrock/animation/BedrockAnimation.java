@@ -33,6 +33,10 @@ public class BedrockAnimation {
         JsonObject anim = new JsonObject();
         anim.addProperty("loop", true);
 
+        // Rounded before the identity tests below, so a channel that only differs from its default by
+        // floating-point dust is dropped rather than written out. Decomposing a matrix back to Euler angles
+        // routinely leaves values like -7.0E-15 where an exact zero is meant, and a half-turn about Y comes out as
+        // (-180, -0.0, -180); rounding keeps the emitted pack readable and byte-identical between runs.
         float[] position = round(pos);
         float[] rotation = round(rot);
         float[] scaling = round(scale);
@@ -55,6 +59,7 @@ public class BedrockAnimation {
         return anim;
     }
 
+    /** To four decimals, matching Blockbench's {@code Math.roundTo(…, 4)}, with negative zero normalised. */
     private static float[] round(float[] values) {
         float[] rounded = new float[values.length];
         for (int axis = 0; axis < values.length; axis++) {

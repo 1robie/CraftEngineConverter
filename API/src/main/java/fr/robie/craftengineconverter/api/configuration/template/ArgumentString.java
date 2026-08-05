@@ -158,8 +158,23 @@ public interface ArgumentString {
             if (argument != null) {
                 value = argument.resolve(node, arguments);
             } else if (this.hasFallback) {
+                // The fallback is itself a config string, so it may reference further placeholders.
                 value = parse(this.fallback).resolve(node, arguments);
             } else {
+                // Unbound resolves to null, dropping the entry, rather than failing.
+                //
+                // CraftEngine errors here, but it can tell "bound to null" from "absent"; this converter
+                // cannot. Its YAML layer follows Bukkit semantics, where a null value removes the key —
+                // so a deliberate "lore: null", which CraftEngine uses precisely to drop a templated key,
+                // reaches us indistinguishable from a missing argument. Failing would discard the whole
+                // item over config that is actually correct, so the lenient reading wins and the warning
+                // keeps a genuine typo discoverable.
+                //
+                // Only worth a warning for a *resolved* item, though. Inside a template body the arguments
+                // legitimately arrive later, from whichever item uses it, so an unbound placeholder there says
+                // nothing — and it said it about ninety times per conversion, which buried the warnings that
+                // matter. Both signals mean "still inside a template": a node path that itself contains an
+                // unresolved placeholder, or one that passes through a template reference.
                 boolean insideTemplateBody = node.contains("${") || node.contains("template[");
                 if (insideTemplateBody) {
                     Logger.debug("Template argument " + this.rawText + " at " + node
@@ -228,6 +243,7 @@ public interface ArgumentString {
                     any = true;
                 }
             }
+            // Every part resolving away means the whole value is absent, not the empty string.
             return any ? result.toString() : null;
         }
 
@@ -270,6 +286,7 @@ public interface ArgumentString {
             if (c == '$' && i + 1 < length && input.charAt(i + 1) == '{') {
                 Scanned scanned = scanPlaceholder(input, i + 2);
                 if (scanned == null) {
+                    // Unclosed: treat the '$' as ordinary text and carry on.
                     literal.append(c);
                     i++;
                     continue;
@@ -281,6 +298,7 @@ public interface ArgumentString {
                 parts.add(Placeholder.of(scanned.content()));
                 i = scanned.closeIndex() + 1;
             } else if (c == '\\' && i + 1 < length && input.charAt(i + 1) == '$') {
+                // Only the placeholder trigger is escapable; a lone backslash stays literal.
                 literal.append('$');
                 i += 2;
             } else {
