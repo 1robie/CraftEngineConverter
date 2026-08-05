@@ -1,6 +1,8 @@
 package fr.robie.craftengineconverter.converter.bedrock;
 
 import com.google.gson.JsonObject;
+import fr.robie.craftengineconverter.api.configuration.Configuration;
+import fr.robie.craftengineconverter.api.configuration.ConfigurationKey;
 import fr.robie.craftengineconverter.api.configuration.bedrock.ItemTextureConfiguration;
 import fr.robie.craftengineconverter.api.configuration.bedrock.ManifestConfiguration;
 import fr.robie.craftengineconverter.api.configuration.bedrock.mapping.MappingsConfiguration;
@@ -30,6 +32,7 @@ import fr.robie.craftengineconverter.converter.bedrock.icon.ModelTextureTinter;
 import fr.robie.craftengineconverter.converter.bedrock.item.EquipmentAssetRegistry;
 import fr.robie.craftengineconverter.converter.bedrock.item.ItemModelDefinitionMapper;
 import fr.robie.craftengineconverter.converter.bedrock.lang.LanguageMapper;
+import fr.robie.craftengineconverter.converter.bedrock.pack.PackPathShortener;
 import fr.robie.craftengineconverter.converter.bedrock.sound.SoundMapper;
 import fr.robie.craftengineconverter.converter.bedrock.texture.CachedTextureInfo;
 import fr.robie.craftengineconverter.converter.bedrock.texture.TexturePipeline;
@@ -764,7 +767,7 @@ public class ConversionContext {
             fr.robie.messageflow.logger.Logger.info("Saved " + this.waypointStyleMapper.size() + " waypoint style(s)");
         }
 
-//        this.soundMapper.reportMissingSounds();
+        this.soundMapper.reportMissingSounds();
         this.texturePipeline.reportTrimFallbacks();
         if (!this.soundMapper.isEmpty()) {
             try {
@@ -873,10 +876,10 @@ public class ConversionContext {
             }
         }
 
-//        if ((boolean) Configuration.get(ConfigurationKey.SHORTEN_PACK_PATHS)) {
-//            PackPathShortener.shorten(this.packDir);
-//        }
-//        PackPathShortener.reportLongPaths(this.packDir);
+        if ((boolean) Configuration.get(ConfigurationKey.SHORTEN_PACK_PATHS)) {
+            PackPathShortener.shorten(this.packDir);
+        }
+        PackPathShortener.reportLongPaths(this.packDir);
     }
 
     private static void writeDefaultPackIcon(java.nio.file.Path dest) throws java.io.IOException {
