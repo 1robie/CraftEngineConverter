@@ -2,6 +2,7 @@ package fr.robie.craftengineconverter.api.configuration.bedrock.mapping.item.opt
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -12,7 +13,7 @@ public class BedrockOptions {
     private boolean displayHandheld = false;
     private int protectionValue = 0;
     private CreativeCategory creativeCategory = CreativeCategory.NONE;
-    //TODO: creative_group
+    private String creativeGroup;
     private final Set<String> tags = new HashSet<>();
 
     public JsonObject serialize() {
@@ -32,6 +33,9 @@ public class BedrockOptions {
         if (this.creativeCategory != CreativeCategory.NONE) {
             jsonObject.addProperty("creative_category", this.creativeCategory.name().toLowerCase());
         }
+        if (this.creativeGroup != null && this.creativeCategory != CreativeCategory.NONE) {
+            jsonObject.addProperty("creative_group", this.creativeGroup);
+        }
         if (!this.tags.isEmpty()) {
             JsonArray tagsArray = new JsonArray();
             for (String tag : this.tags) {
@@ -40,6 +44,16 @@ public class BedrockOptions {
             jsonObject.add("tags", tagsArray);
         }
         return jsonObject;
+    }
+
+    public BedrockOptions setCreativeGroup(String creativeGroup) {
+        this.creativeGroup = creativeGroup;
+        return this;
+    }
+
+    @Nullable
+    public String getCreativeGroup() {
+        return this.creativeGroup;
     }
 
     public BedrockOptions setIcon(String icon) {
