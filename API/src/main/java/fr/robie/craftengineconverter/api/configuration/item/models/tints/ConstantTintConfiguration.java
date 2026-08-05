@@ -4,12 +4,22 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.OptionalInt;
 
-public class ConstantTintConfiguration implements TintConfiguration {
-    private final Object value;
-
+public record ConstantTintConfiguration(Object value) implements TintConfiguration {
     public ConstantTintConfiguration(@NotNull Object value) {
         this.value = value;
+    }
+
+    @Override
+    @NotNull
+    public Object value() {
+        return this.value;
+    }
+
+    @Override
+    public OptionalInt constantColor() {
+        return TintColors.toRgb(this.value);
     }
 
     @Override

@@ -20,6 +20,7 @@ public class SimpleModelConfigurationLoader implements ModelConfigurationLoader<
     @Override
     public @Nullable ModelConfiguration load(@NotNull ConfigurationSection section) {
         String path = section.getString("path");
+        if (path == null) path = section.getString("model");
         if (path == null) {
             return null;
         }

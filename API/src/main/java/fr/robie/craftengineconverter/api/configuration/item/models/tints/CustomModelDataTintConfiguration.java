@@ -4,6 +4,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.OptionalInt;
 
 public class CustomModelDataTintConfiguration implements TintConfiguration {
     private final int index;
@@ -12,6 +13,16 @@ public class CustomModelDataTintConfiguration implements TintConfiguration {
     public CustomModelDataTintConfiguration(int index, @Nullable Object defaultValue) {
         this.index = index;
         this.defaultValue = defaultValue;
+    }
+
+    @Nullable
+    public Object getDefaultValue() {
+        return this.defaultValue;
+    }
+
+    @Override
+    public OptionalInt constantColor() {
+        return TintColors.toRgb(this.defaultValue);
     }
 
     @Override

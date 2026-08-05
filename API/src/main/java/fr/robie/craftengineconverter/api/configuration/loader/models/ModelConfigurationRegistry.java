@@ -8,9 +8,16 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 public class ModelConfigurationRegistry {
     private static final Map<String, ModelConfigurationLoader<?>> LOADERS = new HashMap<>();
+    private static final Set<String> BEDROCK_UNREPRESENTABLE_TYPES = Set.of("special");
+
+    private static String stripNamespace(String type) {
+        int colon = type.indexOf(':');
+        return colon < 0 ? type : type.substring(colon + 1);
+    }
 
     private ModelConfigurationRegistry() {
         throw new UnsupportedOperationException("ModelConfigurationRegistry is a utility class and cannot be instantiated.");
@@ -28,7 +35,14 @@ public class ModelConfigurationRegistry {
         String type = section.getString("type", "model");
         ModelConfigurationLoader<?> loader = LOADERS.get(type);
         if (loader == null) {
-            Logger.warn("Unknown model type '" + type + "', skipping.");
+            loader = LOADERS.get(stripNamespace(type));
+        }
+        if (loader == null) {
+            if (BEDROCK_UNREPRESENTABLE_TYPES.contains(stripNamespace(type))) {
+                Logger.debug("Model type '" + type + "' has no Bedrock equivalent, using a plain definition");
+            } else {
+                Logger.warn("Unknown model type '" + type + "', skipping.");
+            }
             return null;
         }
         return loader.load(section);

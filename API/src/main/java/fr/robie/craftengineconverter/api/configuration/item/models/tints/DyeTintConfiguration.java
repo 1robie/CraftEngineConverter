@@ -4,12 +4,22 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.OptionalInt;
 
-public class DyeTintConfiguration implements TintConfiguration {
-    private final Object defaultValue;
-
+public record DyeTintConfiguration(Object defaultValue) implements TintConfiguration {
     public DyeTintConfiguration(@Nullable Object defaultValue) {
         this.defaultValue = defaultValue;
+    }
+
+    @Override
+    @Nullable
+    public Object defaultValue() {
+        return this.defaultValue;
+    }
+
+    @Override
+    public OptionalInt constantColor() {
+        return TintColors.toRgb(this.defaultValue);
     }
 
     @Override
