@@ -1,7 +1,5 @@
 package fr.robie.craftengineconverter.converter.bedrock.lang;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import fr.robie.craftengineconverter.api.manager.FileCacheManager;
@@ -17,9 +15,6 @@ import java.util.Locale;
 import java.util.Map;
 
 public final class LanguageMapper {
-
-    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
-
     private final Map<String, LinkedHashMap<String, String>> entries = new LinkedHashMap<>();
 
     /**
@@ -91,12 +86,7 @@ public final class LanguageMapper {
             languagesJson.add(locale);
         }
 
-        Path languagesFile = textsDir.resolve("languages.json");
-        try (var writer = Files.newBufferedWriter(languagesFile, StandardCharsets.UTF_8)) {
-            GSON.toJson(languagesJson, writer);
-        } catch (IOException e) {
-            Logger.error("Failed to write languages.json", e);
-        }
+        FileCacheManager.saveJsonToFile(textsDir.resolve("languages.json"), languagesJson);
 
         Logger.info("Exported " + this.entries.size() + " language(s) with " + totalKeys + " total keys");
     }
