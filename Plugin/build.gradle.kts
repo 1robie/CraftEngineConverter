@@ -109,6 +109,10 @@ val runServerJvmArgs: Provider<List<String>> = providers.gradleProperty("runServ
     .map { args -> args.split(' ').filter(String::isNotBlank) }
     .orElse(emptyList())
 
+val runServerJvmArgsExtra: Provider<List<String>> = providers.gradleProperty("runServer.jvmArgsExtra")
+    .map { args -> args.split(' ').filter(String::isNotBlank) }
+    .orElse(emptyList())
+
 val runServerJavaAgent: Provider<String> = providers.gradleProperty("runServer.javaAgent")
 
 val runServerJavaAgentArgs: Provider<String> = providers.gradleProperty("runServer.javaAgentArgs")
@@ -129,9 +133,8 @@ tasks.withType<RunServer>().configureEach {
         }
     }
 
-    jvmArgs(runServerJvmArgs.get())
+    jvmArgs(runServerJvmArgs.get() + runServerJvmArgsExtra.get())
     runServerJavaAgent.orNull?.let { agent ->
-        jvmArgs("-XX:HotswapAgent=external")
         val agentArgs = runServerJavaAgentArgs.orNull?.takeIf(String::isNotBlank)
         jvmArgs(if (agentArgs == null) "-javaagent:$agent" else "-javaagent:$agent=$agentArgs")
     }
