@@ -20,23 +20,24 @@ import fr.robie.craftengineconverter.api.manager.FileCacheManager;
 import fr.robie.craftengineconverter.converter.bedrock.animation.BedrockAnimation;
 import fr.robie.craftengineconverter.converter.bedrock.animation.BedrockAnimationController;
 import fr.robie.craftengineconverter.converter.bedrock.animation.BedrockRenderControllers;
-import fr.robie.craftengineconverter.converter.bedrock.asset.VanillaAssetStore;
 import fr.robie.craftengineconverter.converter.bedrock.asset.VanillaAssets;
+import fr.robie.craftengineconverter.converter.bedrock.asset.VanillaAssetStore;
 import fr.robie.craftengineconverter.converter.bedrock.attachable.BedrockAttachableContext;
 import fr.robie.craftengineconverter.converter.bedrock.block.BlockStateMapper;
-import fr.robie.craftengineconverter.converter.bedrock.font.FontMapper;
 import fr.robie.craftengineconverter.converter.bedrock.geometry.BedrockGeometry;
-import fr.robie.craftengineconverter.converter.bedrock.geometry.GeometryMapper;
-import fr.robie.craftengineconverter.converter.bedrock.geometry.JavaBlockModel;
+import fr.robie.craftengineconverter.converter.bedrock.font.FontMapper;
 import fr.robie.craftengineconverter.converter.bedrock.icon.ModelTextureTinter;
 import fr.robie.craftengineconverter.converter.bedrock.item.EquipmentAssetRegistry;
 import fr.robie.craftengineconverter.converter.bedrock.item.ItemModelDefinitionMapper;
+import fr.robie.craftengineconverter.converter.bedrock.waypoint.WaypointStyleMapper;
 import fr.robie.craftengineconverter.converter.bedrock.lang.LanguageMapper;
 import fr.robie.craftengineconverter.converter.bedrock.pack.PackPathShortener;
+import fr.robie.craftengineconverter.converter.bedrock.geometry.GeometryMapper;
+import fr.robie.craftengineconverter.converter.bedrock.geometry.JavaBlockModel;
 import fr.robie.craftengineconverter.converter.bedrock.sound.SoundMapper;
+import fr.robie.craftengineconverter.converter.bedrock.texture.ArmorTrimBaker;
 import fr.robie.craftengineconverter.converter.bedrock.texture.CachedTextureInfo;
 import fr.robie.craftengineconverter.converter.bedrock.texture.TexturePipeline;
-import fr.robie.craftengineconverter.converter.bedrock.waypoint.WaypointStyleMapper;
 import fr.robie.yamllibrary.ConfigurationSection;
 import org.bukkit.Material;
 import org.jetbrains.annotations.Nullable;
@@ -47,6 +48,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 public class ConversionContext {
     private final MappingsConfiguration mappings = new MappingsConfiguration();
@@ -88,6 +90,10 @@ public class ConversionContext {
     private File pluginFolder;
     private Material defaultMaterial;
     private VanillaAssets vanillaAssets;
+    // Resolved on first use, then kept: building it reads the trim key palette off disk.
+    private Optional<ArmorTrimBaker> armorTrimBaker;
+    /** Definitions whose icon got a coloured trim, for one summary line instead of one per variant. */
+    private final Set<String> trimmedIcons = new java.util.LinkedHashSet<>();
 
     public ConversionContext(Path customMappingsDir, Path texturesDir, Path packDir) {
         this.customMappingsDir = customMappingsDir;
@@ -96,7 +102,8 @@ public class ConversionContext {
         // Blocks read models through the same resolver as items, so they inherit the vanilla-asset fallback and
         // there is only one copy of the parent-chain logic to keep correct.
         this.blockStateMapper.withModelResolver(this.javaModelResolver).withTexturePipeline(this.texturePipeline);
-        this.manifest = ManifestConfiguration.resourcePack("CraftEngineConverter Pack").build();
+        this.manifest = new ManifestConfiguration("CraftEngineConverter Pack")
+                .setPackUUID(java.util.UUID.randomUUID());
         this.texturesConfig.setResourcePackName("CraftEngineConverter")
                 .setTextureName("atlas.items");
         this.terrainTexturesConfig.setResourcePackName("CraftEngineConverter")
@@ -280,8 +287,8 @@ public class ConversionContext {
         String iconTex = rendered != null
                 ? "textures/item/icons/" + mapping.getBedrockIdentifier().replace(":", ".").replace("/", "_")
                 : firstTex.matches(".*_\\d+$")
-                  ? firstTex.replaceAll("_\\d+$", "_icon")
-                  : firstTex + "_icon";
+                        ? firstTex.replaceAll("_\\d+$", "_icon")
+                        : firstTex + "_icon";
 
         String iconId = mapping.getBedrockIdentifier() + "_icon";
         TextureData iconTd = new TextureData(iconId);
@@ -306,6 +313,109 @@ public class ConversionContext {
         if (opts == null) opts = new BedrockOptions();
         opts.setIcon(iconTd.getBedrockIdentifier());
         mapping.setBedrockOptions(opts);
+    }
+
+    /**
+     * Draws an armour piece's icon with its trim already coloured on, and uses it as that variant's inventory sprite.
+     * <p>
+     * Bedrock cannot combine an armour texture with a trim overlay itself — its armour render controller reads
+     * {@code variable.has_trim}, which the engine only sets for vanilla armour — but it does not have to, because
+     * Geyser gives every trim material its own Bedrock item. So the combination is made here, once per material, and
+     * handed over as a finished sprite.
+     *
+     * @param textureId      the definition's texture id, which is what {@link #assignIcon} looks a rendered icon up by
+     * @param baseRef        the model's {@code layer0}: the untrimmed armour sprite
+     * @param overlayRef     the model's trim layer, e.g. {@code minecraft:trims/items/helmet_trim_lapis}
+     * @param armourMaterial the Java material the piece is built on, so a same-material trim can be darkened
+     * @return whether an icon was produced; {@code false} leaves the caller's existing untrimmed icon in place
+     */
+    public boolean bakeTrimmedIcon(String textureId, String baseRef, String overlayRef,
+                                   @Nullable String armourMaterial) {
+        if (this.javaAssetsDir == null) return false;
+
+        Optional<TexturePipeline.TrimOverlay> overlay = this.texturePipeline.asTrimOverlay(overlayRef);
+        if (overlay.isEmpty()) return false;
+
+        Optional<ArmorTrimBaker> baker = this.armorTrimBaker();
+        if (baker.isEmpty()) return false;
+
+        Optional<CachedTextureInfo> base = this.texturePipeline.resolveTexture(baseRef, textureId, this.javaAssetsDir);
+        if (base.isEmpty()) return false;
+
+        java.awt.image.BufferedImage sprite;
+        try {
+            sprite = javax.imageio.ImageIO.read(base.get().sourcePath().toFile());
+        } catch (Exception e) {
+            fr.robie.messageflow.logger.Logger.debug(
+                    "Could not read " + base.get().sourcePath() + " to trim it: " + e.getMessage());
+            return false;
+        }
+        if (sprite == null) return false;
+
+        // An animated armour texture is a vertical strip of frames, and the trim overlay is one frame in size. The
+        // inventory icon is a still of the first frame — flipbook_textures.json only animates terrain tiles — so trim
+        // that frame rather than refusing the whole sheet for a size mismatch that is not one.
+        sprite = firstFrameOf(sprite, base.get());
+
+        Optional<java.awt.image.BufferedImage> trimmed = baker.get().bake(
+                sprite, overlay.get().sheetAssetsPath(), overlay.get().material(), armourMaterial);
+        if (trimmed.isEmpty()) return false;
+
+        this.registerRenderedIcon(textureId, trimmed.get());
+        this.trimmedIcons.add(textureId);
+        return true;
+    }
+
+    /**
+     * The frame an animated texture's inventory icon is taken from, or the image unchanged when it is a still.
+     * <p>
+     * Located the same way {@code extractAnimationFrames} does, by the frame's index within the strip, so a
+     * {@code .mcmeta} that lists frames out of order still picks the one written as {@code _0}.
+     */
+    private static java.awt.image.BufferedImage firstFrameOf(java.awt.image.BufferedImage sheet,
+                                                             CachedTextureInfo info) {
+        if (info.animation().isEmpty()) return sheet;
+        var animation = info.animation().get();
+        if (animation.frames().isEmpty()) return sheet;
+
+        int frameWidth = animation.frameWidth();
+        int frameHeight = animation.frameHeight();
+        if (frameWidth <= 0 || frameHeight <= 0) return sheet;
+
+        int columns = Math.max(1, sheet.getWidth() / frameWidth);
+        int index = animation.frames().getFirst().index();
+        int x = (index % columns) * frameWidth;
+        int y = (index / columns) * frameHeight;
+        if (x + frameWidth > sheet.getWidth() || y + frameHeight > sheet.getHeight()) return sheet;
+
+        return sheet.getSubimage(x, y, frameWidth, frameHeight);
+    }
+
+    /** Built once: it loads the key palette, and its absence is the whole feature's answer. */
+    private Optional<ArmorTrimBaker> armorTrimBaker() {
+        if (this.armorTrimBaker == null) {
+            this.armorTrimBaker = ArmorTrimBaker.create(this.vanillaAssets, this.javaAssetsDir);
+        }
+        return this.armorTrimBaker;
+    }
+
+    /**
+     * One line for the whole pack, rather than one per armour piece and material.
+     * <p>
+     * It also says what was <b>not</b> done, because the difference is visible in game and would otherwise read as a
+     * bug: a trimmed piece shows its trim in the inventory but is worn plain. Java keys a trim on two things, a
+     * material and a pattern, and only the inventory overlay ({@code trims/items/<slot>_trim}) is
+     * pattern-independent. The worn overlay is per pattern ({@code trims/entity/humanoid/<pattern>}), and Geyser's
+     * {@code match} predicate has no {@code trim_pattern} property — only {@code trim_material} — so nothing in the
+     * mapping can tell two patterns apart. Picking one arbitrarily would draw the wrong trim shape, which is worse
+     * than drawing none.
+     */
+    public void reportTrimmedIcons() {
+        if (this.trimmedIcons.isEmpty()) return;
+        fr.robie.messageflow.logger.Logger.info("Coloured " + this.trimmedIcons.size()
+                + " armour trim variant icon(s) from vanilla's trim palettes."
+                + " Worn armour stays untrimmed: Geyser can match a trim's material but not its pattern, and the"
+                + " worn overlay is per pattern");
     }
 
     public void registerRenderedIcon(String textureId, java.awt.image.BufferedImage icon) {
@@ -769,6 +879,8 @@ public class ConversionContext {
 
         this.soundMapper.reportMissingSounds();
         this.texturePipeline.reportTrimFallbacks();
+        this.texturePipeline.reportSkippedTrimOverlays();
+        this.reportTrimmedIcons();
         if (!this.soundMapper.isEmpty()) {
             try {
                 Path soundDefPath = this.packDir.resolve("sounds/sound_definitions.json");
@@ -876,6 +988,8 @@ public class ConversionContext {
             }
         }
 
+        // Last, once every file exists: the pass renames files Bedrock finds by the identifier inside them, so it
+        // has to see the finished pack, and nothing after it may write into those directories again.
         if ((boolean) Configuration.get(ConfigurationKey.SHORTEN_PACK_PATHS)) {
             PackPathShortener.shorten(this.packDir);
         }

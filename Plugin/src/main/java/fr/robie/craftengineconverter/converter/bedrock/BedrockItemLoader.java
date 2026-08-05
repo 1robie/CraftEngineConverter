@@ -1,5 +1,8 @@
 package fr.robie.craftengineconverter.converter.bedrock;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 import fr.robie.craftengineconverter.api.configuration.Configuration;
 import fr.robie.craftengineconverter.api.configuration.ConfigurationKey;
 import fr.robie.craftengineconverter.api.configuration.bedrock.mapping.item.GroupDefinitionMapping;
@@ -24,8 +27,12 @@ import fr.robie.craftengineconverter.api.configuration.item.models.condition.Con
 import fr.robie.craftengineconverter.api.configuration.item.models.model.GenerationConfiguration;
 import fr.robie.craftengineconverter.api.configuration.item.models.model.SimpleModelConfiguration;
 import fr.robie.craftengineconverter.api.configuration.item.models.range_dispatch.RangeDispatchModelConfiguration;
-import fr.robie.craftengineconverter.api.configuration.item.models.select.*;
-import fr.robie.craftengineconverter.api.configuration.item.models.tints.TintConfiguration;
+import fr.robie.craftengineconverter.api.configuration.item.models.select.ChargeTypeSelectConfiguration;
+import fr.robie.craftengineconverter.api.configuration.item.models.select.ComponentSelectConfiguration;
+import fr.robie.craftengineconverter.api.configuration.item.models.select.CustomModelDataSelectConfiguration;
+import fr.robie.craftengineconverter.api.configuration.item.models.select.SelectModelConfiguration;
+import fr.robie.craftengineconverter.api.configuration.item.models.select.TrimMaterialSelectConfiguration;
+import fr.robie.craftengineconverter.converter.bedrock.item.ItemModelDefinitionMapper;
 import fr.robie.craftengineconverter.api.configuration.loader.models.ModelConfigurationRegistry;
 import fr.robie.craftengineconverter.converter.bedrock.animation.AnimationMapper;
 import fr.robie.craftengineconverter.converter.bedrock.animation.BedrockAnimationContext;
@@ -35,10 +42,10 @@ import fr.robie.craftengineconverter.converter.bedrock.display.DisplayPresets;
 import fr.robie.craftengineconverter.converter.bedrock.geometry.BedrockGeometry;
 import fr.robie.craftengineconverter.converter.bedrock.geometry.DisplayContext;
 import fr.robie.craftengineconverter.converter.bedrock.geometry.GeometryMapper;
+import fr.robie.craftengineconverter.api.configuration.item.models.tints.TintConfiguration;
 import fr.robie.craftengineconverter.converter.bedrock.geometry.JavaBlockModel;
 import fr.robie.craftengineconverter.converter.bedrock.icon.ItemIconRenderer;
 import fr.robie.craftengineconverter.converter.bedrock.icon.ModelTextureTinter;
-import fr.robie.craftengineconverter.converter.bedrock.item.ItemModelDefinitionMapper;
 import fr.robie.craftengineconverter.converter.bedrock.texture.CachedTextureInfo;
 import fr.robie.messageflow.logger.Logger;
 import fr.robie.yamllibrary.ConfigurationSection;
@@ -47,6 +54,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.image.BufferedImage;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 
 public class BedrockItemLoader {
@@ -108,8 +117,8 @@ public class BedrockItemLoader {
             ItemMapping iconSource = this.baseDefinition != null
                     ? this.baseDefinition
                     : rootGroup.getDefinitions().stream()
-                    .filter(definition -> !definition.getTexturesData().isEmpty())
-                    .findFirst().orElse(null);
+                            .filter(definition -> !definition.getTexturesData().isEmpty())
+                            .findFirst().orElse(null);
             if (rootGroup.getTexturesData().isEmpty() && iconSource != null
                     && !iconSource.getTexturesData().isEmpty()) {
                 rootGroup.addTextureData(iconSource.getTexturesData().getFirst());
@@ -789,12 +798,21 @@ public class BedrockItemLoader {
 
                 this.renderIconFromModel(modelPath, textureId, simpleModelConfiguration);
                 for (int layer = 1; layer < textureRefs.size(); layer++) {
-                    // Only layer0 becomes an item. Bedrock renders a custom item's icon from a single
-                    // flat texture and cannot composite layers the way Java does for armour trims, so
-                    // the remaining layers get copied but generate no attachable, geometry, animation or
-                    // render-controller artifacts — those would be unreferenced files, and their long
-                    // generated names push paths past the Windows limit.
-                    this.context.copyTexture(textureRefs.get(layer), textureId + "_layer" + layer);
+                    String layerRef = textureRefs.get(layer);
+
+                    // An armour trim is the one layer worth combining rather than copying. Bedrock draws a custom
+                    // item's icon from a single flat texture, so a trim layer left as its own file would never be
+                    // drawn — but Geyser gives each trim material its own Bedrock item, so the two layers can be
+                    // merged now and that item handed the finished sprite.
+                    if (this.context.bakeTrimmedIcon(textureId, textureRefs.getFirst(), layerRef,
+                            mat == null ? null : mat.name())) {
+                        continue;
+                    }
+
+                    // Any other extra layer still only gets copied. Bedrock cannot composite it, and generating an
+                    // attachable, geometry, animation or render controller per layer would leave unreferenced files
+                    // whose long generated names push paths past the Windows limit.
+                    this.context.copyTexture(layerRef, textureId + "_layer" + layer);
                 }
 
                 if (!hasGenerationTexture) {

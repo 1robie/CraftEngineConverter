@@ -19,6 +19,8 @@ public class TexturePipeline {
     /** Reported once each, because one texture is asked about once per state or variant that uses it. */
     private final Set<String> missingTextures = new java.util.LinkedHashSet<>();
     private final Set<String> trimFallbacks = new java.util.LinkedHashSet<>();
+    /** Trim overlays deliberately left out of the pack; deduplicated, since every material asks for the same sheet. */
+    private final Set<String> skippedTrimOverlays = new java.util.LinkedHashSet<>();
     private fr.robie.craftengineconverter.converter.bedrock.asset.VanillaAssets vanillaAssets;
 
     /**
@@ -148,15 +150,117 @@ public class TexturePipeline {
     }
 
     public boolean copyTexture(CachedTextureInfo info, Path outputTexturesDir) {
+        String relative = info.bedrockTexturePath().replace("textures/", "");
+
+        // A trim overlay is an ingredient, not pack content: Java composites it over the armour sprite and tints it
+        // from a palette, and nothing in a Bedrock pack can reference it — the emitted item_texture entries, the
+        // attachables and the Geyser mappings all name the armour texture itself. Copying it shipped four files
+        // nothing pointed at, and it crashed the client outright (see isGreyscalePng).
+        if (isTrimOverlay(relative)) {
+            this.skippedTrimOverlays.add(relative);
+            return false;
+        }
+
         try {
-            Path targetPath = outputTexturesDir.resolve(info.bedrockTexturePath().replace("textures/", "") + ".png");
+            Path targetPath = outputTexturesDir.resolve(relative + ".png");
             Files.createDirectories(targetPath.getParent());
+
+            if (isGreyscalePng(info.sourcePath())) {
+                return writeAsRgba(info.sourcePath(), targetPath);
+            }
             Files.copy(info.sourcePath(), targetPath, StandardCopyOption.REPLACE_EXISTING);
             return true;
         } catch (IOException e) {
             Logger.error("Failed to copy texture: " + info.sourcePath(), e);
             return false;
         }
+    }
+
+    /** Whether this is an armour trim overlay, which exists only to be composited and must not reach the pack. */
+    private static boolean isTrimOverlay(String relativePath) {
+        return relativePath.startsWith("trims/items/");
+    }
+
+    /**
+     * An armour trim overlay named by a model layer, split into the greyscale sheet to draw and the material to
+     * colour it with.
+     *
+     * @param sheetAssetsPath assets-relative path of the greyscale sheet, e.g.
+     *                        {@code minecraft/textures/trims/items/helmet_trim.png}
+     * @param material        the trim material, e.g. {@code lapis}
+     */
+    public record TrimOverlay(String sheetAssetsPath, String material) {}
+
+    /**
+     * Reads a trim overlay out of a model's texture layer, if that is what it is.
+     * <p>
+     * A pack's generated trim models name the material in the path — {@code trims/items/helmet_trim_lapis} — which is
+     * the only place the material is written down by the time a layer is being copied, so it is also where the colour
+     * to bake comes from. Vanilla stopped shipping those per-material files, hence the split: the sheet that does
+     * exist is the material-less prefix, and the suffix is the material.
+     * <p>
+     * Returns empty for the modern material-less form ({@code trims/items/helmet_trim}), because that names no
+     * material and nothing here can tell which trim was meant.
+     */
+    public Optional<TrimOverlay> asTrimOverlay(String textureRef) {
+        String path = this.modelPathToTexturePath(textureRef);
+        if (!isTrimOverlay(path)) return Optional.empty();
+
+        int marker = path.lastIndexOf("_trim_");
+        if (marker < 0) return Optional.empty();
+
+        String sheet = path.substring(0, marker + "_trim".length());
+        String material = path.substring(marker + "_trim_".length());
+        if (material.isBlank()) return Optional.empty();
+
+        return Optional.of(new TrimOverlay(
+                this.extractNamespace(textureRef) + "/textures/" + sheet + ".png", material));
+    }
+
+    /**
+     * Whether a PNG is stored as greyscale, with or without an alpha channel.
+     * <p>
+     * <b>Bedrock cannot read these.</b> Greyscale+alpha (colour type 4) is the worse of the two: a pack carrying one
+     * makes the client fail to load the pack at all, which is how four vanilla armour trim sheets — the only such
+     * files in an otherwise all-RGBA pack — took the whole conversion down. Plain greyscale (type 0) is survivable
+     * today but is the same latent hazard, so both are re-encoded.
+     * <p>
+     * Read straight out of the IHDR rather than by decoding the image, since this is asked of every texture copied.
+     * Byte 25 is the colour type: 0 greyscale, 2 RGB, 3 indexed, 4 greyscale+alpha, 6 RGBA.
+     */
+    private static boolean isGreyscalePng(Path file) {
+        try (var stream = Files.newInputStream(file)) {
+            byte[] header = stream.readNBytes(26);
+            if (header.length < 26) return false;
+            return header[25] == 0 || header[25] == 4;
+        } catch (IOException e) {
+            // Not worth failing a conversion over; the plain copy below is the existing behaviour.
+            Logger.debug("Could not read the PNG header of " + file + ": " + e.getMessage());
+            return false;
+        }
+    }
+
+    /** Re-encodes a texture as RGBA, preserving its pixels — only the storage format changes. */
+    private static boolean writeAsRgba(Path source, Path target) throws IOException {
+        BufferedImage original = ImageIO.read(source.toFile());
+        if (original == null) {
+            Files.copy(source, target, StandardCopyOption.REPLACE_EXISTING);
+            return true;
+        }
+        BufferedImage rgba = new BufferedImage(
+                original.getWidth(), original.getHeight(), BufferedImage.TYPE_INT_ARGB);
+        var graphics = rgba.createGraphics();
+        graphics.drawImage(original, 0, 0, null);
+        graphics.dispose();
+        ImageIO.write(rgba, "PNG", target.toFile());
+        return true;
+    }
+
+    /** One line naming the trim overlays left out of the pack, rather than one per armour piece and material. */
+    public void reportSkippedTrimOverlays() {
+        if (this.skippedTrimOverlays.isEmpty()) return;
+        Logger.debug(this.skippedTrimOverlays.size() + " armour trim overlay(s) were not copied into the pack:"
+                + " Bedrock has no palette-tinted trim layer, and a greyscale sheet stops the pack loading");
     }
 
     public boolean extractAnimationFrames(CachedTextureInfo info, Path outputTexturesDir) {
