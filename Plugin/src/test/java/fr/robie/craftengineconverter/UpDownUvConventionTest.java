@@ -49,29 +49,29 @@ class UpDownUvConventionTest {
         JsonObject cubeJson = bone.getAsJsonArray("cubes").get(0).getAsJsonObject();
         JsonObject uv = cubeJson.getAsJsonObject("uv");
 
-        // Block geometry is emitted mirrored along X, so every face's U additionally runs the other way: the origin
-        // moves to the far edge and the width negates. V is untouched, since the mirror is on X alone. Each
-        // expectation below is therefore Blockbench's own convention with that one flip applied — up would be
-        // uv=[14,13] size=[-12,-10] unmirrored, and 14 + -12 = 2 with the width back to +12.
+        // A mirrored cube keeps its UVs exactly as Java authored them: Bedrock mirrors positions and samples each
+        // face's rect as written, so touching U here would mirror the texture twice. Vanilla's doors depend on it —
+        // they tell a left hinge from a right one by UV direction alone.
+
+        // Up face: Blockbench expects uv=[14,13], uv_size=[-12,-10]
         JsonObject up = uv.getAsJsonObject("up");
-        assertEquals(2.0F, up.getAsJsonArray("uv").get(0).getAsFloat(), 0.001F, "up uv[0]");
+        assertEquals(14.0F, up.getAsJsonArray("uv").get(0).getAsFloat(), 0.001F, "up uv[0]");
         assertEquals(13.0F, up.getAsJsonArray("uv").get(1).getAsFloat(), 0.001F, "up uv[1]");
-        assertEquals(12.0F, up.getAsJsonArray("uv_size").get(0).getAsFloat(), 0.001F, "up uv_size[0]");
+        assertEquals(-12.0F, up.getAsJsonArray("uv_size").get(0).getAsFloat(), 0.001F, "up uv_size[0]");
         assertEquals(-10.0F, up.getAsJsonArray("uv_size").get(1).getAsFloat(), 0.001F, "up uv_size[1]");
 
-        // Down: [12,11] size [-8,-6] unmirrored, so 12 + -8 = 4 with the width back to +8.
+        // Down face: Blockbench expects uv=[12,11], uv_size=[-8,-6]
         JsonObject down = uv.getAsJsonObject("down");
-        assertEquals(4.0F, down.getAsJsonArray("uv").get(0).getAsFloat(), 0.001F, "down uv[0]");
+        assertEquals(12.0F, down.getAsJsonArray("uv").get(0).getAsFloat(), 0.001F, "down uv[0]");
         assertEquals(11.0F, down.getAsJsonArray("uv").get(1).getAsFloat(), 0.001F, "down uv[1]");
-        assertEquals(8.0F, down.getAsJsonArray("uv_size").get(0).getAsFloat(), 0.001F, "down uv_size[0]");
+        assertEquals(-8.0F, down.getAsJsonArray("uv_size").get(0).getAsFloat(), 0.001F, "down uv_size[0]");
         assertEquals(-6.0F, down.getAsJsonArray("uv_size").get(1).getAsFloat(), 0.001F, "down uv_size[1]");
 
-        // North is a side face, so it has no up/down flip of its own — only the mirror's: [0,0] size [16,16]
-        // becomes origin 0 + 16 with the width negated. V stays as authored.
+        // North face (non up/down): standard, no flip
         JsonObject north = uv.getAsJsonObject("north");
-        assertEquals(16.0F, north.getAsJsonArray("uv").get(0).getAsFloat(), 0.001F, "north uv[0]");
+        assertEquals(0.0F, north.getAsJsonArray("uv").get(0).getAsFloat(), 0.001F, "north uv[0]");
         assertEquals(0.0F, north.getAsJsonArray("uv").get(1).getAsFloat(), 0.001F, "north uv[1]");
-        assertEquals(-16.0F, north.getAsJsonArray("uv_size").get(0).getAsFloat(), 0.001F, "north uv_size[0]");
+        assertEquals(16.0F, north.getAsJsonArray("uv_size").get(0).getAsFloat(), 0.001F, "north uv_size[0]");
         assertEquals(16.0F, north.getAsJsonArray("uv_size").get(1).getAsFloat(), 0.001F, "north uv_size[1]");
     }
 }

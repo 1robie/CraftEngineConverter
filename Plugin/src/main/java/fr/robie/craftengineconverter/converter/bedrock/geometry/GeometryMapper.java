@@ -386,13 +386,14 @@ public class GeometryMapper {
 
         int uvRotation = ((face.rotation() % 360) + 360) % 360;
 
-        // A mirrored cube's faces are seen from the other side, so each one's U has to run the other way or the
-        // texture reads back to front. Expressed by moving the origin to the far edge and negating the width, which
-        // is how Bedrock spells a flipped UV rect.
-        if (mirrorX) {
-            uvOriginU += uvSizeU;
-            uvSizeU = -uvSizeU;
-        }
+        // The UV is deliberately left alone, even though the cube is mirrored. Bedrock mirrors a geometry's
+        // positions and then samples each face's UV rect as authored, so reversing U here mirrors the texture a
+        // second time and it comes out back to front.
+        //
+        // Vanilla's doors are the proof, because they encode a hinge side in nothing but UV direction: geometry
+        // identical, and door_bottom_left's west face reads [0,0,16,16] where door_bottom_right's reads
+        // [16,0,0,16]. Flipping U turned every left-hinged door into a right-hinged one. Symmetric textures such
+        // as planks hide this completely, which is why fence gates and stairs looked correct either way.
 
         // Java UVs span 0-16 whatever the texture's resolution (see JavaBlockModel.UV_SPACE), so they are
         // rescaled into whatever space this geometry declares.
