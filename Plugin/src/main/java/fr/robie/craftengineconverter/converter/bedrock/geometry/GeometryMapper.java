@@ -362,7 +362,7 @@ public class GeometryMapper {
      */
     private void mapFace(JavaBlockModel.Face face, BedrockGeometry.Cube cube, int texW, int texH,
                          float[] from, float[] to, String materialInstance, boolean mirrorX) {
-        String dir = mirrorX ? mirroredDirection(face.direction()) : face.direction();
+        String dir = face.direction();
         float u0 = face.u0();
         float v0 = face.v0();
         float u1 = face.u1();
@@ -407,17 +407,15 @@ public class GeometryMapper {
         cube.withFace(dir, uvOriginU, uvOriginV, uvSizeU, uvSizeV, materialInstance, uvRotation);
     }
 
-    /**
-     * Where a face ends up when its cube is mirrored along X: east and west trade places, and the other four are
-     * unmoved because they straddle the mirror plane rather than sitting either side of it.
-     */
-    private static String mirroredDirection(String direction) {
-        return switch (direction) {
-            case "east" -> "west";
-            case "west" -> "east";
-            default -> direction;
-        };
-    }
+    // No mirroredDirection here on purpose: a face keeps its authored name through the mirror.
+    //
+    // Swapping east and west looked right — the sides do change places geometrically — but Bedrock's face names are
+    // absolute, naming the world direction the face ends up pointing, so renaming them mirrors the block a second
+    // time. Doors proved it by facing: their panel is thin in X, so its large faces are west and east, and a swap
+    // exchanges exactly the two faces whose UVs carry the hinge. At y=0 and y=180 (facing east and west) those
+    // faces stay on the X axis and the hinge came out inverted; at y=90 and y=270 the rotation carries them onto
+    // north and south, the swap touches only the thin edges, and the same door was correct. Wrong precisely where
+    // the swap did something, right precisely where it did not.
 
     public static String getMeaningfulMaterialInstanceName(String face, String texture, int elementIndex) {
         return texture + "_" + face + "_" + elementIndex;

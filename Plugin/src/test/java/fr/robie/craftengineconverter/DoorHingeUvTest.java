@@ -21,12 +21,20 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
  * door_bottom_left   west [0,0,16,16]   east [16,0,0,16]
  * door_bottom_right  west [16,0,0,16]   east [0,0,16,16]
  * </pre>
- * Block geometry is emitted mirrored along X, and reversing U as part of that mirror turned every left-hinged door
- * into a right-hinged one — the handle came out on the wrong side, open and closed alike. Bedrock mirrors positions
- * and then samples each face's rect as authored, so the UV has to survive untouched.
+ * Block geometry is emitted mirrored along X, and <b>only its coordinates may move</b>. Two attempts to carry the
+ * mirror into the faces each inverted the hinge:
+ * <ul>
+ *   <li>reversing U — which mirrors the texture a second time, since Bedrock samples each rect as authored;</li>
+ *   <li>renaming east to west — which mirrors the block a second time, since Bedrock's face names are absolute and
+ *       say which way a face points in the world.</li>
+ * </ul>
+ * The rename gave itself away by facing. A door panel is thin in X, so its large faces are west and east, and a
+ * swap exchanges exactly the two whose UVs carry the hinge. At {@code y=0} and {@code y=180} — facing east and
+ * west — those faces stay on the X axis and the hinge inverted; at {@code y=90} and {@code y=270} the rotation
+ * carries them onto north and south, the swap reached only the thin edges, and the same door was correct.
  * <p>
- * Nothing caught it because the shapes already under test are textured symmetrically: a fence gate and a stair are
- * planks, where reversing U is invisible. This uses the one thing that can see it.
+ * Nothing caught either because the shapes already under test are textured symmetrically: a fence gate and a stair
+ * are planks, where none of this is visible. This uses the one thing that can see it.
  */
 class DoorHingeUvTest {
 
@@ -66,8 +74,8 @@ class DoorHingeUvTest {
     @Test
     void aLeftHingedDoorKeepsItsAuthoredUvDirection() {
         JsonObject faces = convert(true);
-        // Java's west face is emitted under east, because the mirror swaps the two side faces.
-        JsonObject fromWest = faces.getAsJsonObject("east");
+        // Read back under the name Java gave it: the mirror moves coordinates, never face names.
+        JsonObject fromWest = faces.getAsJsonObject("west");
         assertEquals(0.0F, fromWest.getAsJsonArray("uv").get(0).getAsFloat(), 0.001F,
                 "a left hinge authors west as [0,0,16,16]; its U origin must survive the mirror");
         assertEquals(16.0F, fromWest.getAsJsonArray("uv_size").get(0).getAsFloat(), 0.001F,
@@ -78,7 +86,7 @@ class DoorHingeUvTest {
     @Test
     void aRightHingedDoorKeepsItsAuthoredUvDirection() {
         JsonObject faces = convert(false);
-        JsonObject fromWest = faces.getAsJsonObject("east");
+        JsonObject fromWest = faces.getAsJsonObject("west");
         assertEquals(16.0F, fromWest.getAsJsonArray("uv").get(0).getAsFloat(), 0.001F,
                 "a right hinge authors west as [16,0,0,16]");
         assertEquals(-16.0F, fromWest.getAsJsonArray("uv_size").get(0).getAsFloat(), 0.001F,
@@ -89,8 +97,8 @@ class DoorHingeUvTest {
     @Test
     void theTwoHingesStayDistinguishable() {
         assertNotEquals(
-                convert(true).getAsJsonObject("east").getAsJsonArray("uv_size").get(0).getAsFloat(),
-                convert(false).getAsJsonObject("east").getAsJsonArray("uv_size").get(0).getAsFloat(),
+                convert(true).getAsJsonObject("west").getAsJsonArray("uv_size").get(0).getAsFloat(),
+                convert(false).getAsJsonObject("west").getAsJsonArray("uv_size").get(0).getAsFloat(),
                 "a left and a right hinge differ only by UV direction; if the conversion flattens that, every door"
                         + " in the pack hangs the same way round");
     }

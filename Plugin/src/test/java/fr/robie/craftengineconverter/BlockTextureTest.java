@@ -123,14 +123,13 @@ class BlockTextureTest {
                 "a rotated-face cube must not be flattened onto the unit cube");
         assertEquals(1, converted.geometry().size(), "it needs a geometry file of its own");
 
-        // Block geometry is mirrored along X, so the two side faces trade places: what Java authored on the east
-        // arrives on the west and vice versa, each keeping its own rotation. North and south straddle the mirror
-        // plane and stay put. Distinct rotations per face are what make the swap visible here at all.
+        // Every face keeps the name Java gave it. Bedrock's names are absolute — they say which way the face points
+        // in the world — so mirroring the cube's coordinates must not rename its faces as well.
         JsonObject faces = facesOf(converted.geometry().values().iterator().next());
         assertEquals(90, uvRotationOf(faces, "north"));
         assertEquals(270, uvRotationOf(faces, "south"));
-        assertEquals(180, uvRotationOf(faces, "west"), "Java's east face, rotated 180, lands on the west");
-        assertEquals(0, uvRotationOf(faces, "east"), "Java's west face, rotated 0, lands on the east");
+        assertEquals(0, uvRotationOf(faces, "west"));
+        assertEquals(180, uvRotationOf(faces, "east"));
     }
 
     /** Partial UVs are the other thing a unit cube cannot sample. */

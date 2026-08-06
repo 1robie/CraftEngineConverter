@@ -48,13 +48,12 @@ class BlockbenchAlignmentTest {
         cube.addFace("east", "#side", 0, 0, 16, 16, 270);
         model.addElement(cube);
 
-        // Read back under "west": block geometry is mirrored along X, and the two side faces trade places with it,
-        // so the face Java authored as east is the one Bedrock sees on the west. Its uv_rotation rides along
-        // unchanged — the mirror moves the face and reverses its U, it does not re-rotate the texture.
+        // Still read back as "east": mirroring a block moves its coordinates and nothing else. Bedrock's face names
+        // are absolute, so renaming them would mirror the block a second time — which is what inverted door hinges.
         JsonObject cubeJson = firstCube(buildBlock(model));
-        JsonObject mirroredEast = cubeJson.getAsJsonObject("uv").getAsJsonObject("west");
-        assertNotNull(mirroredEast, "the east face must be emitted as west once the cube is mirrored");
-        assertEquals(270, mirroredEast.get("uv_rotation").getAsInt());
+        JsonObject east = cubeJson.getAsJsonObject("uv").getAsJsonObject("east");
+        assertNotNull(east, "a mirrored cube keeps the face name Java authored");
+        assertEquals(270, east.get("uv_rotation").getAsInt());
     }
 
     @Test
