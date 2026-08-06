@@ -561,16 +561,27 @@ public class BedrockItemLoader {
 
         String type = behaviorSection.getString("type");
         if ("block_item".equals(type)) {
-            // This component is what makes Bedrock draw the item as its block, in hand and in an item frame:
-            // "The block placer component will also give the item the 3D appearance of the block by default"
-            // (bedrock-wiki/blocks/blocks-as-items.md). Without it the item fell back to an attachable, and an
-            // attachable geometry has one texture per render pass — so a six-textured block like the drawer showed
-            // the same texture on every face, and the held form never matched the placed block. Block geometry has
-            // per-face material instances and gets it right, which is why the fix is to defer to it rather than to
-            // reproduce it. See emitHeldModel in addTextureDataIfSimpleModel for the other half.
-            mapping.addBedrockComponent(new GenericBedrockComponent("minecraft:block_placer",
-                    java.util.Map.of("block", mapping.getBedrockIdentifier())));
-            // Also register textures as terrain textures for block items
+            // No minecraft:block_placer here, deliberately.
+            //
+            // It was added to get the block's 3D appearance in hand — "the block placer component will also give the
+            // item the 3D appearance of the block by default" (bedrock-wiki/blocks/blocks-as-items.md) — but it
+            // cannot work for a converted block, and it made the item render as *nothing at all*. The component names
+            // a block by identifier, and the same page states the constraint it depends on: a replacement block item
+            // "will need to create a new item JSON file that has the same identifier as the block". A CraftEngine
+            // block is not a Bedrock block of its own; it is a state override on the vanilla block it replaces, so
+            // geyser_block_mappings.json registers `minecraft_oak_leaves` and friends and never anything named after
+            // the item. Pointing block_placer at the item's own identifier named a block that does not exist, and
+            // Bedrock drew nothing — measured: 33 of this pack's items, every one invisible in the inventory.
+            //
+            // Naming the base block instead would not help: `block` takes a plain identifier (only `use_on` accepts
+            // states), so it could only ever place and draw the unmodified vanilla state — plain oak leaves for palm
+            // leaves. So the item keeps its 2D icon, which is the documented alternative on that same page.
+            //
+            // Getting a correct 3D held form needs all faces packed into one texture with UVs into it, because
+            // per-face `material_instances` are resolved from the *block* definition against terrain_texture.json
+            // and mean nothing to an attachable. That is the outstanding UV-atlas work, not something this can fake.
+            //
+            // The terrain registration stays: the placed block still reads its textures from that atlas.
             this.registerExistingTexturesAsTerrain(mapping);
         } else if ("furniture_item".equals(type)) {
             String blockedBy = behaviorSection.getString("settings.item");
@@ -780,14 +791,21 @@ public class BedrockItemLoader {
                 // attachables differ only in key separator but sanitise to the same filename, so one silently
                 // overwrote the other.
                 //
-                // A block item is drawn by Bedrock as its own block, via the minecraft:block_placer component
-                // added in detectBlockItem. That matters because block geometry carries per-face material
-                // instances and attachable geometry cannot: a six-textured block converted as an attachable came
-                // out with one texture on every face, and never matched the block once placed.
+                // A block item gets a held 3D model only when its model uses a single texture, and its 2D icon
+                // otherwise. An attachable binds one texture per render pass and its geometry's UVs index into that
+                // one image, so faces can differ by region but never by texture — per-face material instances are a
+                // block concept, resolved from the block definition against terrain_texture.json, and mean nothing
+                // here. With one texture that limit costs nothing and the held form matches the placed block. With
+                // several it produced a cube wearing one texture on every face, which is worse than a recognisable
+                // sprite, so those keep the icon until every face can be packed into a single image.
+                // Measured on the sample pack: 24 of 33 block items use one texture and get real geometry; the 8
+                // that do not are the anvil, drawer, safe, melon, lantern, coil and the two logs.
+                // See detectBlockItem for why minecraft:block_placer is not an alternative.
                 //
                 // The texture work still runs in both cases, because the inventory icon and its flipbook come
                 // from it.
-                boolean emitHeldModel = !this.isArmorMaterial(mat) && !this.isBlockItem();
+                boolean emitHeldModel = !this.isArmorMaterial(mat)
+                        && (!this.isBlockItem() || textureRefs.size() == 1);
 
                 // Artifacts first: resolving a texture is what populates the animation cache that
                 // isAnimated / getFrameBaseTexturePath below depend on.

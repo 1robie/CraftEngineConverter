@@ -60,7 +60,7 @@ public class GeometryMapper {
 
         for (JavaBlockModel.Element element : model.elements()) {
             this.mapElement(element, bone, (int) JavaBlockModel.UV_SPACE, (int) JavaBlockModel.UV_SPACE,
-                    model, instanceNames, false);
+                    model, instanceNames, true);
         }
 
         return geo;
@@ -87,7 +87,7 @@ public class GeometryMapper {
         BedrockGeometry.Bone bone = geo.addBone("bone");
         for (JavaBlockModel.Element element : rotateModel(model, rotX, rotY).elements()) {
             this.mapElement(element, bone,
-                    (int) JavaBlockModel.UV_SPACE, (int) JavaBlockModel.UV_SPACE, model, instanceNames, false);
+                    (int) JavaBlockModel.UV_SPACE, (int) JavaBlockModel.UV_SPACE, model, instanceNames, true);
         }
         return geo;
     }
@@ -279,7 +279,7 @@ public class GeometryMapper {
         for (JavaBlockModel.Face face : element.faces()) {
             String instance = model == null ? null : materialInstanceFor(face, model);
             if (instance != null && instanceNames != null) instanceNames.add(instance);
-            this.mapFace(face, cube, texW, texH, from, to, instance);
+            this.mapFace(face, cube, texW, texH, from, to, instance, mirrorX);
         }
 
         element.rotation().ifPresent(rot -> {
@@ -294,12 +294,14 @@ public class GeometryMapper {
             if (mirrorX) rotOrigin[0] = -rotOrigin[0];
             cube.withPivot(rotOrigin[0], rotOrigin[1], rotOrigin[2]);
 
-            // Blockbench's Java→Bedrock export negates X and Y rotation to compensate for its X-axis
-            // coordinate mirror. Items mirror X, so they need that compensation. Blocks do not mirror X
-            // (task #72), so their rotation passes through unchanged. Z is never negated.
+            // A rotation carried through a mirror is the mirror's conjugate of it, and for the X mirror used here
+            // (x -> -x) that has one answer per axis: turning about X is unchanged, because the mirror plane
+            // contains the X axis and the two commute, while turning about Y or Z reverses, because the mirror
+            // flips the sense of the plane each sweeps. Negating X instead — as this did while compensating for
+            // Blockbench's export rather than for our own transform — tilts a rotated part the wrong way about the
+            // one axis that should have been left alone.
             float bedrockAngle = switch (rot.axis()) {
-                case "x", "y" -> mirrorX ? -rot.angle() : rot.angle();
-                case "z" -> rot.angle();
+                case "y", "z" -> mirrorX ? -rot.angle() : rot.angle();
                 default -> rot.angle();
             };
             float[] rotVec = switch (rot.axis()) {
@@ -345,7 +347,22 @@ public class GeometryMapper {
 
     private void mapFace(JavaBlockModel.Face face, BedrockGeometry.Cube cube, int texW, int texH,
                          float[] from, float[] to, String materialInstance) {
-        String dir = face.direction();
+        this.mapFace(face, cube, texW, texH, from, to, materialInstance, false);
+    }
+
+    /**
+     * @param mirrorX whether the cube this face belongs to was mirrored along X, in which case the face has to be
+     *                mirrored with it. Mirroring is not just a position change: the sides that faced east and west
+     *                have swapped places, and every face keeps its own left and right, so its U must run the other
+     *                way. Moving the cube and leaving its faces alone is a <b>half mirror</b>, and its symptoms are
+     *                on record — the comment that removed block mirroring in the first place described a shape that
+     *                "moves to the opposite side of its own block and reverses its texture", which is exactly what a
+     *                half mirror does. That is why this takes the flag rather than the caller mirroring positions
+     *                alone.
+     */
+    private void mapFace(JavaBlockModel.Face face, BedrockGeometry.Cube cube, int texW, int texH,
+                         float[] from, float[] to, String materialInstance, boolean mirrorX) {
+        String dir = mirrorX ? mirroredDirection(face.direction()) : face.direction();
         float u0 = face.u0();
         float v0 = face.v0();
         float u1 = face.u1();
@@ -369,6 +386,14 @@ public class GeometryMapper {
 
         int uvRotation = ((face.rotation() % 360) + 360) % 360;
 
+        // A mirrored cube's faces are seen from the other side, so each one's U has to run the other way or the
+        // texture reads back to front. Expressed by moving the origin to the far edge and negating the width, which
+        // is how Bedrock spells a flipped UV rect.
+        if (mirrorX) {
+            uvOriginU += uvSizeU;
+            uvSizeU = -uvSizeU;
+        }
+
         // Java UVs span 0-16 whatever the texture's resolution (see JavaBlockModel.UV_SPACE), so they are
         // rescaled into whatever space this geometry declares.
         float widthMul = texW / JavaBlockModel.UV_SPACE;
@@ -379,6 +404,18 @@ public class GeometryMapper {
         uvSizeV *= heightMul;
 
         cube.withFace(dir, uvOriginU, uvOriginV, uvSizeU, uvSizeV, materialInstance, uvRotation);
+    }
+
+    /**
+     * Where a face ends up when its cube is mirrored along X: east and west trade places, and the other four are
+     * unmoved because they straddle the mirror plane rather than sitting either side of it.
+     */
+    private static String mirroredDirection(String direction) {
+        return switch (direction) {
+            case "east" -> "west";
+            case "west" -> "east";
+            default -> direction;
+        };
     }
 
     public static String getMeaningfulMaterialInstanceName(String face, String texture, int elementIndex) {
