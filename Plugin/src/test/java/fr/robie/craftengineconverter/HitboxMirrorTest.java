@@ -8,16 +8,18 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
- * A collision box must sit where the block is <b>drawn</b>, which is not where its geometry is written.
+ * A collision box is written in the same mirrored space as the geometry it wraps.
  * <p>
- * Block geometry is emitted mirrored along X, because Bedrock mirrors it back when it draws — the shape therefore
- * lands where Java put it. A collision box is not drawn: it is a world-space volume the engine takes literally. So
- * the geometry mirrors and the box must not, even though they describe the same block.
+ * Block geometry is emitted mirrored along X, and a box is written in that same space, so the two only line up if
+ * they are mirrored alike.
  * <p>
- * Mirroring the box too was measured on a door panel: it renders at x -8..-5 and its box sat at +5..+8, the far side
- * of the block. The door could be walked through and the empty half could not. Every shape whose X extent is
- * symmetric hides this completely, which is most of them — a full cube, a fence post, a closed gate — so this uses
- * a panel pushed hard against one face.
+ * A door settles it, because it presents the question four different ways. Leaving the box in Java's coordinates
+ * put it on the far side of the block for every state whose panel is thin along X — facing east and west closed,
+ * facing north and south open — and left it correct for every state whose panel is thin along Z, where an X mirror
+ * changes nothing. Wrong precisely where the mirror mattered, right precisely where it did not.
+ * <p>
+ * Every shape whose X extent is symmetric hides this completely, and most are: a full cube, a fence post, a closed
+ * gate. So this uses a panel pushed hard against one face.
  */
 class HitboxMirrorTest {
 
@@ -32,22 +34,22 @@ class HitboxMirrorTest {
     }
 
     @Test
-    void aCollisionBoxStaysOnTheSideJavaDrewIt() {
+    void aCollisionBoxIsMirroredWithTheGeometry() {
         BlockGeometryBuilder.Boxes boxes = BlockGeometryBuilder.boxesFor(panelAgainstWest());
 
         assertEquals(1, boxes.collision().size(), "one solid element, one box");
         BlockDefinition.Box box = boxes.collision().getFirst();
 
-        // Bedrock's block space centres x and z on the block, so Java's 0..3 is -8..-5.
-        assertEquals(-8.0F, box.originX(), 0.001F,
-                "the box must wrap the panel where it is drawn; +5 here would be the opposite face");
-        assertEquals(3.0F, box.sizeX(), 0.001F, "and keep its thickness");
+        // Java's 0..3 mirrors to 13..16, which is +5..+8 once Bedrock's block space centres x on the block.
+        assertEquals(5.0F, box.originX(), 0.001F,
+                "the box mirrors with the shape it wraps; -8 here would be Java's own coordinates, unmirrored");
+        assertEquals(3.0F, box.sizeX(), 0.001F, "and keeps its thickness");
     }
 
     @Test
     void theSelectionOutlineFollowsTheSameSide() {
         BlockDefinition.Box selection = BlockGeometryBuilder.boxesFor(panelAgainstWest()).selection();
-        assertEquals(-8.0F, selection.originX(), 0.001F);
+        assertEquals(5.0F, selection.originX(), 0.001F);
         assertEquals(3.0F, selection.sizeX(), 0.001F);
     }
 

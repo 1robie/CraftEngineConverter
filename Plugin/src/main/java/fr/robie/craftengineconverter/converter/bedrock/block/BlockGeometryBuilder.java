@@ -181,17 +181,22 @@ public final class BlockGeometryBuilder {
         float maxX = -Float.MAX_VALUE, maxY = -Float.MAX_VALUE, maxZ = -Float.MAX_VALUE;
 
         for (JavaBlockModel.Element element : model.elements()) {
-            // Java's coordinates, deliberately NOT mirrored, even though the geometry is.
+            // Mirrored along X, exactly as the geometry is. A box is expressed in the same space as the shape it
+            // wraps, so whatever the client does with one it does with the other, and the two only line up if they
+            // are mirrored alike.
             //
-            // The two are not the same kind of thing. Geometry is emitted mirrored because Bedrock mirrors it back
-            // when it draws, so the shape lands where Java put it. A collision box is not drawn — it is a
-            // world-space volume the engine takes literally — so mirroring one moves it while the visible block
-            // stays put. Measured on a door: the panel renders at x -8..-5 and its box sat at +5..+8, the far side
-            // of the block, so the door could be walked through and the empty half could not.
-            float ex0 = Math.min(element.fromX(), element.toX());
+            // Established by facing rather than by argument, because a door shows it four different ways. Leaving
+            // the box in Java's coordinates put it on the far side of the block for every state whose panel is
+            // thin along X — facing east and west closed, facing north and south open — and left it correct for
+            // every state whose panel is thin along Z, where an X mirror changes nothing. Wrong precisely where
+            // the mirror mattered.
+            //
+            // Java's model space is 0..16, so mirroring is 16 minus the coordinate, and min and max trade places
+            // because negating reverses their order.
+            float ex0 = JavaBlockModel.UV_SPACE - Math.max(element.fromX(), element.toX());
+            float ex1 = JavaBlockModel.UV_SPACE - Math.min(element.fromX(), element.toX());
             float ey0 = Math.min(element.fromY(), element.toY());
             float ez0 = Math.min(element.fromZ(), element.toZ());
-            float ex1 = Math.max(element.fromX(), element.toX());
             float ey1 = Math.max(element.fromY(), element.toY());
             float ez1 = Math.max(element.fromZ(), element.toZ());
 
