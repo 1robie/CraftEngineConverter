@@ -181,15 +181,17 @@ public final class BlockGeometryBuilder {
         float maxX = -Float.MAX_VALUE, maxY = -Float.MAX_VALUE, maxZ = -Float.MAX_VALUE;
 
         for (JavaBlockModel.Element element : model.elements()) {
-            // Mirrored along X to follow the geometry. Block geometry is emitted mirrored, because Bedrock reads it
-            // that way round, and a box left in Java's coordinates then sits on the opposite side of the block from
-            // the shape it is meant to wrap — a stair you could walk through on one half and bump into thin air on
-            // the other. Java's model space is 0..16, so mirroring is 16 minus the coordinate, and the min/max swap
-            // because negating reverses their order.
-            float ex0 = JavaBlockModel.UV_SPACE - Math.max(element.fromX(), element.toX());
-            float ex1 = JavaBlockModel.UV_SPACE - Math.min(element.fromX(), element.toX());
+            // Java's coordinates, deliberately NOT mirrored, even though the geometry is.
+            //
+            // The two are not the same kind of thing. Geometry is emitted mirrored because Bedrock mirrors it back
+            // when it draws, so the shape lands where Java put it. A collision box is not drawn — it is a
+            // world-space volume the engine takes literally — so mirroring one moves it while the visible block
+            // stays put. Measured on a door: the panel renders at x -8..-5 and its box sat at +5..+8, the far side
+            // of the block, so the door could be walked through and the empty half could not.
+            float ex0 = Math.min(element.fromX(), element.toX());
             float ey0 = Math.min(element.fromY(), element.toY());
             float ez0 = Math.min(element.fromZ(), element.toZ());
+            float ex1 = Math.max(element.fromX(), element.toX());
             float ey1 = Math.max(element.fromY(), element.toY());
             float ez1 = Math.max(element.fromZ(), element.toZ());
 
