@@ -385,7 +385,16 @@ public final class BlockStateMapper {
 
             // A texture with see-through pixels rendered as "opaque" shows them solid, so leaves and the like need
             // alpha testing. One method has to serve every instance of the block, which is why it is decided here.
-            String renderMethod = this.hasTransparency(model) ? "alpha_test" : "opaque";
+            String renderMethod = renderMethodFor(model, this.hasTransparency(model));
+
+            // Only a block that genuinely fills its cube should stop light, and the default assumed every block
+            // did. A door, a gate, a sapling and a trapdoor were all shipped as fully light-blocking, so each
+            // darkened whatever it stood against: two doors facing each other shaded one another's inner faces,
+            // and a gate cast a shadow onto the side of the solid block beside it, through gaps you could walk
+            // through. Java derives this from the shape, and so does this — 15 for a full opaque cube, 0 for
+            // anything you can see past.
+            builder.withLightDampening(
+                    isFullCube(model) && !this.hasTransparency(model) ? 15 : 0);
 
             // Shape decides the geometry, measured rather than counted. Counting elements only ever worked
             // because models used to arrive unresolved: a stairway has two elements just as a cross does.
@@ -432,7 +441,7 @@ public final class BlockStateMapper {
             }
             if (resolvedTexture == null) resolvedTexture = blockName;
 
-            String renderMethod = this.hasTransparency(model) ? "alpha_test" : "opaque";
+            String renderMethod = renderMethodFor(model, this.hasTransparency(model));
 
             if (isInvisible(model)) {
                 this.applyInvisibleGeometry(builder, resolvedTexture);
@@ -579,6 +588,40 @@ public final class BlockStateMapper {
             for (JavaBlockModel.Face face : element.faces()) {
                 if (face.u0() != face.u1() || face.v0() != face.v1()) return false;
             }
+        }
+        return true;
+    }
+
+    /**
+     * Which alpha-testing method a see-through block should draw with, which comes down to whether its own far side
+     * ought to be visible through it.
+     * <p>
+     * Bedrock's two transparent methods differ only in backface visibility
+     * ({@code bedrock-wiki/blocks/block-visuals-intro} "Render Methods"):
+     * <pre>
+     * alpha_test              backfaces visible    Ladder, Monster Spawner, Vines
+     * alpha_test_single_sided backfaces hidden     Doors, Saplings, Trapdoors
+     * </pre>
+     * A shape with thickness has a second surface behind the first, so showing backfaces means looking through a
+     * door's window and seeing the inside of its far side — which Java never does, because it culls them. Vanilla
+     * puts doors and trapdoors on the single-sided method for exactly this reason.
+     * <p>
+     * A sheet with no thickness is the opposite case and keeps {@code alpha_test}: a ladder or a cross <b>is</b> its
+     * own backface, and hiding those would leave it invisible from one side.
+     */
+    private static String renderMethodFor(JavaBlockModel model, boolean transparent) {
+        if (!transparent) return "opaque";
+        return isFlatSheet(model) ? "alpha_test" : "alpha_test_single_sided";
+    }
+
+    /** Whether every element is a zero-thickness plane, as a cross, ladder or vine is. */
+    private static boolean isFlatSheet(JavaBlockModel model) {
+        if (model.elements().isEmpty()) return false;
+        for (JavaBlockModel.Element element : model.elements()) {
+            boolean flat = element.fromX() == element.toX()
+                    || element.fromY() == element.toY()
+                    || element.fromZ() == element.toZ();
+            if (!flat) return false;
         }
         return true;
     }

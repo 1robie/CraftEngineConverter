@@ -69,20 +69,27 @@ public final class BlockGeometryBuilder {
             geometry.withDisplay(entry.getKey(), entry.getValue());
         }
 
+        // Smooth lighting comes from the model, not from a guess. Java's `ambientocclusion` says whether a shape
+        // should be shaded by its neighbours, and every vanilla model that would look wrong with it turns it off —
+        // door_bottom_left.json opens with `"ambientocclusion": false` precisely so a door is not shaded by
+        // whatever it is hung against. Forcing it on gave two facing doors shadows across their inner faces. The
+        // flag was already parsed and carried through merges; it was only ever ignored here.
+        boolean ambientOcclusion = model.ambientOcclusion();
+
         BlockDefinition.MaterialInstances.Builder instances = new BlockDefinition.MaterialInstances.Builder();
         boolean any = false;
         for (String name : instanceNames) {
             String shortname = shortnameOf.apply(name);
             if (shortname == null) continue;
-            // Face dimming and ambient occlusion on, matching a vanilla non-light-emitting block.
-            instances.withInstance(name, shortname, renderMethod, true, true);
+            // Face dimming stays on: that is direction-based shading, which vanilla applies to every solid block.
+            instances.withInstance(name, shortname, renderMethod, true, ambientOcclusion);
             any = true;
         }
         if (!any) return null;
 
         // "*" catches any face the model left without an instance, so a missing one cannot render untextured.
         String fallback = firstResolvable(instanceNames, shortnameOf);
-        if (fallback != null) instances.withInstance("*", fallback, renderMethod, true, true);
+        if (fallback != null) instances.withInstance("*", fallback, renderMethod, true, ambientOcclusion);
 
         return new Result(geometry, instances.build());
     }

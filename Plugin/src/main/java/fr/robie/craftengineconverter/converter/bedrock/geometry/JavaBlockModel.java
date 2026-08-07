@@ -13,7 +13,16 @@ import java.util.*;
 
 public class JavaBlockModel {
     private final String parent;
-    private final boolean ambientOcclusion;
+    private boolean ambientOcclusion;
+    /**
+     * Whether this model wrote {@code ambientocclusion} itself, as opposed to taking the default.
+     * <p>
+     * Needed because the default is {@code true} and so is indistinguishable from an explicit {@code true} — yet
+     * the two behave differently under inheritance. Java lets a child take its parent's value, and a pack's door
+     * is a bare {@code parent} plus {@code textures}: the {@code false} that stops a door being shaded by its own
+     * frame lives in {@code block/door_bottom_left}, one level up.
+     */
+    private boolean ambientOcclusionDeclared;
     private boolean guiLightFront = false;
     // Insertion-ordered, not hashed: both maps decide the order things are written to the Bedrock pack — texture
     // variables become material instances, display contexts become item_display_transforms — and a hashed order
@@ -29,6 +38,15 @@ public class JavaBlockModel {
 
     public Optional<String> parent() { return Optional.ofNullable(this.parent); }
     public boolean ambientOcclusion() { return this.ambientOcclusion; }
+
+    /** Whether the model stated {@code ambientocclusion} rather than falling back to the default. */
+    public boolean ambientOcclusionDeclared() { return this.ambientOcclusionDeclared; }
+
+    /** Takes a parent's smooth-lighting setting, for a child that declared none of its own. */
+    public void inheritAmbientOcclusion(boolean value) {
+        this.ambientOcclusion = value;
+        this.ambientOcclusionDeclared = true;
+    }
     public boolean guiLightFront() { return this.guiLightFront; }
     public void setGuiLightFront(boolean front) { this.guiLightFront = front; }
     public Map<String, String> textures() { return this.textures; }
@@ -76,6 +94,8 @@ public class JavaBlockModel {
         boolean ao = !json.has("ambientocclusion") || json.get("ambientocclusion").getAsBoolean();
 
         JavaBlockModel model = new JavaBlockModel(parent, ao);
+        // Recorded separately from the value, so inheritance can tell "said true" from "said nothing".
+        if (json.has("ambientocclusion")) model.inheritAmbientOcclusion(ao);
 
         // "texture_size" is deliberately ignored. It is a Blockbench field, not part of the vanilla model
         // format, and vanilla always reads UVs as 0-16 spanning the whole texture whatever its resolution.

@@ -189,6 +189,13 @@ public final class JavaModelResolver {
         if (!child.guiLightFront() && parent.guiLightFront()) {
             child.setGuiLightFront(true);
         }
+        // Smooth lighting is inherited like everything else, and it has to be: a pack's door is a bare parent plus
+        // textures, and the `ambientocclusion: false` that stops a door being shaded by its own frame is written one
+        // level up in block/door_bottom_left. Only for a child that declared nothing — an explicit true must not be
+        // overwritten by a parent's false.
+        if (!child.ambientOcclusionDeclared() && parent.ambientOcclusionDeclared()) {
+            child.inheritAmbientOcclusion(parent.ambientOcclusion());
+        }
     }
 
     private static Path resolveFile(String modelPath, Path javaAssetsDir) {
