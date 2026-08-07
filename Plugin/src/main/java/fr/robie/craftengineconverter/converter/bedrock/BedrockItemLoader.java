@@ -913,6 +913,37 @@ public class BedrockItemLoader {
      * so the top {@code width}-tall square of the sheet is the representative frame, exactly as the icon
      * naming already assumes.
      */
+    /**
+     * The same image with its samples intact, as ARGB.
+     * <p>
+     * A greyscale PNG decodes to {@code TYPE_BYTE_GRAY}, whose colour space is <b>linear</b>, and every read through
+     * {@code getRGB} — which is how the icon renderer samples a texture — converts it to sRGB on the way out. The
+     * number that comes back is not the number in the file, and the picture is visibly brighter for it: the
+     * gunpowder block's stored greys top out at 112 and its rendered icon reached 193, so it glowed in the
+     * inventory while the placed block, which uses the copied texture and never goes through {@code getRGB}, was
+     * right. Reading the raster and rebuilding the image sidesteps the conversion.
+     * <p>
+     * Indexed and true-colour images have no such problem and are returned untouched.
+     */
+    private static BufferedImage toTrueColour(BufferedImage image) {
+        if (image.getColorModel().getColorSpace().getNumComponents() != 1) return image;
+
+        var raster = image.getRaster();
+        int bands = raster.getNumBands();
+        int maxSample = (1 << raster.getSampleModel().getSampleSize(0)) - 1;
+
+        BufferedImage out = new BufferedImage(image.getWidth(), image.getHeight(), BufferedImage.TYPE_INT_ARGB);
+        for (int y = 0; y < image.getHeight(); y++) {
+            for (int x = 0; x < image.getWidth(); x++) {
+                int grey = raster.getSample(x, y, 0);
+                if (maxSample != 255) grey = grey * 255 / maxSample;
+                int alpha = bands > 1 ? raster.getSample(x, y, 1) : 255;
+                out.setRGB(x, y, (alpha << 24) | (grey << 16) | (grey << 8) | grey);
+            }
+        }
+        return out;
+    }
+
     private BufferedImage loadModelTexture(String reference) {
         Optional<CachedTextureInfo> resolved = this.context.texturePipeline()
                 .resolveTexture(reference, this.itemId, this.context.javaAssetsDir());
@@ -921,6 +952,8 @@ public class BedrockItemLoader {
         try {
             BufferedImage image = javax.imageio.ImageIO.read(resolved.get().sourcePath().toFile());
             if (image == null) return null;
+
+            image = toTrueColour(image);
 
             CachedTextureInfo info = resolved.get();
             if (info.animation().isPresent()) {
