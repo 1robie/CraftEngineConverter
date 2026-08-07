@@ -66,6 +66,26 @@ public final class ModelTextureTinter {
     }
 
     /**
+     * Paints every region into one image, tinting each pixel <b>at most once</b>.
+     * <p>
+     * The once-only part is the whole point. A tint is a multiply, so applying it twice to the same texel squares
+     * it — the sofa's dye came out at 0.51² on red and 0.2² on blue, which reads as a black patch rather than a
+     * darker olive. Regions overlap for two ordinary reasons and neither is a mistake worth rejecting: two faces
+     * of one model can share a texture rectangle, and several items routinely share one sheet — {@code sofa},
+     * {@code sofa_inner} and {@code sleeper_sofa} all tint parts of {@code item/custom/sofa.png} with the same
+     * colour. Both used to compound.
+     * <p>
+     * First region wins, matching {@code ItemIconRenderer}, which resolves a pixel to a single covering face. The
+     * two have to agree or an item's icon and its held model come out different colours.
+     */
+    public static void applyAll(BufferedImage image, List<TintRegion> regions) {
+        if (image == null || regions == null || regions.isEmpty()) return;
+
+        boolean[] tinted = new boolean[image.getWidth() * image.getHeight()];
+        for (TintRegion region : regions) region.applyTo(image, tinted);
+    }
+
+    /**
      * Multiplies {@code rgb} into every opaque pixel of a rectangle. Applied to the pack's own copy of the
      * texture, so the held and worn model shows the colour.
      *
@@ -74,15 +94,27 @@ public final class ModelTextureTinter {
      */
     public record TintRegion(int x0, int y0, int x1, int y1, int rgb) {
 
+        /** One region on its own. Use {@link #applyAll} for a set, which is what stops overlaps compounding. */
         public void applyTo(BufferedImage image) {
+            this.applyTo(image, new boolean[image.getWidth() * image.getHeight()]);
+        }
+
+        /** @param tinted pixels already coloured by an earlier region, and so left alone; updated as we go */
+        private void applyTo(BufferedImage image, boolean[] tinted) {
             float r = ((this.rgb >> 16) & 0xFF) / 255.0F;
             float g = ((this.rgb >> 8) & 0xFF) / 255.0F;
             float b = (this.rgb & 0xFF) / 255.0F;
 
             for (int y = Math.max(0, this.y0); y < Math.min(this.y1, image.getHeight()); y++) {
                 for (int x = Math.max(0, this.x0); x < Math.min(this.x1, image.getWidth()); x++) {
+                    int index = y * image.getWidth() + x;
+                    if (tinted[index]) continue;
+
                     int argb = image.getRGB(x, y);
                     int alpha = argb >>> 24;
+                    // Marked even when fully transparent: a later region must not treat it as untouched and
+                    // colour it, which would put paint outside every face that asked for any.
+                    tinted[index] = true;
                     if (alpha == 0) continue;
 
                     image.setRGB(x, y, (alpha << 24)

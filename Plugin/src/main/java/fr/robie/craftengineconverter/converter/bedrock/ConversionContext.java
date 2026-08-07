@@ -473,7 +473,7 @@ public class ConversionContext {
                         image.getWidth(), image.getHeight(), java.awt.image.BufferedImage.TYPE_INT_ARGB);
                 target.createGraphics().drawImage(image, 0, 0, null);
 
-                for (ModelTextureTinter.TintRegion region : entry.getValue()) region.applyTo(target);
+                ModelTextureTinter.applyAll(target, entry.getValue());
                 javax.imageio.ImageIO.write(target, "png", png.toFile());
             } catch (Exception e) {
                 fr.robie.messageflow.logger.Logger.warn("Could not tint texture " + entry.getKey()
