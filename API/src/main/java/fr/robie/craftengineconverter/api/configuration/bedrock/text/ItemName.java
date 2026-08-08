@@ -51,8 +51,8 @@ public final class ItemName {
         boolean bareTranslate = component.translate() != null
                 && component.text() == null
                 && component.extra().isEmpty()
-                && component.serialize().isJsonObject()
-                && component.serialize().getAsJsonObject().size() == 1;
+                && component.with().isEmpty()
+                && !component.hasStylingBeyondItalicOff();
         return new ItemName(component, bareTranslate ? component.translate() : null);
     }
 

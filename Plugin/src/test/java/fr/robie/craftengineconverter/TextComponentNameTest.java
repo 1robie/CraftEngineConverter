@@ -92,6 +92,19 @@ class TextComponentNameTest {
     }
 
     /**
+     * The shape almost every CraftEngine name really has. {@code <!i>} cancels Java's default italics, which Bedrock
+     * never applies, so it is not styling that a lang entry has to carry — and treating it as such stopped every
+     * such name from getting one, leaving the raw key in the inventory.
+     */
+    @Test
+    void italicOffDoesNotStopANameUsingTheLangFile() {
+        ItemName name = ItemName.of(MiniMessageToComponent.parse("<!i><lang:item.default.flame_cane>"));
+        assertEquals("item.default.flame_cane", name.translationKey(),
+                "italic:false must not disqualify a bare key from the lang route");
+        assertTrue(name.isCarriedByLangFile());
+    }
+
+    /**
      * A bare key must not be sent as display_name at all. Geyser resolves a translate component itself against the
      * vanilla locales, does not find a pack's custom key, and sends the key's own text as an explicit name — which
      * overrides item.&lt;identifier&gt;.name and puts the raw key in the inventory. Leaving it out is what lets the

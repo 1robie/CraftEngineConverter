@@ -60,6 +60,30 @@ public final class TextComponent {
     public String translate() { return this.translate; }
 
     public List<TextComponent> extra() { return this.extra; }
+    public List<TextComponent> with() { return this.with; }
+
+    public String color() { return this.color; }
+    public String font() { return this.font; }
+    public Boolean bold() { return this.bold; }
+    public Boolean italic() { return this.italic; }
+    public Boolean underlined() { return this.underlined; }
+    public Boolean strikethrough() { return this.strikethrough; }
+    public Boolean obfuscated() { return this.obfuscated; }
+
+    /**
+     * Whether this carries any styling a Bedrock lang entry could not express.
+     * <p>
+     * {@code italic: false} does not count, and that exception is the whole reason this method exists. Java shows a
+     * custom item name in italics by default and Bedrock does not, so almost every CraftEngine name opens with
+     * {@code <!i>} to cancel a default that was never applied on this side. Treating it as styling made every such
+     * name — which is nearly all of them — look too complex for a lang entry, so none got one.
+     */
+    public boolean hasStylingBeyondItalicOff() {
+        return this.color != null || this.font != null
+                || this.bold != null || this.underlined != null
+                || this.strikethrough != null || this.obfuscated != null
+                || Boolean.TRUE.equals(this.italic);
+    }
 
     public TextComponent withColor(String color) { this.color = color; return this; }
     public TextComponent withFont(String font) { this.font = font; return this; }
