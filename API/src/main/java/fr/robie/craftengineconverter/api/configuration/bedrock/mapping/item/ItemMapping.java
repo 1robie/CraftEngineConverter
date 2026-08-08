@@ -35,6 +35,20 @@ public abstract class ItemMapping {
         return this;
     }
 
+    /**
+     * Names the item by translation key rather than by literal text.
+     * <p>
+     * Geyser documents {@code display_name} as "a string, or json text component", so a key belongs in a
+     * {@code {"translate": ...}} component and never as a bare string — written as a string it is shown
+     * verbatim, which is how items came to be called {@code item.default.flame_cane} in game.
+     */
+    public ItemMapping setDisplayNameTranslationKey(String translationKey) {
+        this.displayNameTranslationKey = translationKey;
+        return this;
+    }
+
+    private String displayNameTranslationKey;
+
     public ItemMapping setBedrockOptions(BedrockOptions bedrockOptions) {
         this.bedrockOptions = bedrockOptions;
         return this;
@@ -76,7 +90,13 @@ public abstract class ItemMapping {
         JsonObject jsonObject = new JsonObject();
         jsonObject.addProperty("bedrock_identifier", this.bedrockIdentifier);
 
-        if (this.displayName != null) {
+        // A key becomes a text component, never a bare string: Geyser accepts either, and a string is shown
+        // exactly as written, so a key put there reads as "item.default.flame_cane" in the inventory.
+        if (this.displayNameTranslationKey != null) {
+            JsonObject translated = new JsonObject();
+            translated.addProperty("translate", this.displayNameTranslationKey);
+            jsonObject.add("display_name", translated);
+        } else if (this.displayName != null) {
             jsonObject.addProperty("display_name", this.displayName);
         }
 

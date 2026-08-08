@@ -42,8 +42,51 @@ public final class LanguageMapper {
         }
     }
 
+    /**
+     * Names a custom item under the key Bedrock actually looks up, reusing whatever the Java key translates to.
+     * <p>
+     * Java names an item by any key it likes — CraftEngine writes {@code <lang:item.default.flame_cane>} and the
+     * pack's {@code lang/en_us.json} defines {@code item.default.flame_cane}. Bedrock does not read that: a custom
+     * item's name comes from <b>{@code item.<identifier>.name}</b>, identifier included in full with its namespace
+     * and colon, exactly as the wiki's pottery-sherd example shows:
+     * <pre>item.wiki:custom_pottery_sherd.name=Custom Pottery Sherd</pre>
+     * So the same string has to appear a second time under the Bedrock spelling, per locale, or the item shows the
+     * raw key instead of its name.
+     * <p>
+     * Registered rather than written immediately because locales are still being read when items are converted;
+     * the aliases resolve in {@link #save}.
+     *
+     * @param bedrockIdentifier namespaced, e.g. {@code default:flame_cane}
+     * @param javaKey           the translation key the Java item name referred to
+     */
+    public void addItemNameAlias(String bedrockIdentifier, String javaKey) {
+        if (bedrockIdentifier == null || javaKey == null || bedrockIdentifier.isBlank() || javaKey.isBlank()) return;
+        this.itemNameAliases.put(bedrockIdentifier, javaKey);
+    }
+
+    /** Bedrock item identifier to the Java translation key its name came from. See {@link #addItemNameAlias}. */
+    private final Map<String, String> itemNameAliases = new LinkedHashMap<>();
+
+    /**
+     * Writes each alias into every locale that can translate it.
+     * <p>
+     * Per locale rather than once, so a French client gets the French name. A locale missing the key is skipped
+     * rather than filled from another one: Bedrock falls back to {@code en_US} by itself, which is a better answer
+     * than showing English text under a French heading.
+     */
+    private void applyItemNameAliases() {
+        for (Map.Entry<String, String> alias : this.itemNameAliases.entrySet()) {
+            String bedrockKey = "item." + alias.getKey() + ".name";
+            for (LinkedHashMap<String, String> localeMap : this.entries.values()) {
+                String translated = localeMap.get(alias.getValue());
+                // Only when the locale really has it, and never over an entry the pack wrote itself.
+                if (translated != null) localeMap.putIfAbsent(bedrockKey, translated);
+            }
+        }
+    }
+
     public boolean isEmpty() {
-        return this.entries.isEmpty();
+        return this.entries.isEmpty() && this.itemNameAliases.isEmpty();
     }
 
     public int size() {
@@ -52,6 +95,8 @@ public final class LanguageMapper {
 
     public void save(Path textsDir) {
         if (this.isEmpty()) return;
+
+        this.applyItemNameAliases();
 
         try {
             Files.createDirectories(textsDir);

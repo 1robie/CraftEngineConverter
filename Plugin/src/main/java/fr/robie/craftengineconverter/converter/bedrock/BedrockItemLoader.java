@@ -496,9 +496,19 @@ public class BedrockItemLoader {
         if (itemName == null) itemName = this.itemSection.getString("data.item_name");
         if (itemName == null) itemName = this.itemSection.getString("data.custom-name");
         if (itemName != null) {
-            String stripped = this.stripFormatting(itemName);
-            if (stripped != null) {
-                itemMapping.setDisplayName(stripped);
+            // A name given as <lang:some.key> is a translation key, not text, and the two cannot be emitted the
+            // same way. Both halves of the answer are needed: the key goes into display_name as a text component
+            // so Geyser does not hand Bedrock a literal string, and the same string is registered under Bedrock's
+            // own item.<identifier>.name so the client can name the item from the pack in its own language.
+            String translationKey = translationKeyOf(itemName);
+            if (translationKey != null) {
+                itemMapping.setDisplayNameTranslationKey(translationKey);
+                this.context.registerItemNameTranslation(itemMapping.getBedrockIdentifier(), translationKey);
+            } else {
+                String stripped = this.stripFormatting(itemName);
+                if (stripped != null) {
+                    itemMapping.setDisplayName(stripped);
+                }
             }
         }
 
@@ -742,9 +752,23 @@ public class BedrockItemLoader {
         return "items";
     }
 
+    /**
+     * The translation key a name refers to, or {@code null} when the name is literal text.
+     * <p>
+     * Split out from {@link #stripFormatting} because that returns a plain string either way, and its two cases
+     * have to be told apart: a key needs a text component and a Bedrock lang entry, literal text needs neither.
+     */
+    private static String translationKeyOf(String input) {
+        if (input == null) return null;
+        java.util.regex.Matcher matcher = LANG_TAG.matcher(input);
+        return matcher.find() ? matcher.group(1) : null;
+    }
+
+    private static final java.util.regex.Pattern LANG_TAG = java.util.regex.Pattern.compile("<lang:([^>]+)>");
+
     private String stripFormatting(String input) {
         if (input == null) return null;
-        java.util.regex.Matcher langMatcher = java.util.regex.Pattern.compile("<lang:([^>]+)>").matcher(input);
+        java.util.regex.Matcher langMatcher = LANG_TAG.matcher(input);
         if (langMatcher.find()) {
             return langMatcher.group(1);
         }

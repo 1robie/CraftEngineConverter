@@ -554,6 +554,14 @@ public class ConversionContext {
         this.languageMapper.addFromLangDirectory(langDir, namespace);
     }
 
+    /**
+     * Names a custom item under the key Bedrock reads, taking the text from the Java key the pack already
+     * translates. See {@link LanguageMapper#addItemNameAlias}.
+     */
+    public void registerItemNameTranslation(String bedrockIdentifier, String javaTranslationKey) {
+        this.languageMapper.addItemNameAlias(bedrockIdentifier, javaTranslationKey);
+    }
+
     public void addFontDirectory(File fontDir, String namespace) {
         if (this.javaAssetsDir == null) return;
         this.fontMapper.addFromFontDirectory(fontDir, namespace, this.javaAssetsDir);
