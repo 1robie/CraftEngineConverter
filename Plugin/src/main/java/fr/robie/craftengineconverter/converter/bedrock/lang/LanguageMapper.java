@@ -85,6 +85,51 @@ public final class LanguageMapper {
         }
     }
 
+    /**
+     * Writes the pack's Java translations where <b>Geyser</b> reads them, which is the only place that names an
+     * item sent by a live server.
+     * <p>
+     * The name a player sees does not come from the item mapping. CraftEngine puts {@code item_name} on the item
+     * stack as a Java text component — {@code {"translate": "item.default.flame_cane"}} — and the server sends it
+     * with every copy of the item. Geyser resolves that component itself, against the Java translations it
+     * downloads from Mojang, and a pack's own key is not among them, so it renders the key. Nothing in the resource
+     * pack is consulted, which is why a correct {@code item.<identifier>.name} entry changed nothing.
+     * <p>
+     * Geyser's documented answer is {@code locales/overrides}: "You can also add custom Java translation strings to
+     * that json file… You do not need to provide the entire file, only the Java strings you want to change/add."
+     * Writing the pack's own lang files there teaches Geyser every key the pack uses at once — item names, lore,
+     * block names, anything else the server sends as a translatable.
+     * <p>
+     * Emitted beside {@code custom_mappings} rather than inside the pack, because it is Geyser configuration and
+     * not pack content; the files are copied into Geyser's config directory by hand, exactly like the mappings are.
+     * Locale names are lowercased back to Java's spelling ({@code en_us.json}), which is what Geyser looks for.
+     */
+    public void saveGeyserLocaleOverrides(Path overridesDir) {
+        if (this.entries.isEmpty()) return;
+
+        try {
+            Files.createDirectories(overridesDir);
+        } catch (IOException e) {
+            Logger.error("Failed to create the Geyser locale overrides directory", e);
+            return;
+        }
+
+        for (Map.Entry<String, LinkedHashMap<String, String>> localeEntry : this.entries.entrySet()) {
+            com.google.gson.JsonObject json = new com.google.gson.JsonObject();
+            for (Map.Entry<String, String> kv : localeEntry.getValue().entrySet()) {
+                // The Bedrock-only alias belongs in the pack, not here: Geyser resolves Java keys.
+                if (kv.getKey().endsWith(".name") && kv.getKey().contains(":")) continue;
+                json.addProperty(kv.getKey(), kv.getValue());
+            }
+            String javaLocale = localeEntry.getKey().toLowerCase(Locale.ROOT);
+            FileCacheManager.saveJsonToFile(overridesDir.resolve(javaLocale + ".json"), json);
+        }
+
+        Logger.info("Wrote " + this.entries.size() + " Geyser locale override(s) to " + overridesDir
+                + " - copy this folder into Geyser's 'locales' directory and restart Geyser,"
+                + " or custom item and block names will show as their translation keys");
+    }
+
     public boolean isEmpty() {
         return this.entries.isEmpty() && this.itemNameAliases.isEmpty();
     }

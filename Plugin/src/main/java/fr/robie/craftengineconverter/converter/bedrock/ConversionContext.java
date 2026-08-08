@@ -873,6 +873,10 @@ public class ConversionContext {
         this.blockStateMapper.save(this.customMappingsDir);
 
         this.languageMapper.save(this.packDir.resolve("texts"));
+        // Beside custom_mappings, not inside the pack: these are Geyser's own locale overrides, and without them a
+        // custom item's name arrives as its translation key. See LanguageMapper.saveGeyserLocaleOverrides.
+        this.languageMapper.saveGeyserLocaleOverrides(
+                this.customMappingsDir.resolveSibling("locales").resolve("overrides"));
         this.fontMapper.save(this.packDir, this.texturesDir);
 
         if (!this.waypointStyleMapper.isEmpty() && this.javaAssetsDir != null) {
