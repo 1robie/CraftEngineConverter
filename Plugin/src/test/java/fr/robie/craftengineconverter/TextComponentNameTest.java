@@ -91,6 +91,23 @@ class TextComponentNameTest {
                 .translationKey());
     }
 
+    /**
+     * A bare key must not be sent as display_name at all. Geyser resolves a translate component itself against the
+     * vanilla locales, does not find a pack's custom key, and sends the key's own text as an explicit name — which
+     * overrides item.&lt;identifier&gt;.name and puts the raw key in the inventory. Leaving it out is what lets the
+     * client do the lookup in its own language.
+     */
+    @Test
+    void aBareKeyIsLeftToTheLangFileRatherThanSent() {
+        assertTrue(ItemName.of(MiniMessageToComponent.parse("<lang:item.default.flame_cane>")).isCarriedByLangFile());
+
+        // Literal text has no lang entry to fall back on, so it must still be sent.
+        assertFalse(ItemName.literal("Flame Cane").isCarriedByLangFile());
+        // Styling cannot be expressed as a lang entry either, so it goes through display_name.
+        assertFalse(ItemName.of(MiniMessageToComponent.parse("<gold><lang:item.default.flame_cane>"))
+                .isCarriedByLangFile());
+    }
+
     @Test
     void severalPartsBecomeExtra() {
         JsonObject json = parsed("<red>Flame<blue>Cane").getAsJsonObject();

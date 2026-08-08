@@ -95,9 +95,11 @@ public abstract class ItemMapping {
         JsonObject jsonObject = new JsonObject();
         jsonObject.addProperty("bedrock_identifier", this.bedrockIdentifier);
 
-        // A string when the name is bare text, an object when it carries a key or any styling. ItemName owns that
-        // choice, so there is one place that decides rather than a branch here and another in the loader.
-        if (this.name != null) {
+        // A string when the name is bare text, an object when it carries styling - and nothing at all for a bare
+        // translation key, which the pack's lang file names instead. See ItemName.isCarriedByLangFile: anything
+        // sent here is an explicit name and beats the client's own lookup, so sending a key Geyser cannot resolve
+        // is what put "item.default.flame_cane" in the inventory.
+        if (this.name != null && !this.name.isCarriedByLangFile()) {
             jsonObject.add("display_name", this.name.toDisplayNameJson());
         }
 

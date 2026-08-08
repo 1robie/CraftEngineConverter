@@ -61,6 +61,23 @@ public final class ItemName {
         return this.component.serialize();
     }
 
+    /**
+     * Whether {@code display_name} should be left out entirely and the name left to the pack's lang file.
+     * <p>
+     * It has to be, for a bare key. Geyser resolves a {@code translate} component <b>itself</b>, against its own
+     * copy of the vanilla locales, and a pack's custom key is not in them — so it resolves to the key's own text and
+     * sends that as an explicit name, which then overrides whatever {@code item.<identifier>.name} says. The item
+     * ends up called {@code item.default.flame_cane} however correctly the component was written. Reported from a
+     * live server after the component form was already in place.
+     * <p>
+     * Sending nothing is what lets the client do the lookup, and the client is the only party that knows which
+     * language the player is reading. A name with styling still goes through {@code display_name}, because it
+     * cannot be expressed as a lang entry at all — and styling is only ever added deliberately.
+     */
+    public boolean isCarriedByLangFile() {
+        return this.translationKey != null;
+    }
+
     /** The key to register under {@code item.<identifier>.name}, or {@code null} when there is none. */
     public String translationKey() {
         return this.translationKey;
