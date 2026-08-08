@@ -7,6 +7,9 @@ import fr.robie.craftengineconverter.api.configuration.Configuration;
 import fr.robie.craftengineconverter.api.configuration.ConfigurationKey;
 import fr.robie.craftengineconverter.api.configuration.bedrock.mapping.item.GroupDefinitionMapping;
 import fr.robie.craftengineconverter.api.configuration.bedrock.mapping.item.ItemMapping;
+import fr.robie.craftengineconverter.api.configuration.bedrock.text.ItemName;
+import fr.robie.craftengineconverter.api.configuration.bedrock.text.MiniMessageToComponent;
+import fr.robie.craftengineconverter.api.configuration.bedrock.text.TextComponent;
 import fr.robie.craftengineconverter.api.configuration.bedrock.mapping.item.ItemModelItemMapping;
 import fr.robie.craftengineconverter.api.configuration.bedrock.mapping.item.LegacyItemMapping;
 import fr.robie.craftengineconverter.api.configuration.bedrock.mapping.item.component.GenericBedrockComponent;
@@ -495,20 +498,18 @@ public class BedrockItemLoader {
         String itemName = this.itemSection.getString("data.item-name");
         if (itemName == null) itemName = this.itemSection.getString("data.item_name");
         if (itemName == null) itemName = this.itemSection.getString("data.custom-name");
-        if (itemName != null) {
-            // A name given as <lang:some.key> is a translation key, not text, and the two cannot be emitted the
-            // same way. Both halves of the answer are needed: the key goes into display_name as a text component
-            // so Geyser does not hand Bedrock a literal string, and the same string is registered under Bedrock's
-            // own item.<identifier>.name so the client can name the item from the pack in its own language.
-            String translationKey = translationKeyOf(itemName);
-            if (translationKey != null) {
-                itemMapping.setDisplayNameTranslationKey(translationKey);
-                this.context.registerItemNameTranslation(itemMapping.getBedrockIdentifier(), translationKey);
-            } else {
-                String stripped = this.stripFormatting(itemName);
-                if (stripped != null) {
-                    itemMapping.setDisplayName(stripped);
-                }
+        // An explicit bedrock.display-name always wins: inference is a default, not a policy, and the author is
+        // the one who knows what the item should be called.
+        ItemName name = this.configuredName();
+        if (name == null && itemName != null) name = this.inferName(itemName);
+
+        if (name != null) {
+            itemMapping.setName(name);
+            // Only a bare key can also become a lang entry, which is the sole route that localises. A styled name
+            // is carried by display_name alone - see ItemName.of.
+            if (name.translationKey() != null) {
+                this.context.registerItemNameTranslation(
+                        itemMapping.getBedrockIdentifier(), name.translationKey());
             }
         }
 
@@ -753,15 +754,68 @@ public class BedrockItemLoader {
     }
 
     /**
-     * The translation key a name refers to, or {@code null} when the name is literal text.
+     * The name from CraftEngine's own {@code item_name}, keeping whatever colour and styling it carries.
      * <p>
-     * Split out from {@link #stripFormatting} because that returns a plain string either way, and its two cases
-     * have to be told apart: a key needs a text component and a Bedrock lang entry, literal text needs neither.
+     * Falls back to the old strip-every-tag behaviour when the string uses MiniMessage this cannot parse, with one
+     * warning naming the item, so an unsupported tag costs the formatting rather than the name.
      */
-    private static String translationKeyOf(String input) {
-        if (input == null) return null;
-        java.util.regex.Matcher matcher = LANG_TAG.matcher(input);
-        return matcher.find() ? matcher.group(1) : null;
+    private ItemName inferName(String itemName) {
+        TextComponent parsed = MiniMessageToComponent.parse(itemName);
+        if (parsed != null) return ItemName.of(parsed);
+
+        String stripped = this.stripFormatting(itemName);
+        if (stripped == null) return null;
+        Logger.warn("Could not read the formatting of " + this.itemId + "'s name (" + itemName
+                + "), so it will be shown unstyled as \"" + stripped + "\"");
+        return ItemName.literal(stripped);
+    }
+
+    /**
+     * A name written straight into the item's {@code bedrock.display-name}, as either a string or a component.
+     * <p>
+     * The escape hatch for everything inference cannot get right: a name the converter reads wrongly, a Bedrock-only
+     * wording, or styling a pack wants on Bedrock but not on Java.
+     *
+     * @return {@code null} when the item configures none
+     */
+    private ItemName configuredName() {
+        ConfigurationSection bedrock = this.itemSection.getConfigurationSection("bedrock");
+        if (bedrock == null) return null;
+
+        ConfigurationSection section = bedrock.getConfigurationSection("display-name");
+        if (section == null) {
+            String literal = bedrock.getString("display-name");
+            // A plain string is taken literally, never re-parsed for tags: an author writing it here has said
+            // exactly what they want.
+            return literal == null ? null : ItemName.literal(literal);
+        }
+
+        String translate = section.getString("translate");
+        String text = section.getString("text");
+        if (translate == null && text == null) {
+            Logger.warn(this.itemId + " has a bedrock.display-name with neither 'translate' nor 'text'; ignoring it");
+            return null;
+        }
+
+        TextComponent component = translate != null
+                ? TextComponent.translatable(translate)
+                : TextComponent.literal(text);
+
+        if (section.getString("color") != null) component.withColor(section.getString("color"));
+        if (section.getString("font") != null) component.withFont(section.getString("font"));
+        applyFlag(section, "bold", component::withBold);
+        applyFlag(section, "italic", component::withItalic);
+        applyFlag(section, "underlined", component::withUnderlined);
+        applyFlag(section, "strikethrough", component::withStrikethrough);
+        applyFlag(section, "obfuscated", component::withObfuscated);
+
+        return ItemName.of(component);
+    }
+
+    /** Set only when the key is present, so "absent" stays distinct from "false". */
+    private static void applyFlag(ConfigurationSection section, String key,
+                                  java.util.function.Consumer<Boolean> setter) {
+        if (section.contains(key)) setter.accept(section.getBoolean(key));
     }
 
     private static final java.util.regex.Pattern LANG_TAG = java.util.regex.Pattern.compile("<lang:([^>]+)>");
