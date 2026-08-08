@@ -186,8 +186,24 @@ class BlockbenchAlignmentTest {
         assertEquals("1.21.0", geo.get("format_version").getAsString());
     }
 
+    /**
+     * Element rotation signs, per axis, against Blockbench.
+     * <p>
+     * Bedrock negates rotation about <b>X and Y</b> and leaves <b>Z</b>. That is deliberately <i>not</i> the
+     * conjugate of the X mirror the positions get — that would leave X and negate Y and Z — because Bedrock's
+     * rotation convention differs in handedness from its position convention. Deriving these angles from the mirror
+     * alone is self-consistent and wrong in game, which is how this test came to assert the opposite of the truth
+     * on two of the three axes.
+     * <p>
+     * Blockbench is the reference: its Bedrock codec applies "negate every axis but Z" in three separate places
+     * (cubes, bones, locators), and its round trip is what Bedrock modellers rely on.
+     * <p>
+     * The defect that caught it: the sofa's backrest is authored {@code axis: x, angle: 22.5} and has to reach the
+     * geometry as {@code -22.5}. Emitted as {@code +22.5} it leans forward instead of back. The sofa is symmetric
+     * about X, so the position mirror is invisible on it and the rotation sign is the only thing that shows.
+     */
     @Test
-    void blockElementRotationPreservesSignOnAllAxes() {
+    void blockElementRotationMatchesBedrocksPerAxisSignRule() {
         for (String axis : new String[]{"x", "y", "z"}) {
             JavaBlockModel model = new JavaBlockModel(null, true);
             model.addTexture("all", "block/test");
@@ -200,13 +216,9 @@ class BlockbenchAlignmentTest {
             float emittedAngle = cubeJson.get("rotation").getAsJsonArray().get(
                     axis.equals("x") ? 0 : axis.equals("y") ? 1 : 2).getAsFloat();
 
-            // Block geometry is emitted mirrored along X, so an element's rotation comes through as the mirror's
-            // conjugate of itself. The X mirror commutes with a turn about X and reverses one about Y or Z, so only
-            // those two change sign. Getting this per-axis rather than uniformly is the point: negating X as well
-            // tilts the part the wrong way about the one axis the mirror does not touch.
-            float expected = axis.equals("x") ? 22.5F : -22.5F;
+            float expected = axis.equals("z") ? 22.5F : -22.5F;
             assertEquals(expected, emittedAngle, 0.01F,
-                    "a mirrored block's element rotation on " + axis + " must be the X mirror's conjugate");
+                    "Bedrock negates element rotation on every axis but z; " + axis + " came out wrong");
         }
     }
 

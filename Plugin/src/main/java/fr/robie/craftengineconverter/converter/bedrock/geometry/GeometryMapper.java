@@ -294,14 +294,25 @@ public class GeometryMapper {
             if (mirrorX) rotOrigin[0] = -rotOrigin[0];
             cube.withPivot(rotOrigin[0], rotOrigin[1], rotOrigin[2]);
 
-            // A rotation carried through a mirror is the mirror's conjugate of it, and for the X mirror used here
-            // (x -> -x) that has one answer per axis: turning about X is unchanged, because the mirror plane
-            // contains the X axis and the two commute, while turning about Y or Z reverses, because the mirror
-            // flips the sense of the plane each sweeps. Negating X instead — as this did while compensating for
-            // Blockbench's export rather than for our own transform — tilts a rotated part the wrong way about the
-            // one axis that should have been left alone.
+            // Bedrock negates rotation about X and Y and leaves Z alone. That is <b>not</b> the conjugate of the X
+            // mirror applied to the positions just above — that would leave X and negate Y and Z — and the
+            // discrepancy is not a mistake to be reasoned away: Bedrock's rotation convention differs in handedness
+            // from its position convention, so the two halves of the transform genuinely disagree. Deriving the
+            // angles from the mirror alone, as this did, is self-consistent and wrong in game.
+            //
+            // Blockbench is the reference, because it is what Bedrock models are actually authored in and its
+            // round trip is known to match the client. Its Bedrock codec applies the same rule in three separate
+            // places — cubes, bones and locators — each as "negate every axis but Z":
+            //
+            //     base_cube.rotation.forEach((br, axis) => { if (axis != 2) base_cube.rotation[axis] *= -1 })
+            //     base_cube.origin[0] *= -1;
+            //
+            // Reported from a converted pack: the sofa's backrest is authored `axis: x, angle: 22.5` and has to
+            // reach the geometry as -22.5. Emitting +22.5 leans it forward instead of back, which is the whole of
+            // the "backrest is turned the wrong way" defect — the sofa is symmetric about X, so the position mirror
+            // is invisible on it and only the rotation sign shows.
             float bedrockAngle = switch (rot.axis()) {
-                case "y", "z" -> mirrorX ? -rot.angle() : rot.angle();
+                case "x", "y" -> mirrorX ? -rot.angle() : rot.angle();
                 default -> rot.angle();
             };
             float[] rotVec = switch (rot.axis()) {
