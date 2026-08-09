@@ -1,7 +1,8 @@
 package fr.robie.craftengineconverter.converter;
 
 import fr.robie.craftengineconverter.api.configuration.Configuration;
-import fr.robie.craftengineconverter.api.configuration.ConfigurationKey;
+import org.bukkit.Material;
+import fr.robie.craftengineconverter.api.configuration.Keys;
 import fr.robie.craftengineconverter.api.configuration.CraftEngineItemsConfiguration;
 import fr.robie.craftengineconverter.api.configuration.item.models.model.GenerationConfiguration;
 import fr.robie.craftengineconverter.api.configuration.item.models.model.SimpleModelConfiguration;
@@ -34,7 +35,13 @@ public abstract class ItemConverter extends ObjectUtils {
         this.converter = converter;
         this.fileConfig = fileConfig;
         this.fileConfig.options().pathSeparator('\n');
-        this.craftEngineItemsConfiguration = new CraftEngineItemsConfiguration(itemId, Configuration.get(ConfigurationKey.DEFAULT_MATERIAL));
+        // FIXME: default-material resolves to either a Material or the string "auto", and this needs a Material.
+        // The untyped accessor hid that with an unchecked cast, so an "auto" here has always been a
+        // ClassCastException waiting to happen; typing the key only made it visible. Kept as-is so this refactor
+        // changes no behaviour - resolving "auto" properly (as DefaultMaterialResolver does for Bedrock) is its own
+        // change.
+        this.craftEngineItemsConfiguration = new CraftEngineItemsConfiguration(
+                itemId, (Material) Configuration.get(Keys.DEFAULT_MATERIAL));
     }
 
     public void convertItem() {

@@ -1,0 +1,14 @@
+# Nexo integration.
+#
+# Only read when Nexo is installed. Settings that were "nexo.enable-hook" in the old single config.yml are simply
+# "enable-hook" here - the file already says which plugin it is about.
+
+enable-hook: true # Enable Nexo integration if Nexo is installed
+
+# Require this permission to allow Nexo block interaction conversion : craftengineconverter.nexo.block.interact.conversion
+enable-block-interaction-conversion: true # When enabled, when you interact with a nexo block, it will convert the nexo block to their CE equivalent
+
+# Require this permission to allow Nexo furniture interaction conversion : craftengineconverter.nexo.furniture.interact.conversion
+enable-furniture-interaction-conversion: true # When enabled, when you interact with a nexo furniture, it will convert the furniture to their CE equivalent
+
+enable-chunk-load-conversion: false # When enabled, when a chunk is loaded, it will convert all Nexo blocks and furnitures to CE equivalents

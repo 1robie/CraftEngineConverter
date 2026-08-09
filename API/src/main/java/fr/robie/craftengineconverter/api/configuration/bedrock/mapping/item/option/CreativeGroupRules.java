@@ -152,7 +152,7 @@ public final class CreativeGroupRules {
     /**
      * Normalises whatever the configuration layer holds for the {@code creative-groups} key. The key is
      * typed loosely so that its written-back default stays a plain YAML mapping rather than a serialized
-     * Java object — see {@code ConfigurationKey.CREATIVE_GROUPS}.
+     * Java object — see {@code Keys.CREATIVE_GROUPS}.
      */
     public static CreativeGroupRules from(@Nullable Object configValue) {
         if (configValue instanceof CreativeGroupRules rules) return rules;

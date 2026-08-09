@@ -1,7 +1,7 @@
 package fr.robie.craftengineconverter.hooks.nexo;
 
 import fr.robie.craftengineconverter.api.configuration.Configuration;
-import fr.robie.craftengineconverter.api.configuration.ConfigurationKey;
+import fr.robie.craftengineconverter.api.configuration.Keys;
 import fr.robie.craftengineconverter.api.enums.Plugins;
 import fr.robie.craftengineconverter.common.CraftEngineConverterPlugin;
 import fr.robie.craftengineconverter.common.CraftEnginePlacementTracker;
@@ -27,7 +27,7 @@ public class NexoWorldConverter implements WorldConverter {
 
     @Override
     public boolean convertEntity(@NotNull Entity entity) {
-        if (Configuration.get(ConfigurationKey.NEXO_CHUNK_LOAD_CONVERSION)) {
+        if (Configuration.get(Keys.NEXO_CHUNK_LOAD_CONVERSION)) {
             PersistentDataContainer persistentDataContainer = entity.getPersistentDataContainer();
             for (NamespacedKey key : persistentDataContainer.getKeys()) {
                 if (key.asString().equalsIgnoreCase("nexo:furniture")){

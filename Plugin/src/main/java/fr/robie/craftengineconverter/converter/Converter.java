@@ -3,7 +3,7 @@ package fr.robie.craftengineconverter.converter;
 import fr.robie.craftengineconverter.CraftEngineConverter;
 import fr.robie.craftengineconverter.api.cache.FileCacheEntry;
 import fr.robie.craftengineconverter.api.configuration.Configuration;
-import fr.robie.craftengineconverter.api.configuration.ConfigurationKey;
+import fr.robie.craftengineconverter.api.configuration.Keys;
 import fr.robie.craftengineconverter.api.configuration.ConverterSettings;
 import fr.robie.craftengineconverter.api.configuration.item.behavior.block.states.SectionProvider;
 import fr.robie.craftengineconverter.api.enums.ConverterOption;
@@ -99,7 +99,7 @@ public abstract class Converter extends ObjectUtils {
     }
 
     protected void logDebug(@NotNull Message message, Logger.LogType logType, Placeholder placeholder) {
-        if (Configuration.get(ConfigurationKey.ENABLE_DEBUG)) {
+        if (Configuration.get(Keys.ENABLE_DEBUG)) {
             this.processConverterLog(message, logType, placeholder);
         }
     }
@@ -391,7 +391,7 @@ public abstract class Converter extends ObjectUtils {
         }
         ConfigurationSection categoriesSection = config.createSection("categories");
         ConfigurationSection categorySection = categoriesSection.createSection(itemsIds.getFirst());
-        categorySection.set("name", (Configuration.<Boolean>get(ConfigurationKey.DISABLE_DEFAULT_ITALIC) ? "<!i>" : "") + "Category " + fileName);
+        categorySection.set("name", (Configuration.get(Keys.DISABLE_DEFAULT_ITALIC) ? "<!i>" : "") + "Category " + fileName);
         categorySection.set("icon", itemsIds.getFirst());
         categorySection.set("list", itemsIds);
     }

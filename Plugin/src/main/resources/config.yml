@@ -1,3 +1,10 @@
+# General settings. Anything belonging to one converter lives in that converter's own file beside this one:
+#
+#   bedrock.yml           the Bedrock converter
+#   nexo.yml              Nexo integration
+#   itemsadder.yml        ItemsAdder integration
+#   world-converter.yml   converting blocks as chunks are explored
+
 enable-debug: false
 
 # Language settings (available languages: EN, FR)
@@ -80,139 +87,16 @@ auto-convert-on-startup: false
 # Select which converters and options should be used on startup
 # If empty, all options for all converters will be used
 # Available options: ITEMS, EMOJIS, IMAGES, LANGUAGES, SOUNDS, RECIPES, PACKS, ALL
-# auto-convert-on-startup-types:
-#   nexo:
-#     - ITEMS
-#     - EMOJIS
-#   itemsadder:
-#     - ITEMS
-#     - IMAGES
-
-# Default material for items
-default-material: "PAPER"
-
-# Vanilla models and textures that packs inherit but do not ship.
-#
-# A pack's models rarely describe their own shape - they say `"parent": "block/cactus"` and inherit it. Those
-# parents live in the Minecraft client jar, so without them the shape is unknown: a custom block's inventory icon
-# falls back to a flat square instead of the familiar cube, and a few icons (item/light, armour trim overlays)
-# cannot be resolved at all.
-#
-# The jar is fetched from Mojang's own servers, the same ones the launcher uses, and cached under
-# plugins/CraftEngineConverter/vanilla-assets/. Only the files a pack actually references are unpacked from it.
-# Nothing is redistributed with this plugin.
-#
-# Run "/cec bedrock vanilla-assets" to fetch or refresh it up front instead of during a conversion.
-vanilla-assets:
-  # Download the client jar when the cache is empty. Turn off for an offline server; the converter then falls back
-  # to a built-in cube shape for the handful of parents it can recognise by name.
-  download: true
-  # "auto" follows the server's own Minecraft version, which is what the pack targets. Or pin one, e.g. "1.21.4".
-  version: auto
-  # Use assets you already have instead of downloading: an extracted assets folder, a client jar, or a vanilla
-  # resource pack zip. Takes precedence over the download.
-  #
-  # For a folder, point at either the "assets" directory itself or the directory containing it - so a checkout of
-  # the default resource pack works as-is, e.g. "C:/servers/Minecraft-default-assets-latest".
-  #
-  # Worth setting. Without it the converter can only rebuild a missing vanilla parent from its *name*, which
-  # recovers a cube shape and the common poses but not much else; with it, every parent resolves properly and
-  # models keep their real shape, UVs, face rotations and display transforms.
-  path: ""
-
-# Renders an inventory icon from the item's 3D model instead of using the model's texture as the sprite.
-#
-# Java has no icon file for such an item - the client draws one live from the cubes - while Bedrock can only
-# show a flat sprite and cannot render geometry into a slot. Without this, the icon falls back to the model's
-# texture, which for a 3D model is a sheet of unwrapped faces rather than a picture of the item.
-#
-# Items whose model is already a flat sprite (most tools and materials) are unaffected either way.
-render-item-icons: true
-
-# Pixel size of those rendered icons. 64 is plenty for an inventory slot; raise it only if you zoom in on
-# icons elsewhere in the UI.
-item-icon-size: 64
-
-# Shortens generated file names so no path in the pack reaches 80 characters, which some Bedrock platforms fail on
-# and which Geyser warns about. A render controller's file name, for instance, restates the identifier inside it
-# after 58 characters of fixed boilerplate.
-#
-# Only affects files Bedrock finds by the identifier written inside them - geometry, animations, animation and render
-# controllers, attachables. Textures, sounds, fonts, language files and the manifests are found by path and are never
-# renamed. Turn it off only if you want the generated names to stay readable while debugging a pack.
-shorten-pack-paths: true
-
-# Where the game holds a custom item, before the model's own Java "display" transform is applied on top.
-#
-# Bedrock has no "display" block for held items: a pose is an animation on the attachable, and its position is an
-# offset in the holder's item-bone space. That offset cannot be derived from the Java model - it depends on how
-# Bedrock positions the hand - so these are starting values taken from vanilla's own attachables (spyglass, spear,
-# trident, shield), and the final nudge is something you do by looking at an item in game.
-#
-# Change a number here and re-run the conversion; no rebuild is needed. Each slot takes translation in model units
-# (16 = one block), rotation in degrees, and scale as a multiplier. The off hand mirrors X automatically, so there
-# is nothing separate to set for it.
-#
-# If an item sits too low or too high in the hand, that is "translation" Y. If it is turned the wrong way, that is
-# "rotation" X - vanilla uses about -90 to lay an upright model into the hand. If it is invisible in first person,
-# suspect a large "translation" Z, which pushes it past the camera.
-held-item-anchors:
-  third-person:
-    translation: [0, 14, 0]
-    rotation: [-90, 0, 0]
-    scale: [1, 1, 1]
-  first-person:
-    translation: [0, 16, 0]
-    rotation: [-90, 0, 0]
-    scale: [1, 1, 1]
-  head:
-    translation: [0, 20, 0]
-    rotation: [0, 0, 0]
-    scale: [0.625, 0.625, 0.625]
-
-# Slots converted items into a vanilla Bedrock creative-menu group by matching their CraftEngine item id
-# (for example "default:topaz_ore"). Without a rule here the group is guessed from the item's base material,
-# which is often nothing useful - an ore built on nether_brick inherits no group at all.
-#
-# Each entry is a rule name of your choosing:
-#   group:    the vanilla group to use, e.g. "itemGroup.name.ore". Only vanilla group names work, because a
-#             custom group has to live in a behavior pack and Geyser cannot send one. An unrecognised name is
-#             warned about on startup.
-#   category:  optional. Overrides the creative tab (construction, nature, equipment, items) that would
-#              otherwise be derived from the material. A group is only shown when the item has a category.
-#   wildcards: "*" matches any run of characters and "?" matches one. A wildcard describes the whole id, and
-#              the namespace is optional, so "*_ore" and "topaz_*" both match "default:topaz_ore".
-#   patterns:  Java regex, matched anywhere in the id, so "_ore$" and ".*_ore" both work.
-#
-# A rule may use wildcards, patterns, or both; matching is case-insensitive either way. They are separate
-# keys on purpose - a bare "topaz" means "contains topaz" as a regex but "is exactly topaz" as a wildcard.
-#
-# Rules apply in the order written and the first match wins, so put narrow rules above broad ones.
 #
 # Example:
-#   creative-groups:
-#     ores:
-#       group: "itemGroup.name.ore"
-#       category: construction
-#       wildcards:
-#         - "*_ore"
-#     logs:
-#       group: "itemGroup.name.log"
-#       wildcards:
-#         - "*_log"
-#         - "*_wood"
-#     leftover-tools:
-#       group: "itemGroup.name.pickaxe"
-#       patterns:
-#         - "(pick|drill)"
-creative-groups: {}
-
-# Disable italic formatting in item lore by adding <!i> tag
-disable-default-italic: true
-
-# Armor converter settings
-# Available types: COMPONENT, TRIM , BOTH
-armor-converter-type: "COMPONENT"
+#   auto-convert-on-startup-types:
+#     nexo:
+#       - ITEMS
+#       - EMOJIS
+#     itemsadder:
+#       - ITEMS
+#       - IMAGES
+auto-convert-on-startup-types: {}
 
 blacklisted-paths:
   - "shaders/*" # Blacklist all files in shaders folder
@@ -237,39 +121,6 @@ tag:
 
 allow-block-conversion-propagation: true # When enabled, if a block is converted, the surrounding blocks will also be checked for conversion
 max-block-conversion-propagation-depth: 64 # Maximum number of blocks to propagate conversion in one block interaction event
-
-nexo:
-  enable-hook: true # Enable Nexo integration if Nexo is installed
-  # Require this permission to allow Nexo block interaction conversion : craftengineconverter.nexo.block.interact.conversion
-  enable-block-interaction-conversion: true # When enabled, when you interact with a nexo block, it will convert the nexo block to their CE equivalent
-  # Require this permission to allow Nexo furniture interaction conversion : craftengineconverter.nexo.furniture.interact.conversion
-  enable-furniture-interaction-conversion: true # When enabled, when you interact with a nexo furniture, it will convert the furniture to their CE equivalent
-  enable-chunk-load-conversion: false # When enabled, when a chunk is loaded, it will convert all Nexo blocks and furnitures to CE equivalents
-
-itemsadder:
-  enable-hook: true # Enable ItemsAdder integration if ItemsAdder is installed
-  img-placeholderapi-support: true # Register a placeholder %img:old_name% to get the new image
-  # Require this permission to allow ItemsAdder block interaction conversion : craftengineconverter.itemsadder.block.interact.conversion
-  enable-block-interaction-conversion: true # When enabled, when you interact with an ItemsAdder block, it will convert the block to their CE equivalent
-  # Require this permission to allow ItemsAdder furniture interaction conversion : craftengineconverter.itemsadder.furniture.interact.conversion
-  enable-furniture-interaction-conversion: true # When enabled, when you interact with an ItemsAdder furniture, it will convert the furniture to their CE equivalent
-  enable-chunk-load-conversion: false # When enabled, when a chunk is loaded, it will convert all ItemsAdder blocks and furnitures to CE equivalents
-  blacklisted-content-folders-namespaces: [ ] # List of content folders or namespaces to ignore during conversion
-
-world-converter:
-  enable: false # Enable world conversion feature (Requires server restart to take effect)
-  nexo:
-    enable: true # Enable Nexo world conversion without nexo plugin installed ! Just explore and let the lugin convert Nexo blocks and furnitures to CE equivalents
-  itemsadder:
-    enable: true # Enable ItemsAdder world conversion without ItemsAdder plugin installed ! Just explore and let the lugin convert ItemsAdder blocks and furnitures to CE equivalents
-  progress-bar-options:
-    progress-color: GREEN
-    empty-color: DARK_GRAY
-    percent-color: YELLOW
-    progress-char: █
-    empty-char: ░
-    bar-width: 50
-
 
 # Available colors:
 # BLACK, DARK_BLUE, DARK_GREEN, DARK_AQUA, DARK_RED, DARK_PURPLE,

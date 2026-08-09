@@ -69,7 +69,7 @@ public final class DevConvert {
             // load-bearing: with the singleton uninitialised this conversion emitted 23 items instead of 134.
             // The deleted end-to-end tests only ever saw the full output because another test in the same JVM had
             // initialised it first, which is a test-ordering dependency worth being rid of.
-            fr.robie.craftengineconverter.api.configuration.Configuration.getInstance().load(yaml, config);
+            fr.robie.craftengineconverter.api.configuration.Configuration.getInstance().load(fr.robie.craftengineconverter.api.configuration.ConfigFile.MAIN, yaml, config);
 
             // Folder overrides (bedrock.items-folder and friends), which are separate from the global config.
             converter.loadSettingsFromConfig(yaml);
@@ -81,7 +81,7 @@ public final class DevConvert {
         fr.robie.craftengineconverter.converter.bedrock.asset.VanillaAssets assets =
                 fr.robie.craftengineconverter.converter.bedrock.asset.VanillaAssetStore.existing(pluginFolder);
         Object configuredPath = fr.robie.craftengineconverter.api.configuration.Configuration
-                .get(fr.robie.craftengineconverter.api.configuration.ConfigurationKey.VANILLA_ASSETS_PATH);
+                .get(fr.robie.craftengineconverter.api.configuration.Keys.VANILLA_ASSETS_PATH);
         System.out.println(assets.isAvailable()
                 ? "Vanilla assets: " + assets.source()
                 : "Vanilla assets: NONE - non-cube vanilla parents will fall back to a full block."

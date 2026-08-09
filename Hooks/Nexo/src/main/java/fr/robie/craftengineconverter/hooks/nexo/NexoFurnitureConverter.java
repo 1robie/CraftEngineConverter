@@ -5,7 +5,7 @@ import com.nexomc.nexo.api.NexoFurniture;
 import com.nexomc.nexo.api.events.furniture.NexoFurnitureInteractEvent;
 import com.nexomc.nexo.mechanics.furniture.FurnitureMechanic;
 import fr.robie.craftengineconverter.api.configuration.Configuration;
-import fr.robie.craftengineconverter.api.configuration.ConfigurationKey;
+import fr.robie.craftengineconverter.api.configuration.Keys;
 import fr.robie.craftengineconverter.api.enums.Plugins;
 import fr.robie.craftengineconverter.api.history.EntityHistory;
 import fr.robie.craftengineconverter.common.CraftEngineConverterPlugin;
@@ -30,7 +30,7 @@ public class NexoFurnitureConverter extends FurnitureConverter implements Listen
 
     @EventHandler
     public void onNexoFurnitureInteract(NexoFurnitureInteractEvent event) {
-        if (!Configuration.<Boolean>get(ConfigurationKey.NEXO_FURNITURE_INTERACTION_CONVERSION) || !event.getPlayer().hasPermission(Permission.NEXO_FURNITURE_INTERACT_CONVERSION.asPermission())) {
+        if (!Configuration.get(Keys.NEXO_FURNITURE_INTERACTION_CONVERSION) || !event.getPlayer().hasPermission(Permission.NEXO_FURNITURE_INTERACT_CONVERSION.asPermission())) {
             return;
         }
         String itemID = event.getMechanic().getItemID();
@@ -45,10 +45,10 @@ public class NexoFurnitureConverter extends FurnitureConverter implements Listen
         this.placeFurniture(newName, location.add(0, -0.5, 0), entityNBT);
         event.setCancelled(true);
 
-        if (Configuration.<Boolean>get(ConfigurationKey.ALLOW_BLOCK_CONVERSION_PROPAGATION) && Configuration.<Integer>get(ConfigurationKey.MAX_BLOCK_CONVERSION_PROPAGATION_DEPTH) > 1) {
+        if (Configuration.get(Keys.ALLOW_BLOCK_CONVERSION_PROPAGATION) && Configuration.get(Keys.MAX_BLOCK_CONVERSION_PROPAGATION_DEPTH) > 1) {
             Set<Location> processed = new HashSet<>();
             processed.add(location);
-            ConversionCounter counter = new ConversionCounter(Configuration.<Integer>get(ConfigurationKey.MAX_BLOCK_CONVERSION_PROPAGATION_DEPTH) - 1);
+            ConversionCounter counter = new ConversionCounter(Configuration.get(Keys.MAX_BLOCK_CONVERSION_PROPAGATION_DEPTH) - 1);
             this.executeFurnitureConversion(location, processed, counter);
         }
     }

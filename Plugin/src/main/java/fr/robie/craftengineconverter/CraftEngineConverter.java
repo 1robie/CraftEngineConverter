@@ -1,8 +1,9 @@
 package fr.robie.craftengineconverter;
 
 import fr.robie.craftengineconverter.api.builder.TimerBuilder;
+import fr.robie.craftengineconverter.api.configuration.ConfigFile;
 import fr.robie.craftengineconverter.api.configuration.Configuration;
-import fr.robie.craftengineconverter.api.configuration.ConfigurationKey;
+import fr.robie.craftengineconverter.api.configuration.Keys;
 import fr.robie.craftengineconverter.api.database.StorageManager;
 import fr.robie.craftengineconverter.api.enums.ConverterOption;
 import fr.robie.craftengineconverter.api.enums.Languages;
@@ -93,7 +94,7 @@ public final class CraftEngineConverter extends CraftEngineConverterPlugin {
         this.reloadConfig();
         if (Plugins.PACKET_EVENTS.isPresent()) {
             Logger.info("[Hook] PacketEvents");
-            if (Configuration.<Boolean>get(ConfigurationKey.PACKET_EVENTS_FORMATTING)) {
+            if (Configuration.get(Keys.PACKET_EVENTS_FORMATTING)) {
                 this.packetLoader = new PacketEventHook(this);
             }
         }
@@ -145,11 +146,11 @@ public final class CraftEngineConverter extends CraftEngineConverterPlugin {
 
         this.getServer().getServicesManager().register(ITagResolver.class, this.tagResolver, this, ServicePriority.Normal);
 
-        if (Configuration.<Boolean>get(ConfigurationKey.AUTO_CONVERT_ON_STARTUP)) {
+        if (Configuration.get(Keys.AUTO_CONVERT_ON_STARTUP)) {
             Logger.info(Message.MESSAGE__AUTO_CONVERTER__STARTUP__START);
             long startTimeAutoConverter = System.currentTimeMillis();
 
-            Map<String, List<ConverterOption>> autoConvertOptions = Configuration.get(ConfigurationKey.AUTO_CONVERT_ON_STARTUP_TYPES);
+            Map<String, List<ConverterOption>> autoConvertOptions = Configuration.get(Keys.AUTO_CONVERT_ON_STARTUP_TYPES);
             List<CompletableFuture<Void>> futures = new ArrayList<>();
 
             if (autoConvertOptions.isEmpty()) {
@@ -184,21 +185,21 @@ public final class CraftEngineConverter extends CraftEngineConverterPlugin {
             Logger.info(Message.MESSAGE__AUTO_CONVERTER__STARTUP__DISABLED);
         }
 
-        if (Configuration.<Boolean>get(ConfigurationKey.WORLD_CONVERTER_ENABLE)) {
+        if (Configuration.get(Keys.WORLD_CONVERTER_ENABLE)) {
             this.registerListener(this.worldConverterManager);
         }
 
-        if (Plugins.NEXO.isEnabled() && Configuration.<Boolean>get(ConfigurationKey.NEXO_ENABLE_HOOK)) {
+        if (Plugins.NEXO.isEnabled() && Configuration.get(Keys.NEXO_ENABLE_HOOK)) {
             this.registerListener(new NexoBlockConverter(this));
             this.registerListener(new NexoFurnitureConverter(this));
-            if (Configuration.<Boolean>get(ConfigurationKey.WORLD_CONVERTER_ENABLE) && Configuration.<Boolean>get(ConfigurationKey.WORLD_CONVERTER_NEXO_HOOK)) {
+            if (Configuration.get(Keys.WORLD_CONVERTER_ENABLE) && Configuration.get(Keys.WORLD_CONVERTER_NEXO_HOOK)) {
                 this.worldConverterManager.registerConverter(new NexoWorldConverter(this));
             }
         }
-        if (Plugins.ITEMS_ADDER.isEnabled() && Configuration.<Boolean>get(ConfigurationKey.ITEMS_ADDER_ENABLE_HOOK)) {
+        if (Plugins.ITEMS_ADDER.isEnabled() && Configuration.get(Keys.ITEMS_ADDER_ENABLE_HOOK)) {
             this.registerListener(new ItemsAdderBlockConverter(this));
             this.registerListener(new ItemsAdderFurnitureConverter(this));
-            if (Configuration.<Boolean>get(ConfigurationKey.WORLD_CONVERTER_ENABLE) && Configuration.<Boolean>get(ConfigurationKey.WORLD_CONVERTER_ITEMS_ADDER_HOOK)) {
+            if (Configuration.get(Keys.WORLD_CONVERTER_ENABLE) && Configuration.get(Keys.WORLD_CONVERTER_ITEMS_ADDER_HOOK)) {
                 this.worldConverterManager.registerConverter(new ItemsAdderWorldConverter(this));
             }
         }
@@ -238,7 +239,7 @@ public final class CraftEngineConverter extends CraftEngineConverterPlugin {
     }
 
     public void reloadMessages() {
-        this.messageManager.loadLanguage(Configuration.get(ConfigurationKey.LANGUAGE));
+        this.messageManager.loadLanguage(Configuration.get(Keys.LANGUAGE));
     }
 
     private void registerListener(@NotNull Listener listener) {
@@ -294,10 +295,71 @@ public final class CraftEngineConverter extends CraftEngineConverterPlugin {
         return this.serverProfile;
     }
 
+    /**
+     * Loads every configuration file, one per converter plus the general one.
+     * <p>
+     * Each file is written out from the jar if it is not there yet, so a new converter's file appears on upgrade
+     * without anyone having to create it.
+     */
     public void reloadConfig() {
-        this.saveDefaultConfig();
-        File configFile = new File(this.getDataFolder(), "config.yml");
-        FileCacheManager.getYamlCache().getEntryFile(configFile.toPath()).ifPresent(entry -> Configuration.getInstance().load(entry.getData(), configFile));
+        // Only what this reload does should be reported or backed up.
+        Configuration.getInstance().beginLoad();
+        File mainFile = new File(this.getDataFolder(), ConfigFile.MAIN.fileName());
+        // Read before anything is written, so a setting still living in the old single file can be adopted by
+        // whichever file now owns it. Captured up front because ConfigFile.MAIN is loaded first and would otherwise
+        // have been saved before the other files got the chance to look in it.
+        boolean hadMain = mainFile.exists();
+        fr.robie.yamllibrary.file.YamlConfiguration legacy = hadMain
+                ? fr.robie.yamllibrary.file.YamlConfiguration.loadConfiguration(mainFile)
+                : null;
+
+        for (ConfigFile configFile : ConfigFile.values()) {
+            File file = new File(this.getDataFolder(), configFile.fileName());
+            if (!file.exists()) {
+                this.saveResource(configFile.fileName(), false);
+            }
+            FileCacheManager.getYamlCache().getEntryFile(file.toPath())
+                    .ifPresent(entry -> Configuration.getInstance()
+                            .load(configFile, entry.getData(), file, legacy));
+        }
+
+        this.reportConfigurationMoves(mainFile, legacy);
+    }
+
+    /**
+     * Keeps a copy of the old configuration and says what moved, once, the first time anything is relocated.
+     * <p>
+     * Silent when nothing moved, which is every start after the first — the relocation is driven by what the files
+     * contain rather than by a version marker, so a settled installation simply finds nothing to do.
+     */
+    private void reportConfigurationMoves(File mainFile, fr.robie.yamllibrary.file.YamlConfiguration legacy) {
+        Configuration configuration = Configuration.getInstance();
+        if (!configuration.hasRelocated() || legacy == null) return;
+
+        // Written before config.yml is, so a move that goes wrong is always recoverable. Never overwritten: the
+        // existing copy is the pre-split original and is worth more than a later one.
+        File backup = new File(mainFile.getParentFile(), ConfigFile.MAIN.fileName() + ".bak");
+        if (!backup.exists()) {
+            try {
+                java.nio.file.Files.copy(mainFile.toPath(), backup.toPath());
+                Logger.info("Saved the previous configuration as " + backup.getName());
+            } catch (Exception e) {
+                Logger.warn("Could not back up " + mainFile.getName() + ": " + e.getMessage());
+            }
+        }
+
+        StringBuilder moved = new StringBuilder();
+        configuration.relocations().forEach((fileName, count) ->
+                moved.append(moved.isEmpty() ? "" : ", ").append(count).append(" from ").append(fileName));
+        Logger.info("Configuration updated: moved " + moved + " into the file that now owns them");
+
+        if (configuration.legacyNeedsSaving()) {
+            try {
+                legacy.save(mainFile);
+            } catch (Exception e) {
+                Logger.warn("Could not tidy " + mainFile.getName() + ": " + e.getMessage());
+            }
+        }
     }
 
     public void reloadBlockStateMappings() {

@@ -2,7 +2,7 @@ package fr.robie.craftengineconverter.converter.bedrock;
 
 import com.google.gson.JsonObject;
 import fr.robie.craftengineconverter.api.configuration.Configuration;
-import fr.robie.craftengineconverter.api.configuration.ConfigurationKey;
+import fr.robie.craftengineconverter.api.configuration.Keys;
 import fr.robie.craftengineconverter.api.configuration.bedrock.ItemTextureConfiguration;
 import fr.robie.craftengineconverter.api.configuration.bedrock.ManifestConfiguration;
 import fr.robie.craftengineconverter.api.configuration.bedrock.mapping.MappingsConfiguration;
@@ -997,7 +997,7 @@ public class ConversionContext {
 
         // Last, once every file exists: the pass renames files Bedrock finds by the identifier inside them, so it
         // has to see the finished pack, and nothing after it may write into those directories again.
-        if ((boolean) Configuration.get(ConfigurationKey.SHORTEN_PACK_PATHS)) {
+        if (Configuration.get(Keys.SHORTEN_PACK_PATHS)) {
             PackPathShortener.shorten(this.packDir);
         }
         PackPathShortener.reportLongPaths(this.packDir);

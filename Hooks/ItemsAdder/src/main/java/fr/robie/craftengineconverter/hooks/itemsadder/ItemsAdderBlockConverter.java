@@ -3,7 +3,7 @@ package fr.robie.craftengineconverter.hooks.itemsadder;
 import dev.lone.itemsadder.api.CustomBlock;
 import dev.lone.itemsadder.api.Events.CustomBlockInteractEvent;
 import fr.robie.craftengineconverter.api.configuration.Configuration;
-import fr.robie.craftengineconverter.api.configuration.ConfigurationKey;
+import fr.robie.craftengineconverter.api.configuration.Keys;
 import fr.robie.craftengineconverter.api.enums.Plugins;
 import fr.robie.craftengineconverter.common.CraftEngineConverterPlugin;
 import fr.robie.craftengineconverter.common.converter.BlockConverter;
@@ -23,7 +23,7 @@ public class ItemsAdderBlockConverter extends BlockConverter implements Listener
 
     @EventHandler
     public void onItemsAdderBlockInteract(CustomBlockInteractEvent event) {
-        if (!Configuration.<Boolean>get(ConfigurationKey.ITEMS_ADDER_BLOCK_INTERACTION_CONVERSION) || !event.getPlayer().hasPermission(Permission.ITEMSADDER_BLOCK_INTERACT_CONVERSION.asPermission())) {
+        if (!Configuration.get(Keys.ITEMS_ADDER_BLOCK_INTERACTION_CONVERSION) || !event.getPlayer().hasPermission(Permission.ITEMSADDER_BLOCK_INTERACT_CONVERSION.asPermission())) {
             return;
         }
 
@@ -43,10 +43,10 @@ public class ItemsAdderBlockConverter extends BlockConverter implements Listener
 
         this.placeBlock(newName, location, null);
         event.setCancelled(true);
-        if (Configuration.<Boolean>get(ConfigurationKey.ALLOW_BLOCK_CONVERSION_PROPAGATION) && Configuration.<Integer>get(ConfigurationKey.MAX_BLOCK_CONVERSION_PROPAGATION_DEPTH) > 1) {
+        if (Configuration.get(Keys.ALLOW_BLOCK_CONVERSION_PROPAGATION) && Configuration.get(Keys.MAX_BLOCK_CONVERSION_PROPAGATION_DEPTH) > 1) {
             Set<Location> processed = new HashSet<>();
             processed.add(location);
-            ConversionCounter counter = new ConversionCounter(Configuration.<Integer>get(ConfigurationKey.MAX_BLOCK_CONVERSION_PROPAGATION_DEPTH) - 1);
+            ConversionCounter counter = new ConversionCounter(Configuration.get(Keys.MAX_BLOCK_CONVERSION_PROPAGATION_DEPTH) - 1);
             this.executeBlockConversion(block.getLocation(), processed, counter);
         }
 

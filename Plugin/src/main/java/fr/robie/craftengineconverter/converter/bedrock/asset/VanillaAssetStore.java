@@ -1,7 +1,7 @@
 package fr.robie.craftengineconverter.converter.bedrock.asset;
 
 import fr.robie.craftengineconverter.api.configuration.Configuration;
-import fr.robie.craftengineconverter.api.configuration.ConfigurationKey;
+import fr.robie.craftengineconverter.api.configuration.Keys;
 import fr.robie.craftengineconverter.api.utils.MinecraftVersion;
 import fr.robie.messageflow.logger.Logger;
 import org.jetbrains.annotations.NotNull;
@@ -27,7 +27,7 @@ public final class VanillaAssetStore {
     /** The Minecraft version whose assets to use: the configured one, or the server's own. */
     @NotNull
     public static String targetVersion() {
-        String configured = Configuration.get(ConfigurationKey.VANILLA_ASSETS_VERSION);
+        String configured = Configuration.get(Keys.VANILLA_ASSETS_VERSION);
         if (configured != null && !configured.isBlank() && !configured.equalsIgnoreCase("auto")) {
             return configured.trim();
         }
@@ -66,7 +66,7 @@ public final class VanillaAssetStore {
         VanillaAssets existing = existing(pluginFolder);
         if (existing.isAvailable()) return existing;
 
-        if (!(boolean) Configuration.get(ConfigurationKey.VANILLA_ASSETS_DOWNLOAD)) {
+        if (!Configuration.get(Keys.VANILLA_ASSETS_DOWNLOAD)) {
             Logger.info("vanilla-assets.download is off and nothing is cached, so vanilla parents cannot be"
                     + " resolved. Set vanilla-assets.path to assets you already have, or turn the download on.");
             return existing;
@@ -89,7 +89,7 @@ public final class VanillaAssetStore {
 
     @Nullable
     private static Path configuredPath() {
-        String configured = Configuration.get(ConfigurationKey.VANILLA_ASSETS_PATH);
+        String configured = Configuration.get(Keys.VANILLA_ASSETS_PATH);
         if (configured == null || configured.isBlank()) return null;
 
         Path path = Path.of(configured.trim());

@@ -2,7 +2,7 @@ package fr.robie.craftengineconverter.converter.nexo;
 
 import fr.robie.craftengineconverter.api.builder.TimerBuilder;
 import fr.robie.craftengineconverter.api.configuration.Configuration;
-import fr.robie.craftengineconverter.api.configuration.ConfigurationKey;
+import fr.robie.craftengineconverter.api.configuration.Keys;
 import fr.robie.craftengineconverter.api.configuration.conditions.EnchantmentCondition;
 import fr.robie.craftengineconverter.api.configuration.conditions.InvertedCondition;
 import fr.robie.craftengineconverter.api.configuration.conditions.RandomCondition;
@@ -129,7 +129,7 @@ public class NexoItemConverter extends ItemConverter {
     public void convertItemName() {
         String itemName = this.nexoItemSection.getString("itemname");
         if (this.isValidString(itemName)) {
-            this.craftEngineItemsConfiguration.addItemConfiguration(new ItemNameConfiguration(itemName, Configuration.<Boolean>get(ConfigurationKey.DISABLE_DEFAULT_ITALIC)));
+            this.craftEngineItemsConfiguration.addItemConfiguration(new ItemNameConfiguration(itemName, Configuration.get(Keys.DISABLE_DEFAULT_ITALIC)));
         }
     }
 
@@ -137,7 +137,7 @@ public class NexoItemConverter extends ItemConverter {
     public void convertLore() {
         List<String> lore = this.nexoItemSection.getStringList("lore");
         if (!lore.isEmpty()) {
-            this.craftEngineItemsConfiguration.addItemConfiguration(new LoreConfiguration(lore, Configuration.<Boolean>get(ConfigurationKey.DISABLE_DEFAULT_ITALIC)));
+            this.craftEngineItemsConfiguration.addItemConfiguration(new LoreConfiguration(lore, Configuration.get(Keys.DISABLE_DEFAULT_ITALIC)));
         }
     }
 
@@ -1145,7 +1145,7 @@ public class NexoItemConverter extends ItemConverter {
                     }
 
                     if (!equipmentLayers.isEmpty()) {
-                        List<ArmorConverter> convertersToProcess = Configuration.<ArmorConverter>get(ConfigurationKey.ARMOR_CONVERTER_TYPE).getComposition();
+                        List<ArmorConverter> convertersToProcess = Configuration.get(Keys.ARMOR_CONVERTER_TYPE).getComposition();
                         Map<ArmorConverter, ConfigurationSection> converterSections = ArmorConverter.createArmorConverterSections(fileEquipementsSection, assetId);
 
                         for (var layerTypeTuple : equipmentLayers.entrySet()) {
@@ -1222,7 +1222,7 @@ public class NexoItemConverter extends ItemConverter {
                     String assetId = this.determineAssetId(packSection, List.of("_helmet", "_chestplate", "_leggings", "_boots"));
 
                     if (this.isValidString(assetId)) {
-                        List<ArmorConverter> convertersToProcess = Configuration.<ArmorConverter>get(ConfigurationKey.ARMOR_CONVERTER_TYPE).getComposition();
+                        List<ArmorConverter> convertersToProcess = Configuration.get(Keys.ARMOR_CONVERTER_TYPE).getComposition();
                         Map<ArmorConverter, ConfigurationSection> converterSections = ArmorConverter.createArmorConverterSections(fileEquipementsSection, assetId);
 
                         String armorName = assetId.split(":", 2)[1];

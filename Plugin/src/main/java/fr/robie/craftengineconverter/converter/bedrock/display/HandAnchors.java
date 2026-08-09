@@ -1,7 +1,8 @@
 package fr.robie.craftengineconverter.converter.bedrock.display;
 
 import fr.robie.craftengineconverter.api.configuration.Configuration;
-import fr.robie.craftengineconverter.api.configuration.ConfigurationKey;
+import fr.robie.craftengineconverter.api.configuration.Key;
+import fr.robie.craftengineconverter.api.configuration.Keys;
 import fr.robie.yamllibrary.ConfigurationSection;
 
 import java.util.List;
@@ -69,7 +70,7 @@ public final class HandAnchors {
 
     /** The anchor for a slot, as configured. */
     public static Transform forSlot(AttachableSlot slot) {
-        return forSlot(slot, section(ConfigurationKey.HELD_ITEM_ANCHORS));
+        return forSlot(slot, section(Keys.HELD_ITEM_ANCHORS));
     }
 
     /**
@@ -105,7 +106,7 @@ public final class HandAnchors {
      * Reading the config must never be able to break a conversion, so a value that is missing, the wrong shape or
      * unreadable falls back rather than throwing — and Configuration is absent entirely in unit tests.
      */
-    private static ConfigurationSection section(ConfigurationKey key) {
+    private static ConfigurationSection section(Key<?> key) {
         try {
             Object value = Configuration.get(key);
             return value instanceof ConfigurationSection s ? s : null;

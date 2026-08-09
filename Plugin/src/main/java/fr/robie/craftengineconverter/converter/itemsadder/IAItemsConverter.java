@@ -1,7 +1,7 @@
 package fr.robie.craftengineconverter.converter.itemsadder;
 
 import fr.robie.craftengineconverter.api.configuration.Configuration;
-import fr.robie.craftengineconverter.api.configuration.ConfigurationKey;
+import fr.robie.craftengineconverter.api.configuration.Keys;
 import fr.robie.craftengineconverter.api.configuration.conditions.SurvivesExplosionCondition;
 import fr.robie.craftengineconverter.api.configuration.item.LoreConfiguration;
 import fr.robie.craftengineconverter.api.configuration.item.behavior.block.BlockConfiguration;
@@ -98,7 +98,7 @@ public class IAItemsConverter extends ItemConverter {
             if (itemName.startsWith("display-name-")) {
                 itemName = "<l10n:" + itemName + ">";
             }
-            this.craftEngineItemsConfiguration.addItemConfiguration(new ItemNameConfiguration(itemName, Configuration.<Boolean>get(ConfigurationKey.DISABLE_DEFAULT_ITALIC)));
+            this.craftEngineItemsConfiguration.addItemConfiguration(new ItemNameConfiguration(itemName, Configuration.get(Keys.DISABLE_DEFAULT_ITALIC)));
         }
     }
 
@@ -112,7 +112,7 @@ public class IAItemsConverter extends ItemConverter {
                     lore.set(i, "<l10n:" + line + ">");
                 }
             }
-            this.craftEngineItemsConfiguration.addItemConfiguration(new LoreConfiguration(lore, Configuration.<Boolean>get(ConfigurationKey.DISABLE_DEFAULT_ITALIC)));
+            this.craftEngineItemsConfiguration.addItemConfiguration(new LoreConfiguration(lore, Configuration.get(Keys.DISABLE_DEFAULT_ITALIC)));
         }
     }
 

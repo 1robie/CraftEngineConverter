@@ -4,7 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import fr.robie.craftengineconverter.api.configuration.Configuration;
-import fr.robie.craftengineconverter.api.configuration.ConfigurationKey;
+import fr.robie.craftengineconverter.api.configuration.Keys;
 import fr.robie.craftengineconverter.api.configuration.bedrock.mapping.item.GroupDefinitionMapping;
 import fr.robie.craftengineconverter.api.configuration.bedrock.mapping.item.ItemMapping;
 import fr.robie.craftengineconverter.api.configuration.bedrock.text.ItemName;
@@ -707,7 +707,7 @@ public class BedrockItemLoader {
         // An author-declared rule matching the item id wins: it is the only source that can know a
         // "*_ore" item belongs with the ores, since the material it happens to be built on cannot say so.
         CreativeGroupRules.Rule rule =
-                CreativeGroupRules.from(Configuration.get(ConfigurationKey.CREATIVE_GROUPS)).match(this.itemId);
+                CreativeGroupRules.from(Configuration.get(Keys.CREATIVE_GROUPS)).match(this.itemId);
 
         BedrockOptions.CreativeCategory declaredCategory = rule == null ? null : rule.resolvedCategory();
         if (declaredCategory != null) {
@@ -941,13 +941,13 @@ public class BedrockItemLoader {
      * no {@code elements} already <i>is</i> a sprite and is left alone.
      */
     private void renderIconFromModel(String modelPath, String textureId, SimpleModelConfiguration model) {
-        if (!(boolean) Configuration.get(ConfigurationKey.RENDER_ITEM_ICONS)) return;
+        if (!Configuration.get(Keys.RENDER_ITEM_ICONS)) return;
         if (this.context.javaAssetsDir() == null) return;
 
         JavaBlockModel resolved = this.context.javaModelResolver().load(modelPath, this.context.javaAssetsDir());
         if (resolved == null || resolved.elements().isEmpty()) return;
 
-        int size = Configuration.get(ConfigurationKey.ITEM_ICON_SIZE);
+        int size = Configuration.get(Keys.ITEM_ICON_SIZE);
         if (size <= 0) return;
 
         java.util.Map<Integer, Integer> tints = this.resolveTints(model);

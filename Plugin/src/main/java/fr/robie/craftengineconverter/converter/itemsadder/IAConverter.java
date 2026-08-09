@@ -3,7 +3,7 @@ package fr.robie.craftengineconverter.converter.itemsadder;
 import fr.robie.craftengineconverter.CraftEngineConverter;
 import fr.robie.craftengineconverter.api.cache.FileCacheEntry;
 import fr.robie.craftengineconverter.api.configuration.Configuration;
-import fr.robie.craftengineconverter.api.configuration.ConfigurationKey;
+import fr.robie.craftengineconverter.api.configuration.Keys;
 import fr.robie.craftengineconverter.api.configuration.image.SingleCharacterBitmapConfiguration;
 import fr.robie.craftengineconverter.api.configuration.recipe.AbstractRecipe;
 import fr.robie.craftengineconverter.api.configuration.recipe.CookingRecipe;
@@ -202,7 +202,7 @@ public class IAConverter extends Converter {
                 layer2 = layer2 + "_2";
             }
 
-            List<ArmorConverter> convertersToProcess = Configuration.<ArmorConverter>get(ConfigurationKey.ARMOR_CONVERTER_TYPE).getComposition();
+            List<ArmorConverter> convertersToProcess = Configuration.get(Keys.ARMOR_CONVERTER_TYPE).getComposition();
             Map<ArmorConverter, ConfigurationSection> converterSections = ArmorConverter.createArmorConverterSections(
                     this.getOrCreateSection(convertedConfig, "equipments"), this.namespaced(equipmentId, namespace));
 
@@ -950,7 +950,7 @@ public class IAConverter extends Converter {
 
             int totalFiles = 0;
             List<String> blacklistedNamespacesList = new ArrayList<>(List.of(".vscode"));
-            blacklistedNamespacesList.addAll(Configuration.<List<String>>get(ConfigurationKey.ITEMS_ADDER_BLACKLISTED_CONTENT_FOLDERS_NAMESPACES));
+            blacklistedNamespacesList.addAll(Configuration.get(Keys.ITEMS_ADDER_BLACKLISTED_CONTENT_FOLDERS_NAMESPACES));
             List<String> validMinecraftFolders = List.of("atlases", "blockstates", "equipment", "font", "items", "lang", "models", "particles", "post_effect", "shaders", "texts", "textures", "waypoint_style");
             File[] listed = inputFolder.listFiles();
             if (this.isNull(listed)) {

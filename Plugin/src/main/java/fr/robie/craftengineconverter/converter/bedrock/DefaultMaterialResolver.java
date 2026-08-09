@@ -1,7 +1,7 @@
 package fr.robie.craftengineconverter.converter.bedrock;
 
 import fr.robie.craftengineconverter.api.configuration.Configuration;
-import fr.robie.craftengineconverter.api.configuration.ConfigurationKey;
+import fr.robie.craftengineconverter.api.configuration.Keys;
 import fr.robie.craftengineconverter.api.manager.FileCacheManager;
 import fr.robie.messageflow.logger.Logger;
 import org.bukkit.Material;
@@ -37,7 +37,7 @@ final class DefaultMaterialResolver {
     }
 
     static Material resolve(@Nullable File pluginFolder) {
-        Object configured = Configuration.get(ConfigurationKey.DEFAULT_MATERIAL);
+        Object configured = Configuration.get(Keys.DEFAULT_MATERIAL);
 
         if (configured instanceof Material material) {
             Logger.info("Default item material: " + material.name().toLowerCase(Locale.ROOT)
