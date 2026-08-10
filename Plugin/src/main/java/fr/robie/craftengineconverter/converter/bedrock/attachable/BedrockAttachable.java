@@ -37,6 +37,16 @@ public class BedrockAttachable {
         this.animations.put(key, animation); return this;
     }
 
+    /**
+     * Drops every animation declared so far.
+     * <p>
+     * For the one case that replaces a pose set rather than adding to it: an item whose draw stages each carry
+     * their own poses needs the single unstaged set gone, or the attachable declares animations nothing animates.
+     */
+    public BedrockAttachable clearAnimations() {
+        this.animations.clear(); return this;
+    }
+
     public BedrockAttachable withScript(String key, Object script) {
         this.scripts.put(key, script); return this;
     }

@@ -119,6 +119,23 @@ held-item-anchors:
     translation: [0, 20, 0]
     rotation: [0, 0, 0]
     scale: [0.625, 0.625, 0.625]
+  # Per-item overrides, for the shapes one anchor cannot suit. A trident or a spear is long and often scaled up by
+  # its own model, so an offset you would never notice on a sword is thrown out along the shaft and doubled.
+  #
+  # The key is matched verbatim against the item id first and then its base material, so "default:topaz_trident"
+  # tunes one item and "trident" tunes every item built on that material. Anything you leave out falls back to the
+  # block above, channel by channel - naming only "translation" keeps the shared rotation and scale.
+  #
+  # Vanilla's own Bedrock attachables are the reference for the awkward ones, all third-person: the trident sits at
+  # bone pivot [0,24,0] with position [1.5,-2.5,-10.5] and rotation [97,-1.5,-49]; the spear has no bone pivot and
+  # lifts [0,24,-27]; the shield rotates [-90,0,90].
+  items: {}
+  #  trident:
+  #    third-person:
+  #      translation: [0, 14, 0]
+  #      rotation: [-90, 0, 0]
+  #    first-person:
+  #      translation: [0, 16, 0]
 
 # Slots converted items into a vanilla Bedrock creative-menu group by matching their CraftEngine item id
 # (for example "default:topaz_ore"). Without a rule here the group is guessed from the item's base material,

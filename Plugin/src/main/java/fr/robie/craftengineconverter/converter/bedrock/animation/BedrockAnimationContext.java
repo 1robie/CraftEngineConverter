@@ -44,4 +44,26 @@ public final class BedrockAnimationContext {
     public static BedrockAnimationContext empty() {
         return EMPTY;
     }
+
+    /**
+     * Whether two contexts pose the item identically, ignoring what their animations are called.
+     * <p>
+     * The names embed the item id and so always differ between two contexts; only the bone values decide whether
+     * a draw stage actually looks different from the one before it. Used to keep an item that changes model but
+     * not pose — every bow, whose pulling models inherit one {@code display} block — on a single set of
+     * animations rather than a copy per stage.
+     */
+    public boolean posesEqual(BedrockAnimationContext other) {
+        if (other == null || this.isEmpty() || other.isEmpty()) return false;
+        if (!this.animationNames.keySet().equals(other.animationNames.keySet())) return false;
+
+        Map<String, com.google.gson.JsonObject> mine = this.animation.animations();
+        Map<String, com.google.gson.JsonObject> theirs = other.animation.animations();
+        for (AttachableSlot slot : this.animationNames.keySet()) {
+            com.google.gson.JsonObject a = mine.get(this.animationNames.get(slot));
+            com.google.gson.JsonObject b = theirs.get(other.animationNames.get(slot));
+            if (a == null || !a.equals(b)) return false;
+        }
+        return true;
+    }
 }

@@ -1,5 +1,6 @@
 package fr.robie.craftengineconverter.converter.bedrock.attachable;
 
+import fr.robie.craftengineconverter.api.configuration.bedrock.molang.Molang;
 import fr.robie.craftengineconverter.converter.bedrock.animation.BedrockAnimationContext;
 import fr.robie.craftengineconverter.converter.bedrock.display.AttachableSlot;
 
@@ -94,6 +95,42 @@ public record BedrockAttachableContext(Optional<BedrockAttachable> attachable, O
             attachable.withGeometry("frame_" + frame, geometryIds.get(frame));
         }
         attachable.withScript("pre_animation", preAnimation);
+    }
+
+    /**
+     * Gives each draw stage its own poses, selected by the same variable the render controller indexes with.
+     * <p>
+     * Needed because a stage often differs from the one before it <b>only</b> in its {@code display} block, and a
+     * display block becomes an animation here rather than part of the geometry. A trident's throwing state is the
+     * clearest case: Java turns it {@code [0,90,180]} against the in-hand {@code [0,60,0]} and drops it nine units,
+     * while the model's cubes and texture are byte-identical. Swapping geometry alone therefore changes nothing
+     * visible — the item appears never to leave its held pose.
+     * <p>
+     * Costs one animation per slot per stage, so {@link #applyPoseAnimations} stays the path for an item whose
+     * stages pose alike; see {@code BedrockAnimationContext.posesEqual}.
+     *
+     * @param perFrame one context per stage, in draw order, parallel to the render controller's arrays
+     */
+    public static void applyFramePoseAnimations(BedrockAttachable attachable,
+                                                List<BedrockAnimationContext> perFrame, Molang frameVariable) {
+        if (attachable == null) return;
+
+        // The unstaged set is replaced, not extended: leaving it would declare animations nothing animates.
+        attachable.clearAnimations();
+
+        List<Map<String, String>> animate = new ArrayList<>();
+        for (int frame = 0; frame < perFrame.size(); frame++) {
+            BedrockAnimationContext context = perFrame.get(frame);
+            if (context == null || context.isEmpty()) continue;
+
+            for (Map.Entry<AttachableSlot, String> entry : context.animationNames().entrySet()) {
+                String key = entry.getKey().key() + "_f" + frame;
+                attachable.withAnimation(key, entry.getValue());
+                animate.add(Map.of(key, Molang.raw(entry.getKey().condition())
+                        .and(frameVariable.eq(frame)).toString()));
+            }
+        }
+        attachable.withScript("animate", animate);
     }
 
     public static BedrockAttachableContext createWithAnimatedTexture(String identifier, String renderControllerName) {

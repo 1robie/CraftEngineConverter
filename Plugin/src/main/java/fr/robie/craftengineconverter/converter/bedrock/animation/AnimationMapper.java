@@ -61,16 +61,26 @@ public final class AnimationMapper {
     public static BedrockAnimationContext fromDisplay(String identifier,
                                                       Map<String, JavaBlockModel.DisplayTransform> display,
                                                       String parent) {
+        return fromDisplay(identifier, display, parent, java.util.List.of(identifier));
+    }
+
+    /**
+     * @param anchorKeys which {@code held-item-anchors.items} entries may override the anchor, in priority order —
+     *                   normally the item id then its base material. Distinct from {@code identifier}, which names
+     *                   the animations: a draw stage's animations are named after the stage but must anchor as the
+     *                   item.
+     */
+    public static BedrockAnimationContext fromDisplay(String identifier,
+                                                      Map<String, JavaBlockModel.DisplayTransform> display,
+                                                      String parent, java.util.List<String> anchorKeys) {
         String safeId = identifier.replace(":", ".").replace("/", "_");
 
         BedrockAnimation animation = new BedrockAnimation();
         Map<AttachableSlot, String> names = new EnumMap<>(AttachableSlot.class);
+        Map<AttachableSlot, Transform> poses = posesFor(display, parent, anchorKeys);
 
         for (AttachableSlot slot : AttachableSlot.values()) {
-            Transform pose = Transform
-                    .compose(HandAnchors.forSlot(slot), DisplayPoses.forSlot(slot, display, parent))
-                    .toBedrock();
-
+            Transform pose = poses.get(slot);
             String name = "animation." + safeId + "." + slot.animationSuffix();
             animation.withAnimation(name, BedrockAnimation.boneAnimation(
                     pose.translation(), pose.rotation(), pose.scale()));
@@ -78,5 +88,23 @@ public final class AnimationMapper {
         }
 
         return new BedrockAnimationContext(animation, names);
+    }
+
+    /**
+     * The composed pose per slot, before it is written out as an animation.
+     * <p>
+     * Exposed for the one caller that needs the numbers rather than the file: blending one draw stage's pose into
+     * the next over the charge needs both endpoints, and reading them back out of the emitted JSON would be
+     * parsing our own output.
+     */
+    public static Map<AttachableSlot, Transform> posesFor(Map<String, JavaBlockModel.DisplayTransform> display,
+                                                          String parent, java.util.List<String> anchorKeys) {
+        Map<AttachableSlot, Transform> poses = new EnumMap<>(AttachableSlot.class);
+        for (AttachableSlot slot : AttachableSlot.values()) {
+            poses.put(slot, Transform
+                    .compose(HandAnchors.forItem(slot, anchorKeys), DisplayPoses.forSlot(slot, display, parent))
+                    .toBedrock());
+        }
+        return poses;
     }
 }

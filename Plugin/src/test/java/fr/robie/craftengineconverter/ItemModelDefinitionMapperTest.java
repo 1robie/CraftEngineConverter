@@ -47,8 +47,8 @@ class ItemModelDefinitionMapperTest {
     @Test
     void parsesTheWholeCorpus() {
         assertFalse(mapper.isEmpty());
-        // 93 definition files live in the test pack across the three namespaces.
-        assertEquals(93, mapper.size());
+        // 94 definition files live in the test pack across the three namespaces.
+        assertEquals(94, mapper.size());
     }
 
     @Test

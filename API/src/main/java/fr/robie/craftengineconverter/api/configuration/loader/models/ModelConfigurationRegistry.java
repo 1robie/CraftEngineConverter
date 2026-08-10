@@ -12,7 +12,12 @@ import java.util.Set;
 
 public class ModelConfigurationRegistry {
     private static final Map<String, ModelConfigurationLoader<?>> LOADERS = new HashMap<>();
-    private static final Set<String> BEDROCK_UNREPRESENTABLE_TYPES = Set.of("special");
+    /**
+     * Types with no Bedrock equivalent that are still worth naming, so a skip reads as a known limitation rather
+     * than as a typo. {@code special} has left this set: it now resolves to its {@code base} model — see
+     * {@code SpecialModelConfigurationLoader}.
+     */
+    private static final Set<String> BEDROCK_UNREPRESENTABLE_TYPES = Set.of();
 
     private static String stripNamespace(String type) {
         int colon = type.indexOf(':');

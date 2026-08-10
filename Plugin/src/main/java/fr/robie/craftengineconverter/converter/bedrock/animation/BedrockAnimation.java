@@ -29,6 +29,11 @@ public class BedrockAnimation {
         return this.animations.isEmpty();
     }
 
+    /** The animations by name, in insertion order. */
+    public Map<String, JsonObject> animations() {
+        return java.util.Collections.unmodifiableMap(this.animations);
+    }
+
     public static JsonObject boneAnimation(float[] pos, float[] rot, float[] scale) {
         JsonObject anim = new JsonObject();
         anim.addProperty("loop", true);
@@ -54,6 +59,42 @@ public class BedrockAnimation {
             boneAnim.add("scale", toJsonArray(scaling[0], scaling[1], scaling[2]));
         }
 
+        bone.add("bone", boneAnim);
+        anim.add("bones", bone);
+        return anim;
+    }
+
+    /**
+     * A bone animation whose position is three Molang expressions rather than three numbers.
+     * <p>
+     * Bedrock evaluates a channel written as a string every render tick, which is the only way a pose can follow a
+     * value that changes continuously — vanilla's trident raises itself exactly this way, lerping its position over
+     * {@code variable.charge_amount}. Rotation and scale stay numeric because interpolating Euler angles takes the
+     * wrong path through a large turn, and vanilla does not interpolate them either.
+     * <p>
+     * No identity test on the position: an expression's value is not known here, so all three channels are always
+     * written.
+     */
+    public static JsonObject boneAnimation(String[] position, float[] rot, float[] scale) {
+        JsonObject anim = new JsonObject();
+        anim.addProperty("loop", true);
+
+        float[] rotation = round(rot);
+        float[] scaling = round(scale);
+
+        JsonObject boneAnim = new JsonObject();
+        JsonArray positions = new JsonArray();
+        for (String axis : position) positions.add(axis);
+        boneAnim.add("position", positions);
+
+        if (rotation[0] != 0 || rotation[1] != 0 || rotation[2] != 0) {
+            boneAnim.add("rotation", toJsonArray(rotation[0], rotation[1], rotation[2]));
+        }
+        if (scaling[0] != 1 || scaling[1] != 1 || scaling[2] != 1) {
+            boneAnim.add("scale", toJsonArray(scaling[0], scaling[1], scaling[2]));
+        }
+
+        JsonObject bone = new JsonObject();
         bone.add("bone", boneAnim);
         anim.add("bones", bone);
         return anim;

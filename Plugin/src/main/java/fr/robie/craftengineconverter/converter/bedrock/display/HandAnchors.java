@@ -70,22 +70,77 @@ public final class HandAnchors {
 
     /** The anchor for a slot, as configured. */
     public static Transform forSlot(AttachableSlot slot) {
-        return forSlot(slot, section(Keys.HELD_ITEM_ANCHORS));
+        return forSlot(slot, section(Keys.HELD_ITEM_ANCHORS), List.of());
+    }
+
+    /**
+     * The anchor for a slot, with any per-item override applied.
+     * <p>
+     * Named apart from {@link #forSlot(AttachableSlot, ConfigurationSection)} rather than overloading it: the two
+     * second parameters are unrelated reference types, so a bare {@code null} would not resolve.
+     */
+    public static Transform forItem(AttachableSlot slot, List<String> overrideKeys) {
+        return forSlot(slot, section(Keys.HELD_ITEM_ANCHORS), overrideKeys);
+    }
+
+    public static Transform forSlot(AttachableSlot slot, ConfigurationSection anchors) {
+        return forSlot(slot, anchors, List.of());
     }
 
     /**
      * The anchor for a slot, reading overrides from the given {@code held-item-anchors} section — {@code null} for
      * none. Left-hand slots mirror only the anchor's X, as vanilla's own off-hand poses do, so there is nothing
      * separate to configure for the off hand.
+     * <p>
+     * Resolved in three layers, per channel: the built-in default, then the global slot block, then the first
+     * entry under {@code items} matching one of {@code overrideKeys}. One anchor cannot suit every shape — a
+     * trident is long and often scaled, so an offset that is imperceptible on a sword is thrown out along the
+     * shaft and doubled — and vanilla does not try: its own {@code geometry.spear} lifts {@code [0,24,-27]} with
+     * no bone pivot where {@code geometry.trident} pivots at {@code [0,24,0]} and lifts {@code [1.5,-2.5,-10.5]}.
+     *
+     * @param overrideKeys candidates in priority order, normally the item id then its base material
      */
-    public static Transform forSlot(AttachableSlot slot, ConfigurationSection anchors) {
+    public static Transform forSlot(AttachableSlot slot, ConfigurationSection anchors,
+                                    List<String> overrideKeys) {
+        String key = slotKey(slot);
+        Transform global = configured(anchors, key, defaultFor(slot));
+        Transform resolved = configured(itemOverride(anchors, overrideKeys), key, global);
+        return slot.isOffHand() ? mirrorX(resolved) : resolved;
+    }
+
+    private static String slotKey(AttachableSlot slot) {
         return switch (slot) {
-            case THIRD_PERSON_MAIN -> configured(anchors, "third-person", DEFAULT_THIRD_PERSON);
-            case THIRD_PERSON_OFF -> mirrorX(configured(anchors, "third-person", DEFAULT_THIRD_PERSON));
-            case FIRST_PERSON_MAIN -> configured(anchors, "first-person", DEFAULT_FIRST_PERSON);
-            case FIRST_PERSON_OFF -> mirrorX(configured(anchors, "first-person", DEFAULT_FIRST_PERSON));
-            case HEAD -> configured(anchors, "head", DEFAULT_HEAD);
+            case THIRD_PERSON_MAIN, THIRD_PERSON_OFF -> "third-person";
+            case FIRST_PERSON_MAIN, FIRST_PERSON_OFF -> "first-person";
+            case HEAD -> "head";
         };
+    }
+
+    private static Transform defaultFor(AttachableSlot slot) {
+        return switch (slot) {
+            case THIRD_PERSON_MAIN, THIRD_PERSON_OFF -> DEFAULT_THIRD_PERSON;
+            case FIRST_PERSON_MAIN, FIRST_PERSON_OFF -> DEFAULT_FIRST_PERSON;
+            case HEAD -> DEFAULT_HEAD;
+        };
+    }
+
+    /**
+     * The first {@code held-item-anchors.items.<key>} block matching one of the candidates.
+     * <p>
+     * Keys are matched verbatim, so both {@code default:topaz_trident} and {@code trident} work — one item or
+     * every item built on that material, whichever the caller offers first.
+     */
+    private static ConfigurationSection itemOverride(ConfigurationSection anchors, List<String> overrideKeys) {
+        if (anchors == null || overrideKeys.isEmpty()) return null;
+        ConfigurationSection items = anchors.getConfigurationSection("items");
+        if (items == null) return null;
+
+        for (String key : overrideKeys) {
+            if (key == null || key.isBlank()) continue;
+            ConfigurationSection override = items.getConfigurationSection(key);
+            if (override != null) return override;
+        }
+        return null;
     }
 
     /**

@@ -24,6 +24,19 @@ public final class MolangMath {
         return call("floor", value.toString());
     }
 
+    /**
+     * {@code math.lerp(from, to, t)} — linear interpolation, as vanilla's own trident uses to raise itself over
+     * the charge rather than snapping.
+     * <p>
+     * Sound for a position and <b>not</b> for a rotation: interpolating Euler angles takes the wrong path as soon
+     * as the turn is large, and a trident's throwing pose is very nearly a half turn. Vanilla makes the same
+     * split — its raise layers move the item and leave the rotation to change in one step.
+     */
+    @NotNull
+    public static Molang lerp(double from, double to, @NotNull Molang time) {
+        return call("lerp", Molang.format(from), Molang.format(to), time.toString());
+    }
+
     @NotNull
     public static Molang round(@NotNull Molang value) {
         return call("round", value.toString());

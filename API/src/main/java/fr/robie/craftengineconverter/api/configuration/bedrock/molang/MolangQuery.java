@@ -45,6 +45,22 @@ public final class MolangQuery {
     /** Ticks left of the current use. Vanilla's crossbow animation controller transitions on this. */
     public static final Molang ITEM_REMAINING_USE_DURATION = query("item_remaining_use_duration");
 
+    /**
+     * Ticks left of the current use <b>in a named slot</b>, which is the only use query that takes one.
+     * <p>
+     * Everything else is {@code main_hand_item_*} and reads the main hand whatever slot the attachable is being
+     * drawn in — so this is the only way an off-hand item can tell whether <i>it</i> is the one in use. Vanilla
+     * calls it exactly once, in {@code animations/player_firstperson.animation.json}, as
+     * {@code query.item_remaining_use_duration('main_hand', 1.0)}.
+     *
+     * @param slot      {@code main_hand} or {@code off_hand}
+     * @param normalize {@code 1.0} to get a fraction of the total rather than a tick count
+     */
+    @NotNull
+    public static Molang itemRemainingUseDuration(@NotNull String slot, double normalize) {
+        return Molang.raw("query.item_remaining_use_duration('" + slot + "', " + Molang.format(normalize) + ")");
+    }
+
     /** Whether a crossbow is loaded. Not {@code is_charged}, which belongs to the Blaze. */
     public static final Molang ITEM_IS_CHARGED = query("item_is_charged");
 

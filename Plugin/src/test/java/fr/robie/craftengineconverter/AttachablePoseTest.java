@@ -281,6 +281,54 @@ class AttachablePoseTest {
      * model — so they are tunable from {@code config.yml} without a rebuild. This proves the reading works, and
      * that a config naming one channel does not silently zero the other two.
      */
+    /**
+     * One anchor cannot suit every shape. A trident is long and usually scaled by its own model, so an offset that
+     * is imperceptible on a sword is thrown out along the shaft and doubled — and vanilla does not use one anchor
+     * either. An override resolves in three layers, per channel: built-in default, global block, item block.
+     */
+    @Test
+    void anItemCanOverrideTheGlobalAnchor() {
+        Map<String, Object> globalThirdPerson = new HashMap<>();
+        globalThirdPerson.put("translation", List.of(0.0, 14.0, 0.0));
+        globalThirdPerson.put("rotation", List.of(-90.0, 0.0, 0.0));
+
+        Map<String, Object> tridentThirdPerson = new HashMap<>();
+        tridentThirdPerson.put("translation", List.of(1.5, -2.5, -10.5));
+
+        ConfigurationSection anchors = ConfigurationTrees.toSection(Map.of(
+                "third-person", globalThirdPerson,
+                "items", Map.of("trident", Map.of("third-person", tridentThirdPerson))));
+
+        Transform trident = HandAnchors.forSlot(
+                AttachableSlot.THIRD_PERSON_MAIN, anchors, List.of("default:topaz_trident", "trident"));
+        Transform sword = HandAnchors.forSlot(
+                AttachableSlot.THIRD_PERSON_MAIN, anchors, List.of("default:topaz_sword", "golden_sword"));
+
+        assertEquals(1.5F, trident.translation()[0], EPSILON, "the item block wins");
+        assertEquals(-2.5F, trident.translation()[1], EPSILON);
+        assertEquals(-10.5F, trident.translation()[2], EPSILON);
+        // Named nowhere in the item block, so it falls through to the global one rather than to zero.
+        assertEquals(-90.0F, trident.rotation()[0], EPSILON, "an unnamed channel falls through to the global block");
+
+        assertEquals(14.0F, sword.translation()[1], EPSILON, "an item with no override is untouched");
+    }
+
+    /** The id is tried before the material, so one item can differ from the rest built on the same base. */
+    @Test
+    void theItemIdBeatsTheMaterial() {
+        ConfigurationSection anchors = ConfigurationTrees.toSection(Map.of("items", Map.of(
+                "default:topaz_trident", Map.of("third-person", Map.of("translation", List.of(1.0, 1.0, 1.0))),
+                "trident", Map.of("third-person", Map.of("translation", List.of(9.0, 9.0, 9.0))))));
+
+        Transform specific = HandAnchors.forSlot(
+                AttachableSlot.THIRD_PERSON_MAIN, anchors, List.of("default:topaz_trident", "trident"));
+        Transform byMaterial = HandAnchors.forSlot(
+                AttachableSlot.THIRD_PERSON_MAIN, anchors, List.of("default:other_trident", "trident"));
+
+        assertEquals(1.0F, specific.translation()[0], EPSILON);
+        assertEquals(9.0F, byMaterial.translation()[0], EPSILON);
+    }
+
     @Test
     void anAnchorCanBeOverriddenFromConfig() {
         Map<String, Object> thirdPerson = new HashMap<>();

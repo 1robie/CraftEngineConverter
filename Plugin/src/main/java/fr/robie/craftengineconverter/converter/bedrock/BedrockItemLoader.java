@@ -33,16 +33,23 @@ import fr.robie.craftengineconverter.api.configuration.item.models.range_dispatc
 import fr.robie.craftengineconverter.api.configuration.item.models.select.ChargeTypeSelectConfiguration;
 import fr.robie.craftengineconverter.api.configuration.item.models.select.ComponentSelectConfiguration;
 import fr.robie.craftengineconverter.api.configuration.item.models.select.CustomModelDataSelectConfiguration;
+import fr.robie.craftengineconverter.api.configuration.item.models.select.DisplayContent;
+import fr.robie.craftengineconverter.api.configuration.item.models.select.DisplayContentSelectConfiguration;
 import fr.robie.craftengineconverter.api.configuration.item.models.select.SelectModelConfiguration;
 import fr.robie.craftengineconverter.api.configuration.item.models.select.TrimMaterialSelectConfiguration;
 import fr.robie.craftengineconverter.converter.bedrock.item.ItemModelDefinitionMapper;
 import fr.robie.craftengineconverter.api.configuration.loader.models.ModelConfigurationRegistry;
+import fr.robie.craftengineconverter.api.configuration.bedrock.molang.Molang;
+import fr.robie.craftengineconverter.api.configuration.bedrock.molang.MolangMath;
 import fr.robie.craftengineconverter.converter.bedrock.animation.AnimationMapper;
+import fr.robie.craftengineconverter.converter.bedrock.animation.BedrockAnimation;
 import fr.robie.craftengineconverter.converter.bedrock.animation.BedrockAnimationContext;
 import fr.robie.craftengineconverter.converter.bedrock.animation.BedrockRenderControllers;
 import fr.robie.craftengineconverter.converter.bedrock.attachable.BedrockAttachableContext;
 import fr.robie.craftengineconverter.converter.bedrock.attachable.DrawStates;
+import fr.robie.craftengineconverter.converter.bedrock.display.AttachableSlot;
 import fr.robie.craftengineconverter.converter.bedrock.display.DisplayPresets;
+import fr.robie.craftengineconverter.converter.bedrock.display.Transform;
 import fr.robie.craftengineconverter.converter.bedrock.geometry.BedrockGeometry;
 import fr.robie.craftengineconverter.converter.bedrock.geometry.DisplayContext;
 import fr.robie.craftengineconverter.converter.bedrock.geometry.GeometryMapper;
@@ -89,6 +96,11 @@ public class BedrockItemLoader {
      * assets directory — is an early return several methods away from here.
      */
     private final java.util.LinkedHashMap<String, DrawStates> pendingDrawStates = new java.util.LinkedHashMap<>();
+    /**
+     * Where an item's inventory sprite comes from, when a {@code display_context} select says it is not the
+     * held model. Keyed by the held branch's {@code textureId}; see {@link #traverseDisplayContextSelect}.
+     */
+    private final java.util.HashMap<String, SimpleModelConfiguration> pendingIconModels = new java.util.HashMap<>();
 
     public BedrockItemLoader(@NotNull String itemId, @NotNull ConfigurationSection itemSection, @NotNull ConversionContext context) {
         this.itemId = itemId;
@@ -339,6 +351,11 @@ public class BedrockItemLoader {
     }
 
     private void traverseSelect(@NotNull GroupDefinitionMapping group, @NotNull SelectModelConfiguration<?> select, Material material, String baseTextureId, List<BedrockPredicate> predicateStack) {
+        if (select instanceof DisplayContentSelectConfiguration displayContext) {
+            this.traverseDisplayContextSelect(group, displayContext, material, baseTextureId, predicateStack);
+            return;
+        }
+
         for (SelectModelConfiguration.Case caseEntry : select.getCases()) {
             String caseValue = this.caseValueToString(caseEntry.when());
             String caseTextureId = baseTextureId + "_" + this.identifierSuffix(caseValue);
@@ -354,6 +371,79 @@ public class BedrockItemLoader {
         if (select.getFallback() != null) {
             this.buildDefinitions(group, select.getFallback(), material, baseTextureId, predicateStack);
         }
+    }
+
+    /**
+     * Splits a {@code display_context} select into the item's icon and its held form.
+     * <p>
+     * This is not a variant select like {@code trim_material}, where each case becomes its own Bedrock item.
+     * Bedrock has no display contexts: an attachable is drawn in one of five slots keyed on
+     * {@code context.is_first_person} and {@code context.item_slot}, and the inventory shows a flat sprite that
+     * {@code ItemIconRenderer} draws. So the tree collapses onto that split — the {@code gui}-side model becomes
+     * the icon, the held-side model becomes the geometry, poses and attachable texture, and the item keeps a
+     * single Geyser definition because it is a single Bedrock item.
+     * <p>
+     * Every vanilla trident and spear is written this way, and so is every custom one: one case naming
+     * {@code ["gui","ground","fixed","on_shelf"]} against a flat sprite, with the in-hand model as the fallback.
+     * Without this the fallback wins outright and the inventory shows the in-hand model — for the sample
+     * trident, the unwrapped {@code topaz_trident_3d} sheet rather than its sprite.
+     */
+    private void traverseDisplayContextSelect(@NotNull GroupDefinitionMapping group,
+                                              @NotNull SelectModelConfiguration<?> select, Material material,
+                                              String baseTextureId, List<BedrockPredicate> predicateStack) {
+        ModelConfiguration inventoryModel = null;
+        ModelConfiguration heldModel = null;
+        boolean inventoryDisagrees = false;
+        boolean heldDisagrees = false;
+
+        for (SelectModelConfiguration.Case caseEntry : select.getCases()) {
+            if (!(caseEntry.when() instanceof DisplayContent context)) continue;
+            if (isInventoryContext(context)) {
+                if (inventoryModel == null) inventoryModel = caseEntry.model();
+                else if (inventoryModel != caseEntry.model()) inventoryDisagrees = true;
+            } else {
+                if (heldModel == null) heldModel = caseEntry.model();
+                else if (heldModel != caseEntry.model()) heldDisagrees = true;
+            }
+        }
+
+        ModelConfiguration fallback = select.getFallback();
+        if (heldModel == null) heldModel = fallback;
+        if (inventoryModel == null) inventoryModel = fallback;
+
+        if (heldModel == null) {
+            Logger.warn("Item " + this.itemId + " selects on display context but names no model for a held"
+                    + " context and has no fallback - nothing to convert");
+            return;
+        }
+
+        if (heldDisagrees) {
+            // Bedrock binds one geometry per attachable; first and third person cannot differ in shape.
+            Logger.warn("Item " + this.itemId + " shows different models in different held contexts,"
+                    + " which Bedrock cannot do - using the first");
+        }
+        if (inventoryDisagrees) {
+            // The engine poses dropped and framed items itself, so only the gui-side model has anywhere to go.
+            Logger.debug("Item " + this.itemId + " varies its model across gui/ground/fixed - Bedrock draws one"
+                    + " sprite for all of them, so the first is used");
+        }
+
+        // Recorded against the held branch's own texture id, because that is the id the artifacts below are
+        // registered under; addTextureDataIfSimpleModel picks it up when it builds the definition's texture.
+        if (inventoryModel instanceof SimpleModelConfiguration icon && inventoryModel != heldModel) {
+            this.pendingIconModels.put(baseTextureId, icon);
+        }
+
+        // One definition: the held branch keeps the base id and the unchanged predicate stack.
+        this.buildDefinitions(group, heldModel, material, baseTextureId, predicateStack);
+    }
+
+    /** Whether Bedrock draws this context as the inventory sprite rather than as a held attachable. */
+    private static boolean isInventoryContext(@NotNull DisplayContent context) {
+        return switch (context) {
+            case GUI, GROUND, FIXED, ON_SHELF -> true;
+            default -> false;
+        };
     }
 
     private void traverseRange(@NotNull GroupDefinitionMapping group, @NotNull RangeDispatchModelConfiguration range, Material material, String baseTextureId, List<BedrockPredicate> predicateStack) {
@@ -439,9 +529,25 @@ public class BedrockItemLoader {
         return null;
     }
 
+    /**
+     * A case value as it appears in a synthesized identifier.
+     * <p>
+     * Collections are refused rather than stringified. A multi-value {@code when} is split into one case per
+     * value by {@code AbstractSelectModelConfigurationLoader.loadCases}, so one should never arrive here — but
+     * {@code List.toString()} yields {@code [gui, ground, fixed]}, and the brackets and commas survive
+     * {@link #sanitizeTextureSuffix} into a Bedrock identifier and a file name, which fails far from here.
+     */
     private String caseValueToString(Object when) {
         if (when instanceof Enum<?> enumValue) {
             return enumValue.name().toLowerCase(Locale.ROOT);
+        }
+        if (when instanceof Iterable<?> || when instanceof Object[]) {
+            Logger.warn("Item " + this.itemId + " has a select case naming several values at once that reached"
+                    + " identifier generation - using only the first");
+            Object first = when instanceof Iterable<?> values
+                    ? values.iterator().hasNext() ? values.iterator().next() : null
+                    : ((Object[]) when).length > 0 ? ((Object[]) when)[0] : null;
+            return first == null ? "case" : this.caseValueToString(first);
         }
         return when.toString();
     }
@@ -918,7 +1024,22 @@ public class BedrockItemLoader {
                 this.registerPipelineArtifacts(textureRefs.getFirst(), modelPath, textureId,
                         this.isToolMaterial(mat), emitHeldModel);
 
-                this.renderIconFromModel(modelPath, textureId, simpleModelConfiguration);
+                // A display_context select may say the inventory sprite is a different model from the held one -
+                // a trident's flat sprite against its 3D in-hand shape. The artifacts above stay on the held
+                // model; only the icon and the definition's texture move.
+                SimpleModelConfiguration iconModel = this.pendingIconModels.remove(textureId);
+                List<String> iconRefs = textureRefs;
+                if (iconModel != null) {
+                    iconRefs = this.context.javaModelResolver()
+                            .texturesOf(iconModel.getModel(), this.context.javaAssetsDir());
+                    if (iconRefs.isEmpty()) iconRefs = List.of(iconModel.getModel());
+                    // assignIcon copies the icon out of the pack, not out of the source tree, so the sprite has
+                    // to be written even though no attachable references it.
+                    this.context.copyTexture(iconRefs.getFirst(), textureId);
+                }
+
+                this.renderIconFromModel(iconModel != null ? iconModel.getModel() : modelPath, textureId,
+                        iconModel != null ? iconModel : simpleModelConfiguration);
                 for (int layer = 1; layer < textureRefs.size(); layer++) {
                     String layerRef = textureRefs.get(layer);
 
@@ -939,7 +1060,7 @@ public class BedrockItemLoader {
 
                 if (!hasGenerationTexture) {
                     TextureData textureData = new TextureData(textureId);
-                    for (String ref : textureRefs) {
+                    for (String ref : iconRefs) {
                         // An animated texture is split into per-frame files, so the un-framed path
                         // names nothing on disk; point at frame 0 as the still icon.
                         if (this.context.texturePipeline().isAnimated(ref)) {
@@ -1148,7 +1269,8 @@ public class BedrockItemLoader {
 
     private void registerPose(String textureId, Map<String, JavaBlockModel.DisplayTransform> display,
                               String parent) {
-        BedrockAnimationContext animCtx = AnimationMapper.fromDisplay(textureId, display, parent);
+        BedrockAnimationContext animCtx =
+                AnimationMapper.fromDisplay(textureId, display, parent, this.anchorKeys());
         if (animCtx.isEmpty()) return;
 
         animCtx.animation().ifPresent(anim -> this.context.registerAnimation(textureId.replace(":", "."), anim));
@@ -1164,9 +1286,23 @@ public class BedrockItemLoader {
      */
     private BedrockAnimationContext defaultPose(String textureId, boolean isTool) {
         BedrockAnimationContext animCtx = AnimationMapper.fromDisplay(textureId,
-                DisplayPresets.forParent(isTool ? "item/handheld" : "item/generated"));
+                DisplayPresets.forParent(isTool ? "item/handheld" : "item/generated"), null, this.anchorKeys());
         animCtx.animation().ifPresent(anim -> this.context.registerAnimation(textureId.replace(":", "."), anim));
         return animCtx;
+    }
+
+    /**
+     * Which {@code held-item-anchors.items} entries may override this item's anchor, most specific first.
+     * <p>
+     * One anchor cannot suit every shape, and the items this matters for are exactly the awkward ones - a trident
+     * is long and usually scaled, so an offset invisible on a sword is thrown out along the shaft. Naming the
+     * material as well as the id means "every trident" is one entry rather than one per item.
+     */
+    private java.util.List<String> anchorKeys() {
+        Material material = this.getMaterial();
+        return material == null
+                ? java.util.List.of(this.itemId)
+                : java.util.List.of(this.itemId, material.name().toLowerCase(Locale.ROOT));
     }
 
     /** CraftEngine's {@code model.generation.display}, in the same shape a Java model's {@code display} parses to. */
@@ -1386,7 +1522,8 @@ public class BedrockItemLoader {
 
         DrawStates drawStates = this.pendingDrawStates.remove(textureId);
         if (drawStates != null) {
-            this.applyDrawStates(attachable, drawStates, textureId, safeKey, baseGeometryId, defaultTexture);
+            this.applyDrawStates(attachable, drawStates, textureId, safeKey, baseGeometryId, defaultTexture,
+                    animCtx);
         }
 
         this.context.registerAttachable(textureId, attachable);
@@ -1441,7 +1578,8 @@ public class BedrockItemLoader {
      * walks {@code item_texture.json}, and a draw frame is never an icon.
      */
     private void applyDrawStates(BedrockAttachableContext attachCtx, DrawStates drawStates, String textureId,
-                                 String safeKey, String baseGeometryId, String baseTexturePath) {
+                                 String safeKey, String baseGeometryId, String baseTexturePath,
+                                 BedrockAnimationContext basePose) {
         if (attachCtx.attachable().isEmpty() || this.context.javaAssetsDir() == null) return;
 
         List<DrawStates.Frame> frames = drawStates.frames();
@@ -1476,12 +1614,132 @@ public class BedrockItemLoader {
             geometryIds.add(this.registerHeldGeometry(frames.get(frame).modelPath(), frameKey, ref));
         }
 
+        // Poses before the script: whether the stages blend decides whether the script has to publish the charge.
+        boolean blends = this.applyFramePoses(attachCtx, drawStates, textureId, basePose);
+
         BedrockAttachableContext.applyDrawStates(attachCtx.attachable().orElseThrow(),
-                texturePaths, geometryIds, drawStates.preAnimation());
+                texturePaths, geometryIds, drawStates.preAnimation(blends));
 
         this.context.registerRenderController("controller.render." + safeKey,
                 new BedrockRenderControllers().withController("controller.render." + safeKey,
                         BedrockRenderControllers.frameArrayController(frames.size(), DrawStates.frameVariable())));
+    }
+
+    /**
+     * Gives each draw stage its own poses, when the stages are actually posed differently.
+     * <p>
+     * A stage that changes the model's shape or texture is already visible through the render controller's arrays.
+     * A stage that changes only the {@code display} block is not — and that is the normal case for the states this
+     * converter was extended to cover. Java's trident is the example: {@code trident_in_hand} and
+     * {@code trident_throwing} carry identical cubes and the same texture, and differ solely in a
+     * {@code thirdperson} rotation of {@code [0,60,0]} against {@code [0,90,180]}. On Bedrock a display block is an
+     * animation, so without this the throwing state swaps to a geometry that looks exactly like the one it
+     * replaced.
+     * <p>
+     * Skipped when every stage poses alike, which keeps a bow on one set of five animations rather than twenty:
+     * its {@code bow_pulling_*} models declare no {@code display} of their own and inherit one from
+     * {@code item/bow}.
+     */
+    private boolean applyFramePoses(BedrockAttachableContext attachCtx, DrawStates drawStates, String textureId,
+                                    BedrockAnimationContext basePose) {
+        if (basePose == null || basePose.isEmpty()) return false;
+
+        List<DrawStates.Frame> frames = drawStates.frames();
+        List<BedrockAnimationContext> perFrame = new ArrayList<>(frames.size());
+        perFrame.add(basePose);
+        boolean posesDiffer = false;
+
+        Map<AttachableSlot, Transform> idlePoses = null;
+
+        for (int frame = 1; frame < frames.size(); frame++) {
+            String frameKey = textureId + "_p" + frame;
+            JavaBlockModel model = this.context.javaModelResolver()
+                    .load(frames.get(frame).modelPath(), this.context.javaAssetsDir());
+
+            if (model == null) {
+                perFrame.add(basePose);
+                continue;
+            }
+
+            // Named after the stage, anchored as the item: an override is written once, not per stage.
+            BedrockAnimationContext pose = AnimationMapper.fromDisplay(frameKey, model.display(),
+                    model.parent().orElse(null), this.anchorKeys());
+            if (basePose.posesEqual(pose)) {
+                perFrame.add(basePose);
+                continue;
+            }
+            posesDiffer = true;
+
+            if (idlePoses == null) idlePoses = this.idlePosesFor(frames.getFirst().modelPath());
+            perFrame.add(idlePoses == null ? pose : this.blendedPose(frameKey, idlePoses,
+                    AnimationMapper.posesFor(model.display(), model.parent().orElse(null), this.anchorKeys())));
+        }
+
+        if (!posesDiffer) return false;
+
+        for (int frame = 1; frame < perFrame.size(); frame++) {
+            BedrockAnimationContext pose = perFrame.get(frame);
+            if (pose == basePose) continue;
+            final String frameKey = (textureId + "_p" + frame).replace(":", ".");
+            pose.animation().ifPresent(anim -> this.context.registerAnimation(frameKey, anim));
+        }
+
+        attachCtx.attachable().ifPresent(att -> BedrockAttachableContext.applyFramePoseAnimations(
+                att, perFrame, DrawStates.frameVariable()));
+        return true;
+    }
+
+    /** The idle stage's poses as numbers, so both ends of the blend are available. */
+    @Nullable
+    private Map<AttachableSlot, Transform> idlePosesFor(String idleModelPath) {
+        JavaBlockModel model = this.context.javaModelResolver()
+                .load(idleModelPath, this.context.javaAssetsDir());
+        return model == null ? null
+                : AnimationMapper.posesFor(model.display(), model.parent().orElse(null), this.anchorKeys());
+    }
+
+    /**
+     * A stage's pose, reached by drifting from the idle one over the draw rather than appearing at once.
+     * <p>
+     * This is what makes a converted trident move like the vanilla Bedrock one. Vanilla's own trident never snaps:
+     * {@code animation.trident.wield_first_person_raise} lerps its position over {@code variable.charge_amount},
+     * and {@code wield_first_person_raise_shake} adds a wobble once fully charged. Java has no equivalent — it
+     * simply swaps to {@code trident_throwing} — so reproducing the Java pack literally gives a jump where a
+     * Bedrock player expects a lift.
+     * <p>
+     * Position only. Rotation and scale take the stage's values outright, because interpolating Euler angles takes
+     * the wrong path through a large turn and a throwing pose is very nearly a half turn — the same split vanilla
+     * makes.
+     */
+    @NotNull
+    private BedrockAnimationContext blendedPose(String frameKey, Map<AttachableSlot, Transform> idle,
+                                                Map<AttachableSlot, Transform> active) {
+        String safeId = frameKey.replace(":", ".").replace("/", "_");
+        BedrockAnimation animation = new BedrockAnimation();
+        Map<AttachableSlot, String> names = new java.util.EnumMap<>(AttachableSlot.class);
+
+        for (AttachableSlot slot : AttachableSlot.values()) {
+            Transform from = idle.get(slot);
+            Transform to = active.get(slot);
+
+            String[] position = new String[3];
+            for (int axis = 0; axis < 3; axis++) {
+                float start = from.translation()[axis];
+                float end = to.translation()[axis];
+                // An axis that does not move needs no interpolation, and writing one would leave
+                // "math.lerp(-0.25, -0.25, ...)" in the pack for a reader to decipher.
+                Molang drift = start == end ? Molang.number(end)
+                        : MolangMath.lerp(start, end, DrawStates.chargeVariable());
+                // The shake is vertical only, as vanilla's is.
+                position[axis] = axis == 1 ? drift.plus(DrawStates.fullChargeShake()).toString() : drift.toString();
+            }
+
+            String name = "animation." + safeId + "." + slot.animationSuffix();
+            animation.withAnimation(name, BedrockAnimation.boneAnimation(position, to.rotation(), to.scale()));
+            names.put(slot, name);
+        }
+
+        return new BedrockAnimationContext(animation, names);
     }
 
     /**

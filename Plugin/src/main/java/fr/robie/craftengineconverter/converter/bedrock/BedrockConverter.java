@@ -5,7 +5,9 @@ import fr.robie.craftengineconverter.api.configuration.loader.ConfigurationTrees
 import fr.robie.craftengineconverter.api.manager.FileCacheManager;
 import fr.robie.craftengineconverter.api.utils.FileUtils;
 import fr.robie.craftengineconverter.converter.bedrock.item.ConfigFactoryExpander;
+import fr.robie.craftengineconverter.converter.bedrock.item.VersionGates;
 import fr.robie.messageflow.logger.Logger;
+import org.jetbrains.annotations.Nullable;
 import fr.robie.yamllibrary.ConfigurationSection;
 import fr.robie.yamllibrary.file.YamlConfiguration;
 import org.jetbrains.annotations.NotNull;
@@ -208,13 +210,68 @@ public class BedrockConverter {
 
     private void convertItemSection(@NotNull ConfigurationSection items, @NotNull File file,
                                     @NotNull ConversionContext ctx) {
-        for (String itemId : items.getKeys(false)) {
-            ConfigurationSection itemSection = items.getConfigurationSection(itemId);
-            if (itemSection == null) continue;
-            ConfigurationSection resolved = ctx.resolveTemplates(itemId, itemSection, file);
-            if (resolved == null) continue;
-            ctx.acceptMapping(new BedrockItemLoader(itemId, resolved, ctx).load());
+        int[] gated = new int[2];
+        this.convertItemSection(items, file, ctx, null, gated);
+        if (gated[0] + gated[1] > 0) {
+            Logger.info("Resolved " + (gated[0] + gated[1]) + " version-gated entr(ies) in " + file.getName()
+                    + " for Minecraft " + VersionGates.targetVersion() + ": kept " + gated[0]
+                    + ", skipped " + gated[1]);
         }
+    }
+
+    /**
+     * Converts every item in a section, descending through any {@code $$} version gate on the way.
+     * <p>
+     * A gate is not an item, but it arrives looking like one: {@code $$>=1.21.4#topaz_trident} is a key in
+     * the {@code items} map, split across several sections because {@code .} is the path separator. Reading
+     * it as an item id is what made the trident, the spear and the elytra vanish from the output without a
+     * word — the body has no {@code material}, so the loader simply returned null.
+     *
+     * @param gatePrefix the fragments consumed so far, rejoined; {@code null} at the top of a section
+     * @param gated      counts of gated entries kept and skipped, for the one summary line
+     */
+    private void convertItemSection(@NotNull ConfigurationSection items, @NotNull File file,
+                                    @NotNull ConversionContext ctx, @Nullable String gatePrefix,
+                                    int[] gated) {
+        for (String key : items.getKeys(false)) {
+            ConfigurationSection section = items.getConfigurationSection(key);
+            if (section == null) continue;
+
+            if (VersionGates.isFragment(key)) {
+                this.descendVersionGate(section, file, ctx,
+                        gatePrefix == null ? key : gatePrefix + "." + key, gated);
+                continue;
+            }
+
+            ConfigurationSection resolved = ctx.resolveTemplates(key, section, file);
+            if (resolved == null) continue;
+            ctx.acceptMapping(new BedrockItemLoader(key, resolved, ctx).load());
+        }
+    }
+
+    /**
+     * One level of a split gate: either keep descending, or decide the gate and convert what it holds.
+     * <p>
+     * The descent ends at the {@code #label} the author wrote, or — for a gate with no label — as soon as
+     * the children stop looking like fragments and start looking like item ids.
+     */
+    private void descendVersionGate(@NotNull ConfigurationSection section, @NotNull File file,
+                                    @NotNull ConversionContext ctx, @NotNull String joined, int[] gated) {
+        boolean complete = VersionGates.isLabelled(joined)
+                || section.getKeys(false).stream().noneMatch(VersionGates::isFragment);
+
+        if (!complete) {
+            this.convertItemSection(section, file, ctx, joined, gated);
+            return;
+        }
+
+        if (!VersionGates.accepts(VersionGates.expressionOf(joined), VersionGates.targetVersion())) {
+            gated[1]++;
+            return;
+        }
+        gated[0]++;
+        // Its children are items again - and may themselves be gated, so start a fresh prefix.
+        this.convertItemSection(section, file, ctx, null, gated);
     }
 
     /**
