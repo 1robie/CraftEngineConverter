@@ -2,6 +2,8 @@ package fr.robie.craftengineconverter.converter.bedrock.animation;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import fr.robie.craftengineconverter.api.configuration.bedrock.molang.Molang;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -114,6 +116,56 @@ public class BedrockRenderControllers {
 
     public static JsonObject singleFrameController(int frameIndex) {
         return staticController("frame_" + frameIndex);
+    }
+
+    /**
+     * Picks both the texture and the geometry out of parallel arrays, at an index the pack computes for itself.
+     * <p>
+     * This is the only way a custom item can change shape at runtime. Vanilla's own bow indexes the same two arrays
+     * with {@code query.get_animation_frame}, which the engine supplies from the vanilla bow's hardcoded pulling
+     * state and nothing can write to — but Bedrock evaluates a <i>computed</i> subscript, so a
+     * {@code variable.} the attachable sets in {@code scripts.pre_animation} works just as well. Vanilla does
+     * exactly that for horse armour, in {@code horse.v4.render_controllers.json}.
+     * <p>
+     * Unlike {@link #animatedController}, which indexes one texture array off the clock, this swaps the geometry
+     * too — the frames of a drawn bow are different shapes, not just different images. The two cannot be combined:
+     * a controller has one {@code geometry} field and one {@code Array.frames}.
+     *
+     * @param frameCount how many {@code frame_0..frame_n} texture and geometry slots the attachable declares
+     * @param index      the expression selecting among them, evaluated every render tick
+     */
+    public static JsonObject frameArrayController(int frameCount, @NotNull Molang index) {
+        JsonArray textureFrames = new JsonArray();
+        JsonArray geometryFrames = new JsonArray();
+        for (int frame = 0; frame < frameCount; frame++) {
+            textureFrames.add("Texture.frame_" + frame);
+            geometryFrames.add("Geometry.frame_" + frame);
+        }
+
+        JsonObject textureArrays = new JsonObject();
+        textureArrays.add("Array.frames", textureFrames);
+        JsonObject geometryArrays = new JsonObject();
+        geometryArrays.add("Array.geo_frames", geometryFrames);
+        JsonObject arrays = new JsonObject();
+        arrays.add("textures", textureArrays);
+        arrays.add("geometries", geometryArrays);
+
+        JsonObject c = new JsonObject();
+        c.add("arrays", arrays);
+
+        JsonArray tex = new JsonArray();
+        tex.add("Array.frames[" + index + "]");
+        tex.add("Texture.enchanted");
+        c.add("textures", tex);
+
+        JsonArray mats = new JsonArray();
+        JsonObject mat = new JsonObject();
+        mat.addProperty("*", "variable.is_enchanted ? Material.enchanted : Material.default");
+        mats.add(mat);
+        c.add("materials", mats);
+
+        c.addProperty("geometry", "Array.geo_frames[" + index + "]");
+        return c;
     }
 
     public static JsonObject staticController(String textureName) {

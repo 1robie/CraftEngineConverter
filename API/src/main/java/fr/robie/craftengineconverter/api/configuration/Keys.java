@@ -121,6 +121,16 @@ public final class Keys {
     public static final Key<Boolean> RENDER_ITEM_ICONS = Key.bool(BEDROCK, "render-item-icons", true);
     public static final Key<Integer> ITEM_ICON_SIZE = Key.integer(BEDROCK, "item-icon-size", 64);
     public static final Key<Boolean> SHORTEN_PACK_PATHS = Key.bool(BEDROCK, "shorten-pack-paths", true);
+    public static final Key<Boolean> ITEM_DRAW_STATES = Key.bool(BEDROCK, "item-draw-states", true)
+            .doc("Lets a bow or crossbow change model as it is drawn.",
+                    "",
+                    "Geyser cannot express draw progress - its range_dispatch predicate only knows damage, count,",
+                    "bundle fullness and custom model data - so the swap is done inside the resource pack instead,",
+                    "by a render controller indexing its frames from a Molang variable. Without this, a custom bow",
+                    "keeps its idle model the whole way through the draw.",
+                    "",
+                    "Turn it off if a bow shows the wrong frame: Bedrock reports the use duration in units that are",
+                    "not documented anywhere, so the timing is the one part of this taken from measurement.");
     public static final Key<Boolean> DISABLE_DEFAULT_ITALIC = Key.bool(BEDROCK, "disable-default-italic", true);
 
     public static final Key<ArmorConverter> ARMOR_CONVERTER_TYPE =

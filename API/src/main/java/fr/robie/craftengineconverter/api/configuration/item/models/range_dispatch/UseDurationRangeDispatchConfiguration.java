@@ -15,6 +15,15 @@ public class UseDurationRangeDispatchConfiguration extends RangeDispatchModelCon
         this(false);
     }
 
+    /**
+     * Whether the thresholds are compared against the time <i>left</i> rather than the time elapsed.
+     * <p>
+     * It inverts the direction of every comparison, so anything reproducing this dispatch has to know.
+     */
+    public boolean isRemaining() {
+        return this.remaining;
+    }
+
     @Override
     public void serialize(@NotNull ConfigurationSection section) {
         super.serialize(section);

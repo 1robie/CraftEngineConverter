@@ -75,6 +75,16 @@ item-icon-size: 64
 # renamed. Turn it off only if you want the generated names to stay readable while debugging a pack.
 shorten-pack-paths: true
 
+# Lets a bow or crossbow change model as it is drawn.
+#
+# Geyser cannot express draw progress - its range_dispatch predicate only knows damage, count, bundle fullness and
+# custom model data - so the swap is done inside the resource pack instead, by a render controller indexing its
+# frames from a Molang variable. Without this, a custom bow keeps its idle model the whole way through the draw.
+#
+# Turn it off if a bow shows the wrong frame: Bedrock reports the use duration in units that are not documented
+# anywhere, so the timing is the one part of this taken from measurement.
+item-draw-states: true
+
 # Disable italic formatting in item lore by adding <!i> tag
 disable-default-italic: true
 

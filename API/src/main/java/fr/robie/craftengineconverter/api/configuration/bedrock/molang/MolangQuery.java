@@ -85,7 +85,48 @@ public final class MolangQuery {
      */
     @NotNull
     public static Molang chargeAmount() {
-        Molang inner = MAIN_HAND_ITEM_USE_DURATION.minus(FRAME_ALPHA).plus(Molang.number(1));
-        return MolangMath.clamp(MAIN_HAND_ITEM_MAX_DURATION.minus(inner).dividedBy(10), 0, 1);
+        return MolangMath.clamp(elapsedUseTicks().dividedBy(10), 0, 1);
+    }
+
+    /**
+     * How far through its use the main-hand item is, from 0 to 1, on the Java pack's own terms.
+     * <p>
+     * The same shape as {@link #chargeAmount()} with vanilla's hardcoded {@code / 10.0} replaced by the {@code scale}
+     * the Java {@code range_dispatch} declares. Java compares its thresholds against
+     * {@code use_duration * scale}, so reproducing the multiplication is what makes a bow with a non-vanilla draw
+     * time change frames at the moments its author chose. Vanilla can hardcode the divisor because it only uses the
+     * value for a first-person wobble, never to pick a model.
+     * <p>
+     * <b>Only correct while the item is in use.</b> Idle, {@link #MAIN_HAND_ITEM_USE_DURATION} is 0, so the
+     * subtraction leaves the whole max duration and the result clamps to 1 — a bow reading this ungated sits
+     * permanently on its last frame. Gate it on {@link #IS_USING_ITEM} or on a use duration above zero.
+     */
+    @NotNull
+    public static Molang useProgress(double scale) {
+        return MolangMath.clamp(elapsedUseTicks().times(scale), 0, 1);
+    }
+
+    /**
+     * How far through its use the main-hand item is, from 0 to 1, without any constant at all.
+     * <p>
+     * For a property Java has <i>already</i> normalised — {@code crossbow/pull} is the elapsed time over the
+     * crossbow's own charge duration — there is no scale in the pack to read, and the charge duration is not
+     * something a resource pack can know: Quick Charge shortens it. Dividing by the item's own max duration gives
+     * the same fraction without naming a number, and it is what vanilla does when it needs one:
+     * {@code player.entity.json} sets
+     * {@code variable.item_use_normalized = query.main_hand_item_use_duration / query.main_hand_item_max_duration}.
+     * <p>
+     * Carries the same caveat as {@link #useProgress}: <b>only correct while the item is in use.</b>
+     */
+    @NotNull
+    public static Molang normalisedUseProgress() {
+        return MolangMath.clamp(elapsedUseTicks().dividedBy(MAIN_HAND_ITEM_MAX_DURATION), 0, 1);
+    }
+
+    /** Ticks elapsed since the use began, interpolated within the tick so the value moves smoothly. */
+    @NotNull
+    private static Molang elapsedUseTicks() {
+        Molang remaining = MAIN_HAND_ITEM_USE_DURATION.minus(FRAME_ALPHA).plus(Molang.number(1));
+        return MAIN_HAND_ITEM_MAX_DURATION.minus(remaining);
     }
 }

@@ -69,6 +69,33 @@ public record BedrockAttachableContext(Optional<BedrockAttachable> attachable, O
         attachable.withScript("animate", animate);
     }
 
+    /**
+     * Gives an attachable one texture and one geometry slot per draw stage, plus the script that decides which pair
+     * is showing.
+     * <p>
+     * The slots are named {@code frame_0..frame_n} to match the arrays
+     * {@link fr.robie.craftengineconverter.converter.bedrock.animation.BedrockRenderControllers#frameArrayController}
+     * builds over them. {@code default} is left in place: it is what every other consumer of this attachable reads,
+     * and index 0 points at the same texture anyway.
+     * <p>
+     * {@code pre_animation} runs before the pose animations each render tick, which is what lets the render
+     * controller read the variable it sets in the same frame.
+     *
+     * @param texturePaths  the pack-relative texture path of each frame, idle first
+     * @param geometryIds   the geometry identifier of each frame, parallel to {@code texturePaths}
+     * @param preAnimation  the statements setting the frame variable
+     */
+    public static void applyDrawStates(BedrockAttachable attachable, List<String> texturePaths,
+                                       List<String> geometryIds, List<String> preAnimation) {
+        if (attachable == null) return;
+
+        for (int frame = 0; frame < texturePaths.size(); frame++) {
+            attachable.withTexture("frame_" + frame, texturePaths.get(frame));
+            attachable.withGeometry("frame_" + frame, geometryIds.get(frame));
+        }
+        attachable.withScript("pre_animation", preAnimation);
+    }
+
     public static BedrockAttachableContext createWithAnimatedTexture(String identifier, String renderControllerName) {
         return createWithAnimatedTexture(identifier, renderControllerName, null);
     }

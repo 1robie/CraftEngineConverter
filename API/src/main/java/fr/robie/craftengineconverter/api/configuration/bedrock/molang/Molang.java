@@ -62,6 +62,16 @@ public class Molang {
         return new Molang("'" + value + "'", ATOM);
     }
 
+    /**
+     * A pack-defined variable, the only kind of value a pack can write to.
+     *
+     * @param name the bare name, without the {@code variable.} prefix
+     */
+    @NotNull
+    public static Molang variable(@NotNull String name) {
+        return new Molang("variable." + name, ATOM);
+    }
+
     // ------------------------------------------------------------------ comparison
 
     @NotNull
@@ -138,13 +148,25 @@ public class Molang {
         return this.binary("/", number(value), PRODUCT);
     }
 
+    /** Division by something only the engine knows, which is how a value is normalised without a magic constant. */
+    @NotNull
+    public Molang dividedBy(@NotNull Molang other) {
+        return this.binary("/", other, PRODUCT);
+    }
+
     // ------------------------------------------------------------------ conditionals
 
-    /** {@code condition ? whenTrue : whenFalse}. */
+    /**
+     * {@code condition ? whenTrue : whenFalse}.
+     * <p>
+     * All three operands are bracketed one level tighter than the conditional itself, so a nested ternary — which a
+     * frame index over uneven thresholds is — renders with explicit brackets rather than relying on Molang's
+     * associativity. Nothing in the vanilla pack nests one, so there is no observed behaviour to match.
+     */
     @NotNull
     public Molang then(@NotNull Molang whenTrue, @NotNull Molang whenFalse) {
-        return new Molang(this.bracketedFor(CONDITIONAL) + " ? " + whenTrue.bracketedFor(CONDITIONAL)
-                + " : " + whenFalse.bracketedFor(CONDITIONAL), CONDITIONAL);
+        return new Molang(this.bracketedFor(CONDITIONAL - 1) + " ? " + whenTrue.bracketedFor(CONDITIONAL - 1)
+                + " : " + whenFalse.bracketedFor(CONDITIONAL - 1), CONDITIONAL);
     }
 
     /** {@code left ?? right} — the value on the right when the left is undefined. */

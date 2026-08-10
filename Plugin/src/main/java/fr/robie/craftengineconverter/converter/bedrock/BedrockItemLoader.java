@@ -41,6 +41,7 @@ import fr.robie.craftengineconverter.converter.bedrock.animation.AnimationMapper
 import fr.robie.craftengineconverter.converter.bedrock.animation.BedrockAnimationContext;
 import fr.robie.craftengineconverter.converter.bedrock.animation.BedrockRenderControllers;
 import fr.robie.craftengineconverter.converter.bedrock.attachable.BedrockAttachableContext;
+import fr.robie.craftengineconverter.converter.bedrock.attachable.DrawStates;
 import fr.robie.craftengineconverter.converter.bedrock.display.DisplayPresets;
 import fr.robie.craftengineconverter.converter.bedrock.geometry.BedrockGeometry;
 import fr.robie.craftengineconverter.converter.bedrock.geometry.DisplayContext;
@@ -79,6 +80,15 @@ public class BedrockItemLoader {
     private ItemMapping baseDefinition;
     private final java.util.ArrayList<String> processedModelPaths = new java.util.ArrayList<>();
     private final java.util.HashMap<String, BedrockAnimationContext> animationContexts = new java.util.HashMap<>();
+    /**
+     * Draw stages found during the walk, keyed by the base variant's {@code textureId}, waiting for that variant's
+     * artifacts to be built so they can be hung off its attachable.
+     * <p>
+     * Entries are removed as they are consumed and {@link #load()} complains about anything left, because every way
+     * this can quietly not happen — a deduped model, an armour or block item that emits no held form, a missing
+     * assets directory — is an early return several methods away from here.
+     */
+    private final java.util.LinkedHashMap<String, DrawStates> pendingDrawStates = new java.util.LinkedHashMap<>();
 
     public BedrockItemLoader(@NotNull String itemId, @NotNull ConfigurationSection itemSection, @NotNull ConversionContext context) {
         this.itemId = itemId;
@@ -126,6 +136,7 @@ public class BedrockItemLoader {
                     && !iconSource.getTexturesData().isEmpty()) {
                 rootGroup.addTextureData(iconSource.getTexturesData().getFirst());
             }
+            this.warnAboutUnconsumedDrawStates();
             this.convertItem(rootGroup);
             return rootGroup;
         }
@@ -253,6 +264,21 @@ public class BedrockItemLoader {
     }
 
     private void traverseCondition(@NotNull GroupDefinitionMapping group, @NotNull ConditionModelConfiguration condition, Material material, String baseTextureId, List<BedrockPredicate> predicateStack) {
+        // A bow is handled whole, before any of the branch-by-branch logic below, because its drawn models are not
+        // separate Bedrock items: Geyser cannot select between them, so they become extra frames on one attachable
+        // and only the idle branch produces a definition. Leaving it to the generic walk gets nothing — every pull
+        // branch yields a null predicate and is then dropped by the one-predicate-less-definition guard.
+        if (Configuration.get(Keys.ITEM_DRAW_STATES)) {
+            Optional<DrawStates> drawStates = DrawStates.detect(condition, this.itemId);
+            if (drawStates.isPresent()) {
+                // Recorded before the recursion, not after: the call below runs the whole artifact pipeline for the
+                // idle model synchronously, and that is where these are picked up.
+                this.pendingDrawStates.put(baseTextureId, drawStates.get());
+                this.buildDefinitions(group, condition.getOnFalse(), material, baseTextureId, predicateStack);
+                return;
+            }
+        }
+
         if (!condition.isConditionSupported()) {
             Logger.warn("Unsupported condition property '" + condition.getProperty() + "' for item " + material + " - condition branches will be processed without predicates");
         }
@@ -1226,6 +1252,13 @@ public class BedrockItemLoader {
         Optional<CachedTextureInfo> resolved = this.context.texturePipeline().resolveTexture(textureRef, textureId, this.context.javaAssetsDir());
 
         if (resolved.isPresent() && resolved.get().animation().isPresent()) {
+            // One render controller has one geometry field and one Array.frames, and the flipbook path below already
+            // owns both. A bow whose idle texture also animates would need two independent frame arrays, so the
+            // animation wins - it is the one the item would otherwise lose entirely.
+            if (this.pendingDrawStates.remove(textureId) != null) {
+                Logger.warn("Item " + this.itemId + " has both an animated texture and draw stages"
+                        + " - keeping the animation, so it will not change shape as it is drawn");
+            }
             this.registerAnimatedItemArtifacts(textureRef, modelPath, textureId, resolved.get(), isTool, emitHeldModel);
         } else {
             this.registerStaticItemArtifacts(textureRef, modelPath, textureId, isTool, emitHeldModel);
@@ -1327,20 +1360,8 @@ public class BedrockItemLoader {
         // Everything below builds the held 3D model, which armour does not use.
         if (!emitHeldModel) return;
 
-        this.context.registerGeometry(modelPath, textureId, 16, 16);
-
-        boolean hasGeometry = this.context.collectedGeometry().containsKey(textureId);
-
-        // Create default flat geometry when the model has no shape of its own — a sprite item, whose model is
-        // nothing but a textures block. Extruding its silhouette is the best available stand-in.
-        if (!hasGeometry) {
-            String safeKey = textureId.replace(":", ".").replace("/", "_");
-            BedrockGeometry fallbackGeo = this.loadStaticTexture(textureRef, textureId)
-                    .map(image -> GeometryMapper.createFlatItemGeometry(safeKey, image))
-                    .orElseGet(() -> GeometryMapper.createFlatItemGeometry(safeKey, 16, 16));
-            this.context.collectedGeometry().put(textureId, fallbackGeo);
-            hasGeometry = true;
-        }
+        // Always present: registerHeldGeometry extrudes the sprite when the model has no shape of its own.
+        String baseGeometryId = this.registerHeldGeometry(modelPath, textureId, textureRef);
 
         BedrockAnimationContext animCtx = this.animationContexts.get(textureId);
 
@@ -1352,7 +1373,7 @@ public class BedrockItemLoader {
             // So the item renders posed rather than sitting unrotated at the bone's origin.
             animCtx = this.defaultPose(textureId, isTool);
         }
-        attachable = BedrockAttachableContext.createWithAnimations(textureId, hasGeometry, false, animCtx, defaultTexture);
+        attachable = BedrockAttachableContext.createWithAnimations(textureId, true, false, animCtx, defaultTexture);
 
         // Register per-item render controller for this static item
         String safeKey = textureId.replace(":", ".").replace("/", "_");
@@ -1363,7 +1384,104 @@ public class BedrockItemLoader {
         // Override attachable to use per-item RC instead of the shared item_default
         attachable.attachable().ifPresent(att -> att.withRenderController("controller.render." + safeKey));
 
+        DrawStates drawStates = this.pendingDrawStates.remove(textureId);
+        if (drawStates != null) {
+            this.applyDrawStates(attachable, drawStates, textureId, safeKey, baseGeometryId, defaultTexture);
+        }
+
         this.context.registerAttachable(textureId, attachable);
+    }
+
+    /**
+     * Says so when draw stages were found but never reached an attachable.
+     * <p>
+     * The pipeline between the two has several early returns — a model already processed under the same id, an item
+     * that emits no held form, a missing assets directory — and each of them is far enough away that a bow simply
+     * not animating would otherwise be the only symptom.
+     */
+    private void warnAboutUnconsumedDrawStates() {
+        for (String textureId : this.pendingDrawStates.keySet()) {
+            Logger.warn("Item " + this.itemId + " has draw stages for '" + textureId
+                    + "' that never reached an attachable - it will not change appearance as it is drawn");
+        }
+        this.pendingDrawStates.clear();
+    }
+
+    /**
+     * Builds the item's held geometry, falling back to an extruded sprite when the model has no shape of its own —
+     * a model that is nothing but a textures block, which is what {@code item/generated} produces.
+     *
+     * @return the geometry identifier the attachable should point at
+     */
+    @NotNull
+    private String registerHeldGeometry(String modelPath, String geometryKey, String textureRef) {
+        this.context.registerGeometry(modelPath, geometryKey, 16, 16);
+        String safeKey = geometryKey.replace(":", ".").replace("/", "_");
+
+        if (!this.context.collectedGeometry().containsKey(geometryKey)) {
+            BedrockGeometry fallbackGeo = this.loadStaticTexture(textureRef, geometryKey)
+                    .map(image -> GeometryMapper.createFlatItemGeometry(safeKey, image))
+                    .orElseGet(() -> GeometryMapper.createFlatItemGeometry(safeKey, 16, 16));
+            this.context.collectedGeometry().put(geometryKey, fallbackGeo);
+        }
+        return "geometry." + safeKey;
+    }
+
+    /**
+     * Turns an item's draw stages into extra frames on its attachable.
+     * <p>
+     * Each stage after the idle one contributes a texture and a geometry, and the render controller built here
+     * replaces the static one so it can index both arrays from the variable the attachable sets. Nothing is added
+     * on the Geyser side: the stages are appearances of one Bedrock item, not items of their own, so they get no
+     * definition, no {@code bedrock_identifier} and no {@code item_texture.json} shortname. Emitting any of those
+     * would put a second copy of the bow in the creative menu.
+     * <p>
+     * Every stage is resolved before any of it is written. An attachable naming a texture the pack does not contain
+     * is refused by some clients outright, and nothing else here would catch it — the end-of-conversion check only
+     * walks {@code item_texture.json}, and a draw frame is never an icon.
+     */
+    private void applyDrawStates(BedrockAttachableContext attachCtx, DrawStates drawStates, String textureId,
+                                 String safeKey, String baseGeometryId, String baseTexturePath) {
+        if (attachCtx.attachable().isEmpty() || this.context.javaAssetsDir() == null) return;
+
+        List<DrawStates.Frame> frames = drawStates.frames();
+        List<String> frameRefs = new ArrayList<>(frames.size());
+        for (DrawStates.Frame frame : frames) {
+            List<String> refs = this.context.javaModelResolver()
+                    .texturesOf(frame.modelPath(), this.context.javaAssetsDir());
+            // layer0, the same reference the base path treats as the item's own texture.
+            String ref = refs.isEmpty() ? frame.modelPath() : refs.getFirst();
+            if (this.context.texturePipeline()
+                    .resolveTexture(ref, textureId, this.context.javaAssetsDir()).isEmpty()) {
+                Logger.warn("Item " + this.itemId + " has a draw stage whose texture '" + ref
+                        + "' is missing - it will not change appearance as it is drawn");
+                return;
+            }
+            frameRefs.add(ref);
+        }
+
+        List<String> texturePaths = new ArrayList<>(frames.size());
+        List<String> geometryIds = new ArrayList<>(frames.size());
+        // Frame 0 is the idle model, whose texture and geometry the base path has already produced.
+        texturePaths.add(baseTexturePath);
+        geometryIds.add(baseGeometryId);
+
+        for (int frame = 1; frame < frames.size(); frame++) {
+            String ref = frameRefs.get(frame);
+            // A short suffix, not the property-and-threshold names the generic walk would have built: these keys
+            // become file names under models/entity, where this project has hit the Windows path limit before.
+            String frameKey = textureId + "_p" + frame;
+            this.context.copyTexture(ref, textureId);
+            texturePaths.add(this.resolveTexturePath(ref));
+            geometryIds.add(this.registerHeldGeometry(frames.get(frame).modelPath(), frameKey, ref));
+        }
+
+        BedrockAttachableContext.applyDrawStates(attachCtx.attachable().orElseThrow(),
+                texturePaths, geometryIds, drawStates.preAnimation());
+
+        this.context.registerRenderController("controller.render." + safeKey,
+                new BedrockRenderControllers().withController("controller.render." + safeKey,
+                        BedrockRenderControllers.frameArrayController(frames.size(), DrawStates.frameVariable())));
     }
 
     /**
