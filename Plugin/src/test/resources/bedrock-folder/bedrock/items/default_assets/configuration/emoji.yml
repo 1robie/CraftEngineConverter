@@ -1,0 +1,138 @@
+# An emoji is always an image, but an image is not necessarily an emoji.
+# You need to configure the corresponding image for your emoji first. Here, I have configured a 4x4 bitmap for it.
+# https://xiao-momi.github.io/craft-engine-wiki/configuration/image
+images:
+  default:emojis:
+    height: 11
+    ascent: 9
+    font: minecraft:default # If your chat plugin supports custom font, better using a custom font here
+    file: minecraft:font/image/emojis.png
+    grid_size: 4,4
+
+# https://xiao-momi.github.io/craft-engine-wiki/reference/template
+templates:
+  default:emoji/basic:
+    content: <!shadow><white><arg:emoji></white></!shadow>
+    content_overrides:
+      chat: <hover:show_text:'<l10n:emoji.tip:"<arg:keyword>":"<arg:emoji>">'><!shadow><white><arg:emoji></white></!shadow></hover>
+      book: <hover:show_text:'<arg:keyword>'><!shadow><white><arg:emoji></white></!shadow></hover>
+      anvil: <!i><!shadow><white><arg:emoji></white></!shadow></!i>
+
+# Here are the specific configurations for the emoji.
+# However, I have used templates in this section. If you would like to see the complete configuration, please refer to the wiki.
+# https://xiao-momi.github.io/craft-engine-wiki/configuration/emoji
+emoji:
+  default:emoji_smiley:
+    template: default:emoji/basic
+    overrides:
+      image: default:emojis:0:0
+      permission: emoji.smile
+      keywords:
+        - :)
+        - ':smiley:'
+        - ':smile:'
+  default:emoji_angry:
+    template: default:emoji/basic
+    overrides:
+      image: default:emojis:0:1
+      permission: emoji.angry
+      keywords:
+        - ':angry:'
+  default:emoji_grin:
+    template: default:emoji/basic
+    overrides:
+      image: default:emojis:0:2
+      permission: emoji.grin
+      keywords:
+        - ':grin:'
+  default:emoji_sob:
+    template: default:emoji/basic
+    overrides:
+      image: default:emojis:0:3
+      permission: emoji.sob
+      keywords:
+        - ':sob:'
+  default:emoji_sweat_smile:
+    template: default:emoji/basic
+    overrides:
+      image: default:emojis:1:0
+      permission: emoji.sweat_smile
+      keywords:
+        - ':sweat_smile:'
+  default:emoji_blush:
+    template: default:emoji/basic
+    overrides:
+      image: default:emojis:1:1
+      permission: emoji.blush
+      keywords:
+        - ':blush:'
+  default:emoji_joy:
+    template: default:emoji/basic
+    overrides:
+      image: default:emojis:1:2
+      permission: emoji.joy
+      keywords:
+        - ':joy:'
+  default:emoji_slight_frown:
+    template: default:emoji/basic
+    overrides:
+      image: default:emojis:1:3
+      permission: emoji.slight_frown
+      keywords:
+        - ':slight_frown:'
+  default:emoji_unamused:
+    template: default:emoji/basic
+    overrides:
+      image: default:emojis:2:0
+      permission: emoji.unamused
+      keywords:
+        - ':unamused:'
+  default:emoji_laughing:
+    template: default:emoji/basic
+    overrides:
+      image: default:emojis:2:1
+      permission: emoji.laughing
+      keywords:
+        - ':laughing:'
+  default:emoji_sunglasses:
+    template: default:emoji/basic
+    overrides:
+      image: default:emojis:2:2
+      permission: emoji.sunglasses
+      keywords:
+        - ':sunglasses:'
+  default:emoji_innocent:
+    template: default:emoji/basic
+    overrides:
+      image: default:emojis:2:3
+      permission: emoji.innocent
+      keywords:
+        - ':innocent:'
+  default:emoji_face_vomiting:
+    template: default:emoji/basic
+    overrides:
+      image: default:emojis:3:0
+      permission: emoji.face_vomiting
+      keywords:
+        - ':face_vomiting:'
+  default:emoji_rolling_eyes:
+    template: default:emoji/basic
+    overrides:
+      image: default:emojis:3:1
+      permission: emoji.rolling_eyes
+      keywords:
+        - ':rolling_eyes:'
+  default:emoji_yum:
+    template: default:emoji/basic
+    overrides:
+      image: default:emojis:3:2
+      permission: emoji.yum
+      keywords:
+        - ':yum:'
+  default:emoji_confounded:
+    template: default:emoji/basic
+    overrides:
+      image: default:emojis:3:3
+      permission: emoji.confounded
+      keywords:
+        - ':confounded:'

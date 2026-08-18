@@ -1,0 +1,83 @@
+items:
+  default:netherite_anvil:
+    data:
+      item_name: <!i><lang:item.default.netherite_anvil>
+    model: minecraft:block/custom/netherite_anvil
+    behavior:
+      type: block_item
+      block:
+        loot:
+          template: default:loot_table/self
+        behavior:
+          type: falling_block
+          hurt_amount: 4
+          max_hurt: 80
+          sounds:
+            land: minecraft:block.anvil.land
+            destroy: minecraft:block.anvil.destroy
+        events:
+          - on: right_click
+            functions:
+              - type: open_window
+                gui_type: anvil
+              - type: cancel_event
+            conditions:
+              - type: expression
+                expression: '!<arg:player.is_sneaking>'
+        settings:
+          sounds:
+            break: minecraft:block.anvil.break
+            step: minecraft:block.anvil.step
+            place: minecraft:block.anvil.place
+            hit: minecraft:block.anvil.hit
+            fall: minecraft:block.anvil.fall
+          map_color: 29
+          hardness: 10.0
+          resistance: 1200
+          push_reaction: block
+          correct_tools:
+            template: default:pickaxe_power/level_4
+          tags: ["minecraft:mineable/pickaxe"]
+        states:
+          properties:
+            facing_clockwise:
+              type: 4-direction
+              default: north
+          appearances:
+            axisX:
+              state: minecraft:anvil[facing=east]
+              model:
+                path: minecraft:block/custom/netherite_anvil
+                y: 90
+                generation:
+                  parent: minecraft:block/anvil
+                  textures:
+                    top: minecraft:block/custom/netherite_anvil_top
+                    body: minecraft:block/custom/netherite_anvil
+                    particle: minecraft:block/custom/netherite_anvil
+            axisZ:
+              state: minecraft:anvil[facing=north]
+              model:
+                path: minecraft:block/custom/netherite_anvil
+          variants:
+            facing_clockwise=east:
+              appearance: axisX
+            facing_clockwise=west:
+              appearance: axisX
+            facing_clockwise=north:
+              appearance: axisZ
+            facing_clockwise=south:
+              appearance: axisZ
+recipes:
+  default:netherite_anvil:
+    type: shaped
+    pattern:
+      - ' B '
+      - 'BAB'
+      - ' B '
+    ingredients:
+      A: minecraft:anvil
+      B: minecraft:netherite_ingot
+    result:
+      id: default:netherite_anvil
+      count: 1

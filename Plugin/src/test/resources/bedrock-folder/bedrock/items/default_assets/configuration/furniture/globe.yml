@@ -1,0 +1,49 @@
+items:
+  default:globe:
+    data:
+      item_name: <!i><lang:item.default.globe>
+    model: minecraft:item/custom/globe
+    behavior:
+      type: furniture_item
+      rules:
+        ground:
+          rotation: four
+          alignment: center
+      furniture:
+        settings:
+          item: default:globe
+          hit_times: 3
+          sounds:
+            break: minecraft:block.copper.break
+            place: minecraft:block.copper.place
+            hit: minecraft:block.copper.hit
+        variants:
+          ground:
+            loot_spawn_offset: 0,0.25,0
+            elements:
+              - type: item
+                item: default:globe_earth
+                position: 0,0.4,0
+              - type: item_display
+                item: default:globe_base
+                position: 0,0.5,0
+            hitboxes:
+              - position: 0,0,0
+                type: shulker
+                peek: 50
+                scale: 0.8
+                blocks_building: true
+                interactive: true
+                interaction_entity: true
+        loot:
+          template: default:loot_table/furniture
+          arguments:
+            item: default:globe
+  default:globe_earth:
+    data:
+      item_name: <!i><lang:item.default.globe>
+    model: minecraft:item/custom/globe_earth
+  default:globe_base:
+    data:
+      item_name: <!i><lang:item.default.globe>
+    model: minecraft:item/custom/globe_base

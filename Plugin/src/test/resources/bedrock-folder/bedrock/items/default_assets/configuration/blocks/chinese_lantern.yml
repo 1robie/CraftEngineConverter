@@ -1,0 +1,43 @@
+items:
+  default:chinese_lantern:
+    data:
+      item_name: <!i><lang:item.default.chinese_lantern>
+    model: minecraft:block/custom/chinese_lantern
+    behavior:
+      type: block_item
+      block:
+        loot:
+          template: default:loot_table/self
+        settings:
+          template:
+            - default:hardness/wool
+            - default:burn_data/planks
+            - default:sound/wood
+            - default:settings/solid_1x1x1
+          overrides:
+            push_reaction: normal
+            instrument: harp
+            luminance: 15
+            map_color: 36
+        state:
+          auto_state: solid
+          model:
+            path: minecraft:block/custom/chinese_lantern
+            # minecraft:block/cube_column
+            textures:
+              - minecraft:block/custom/chinese_lantern_top
+              - minecraft:block/custom/chinese_lantern
+recipes:
+  default:chinese_lantern:
+    type: shaped
+    pattern:
+      - ABA
+      - BCB
+      - ABA
+    ingredients:
+      A: '#minecraft:planks'
+      B: minecraft:stick
+      C: minecraft:torch
+    result:
+      id: default:chinese_lantern
+      count: 1

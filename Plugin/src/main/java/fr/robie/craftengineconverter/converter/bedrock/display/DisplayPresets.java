@@ -18,9 +18,14 @@ import java.util.Map;
  * pose counterpart to {@link fr.robie.craftengineconverter.converter.bedrock.geometry.VanillaBlockShapes}, which
  * does the same job for the missing <i>shape</i>.
  * <p>
- * Values are Blockbench's {@code display_presets} table verbatim, which is in turn vanilla's
- * {@code item/generated}, {@code item/handheld}, {@code item/handheld_rod} and {@code block/block}. Taking them
- * from Blockbench rather than transcribing them from the jar keeps one reference for the whole conversion.
+ * Values are transcribed from the 1.21.11 jar — {@code assets/minecraft/models/item/generated.json},
+ * {@code item/handheld.json}, {@code item/handheld_rod.json} and {@code block/block.json}. These were previously
+ * taken from Blockbench's {@code display_presets} table, on the reasoning that one reference for the whole
+ * conversion beats two; that turned out to be a mistake, because the table is not a faithful copy. It pre-mirrors
+ * left-hand entries the jar leaves to the client, duplicates a {@code thirdperson_lefthand} onto
+ * {@code block/block}, adds an {@code on_shelf} pose to {@code item/generated} that does not exist, and omits the
+ * one {@code block/block} does have. The jar is the authority; Blockbench is still the authority for how a pose is
+ * <i>applied</i> (see {@link Transform}).
  * <p>
  * Presets are <b>layered</b>, because vanilla's parents are: {@code item/handheld} extends
  * {@code item/generated}, so a handheld model's {@code ground} and {@code fixed} poses come from the generated
@@ -28,15 +33,24 @@ import java.util.Map;
  */
 public final class DisplayPresets {
 
-    /** {@code item/generated} — the flat sprite every plain item inherits. It declares no {@code gui} pose. */
+    /**
+     * {@code item/generated} — the flat sprite every plain item inherits. It declares no {@code gui} pose.
+     * <p>
+     * Transcribed from {@code assets/minecraft/models/item/generated.json} in the 1.21.11 jar, <b>not</b> from
+     * Blockbench's copy, which differs in two ways that matter. Blockbench pre-mirrors the left-hand entries; the
+     * jar declares only the right hand and lets the client mirror, which is what {@link DisplayPoses#forSlot} does —
+     * carrying both means the mirror can be applied to an already-mirrored value. And Blockbench adds an
+     * {@code on_shelf} pose of {@code [0,180,0]} that the jar does not have; inventing a pose is worse than having
+     * none, so it is left out.
+     * <p>
+     * The jar's {@code fixed} entry omits {@code translation} entirely. The explicit zero here is the same thing.
+     */
     private static final Map<String, JavaBlockModel.DisplayTransform> ITEM = table(
             entry(DisplayContext.GROUND, rot(0, 0, 0), tr(0, 2, 0), scale(0.5F)),
             entry(DisplayContext.HEAD, rot(0, 180, 0), tr(0, 13, 7), scale(1.0F)),
             entry(DisplayContext.FIXED, rot(0, 180, 0), tr(0, 0, 0), scale(1.0F)),
             entry(DisplayContext.THIRD_PERSON_RIGHT, rot(0, 0, 0), tr(0, 3, 1), scale(0.55F)),
-            entry(DisplayContext.THIRD_PERSON_LEFT, rot(0, 0, 0), tr(0, 3, 1), scale(0.55F)),
-            entry(DisplayContext.FIRST_PERSON_RIGHT, rot(0, -90, 25), tr(1.13F, 3.2F, 1.13F), scale(0.68F)),
-            entry(DisplayContext.FIRST_PERSON_LEFT, rot(0, -90, 25), tr(1.13F, 3.2F, 1.13F), scale(0.68F)));
+            entry(DisplayContext.FIRST_PERSON_RIGHT, rot(0, -90, 25), tr(1.13F, 3.2F, 1.13F), scale(0.68F)));
 
     /** {@code item/handheld} — tools and weapons, laid along the hand. */
     private static final Map<String, JavaBlockModel.DisplayTransform> HANDHELD = table(
@@ -52,13 +66,20 @@ public final class DisplayPresets {
             entry(DisplayContext.FIRST_PERSON_RIGHT, rot(0, 90, 25), tr(0, 1.6F, 0.8F), scale(0.68F)),
             entry(DisplayContext.FIRST_PERSON_LEFT, rot(0, -90, -25), tr(0, 1.6F, 0.8F), scale(0.68F)));
 
-    /** {@code block/block} — the three-quarter view a block-shaped item is shown in. */
+    /**
+     * {@code block/block} — the three-quarter view a block-shaped item is shown in.
+     * <p>
+     * Also straight from the jar, which unlike Blockbench's copy declares no {@code thirdperson_lefthand} (the
+     * client mirrors the right one) and does declare {@code on_shelf}. Both first-person entries are present and are
+     * genuinely different rather than pre-negated — {@code 45} against {@code 225} — which is a reminder that
+     * dropping a declared left-hand entry is not always safe; here the jar has them, so they are kept.
+     */
     private static final Map<String, JavaBlockModel.DisplayTransform> BLOCK = table(
             entry(DisplayContext.GUI, rot(30, 225, 0), tr(0, 0, 0), scale(0.625F)),
             entry(DisplayContext.GROUND, rot(0, 0, 0), tr(0, 3, 0), scale(0.25F)),
             entry(DisplayContext.FIXED, rot(0, 0, 0), tr(0, 0, 0), scale(0.5F)),
+            entry(DisplayContext.ON_SHELF, rot(0, 180, 0), tr(0, 0, 0), scale(1.0F)),
             entry(DisplayContext.THIRD_PERSON_RIGHT, rot(75, 45, 0), tr(0, 2.5F, 0), scale(0.375F)),
-            entry(DisplayContext.THIRD_PERSON_LEFT, rot(75, 45, 0), tr(0, 2.5F, 0), scale(0.375F)),
             entry(DisplayContext.FIRST_PERSON_RIGHT, rot(0, 45, 0), tr(0, 0, 0), scale(0.40F)),
             entry(DisplayContext.FIRST_PERSON_LEFT, rot(0, 225, 0), tr(0, 0, 0), scale(0.40F)));
 

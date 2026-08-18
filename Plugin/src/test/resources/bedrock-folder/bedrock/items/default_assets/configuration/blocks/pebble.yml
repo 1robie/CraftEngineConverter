@@ -1,0 +1,122 @@
+items:
+  default:pebble:
+    data:
+      item_name: <!i><lang:item.default.pebble>
+    texture: minecraft:item/custom/pebble
+    behavior:
+      - type: block_item
+        block:
+          settings:
+            template:
+              - default:sound/stone
+              - default:hardness/none
+            overrides:
+              map_color: 11
+              push_reaction: destroy
+          behaviors:
+            - type: liquid_flowable_block
+            - type: sturdy_base_block
+              direction: down
+              support_types:
+                - full
+            - type: stackable_block
+              property: pebble
+              items:
+                - default:pebble
+          loot:
+            pools:
+              - rolls: 1
+                entries:
+                  - type: item
+                    item: default:pebble
+                    functions:
+                      - type: set_count
+                        count: 3
+                        add: false
+                        conditions:
+                          - type: match_block_property
+                            properties:
+                              pebble: 3
+                      - type: set_count
+                        count: 2
+                        add: false
+                        conditions:
+                          - type: match_block_property
+                            properties:
+                              pebble: 2
+                      - type: explosion_decay
+          states:
+            properties:
+              pebble:
+                type: int
+                min: 1
+                max: 3
+                default: 1
+            appearances:
+              one:
+                auto_state: lower_tripwire
+                models:
+                  - path: minecraft:block/custom/pebble_1
+                    weight: 1
+                  - path: minecraft:block/custom/pebble_1
+                    weight: 1
+                    y: 90
+                  - path: minecraft:block/custom/pebble_1
+                    weight: 1
+                    y: 180
+                  - path: minecraft:block/custom/pebble_1
+                    weight: 1
+                    y: 270
+              two:
+                auto_state: lower_tripwire
+                models:
+                  - path: minecraft:block/custom/pebble_2
+                    weight: 1
+                  - path: minecraft:block/custom/pebble_2
+                    weight: 1
+                    y: 90
+                  - path: minecraft:block/custom/pebble_2
+                    weight: 1
+                    y: 180
+                  - path: minecraft:block/custom/pebble_2
+                    weight: 1
+                    y: 270
+              three:
+                auto_state: higher_tripwire
+                models:
+                  - path: minecraft:block/custom/pebble_3
+                    weight: 1
+                  - path: minecraft:block/custom/pebble_3
+                    weight: 1
+                    y: 90
+                  - path: minecraft:block/custom/pebble_3
+                    weight: 1
+                    y: 180
+                  - path: minecraft:block/custom/pebble_3
+                    weight: 1
+                    y: 270
+            variants:
+              pebble=1:
+                appearance: 'one'
+              pebble=2:
+                appearance: 'two'
+              pebble=3:
+                appearance: 'three'
+recipes:
+  default:pebble:
+    type: shapeless
+    ingredients:
+      - minecraft:cobblestone
+    result:
+      id: default:pebble
+      count: 4
+  default:cobblestone_from_pebble:
+    type: shaped
+    pattern:
+      - AA
+      - AA
+    ingredients:
+      A: default:pebble
+    result:
+      id: minecraft:cobblestone
+      count: 1

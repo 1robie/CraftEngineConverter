@@ -73,15 +73,61 @@ public final class DisplayPoses {
      * what the client shows for a model with cubes and no GUI pose of its own.
      */
     public static Transform guiPose(JavaBlockModel model) {
-        return model.display(DisplayContext.GUI)
-                .map(DisplayPoses::toTransform)
-                .orElseGet(() -> toTransform(DisplayPresets.block().get(DisplayContext.GUI)));
+        java.util.Optional<JavaBlockModel.DisplayTransform> declared = model.display(DisplayContext.GUI);
+        if (declared.isPresent()) return toTransform(declared.get());
+
+        // The parent decides the fallback, exactly as it does for the held slots. This used to hand back
+        // block/block's three-quarter view for ANY model with no gui entry - which is most of them, since
+        // item/generated deliberately declares none and the client renders those flat. A plain item whose parent
+        // chain had not resolved was therefore drawn turned [30,225,0] and shrunk to 0.625, like a block.
+        JavaBlockModel.DisplayTransform inherited =
+                DisplayPresets.forParent(model.parent().orElse(null)).get(DisplayContext.GUI);
+        return inherited != null ? toTransform(inherited) : Transform.IDENTITY;
     }
 
-    /** Both pivots folded into the translation, so callers only ever handle a plain TRS. */
+    /**
+     * Both pivots folded into the translation, so callers only ever handle a plain TRS — and the values clamped the
+     * way the client clamps them.
+     * <p>
+     * Java will not render an arbitrary {@code display} entry: translation is limited to {@code ±80}, scale to a
+     * magnitude of {@code 4}, and rotation is wrapped into a single turn. Blockbench enforces the same three
+     * ({@code display_mode.js:1478-1508}, {@code DisplayModePanel.vue:198-208}), which is why a pack authored there
+     * never trips them — but a hand-written or generated model can, and passing an unclamped value through means
+     * Bedrock shows something the Java client never would. Clamped here because this is the one funnel every slot
+     * and every fallback goes through.
+     */
     public static Transform toTransform(JavaBlockModel.DisplayTransform display) {
-        return Transform.of(display.translation(), display.rotation(), display.scale())
+        return Transform.of(
+                        clamped(display.translation(), TRANSLATION_LIMIT),
+                        trimmed(display.rotation()),
+                        clamped(display.scale(), SCALE_LIMIT))
                 .withPivots(display.rotationPivot(), display.scalePivot());
+    }
+
+    /** Java's translation limit, in model units. */
+    private static final float TRANSLATION_LIMIT = 80.0F;
+
+    /** Java's scale limit, as a magnitude — a mirrored slot legitimately reaches {@code -4}. */
+    private static final float SCALE_LIMIT = 4.0F;
+
+    private static float[] clamped(float[] values, float limit) {
+        float[] out = new float[3];
+        for (int axis = 0; axis < 3; axis++) {
+            out[axis] = Math.max(-limit, Math.min(limit, values[axis]));
+        }
+        return out;
+    }
+
+    /** Rotation wrapped into {@code (-180, 180]}, matching Blockbench's {@code Math.trimDeg}. */
+    private static float[] trimmed(float[] degrees) {
+        float[] out = new float[3];
+        for (int axis = 0; axis < 3; axis++) {
+            float value = degrees[axis] % 360.0F;
+            if (value > 180.0F) value -= 360.0F;
+            if (value <= -180.0F) value += 360.0F;
+            out[axis] = value;
+        }
+        return out;
     }
 
     /** The left-hand reading of a right-hand pose: rotation Y and Z negated, translation X negated. */

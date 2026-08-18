@@ -20,6 +20,17 @@ public final class DisplayContext {
     public static final String GROUND = "ground";
     public static final String FIXED = "fixed";
 
+    /**
+     * Shelves, added in 1.21.9. Present so the value survives parsing and can be reported rather than vanishing —
+     * Bedrock's engine poses a shelved item itself and gives a pack no say, as it does for {@link #GROUND} and
+     * {@link #FIXED}. The config model already knew the name ({@code DisplayContent.ON_SHELF}); this side did not,
+     * so a model declaring it was dropped without a word.
+     */
+    public static final String ON_SHELF = "on_shelf";
+
+    /** The contexts Bedrock renders itself, which no attachable slot or animation can influence. */
+    private static final java.util.Set<String> ENGINE_OWNED = java.util.Set.of(GROUND, FIXED, ON_SHELF);
+
     private DisplayContext() {
         throw new UnsupportedOperationException("DisplayContext is a utility class and cannot be instantiated.");
     }
@@ -40,8 +51,20 @@ public final class DisplayContext {
             case HEAD -> HEAD;
             case GROUND -> GROUND;
             case FIXED -> FIXED;
+            case ON_SHELF -> ON_SHELF;
             default -> null;
         };
+    }
+
+    /**
+     * Whether Bedrock renders this context itself, so a pose declared for it cannot be honoured.
+     * <p>
+     * Worth telling the user about rather than dropping in silence: a pack whose only distinguishing pose is
+     * {@code fixed} — an item built to sit in an item frame — converts to something that looks untouched, and the
+     * reason is not discoverable from the output.
+     */
+    public static boolean isEngineOwned(String context) {
+        return ENGINE_OWNED.contains(context);
     }
 
     /** The right-hand context a left-hand one falls back to, or {@code null} when it is not a left-hand context. */

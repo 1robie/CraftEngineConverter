@@ -1,0 +1,101 @@
+items:
+  default:flame_cane:
+    data:
+      item_name: <!i><lang:item.default.flame_cane>
+    texture: minecraft:item/custom/flame_cane
+    behavior:
+      type: block_item
+      block:
+        settings:
+          template:
+            - default:hardness/none
+            - default:sound/grass
+          overrides:
+            push_reaction: destroy
+            map_color: 15
+        behaviors:
+          - type: vertical_crop_block
+            max_height: 4
+            grow_speed: 1
+            direction: up
+          - type: bush_block
+            stackable: true
+            delay: 1
+            bottom_blocks:
+              - minecraft:netherrack
+              - minecraft:soul_sand
+              - minecraft:soul_soil
+              - minecraft:magma_block
+              - minecraft:warped_nylium
+              - minecraft:crimson_nylium
+              - minecraft:basalt
+          - type: near_liquid_block
+            liquid_type: lava
+            delay: 1
+            stackable: true
+            positions:
+              - -1,-1,0
+              - 1,-1,0
+              - 0,-1,-1
+              - 0,-1,1
+        loot:
+          template: default:loot_table/self
+        states:
+          properties:
+            age:
+              type: int
+              default: 0
+              min: 0
+              max: 5
+          appearances:
+            default:
+              auto_state: sugar_cane
+              models:
+                - path: minecraft:block/custom/flame_cane_1
+                  weight: 1
+                  generation:
+                    parent: minecraft:block/sugar_cane
+                    textures:
+                      cross: minecraft:block/custom/flame_cane_1
+                - path: minecraft:block/custom/flame_cane_2
+                  weight: 1
+                  generation:
+                    parent: minecraft:block/sugar_cane
+                    textures:
+                      cross: minecraft:block/custom/flame_cane_2
+          variants:
+            age=0:
+              appearance: default
+            age=1:
+              appearance: default
+            age=2:
+              appearance: default
+            age=3:
+              appearance: default
+            age=4:
+              appearance: default
+            age=5:
+              appearance: default
+recipes:
+  default:magma_cream:
+    type: shaped
+    pattern:
+      - ' A '
+      - 'ABA'
+      - ' A '
+    ingredients:
+      A: default:flame_cane
+      B: minecraft:slime_ball
+    result:
+      id: minecraft:magma_cream
+      count: 1
+  default:magma_block:
+    type: shapeless
+    ingredients:
+      - minecraft:cobblestone
+      - minecraft:cobblestone
+      - default:flame_cane
+      - default:flame_cane
+    result:
+      id: minecraft:magma_block
+      count: 2

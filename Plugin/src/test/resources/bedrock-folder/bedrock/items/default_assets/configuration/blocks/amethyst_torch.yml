@@ -1,0 +1,151 @@
+items:
+  default:amethyst_torch:
+    data:
+      item_name: <!i><lang:item.default.amethyst_torch>
+    texture: minecraft:block/custom/amethyst_torch
+    behavior:
+      - type: wall_block_item
+        block: default:amethyst_wall_torch
+      - type: block_item
+        block: default:amethyst_torch
+      - type: block_item
+        block: default:amethyst_wall_torch
+  default:amethyst_standing_torch:
+    data:
+      item_name: <!i><lang:item.default.amethyst_torch>
+    model:
+      path: minecraft:block/custom/amethyst_torch
+      generation:
+        parent: minecraft:block/template_torch
+        textures:
+          torch: minecraft:block/custom/amethyst_torch
+  default:amethyst_wall_torch:
+    data:
+      item_name: <!i><lang:item.default.amethyst_torch>
+    model:
+      path: minecraft:block/custom/amethyst_wall_torch
+      generation:
+        parent: minecraft:block/template_torch_wall
+        textures:
+          torch: minecraft:block/custom/amethyst_torch
+blocks:
+  default:amethyst_torch:
+    loot:
+      template: default:loot_table/basic
+      arguments:
+        item: default:amethyst_torch
+    settings:
+      template:
+        - default:sound/wood
+        - default:hardness/none
+      overrides:
+        push_reaction: destroy
+        replaceable: false
+        map_color: 24
+        luminance: 15
+        item: default:amethyst_torch
+    state:
+      state: redstone_torch[lit=false]
+      entity_renderer:
+        item: default:amethyst_standing_torch
+        scale: 1.01
+    behavior:
+      - type: sturdy_base_block
+        direction: down
+        support_types:
+          - center
+      - type: liquid_flowable_block
+      - type: simple_particle_block
+        tick_interval: 10
+        particles:
+          - particle: smoke
+            x: 0.5
+            y: 0.7
+            z: 0.5
+          - particle: dust
+            color: 138,43,226
+            x: 0.5
+            y: 0.7
+            z: 0.5
+  default:amethyst_wall_torch:
+    loot:
+      template: default:loot_table/basic
+      arguments:
+        item: default:amethyst_torch
+    settings:
+      template:
+        - default:sound/wood
+        - default:hardness/none
+      overrides:
+        push_reaction: destroy
+        replaceable: false
+        map_color: 24
+        luminance: 15
+        item: default:amethyst_torch
+    behavior:
+      - type: directional_attached_block
+      - type: liquid_flowable_block
+      - type: wall_torch_particle_block
+        particles:
+          - particle: smoke
+            x: 0.27
+            y: 0.42
+            z: 0.27
+          - particle: dust
+            color: 138,43,226
+            x: 0.27
+            y: 0.42
+            z: 0.27
+    states:
+      properties:
+        facing:
+          type: horizontal_direction
+      appearances:
+        north:
+          state: redstone_wall_torch[facing=north,lit=false]
+          entity_renderer:
+            item: default:amethyst_wall_torch
+            scale: 1.04
+            yaw: 90
+            translation: -0.02,0.01,0
+        east:
+          state: redstone_wall_torch[facing=east,lit=false]
+          entity_renderer:
+            item: default:amethyst_wall_torch
+            scale: 1.04
+            yaw: 180
+            translation: -0.02,0.01,0
+        west:
+          state: redstone_wall_torch[facing=west,lit=false]
+          entity_renderer:
+            item: default:amethyst_wall_torch
+            scale: 1.04
+            translation: -0.02,0.01,0
+        south:
+          state: redstone_wall_torch[facing=south,lit=false]
+          entity_renderer:
+            item: default:amethyst_wall_torch
+            scale: 1.04
+            yaw: -90
+            translation: -0.02,0.01,0
+      variants:
+        facing=north:
+          appearance: north
+        facing=east:
+          appearance: east
+        facing=west:
+          appearance: west
+        facing=south:
+          appearance: south
+recipes:
+  default:amethyst_torch:
+    type: shaped
+    pattern:
+      - 'A'
+      - 'B'
+    ingredients:
+      A: minecraft:amethyst_shard
+      B: minecraft:stick
+    result:
+      id: default:amethyst_torch
+      count: 1

@@ -1,0 +1,75 @@
+items:
+  default:copper_coil:
+    data:
+      item_name: <!i><lang:item.default.copper_coil>
+    model: minecraft:block/custom/copper_coil
+    behavior:
+      type: block_item
+      block:
+        loot:
+          template: default:loot_table/self
+        settings:
+          template:
+            - default:sound/metal
+          overrides:
+            hardness: 3.0
+            resistance: 4.5
+            replaceable: false
+            is_redstone_conductor: true
+            is_suffocating: true
+            instrument: basedrum
+            map_color: 15
+            tags:
+              - minecraft:mineable/pickaxe
+            correct_tools:
+              template: default:pickaxe_power/level_1
+        behavior:
+          type: lamp_block
+        states:
+          properties:
+            lit:
+              type: boolean
+              default: false
+          appearances:
+            off:
+              auto_state: cactus
+              model:
+                path: minecraft:block/custom/copper_coil
+                generation:
+                  parent: minecraft:block/cactus
+                  textures:
+                    particle: minecraft:block/custom/copper_coil
+                    bottom: minecraft:block/custom/copper_coil
+                    top: minecraft:block/custom/copper_coil
+                    side: minecraft:block/custom/copper_coil_side
+            on:
+              auto_state: cactus
+              model:
+                path: minecraft:block/custom/copper_coil_on
+                generation:
+                  parent: minecraft:block/cactus
+                  textures:
+                    particle: minecraft:block/custom/copper_coil_on
+                    bottom: minecraft:block/custom/copper_coil_on
+                    top: minecraft:block/custom/copper_coil_on
+                    side: minecraft:block/custom/copper_coil_on_side
+          variants:
+            lit=false:
+              appearance: 'off'
+            lit=true:
+              appearance: 'on'
+              settings:
+                luminance: 8
+recipes:
+  default:copper_coil:
+    type: shaped
+    pattern:
+      - AAA
+      - ABA
+      - AAA
+    ingredients:
+      A: minecraft:copper_ingot
+      B: minecraft:redstone
+    result:
+      id: default:copper_coil
+      count: 1

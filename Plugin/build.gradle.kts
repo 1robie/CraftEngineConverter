@@ -104,6 +104,29 @@ tasks.assemble {
     dependsOn(tasks.named("shadowJar"))
 }
 
+/**
+ * One conversion against a plugin data folder, with no server. See the class docs on `DevConvert`.
+ *
+ * Runs on the *test* runtime classpath: `paper-api` is `compileOnly` for the main source set, and only the test
+ * runtime puts it back.
+ *
+ * `-PconvertDir=<path>` points it at a folder other than the dev server's.
+ */
+tasks.register<JavaExec>("devConvert") {
+    group = "craftengineconverter"
+    description = "Converts a plugin data folder to a Bedrock pack, headless."
+
+    // Relative to the repository root, not to this subproject - the command is documented as being run from there.
+    val repositoryRoot = rootProject.layout.projectDirectory.asFile
+    val convertDir = providers.gradleProperty("convertDir")
+        .orElse("run/plugins/CraftEngineConverter")
+        .map { path -> File(path).let { if (it.isAbsolute) it.path else repositoryRoot.resolve(path).path } }
+
+    classpath = sourceSets["test"].runtimeClasspath
+    mainClass = "fr.robie.craftengineconverter.converter.bedrock.DevConvert"
+    argumentProviders.add(CommandLineArgumentProvider { listOf(convertDir.get()) })
+}
+
 
 val runServerJvmArgs: Provider<List<String>> = providers.gradleProperty("runServer.jvmArgs")
     .map { args -> args.split(' ').filter(String::isNotBlank) }

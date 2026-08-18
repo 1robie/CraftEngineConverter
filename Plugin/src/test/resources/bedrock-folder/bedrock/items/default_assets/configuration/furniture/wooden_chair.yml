@@ -1,0 +1,45 @@
+items:
+  default:wooden_chair:
+    data:
+      item_name: <!i><lang:item.default.wooden_chair>
+    model: minecraft:item/custom/wooden_chair
+    behavior:
+      type: furniture_item
+      rules:
+        ground:
+          rotation: any
+          alignment: any
+      furniture:
+        events:
+          - template: default:rotatable_furniture_8
+        settings:
+          item: default:wooden_chair
+          hit_times: 3
+          sounds:
+            break: minecraft:block.bamboo_wood.break
+            place: minecraft:block.bamboo_wood.place
+            hit: minecraft:block.bamboo_wood.hit
+        variants:
+          ground:
+            loot_spawn_offset: 0,0.4,0
+            elements:
+              - item: default:wooden_chair
+                display_transform: NONE
+                shadow_radius: 0.4
+                shadow_strength: 0.5
+                billboard: FIXED
+                translation: 0,0.5,0
+            hitboxes:
+              - position: 0,0,0
+                type: interaction
+                blocks_building: true
+                invisible: true
+                width: 0.7
+                height: 1.2
+                interactive: true
+                seats:
+                  - 0,0,-0.1 0
+        loot:
+          template: default:loot_table/furniture
+          arguments:
+            item: default:wooden_chair

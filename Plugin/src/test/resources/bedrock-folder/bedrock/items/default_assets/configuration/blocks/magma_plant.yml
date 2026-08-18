@@ -1,0 +1,149 @@
+items:
+  default:magma_fruit:
+    material: carrot
+    texture: minecraft:item/custom/magma_fruit
+    data:
+      item_name: <!i><white><lang:item.default.magma_fruit>
+      $$>=1.20.5:
+        food:
+          nutrition: 3
+          saturation: 0.5
+          can_always_eat: true
+    settings:
+      invulnerable:
+        - lava
+        - fire
+        - fire_tick
+      $$<1.20.5:
+        food:
+          nutrition: 3
+          saturation: 0.5
+    events:
+      - on: consume
+        functions:
+          - type: damage
+            target: self
+            amount: 1.0
+            damage_type: lava
+          - type: potion_effect
+            duration: 200
+            amplifier: 0
+            particles: true
+            potion_effect: minecraft:fire_resistance
+    behavior:
+      type: liquid_collision_block_item
+      block: default:magma_plant
+blocks:
+  default:magma_plant:
+    settings:
+      template:
+        - default:hardness/none
+        - default:sound/grass
+      overrides:
+        item: default:magma_fruit
+        push_reaction: destroy
+        map_color: 24
+    behavior:
+      - type: crop_block
+        grow_speed: 0.25
+        light_requirement: 0
+        is_bone_meal_target: true
+        bone_meal_age_bonus:
+          type: uniform
+          min: 1
+          max: 2
+      - type: on_liquid_block
+        stackable: false
+        liquid_type:
+          - lava
+    states:
+      properties:
+        age:
+          type: int
+          default: 0
+          min: 0
+          max: 3
+      appearances:
+        age=0:
+          auto_state: lower_tripwire
+          model: minecraft:block/custom/magma_plant_stage_0
+        age=1:
+          auto_state: higher_tripwire
+          model: minecraft:block/custom/magma_plant_stage_1
+        age=2:
+          auto_state: sugar_cane
+          model: minecraft:block/custom/magma_plant_stage_2
+        age=3:
+          auto_state: sugar_cane
+          models:
+            - path: minecraft:block/custom/magma_plant_stage_3
+              weight: 1
+            - path: minecraft:block/custom/magma_plant_stage_3
+              y: 90
+              weight: 1
+            - path: minecraft:block/custom/magma_plant_stage_3
+              y: 180
+              weight: 1
+            - path: minecraft:block/custom/magma_plant_stage_3
+              y: 270
+              weight: 1
+      variants:
+        age=0:
+          appearance: age=0
+        age=1:
+          appearance: age=1
+        age=2:
+          appearance: age=2
+        age=3:
+          appearance: age=3
+    loot:
+      template: default:loot_table/crop
+      arguments:
+        crop_item: default:magma_fruit
+        ripe_age: 3
+    events:
+      - on: break
+        conditions:
+          - type: match_block_property
+            properties:
+              age: 3
+        functions:
+          - type: particle
+            x: <arg:block.block_x> + 0.5
+            y: <arg:block.block_y> + 0.5
+            z: <arg:block.block_z> + 0.5
+            particle: minecraft:lava
+            count: 10
+            offset_x: 0.05
+            offset_y: 0.02
+            offset_z: 0.05
+            speed: 0.08
+          - type: play_sound
+            sound: minecraft:entity.firework_rocket.blast
+            x: <arg:block.block_x> + 0.5
+            y: <arg:block.block_y> + 0.5
+            z: <arg:block.block_z> + 0.5
+      - on: right_click
+        conditions:
+          - type: match_block_property
+            properties:
+              age: 3
+          - type: hand
+            hand: main_hand
+          - type: '!has_item'
+        functions:
+          - type: break_block
+            x: <arg:block.block_x>
+            y: <arg:block.block_y>
+            z: <arg:block.block_z>
+          - type: place_block
+            x: <arg:block.block_x>
+            y: <arg:block.block_y>
+            z: <arg:block.block_z>
+            block_state: default:magma_plant[age=0]
+          - type: swing_hand
+          - type: damage
+            target: self
+            amount: 1.0
+            damage_type: on_fire
+          - type: update_interaction_tick

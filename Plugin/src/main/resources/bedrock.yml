@@ -92,50 +92,36 @@ disable-default-italic: true
 # Available types: COMPONENT, TRIM , BOTH
 armor-converter-type: "COMPONENT"
 
-# Where the game holds a custom item, before the model's own Java "display" transform is applied on top.
+# An optional offset on top of the held and worn poses. LEAVING THIS EMPTY IS CORRECT.
 #
-# Bedrock has no "display" block for held items: a pose is an animation on the attachable, and its position is an
-# offset in the holder's item-bone space. That offset cannot be derived from the Java model - it depends on how
-# Bedrock positions the hand - so these are starting values taken from vanilla's own attachables (spyglass, spear,
-# trident, shield), and the final nudge is something you do by looking at an item in game.
+# The converter works the pose out for itself. It builds the Java client's render of the item and the Bedrock
+# attachable's render of it as matrices and solves for the animation that makes the two agree, so an item is held,
+# aimed and scaled the way it is in Java without anything being tuned by hand. This block used to be where the pose
+# itself lived, as three constants adjusted by looking at items in game; it is not any more.
 #
-# Change a number here and re-run the conversion; no rebuild is needed. Each slot takes translation in model units
-# (16 = one block), rotation in degrees, and scale as a multiplier. The off hand mirrors X automatically, so there
-# is nothing separate to set for it.
+# So if a pose comes out wrong, it is a bug worth reporting rather than something to correct here - a value in this
+# block shifts EVERY item in that slot, so fixing one item this way quietly misplaces the rest.
 #
-# If an item sits too low or too high in the hand, that is "translation" Y. If it is turned the wrong way, that is
-# "rotation" X - vanilla uses about -90 to lay an upright model into the hand. If it is invisible in first person,
-# suspect a large "translation" Z, which pushes it past the camera.
+# What it is still good for is deliberately deviating from Java, if that is what you want. The offset applies in
+# Bedrock axes outside the model's own transform, so it means what you would expect: translation [0, 2, 0] raises
+# the item two units (16 = one block) no matter what the model does to itself. Rotation is in degrees, scale is a
+# multiplier, and anything you leave out stays as it was. The off hand mirrors X automatically.
+#
+# Change a number here and re-run the conversion; no rebuild is needed.
 held-item-anchors:
-  third-person:
-    translation: [0, 14, 0]
-    rotation: [-90, 0, 0]
-    scale: [1, 1, 1]
-  first-person:
-    translation: [0, 16, 0]
-    rotation: [-90, 0, 0]
-    scale: [1, 1, 1]
-  head:
-    translation: [0, 20, 0]
-    rotation: [0, 0, 0]
-    scale: [0.625, 0.625, 0.625]
-  # Per-item overrides, for the shapes one anchor cannot suit. A trident or a spear is long and often scaled up by
-  # its own model, so an offset you would never notice on a sword is thrown out along the shaft and doubled.
+  third-person: {}
+  first-person: {}
+  head: {}
+  # Per-item offsets, matched verbatim against the item id first and then its base material - so
+  # "default:topaz_trident" affects one item and "trident" affects every item built on that material.
   #
-  # The key is matched verbatim against the item id first and then its base material, so "default:topaz_trident"
-  # tunes one item and "trident" tunes every item built on that material. Anything you leave out falls back to the
-  # block above, channel by channel - naming only "translation" keeps the shared rotation and scale.
-  #
-  # Vanilla's own Bedrock attachables are the reference for the awkward ones, all third-person: the trident sits at
-  # bone pivot [0,24,0] with position [1.5,-2.5,-10.5] and rotation [97,-1.5,-49]; the spear has no bone pivot and
-  # lifts [0,24,-27]; the shield rotates [-90,0,90].
+  # These should no longer be needed for shape. Long models like a trident or a spear used to need one because the
+  # pose was composed as if the model turned about its origin when a Bedrock bone actually turns about its pivot,
+  # which is exact at one point and drifts further away the longer the model is. That is solved now, not compensated.
   items: {}
-  #  trident:
+  #  default:topaz_trident:
   #    third-person:
-  #      translation: [0, 14, 0]
-  #      rotation: [-90, 0, 0]
-  #    first-person:
-  #      translation: [0, 16, 0]
+  #      translation: [0, 2, 0]
 
 # Slots converted items into a vanilla Bedrock creative-menu group by matching their CraftEngine item id
 # (for example "default:topaz_ore"). Without a rule here the group is guessed from the item's base material,

@@ -197,8 +197,16 @@ class TransformTest {
         Transform bedrock = java.toBedrock();
 
         assertTriple(point(-1, 2, 3), bedrock.translation(), "position negates X only");
-        assertTriple(point(-10, -20, 30), bedrock.rotation(), "rotation negates X and Y");
         assertTriple(new float[]{0.5F, 0.6F, 0.7F}, bedrock.scale(), "scale is untouched");
+
+        // The rotation cannot be compared as a triple, because the two sides are not in the same Euler order: a
+        // Java display transform is XYZ and a Bedrock bone is ZYX (Blockbench's per-format euler_order, default
+        // 'ZYX', which no format overrides). So the check is that the ZYX reading of the emitted triple is the same
+        // rotation as negating X and Y of the XYZ input - which is what Blockbench's rule means.
+        assertSameRotation(
+                Transform.bedrockRotationMatrix(bedrock.rotation()),
+                rotating(-10, -20, 30).toMatrix(),
+                "rotation is the negate-X-and-Y reflection, expressed in Bedrock's ZYX order");
     }
 
     @Test
@@ -208,7 +216,9 @@ class TransformTest {
         };
         for (float[] angles : cases) {
             Transform bedrock = rotating(angles[0], angles[1], angles[2]).toBedrock();
-            assertTriple(rotation(-angles[0], -angles[1], angles[2]), bedrock.rotation(),
+            assertSameRotation(
+                    Transform.bedrockRotationMatrix(bedrock.rotation()),
+                    rotating(-angles[0], -angles[1], angles[2]).toMatrix(),
                     "conjugation must match negate-X-and-Y for " + java.util.Arrays.toString(angles));
         }
     }
@@ -258,16 +268,15 @@ class TransformTest {
         Transform a = rotating(-90, 0, 0);
         Transform b = rotating(0, -90, 55);
 
-        Transform flippedProduct = Transform.compose(a, b).toBedrock();
-        Transform productOfFlipped = Transform.compose(a.toBedrock(), b.toBedrock());
+        // Stated as a reflection of the composed matrix, which is what the flip is. It deliberately does NOT say
+        // flip(a . b) == flip(a) . flip(b): a flipped Transform's rotation is a Bedrock ZYX triple, so composing two
+        // of them through Transform - which reads rotations as XYZ - would be meaningless. That asymmetry is exactly
+        // why the flip must happen once, at the very end of a composition, and never on a factor.
+        float[] flipped = Transform.bedrockRotationMatrix(Transform.compose(a, b).toBedrock().rotation());
+        float[] reflectedProduct = rotating(90, 90, 55).toMatrix();
 
-        for (float[] probe : new float[][]{{1, 0, 0}, {0, 1, 0}, {0, 0, 1}, {2, -3, 1}}) {
-            float[] first = probe.clone();
-            float[] second = probe.clone();
-            flippedProduct.applyTo(first);
-            productOfFlipped.applyTo(second);
-            assertTriple(first, second, "flip(a . b) must equal flip(a) . flip(b)");
-        }
+        assertSameRotation(flipped, reflectedProduct,
+                "the flip is the reflection of the composed rotation, read back in ZYX");
     }
 
     @Test
@@ -277,7 +286,30 @@ class TransformTest {
         Transform round = java.toBedrock().toBedrock();
 
         assertTriple(java.translation(), round.translation(), "translation");
-        assertTriple(java.rotation(), round.rotation(), "rotation");
+
+        // The rotation is NOT an involution any more, and that is correct rather than a regression: the flip also
+        // changes Euler order, from the XYZ a Java display transform uses to the ZYX a Bedrock bone uses. Applying
+        // it twice reflects twice - back to the original rotation - but re-reads an XYZ triple as ZYX in between, so
+        // the numbers do not return. Anything relying on it being reversible was relying on the missing order change.
+        boolean unchanged = true;
+        for (int axis = 0; axis < 3; axis++) {
+            if (Math.abs(java.rotation()[axis] - round.rotation()[axis]) > 1.0E-3F) unchanged = false;
+        }
+        assertFalse(unchanged, "the flip changes Euler order, so it cannot be undone by repeating it");
+    }
+
+    /** Whether two rotation matrices are the same rotation, by where they send four probe points. */
+    private static void assertSameRotation(float[] actual, float[] expected, String message) {
+        for (float[] probe : new float[][]{{1, 0, 0}, {0, 1, 0}, {0, 0, 1}, {2, -3, 1}}) {
+            for (int axis = 0; axis < 3; axis++) {
+                float a = actual[axis * 4] * probe[0] + actual[axis * 4 + 1] * probe[1]
+                        + actual[axis * 4 + 2] * probe[2];
+                float e = expected[axis * 4] * probe[0] + expected[axis * 4 + 1] * probe[1]
+                        + expected[axis * 4 + 2] * probe[2];
+                org.junit.jupiter.api.Assertions.assertEquals(e, a, 1.0E-3F,
+                        message + " (probe " + java.util.Arrays.toString(probe) + " axis " + axis + ")");
+            }
+        }
     }
 
     // ---------------------------------------------------------------- identity

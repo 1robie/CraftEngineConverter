@@ -1,0 +1,124 @@
+items:
+  default:safe_block:
+    data:
+      item_name: <!i><lang:item.default.safe_block>
+    model: minecraft:block/custom/safe_block
+    behavior:
+      type: block_item
+      block:
+        loot:
+          template: default:loot_table/self
+        settings:
+          hardness: 5
+          resistance: 1200
+          is_suffocating: true
+          is_redstone_conductor: true
+          push_reaction: block
+          instrument: basedrum
+          map_color: 6
+          tags:
+            - minecraft:mineable/pickaxe
+          sounds:
+            break: minecraft:block.stone.break
+            fall: minecraft:block.stone.fall
+            hit: minecraft:block.stone.hit
+            place: minecraft:block.stone.place
+            step: minecraft:block.stone.step
+        behavior:
+          type: simple_storage_block
+          title: "<lang:item.default.safe_block>"
+          rows: 1
+          sounds:
+            open: minecraft:block.iron_trapdoor.open
+            close: minecraft:block.iron_trapdoor.close
+          allow_input: true
+          allow_output: false
+        states:
+          properties:
+            facing:
+              type: 4-direction
+              default: north
+            open:
+              type: boolean
+              default: false
+          appearances:
+            east:
+              auto_state: note_block
+              model:
+                path: minecraft:block/custom/safe_block
+                y: 90
+                # minecraft:block/orientable
+                textures:
+                  - minecraft:block/custom/safe_block_bottom
+                  - minecraft:block/custom/safe_block_front
+                  - minecraft:block/custom/safe_block_side
+                  - minecraft:block/custom/safe_block_top
+            east_open:
+              auto_state: note_block
+              model:
+                path: minecraft:block/custom/safe_block_open
+                y: 90
+                # minecraft:block/orientable
+                textures:
+                  - minecraft:block/custom/safe_block_bottom
+                  - minecraft:block/custom/safe_block_front_open
+                  - minecraft:block/custom/safe_block_side
+                  - minecraft:block/custom/safe_block_top
+            north:
+              auto_state: note_block
+              model:
+                path: minecraft:block/custom/safe_block
+            north_open:
+              auto_state: note_block
+              model:
+                path: minecraft:block/custom/safe_block_open
+            south:
+              auto_state: note_block
+              model:
+                path: minecraft:block/custom/safe_block
+                y: 180
+            south_open:
+              auto_state: note_block
+              model:
+                path: minecraft:block/custom/safe_block_open
+                y: 180
+            west:
+              auto_state: note_block
+              model:
+                path: minecraft:block/custom/safe_block
+                y: 270
+            west_open:
+              auto_state: note_block
+              model:
+                path: minecraft:block/custom/safe_block_open
+                y: 270
+          variants:
+            facing=east,open=false:
+              appearance: east
+            facing=east,open=true:
+              appearance: east_open
+            facing=north,open=false:
+              appearance: north
+            facing=north,open=true:
+              appearance: north_open
+            facing=south,open=false:
+              appearance: south
+            facing=south,open=true:
+              appearance: south_open
+            facing=west,open=false:
+              appearance: west
+            facing=west,open=true:
+              appearance: west_open
+recipes:
+  default:safe_block:
+    type: shaped
+    pattern:
+      - 'AAA'
+      - 'ABA'
+      - 'AAA'
+    ingredients:
+      A: minecraft:iron_ingot
+      B: ["minecraft:barrel", "minecraft:chest"]
+    result:
+      id: default:safe_block
+      count: 1

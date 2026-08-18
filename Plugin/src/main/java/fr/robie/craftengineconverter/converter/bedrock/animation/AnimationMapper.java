@@ -3,7 +3,9 @@ package fr.robie.craftengineconverter.converter.bedrock.animation;
 import fr.robie.craftengineconverter.converter.bedrock.display.AttachableSlot;
 import fr.robie.craftengineconverter.converter.bedrock.display.DisplayPoses;
 import fr.robie.craftengineconverter.converter.bedrock.display.HandAnchors;
+import fr.robie.craftengineconverter.converter.bedrock.display.PoseSolver;
 import fr.robie.craftengineconverter.converter.bedrock.display.Transform;
+import fr.robie.craftengineconverter.converter.bedrock.geometry.GeometryMapper;
 import fr.robie.craftengineconverter.converter.bedrock.geometry.JavaBlockModel;
 
 import java.util.EnumMap;
@@ -22,7 +24,8 @@ import java.util.Map;
  * hand's angle and then by the model's is not the sum of the two angles, so the per-axis formulas this replaced
  * ({@code {90, -r[2], -r[1]}} and friends) could only be right while one of the two rotations was trivial — and
  * they silently discarded the axes that did not fit. See {@link Transform} for the rules, all ported from
- * Blockbench, and {@link HandAnchors} for the constants.
+ * Blockbench, and {@link PoseSolver} for the pose itself — which is solved from the two renders rather than composed
+ * from a tuned constant, so {@link HandAnchors} is now only an optional offset a pack may ask for.
  */
 public final class AnimationMapper {
 
@@ -101,9 +104,17 @@ public final class AnimationMapper {
                                                           String parent, java.util.List<String> anchorKeys) {
         Map<AttachableSlot, Transform> poses = new EnumMap<>(AttachableSlot.class);
         for (AttachableSlot slot : AttachableSlot.values()) {
-            poses.put(slot, Transform
-                    .compose(HandAnchors.forItem(slot, anchorKeys), DisplayPoses.forSlot(slot, display, parent))
-                    .toBedrock());
+            // No correction is made for vanilla's own held-item animations - melee_spear_hold, holding_brush,
+            // holding_heavy_core and the rest - and that is deliberate. They are gated on vanilla item names and
+            // tags (v.melee_spear_equipped is query.equipped_item_any_tag(mainhand, 'minecraft:is_spear')), and
+            // Geyser registers every custom item under its OWN Bedrock identifier, which carries no vanilla tag.
+            // So those animations never fire for a converted item, and subtracting them would introduce the very
+            // offset it looks like it is removing. Checked: all 85 attachables in a real pack have custom
+            // identifiers, none vanilla.
+            poses.put(slot, PoseSolver.solve(slot,
+                    DisplayPoses.forSlot(slot, display, parent),
+                    GeometryMapper.ITEM_PIVOT,
+                    HandAnchors.forItem(slot, anchorKeys)));
         }
         return poses;
     }

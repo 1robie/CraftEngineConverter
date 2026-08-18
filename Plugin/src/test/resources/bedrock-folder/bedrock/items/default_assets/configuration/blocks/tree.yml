@@ -1,0 +1,764 @@
+# config_factory allows you to quickly create a large number of configurations.
+# In the example below, I've created a tree configuration factory that heavily utilizes the template system.
+# To add a new tree, you simply need to add a new entry under instances
+# and place the required texture files according to the defined resource pack format.
+
+# The configuration is not rigid; you can add new options at any time, as long as you understand how the template works.
+
+# The basic factory includes the generation of the following configurations:
+# log, stripped_log, wood, stripped_log, sapling, planks, trapdoor, door, fence, fence_gate, pressure_plate
+config_factory#basic:
+  instances:
+    - namespace: default
+      tree_type: palm
+      # The folder path where the textures are located
+      asset_path_prefix: minecraft:block/custom/
+      # When generating blocks such as doors, an unused state of the vanilla block needs to be replaced.
+      # Available types: oak, spruce, birch, jungle, acacia, dark_oak, mangrove, cherry, pale_oak, bamboo, warped, crimson, iron
+      # copper, waxed_copper, exposed_copper, waxed_exposed_copper, weathered_copper, waxed_weathered_copper, oxidized_copper, waxed_oxidized_copper
+      replaced_door_type: oak
+      # Available types: oak, spruce, birch, jungle, acacia, dark_oak, mangrove, cherry, pale_oak, bamboo, warped, crimson
+      replaced_fence_gate_type: oak
+      # If leaves can be tinted by biomes
+      leaves_tintable: true
+      default_leaves_color: "#48B358"
+      # https://minecraft.wiki/w/Map_item_format
+      planks_map_color: sand
+      wood_map_color: raw_iron
+      leaves_map_color: plant
+      # The maximum distance leaves can be from a log
+      leaves_max_distance: 7
+      category_name: <!i><green><l10n:category.palm_tree></green>
+  blueprint:
+    categories:
+      ${namespace}:${tree_type}_tree:
+        name: ${category_name:-"<white>${namespace}:${tree_type}"}
+        hidden: true
+        icon: ${namespace}:${tree_type}_log
+        list: []
+    items:
+      ${namespace}:${tree_type}_log:
+        category: ${namespace}:${tree_type}_tree
+        settings:
+          fuel_time: ${wood_fuel_time:-300}
+          tags:
+            - ${namespace}:${tree_type}_logs
+            - minecraft:logs
+            - minecraft:logs_that_burn
+        data:
+          item_name: <!i><lang:item.${namespace}.${tree_type}_log>
+        model: ${asset_path_prefix}${tree_type}_log
+        behavior:
+          type: block_item
+          block:
+            behavior:
+              type: strippable_block
+              stripped: ${namespace}:stripped_${tree_type}_log
+            loot::template: default:loot_table/self
+            settings::template: default:settings/wood
+            settings::map_color: ${wood_map_color:-wood}
+            states:
+              template: default:block_state/pillar
+              arguments:
+                pillar_texture_top: ${asset_path_prefix}${tree_type}_log_top
+                pillar_texture_side: ${asset_path_prefix}${tree_type}_log
+                pillar_model: ${asset_path_prefix}${tree_type}_log
+      ${namespace}:stripped_${tree_type}_log:
+        category: ${namespace}:${tree_type}_tree
+        settings:
+          fuel_time: ${wood_fuel_time:-300}
+          tags:
+            - ${namespace}:${tree_type}_logs
+            - minecraft:logs
+            - minecraft:logs_that_burn
+        data:
+          item_name: <!i><lang:item.default.stripped_${tree_type}_log>
+        model: ${asset_path_prefix}stripped_${tree_type}_log
+        behavior:
+          type: block_item
+          block:
+            loot::template: default:loot_table/self
+            settings::template: default:settings/wood
+            settings::map_color: ${wood_map_color:-wood}
+            states:
+              template: default:block_state/pillar
+              arguments:
+                pillar_texture_top: ${asset_path_prefix}stripped_${tree_type}_log_top
+                pillar_texture_side: ${asset_path_prefix}stripped_${tree_type}_log
+                pillar_model: ${asset_path_prefix}stripped_${tree_type}_log
+      ${namespace}:${tree_type}_wood:
+        category: ${namespace}:${tree_type}_tree
+        settings:
+          fuel_time: ${wood_fuel_time:-300}
+          tags:
+            - ${namespace}:${tree_type}_logs
+            - minecraft:logs
+            - minecraft:logs_that_burn
+        data:
+          item_name: <!i><lang:item.${namespace}.${tree_type}_wood>
+        model: ${asset_path_prefix}${tree_type}_wood
+        behavior:
+          type: block_item
+          block:
+            behavior:
+              type: strippable_block
+              stripped: ${namespace}:stripped_${tree_type}_wood
+            loot::template: default:loot_table/self
+            settings::template: default:settings/wood
+            settings::map_color: ${wood_map_color:-wood}
+            states:
+              template: default:block_state/pillar
+              arguments:
+                pillar_texture_top: ${asset_path_prefix}${tree_type}_log
+                pillar_texture_side: ${asset_path_prefix}${tree_type}_log
+                pillar_model: ${asset_path_prefix}${tree_type}_wood
+      ${namespace}:stripped_${tree_type}_wood:
+        category: ${namespace}:${tree_type}_tree
+        settings:
+          fuel_time: ${wood_fuel_time:-300}
+          tags:
+            - ${namespace}:${tree_type}_logs
+            - minecraft:logs
+            - minecraft:logs_that_burn
+        data:
+          item_name: <!i><lang:item.${namespace}.${tree_type}_wood>
+        model: ${asset_path_prefix}stripped_${tree_type}_wood
+        behavior:
+          type: block_item
+          block:
+            loot::template: default:loot_table/self
+            settings::template: default:settings/wood
+            settings::map_color: ${wood_map_color:-wood}
+            states:
+              template: default:block_state/pillar
+              arguments:
+                pillar_texture_top: ${asset_path_prefix}stripped_${tree_type}_log
+                pillar_texture_side: ${asset_path_prefix}stripped_${tree_type}_log
+                pillar_model: ${asset_path_prefix}stripped_${tree_type}_wood
+      ${namespace}:${tree_type}_planks:
+        category: ${namespace}:${tree_type}_tree
+        settings:
+          fuel_time: ${wood_fuel_time:-300}
+          tags:
+            - minecraft:planks
+            - minecraft:wooden_tool_materials
+        data:
+          item_name: <!i><lang:item.${namespace}.${tree_type}_planks>
+        model: ${asset_path_prefix}${tree_type}_planks
+        behavior:
+          type: block_item
+          block:
+            settings::template: default:settings/planks
+            settings::map_color: ${planks_map_color:-wood}
+            loot::template: default:loot_table/self
+            state:
+              model:
+                path: ${asset_path_prefix}${tree_type}_planks
+                texture: ${asset_path_prefix}${tree_type}_planks
+              auto_state: solid
+      ${namespace}:${tree_type}_sapling:
+        category: ${namespace}:${tree_type}_tree
+        settings:
+          fuel_time: ${sapling_fuel_time:-"${wood_fuel_time:-300} / 3"}
+        data:
+          item_name: <!i><lang:item.${namespace}.${tree_type}_sapling>
+        texture: ${asset_path_prefix}${tree_type}_sapling
+        behavior:
+          type: block_item
+          block:
+            settings::template: default:settings/sapling
+            behaviors:
+              - type: liquid_flowable_block
+              - type: bush_block
+                bottom_blocks:
+                  - minecraft:farmland
+                bottom_block_tags:
+                  - minecraft:dirt
+                  - minecraft:sand
+                  - minecraft:supports_vegetation
+              - type: sapling_block
+                feature: ${namespace}:${tree_type}_tree
+                bone_meal_success_chance: 0.45
+            loot::template: default:loot_table/self
+            states:
+              properties:
+                stage:
+                  type: int
+                  default_value: 0
+                  min: 0
+                  max: 1
+              appearances:
+                default:
+                  auto_state: sapling
+                  model:
+                    path: ${asset_path_prefix}${tree_type}_sapling
+                    generation:
+                      parent: minecraft:block/cross
+                      textures:
+                        cross: ${asset_path_prefix}${tree_type}_sapling
+      ${namespace}:${tree_type}_leaves:
+        category: ${namespace}:${tree_type}_tree
+        material: oak_leaves
+        data:
+          item_name: <!i><lang:item.${namespace}.${tree_type}_leaves>
+        client_bound_data:
+          block_state: ${namespace}:${tree_type}_leaves[persistent=true,waterlogged=false,distance=${leaves_max_distance:-7}]
+        model:
+          type: minecraft:model
+          path: ${asset_path_prefix}${tree_type}_leaves
+          tints:
+            - type: minecraft:constant
+              value: ${default_leaves_color:-"#48B358"}
+        behavior:
+          type: block_item
+          block:
+            behavior:
+              type: leaves_block
+            loot:
+              template: default:loot_table/leaves
+              arguments:
+                leaves: ${namespace}:${tree_type}_leaves
+                sapling: ${namespace}:${tree_type}_sapling
+            settings:
+              template: default:settings/leaves
+            states:
+              template: default:block_state/leaves
+              arguments:
+                leaves_texture: ${asset_path_prefix}${tree_type}_leaves
+      ${namespace}:${tree_type}_trapdoor:
+        category: ${namespace}:${tree_type}_tree
+        data:
+          item_name: <!i><lang:item.${namespace}.${tree_type}_trapdoor>
+        settings:
+          fuel_time: ${wood_fuel_time:-300}
+        model: ${asset_path_prefix}${tree_type}_trapdoor_bottom
+        behavior:
+          type: block_item
+          block:
+            behavior:
+              type: trapdoor_block
+              can_open_with_hand: true
+              can_open_by_wind_charge: true
+              sounds:
+                open: minecraft:block.wooden_trapdoor.open
+                close: minecraft:block.wooden_trapdoor.close
+            loot:
+              template: default:loot_table/self
+            settings:
+              template:
+                - default:sound/wood
+              overrides:
+                map_color: ${planks_map_color}
+                instrument: bass
+                hardness: 3.0
+                resistance: 3.0
+                burnable: true
+                tags:
+                  - minecraft:mineable/axe
+                  - minecraft:trapdoors
+            states:
+              template: default:block_state/trapdoor
+              arguments:
+                trapdoor_base_block: ${replaced_door_type}_trapdoor
+                trapdoor_texture: ${asset_path_prefix}${tree_type}_trapdoor
+                trapdoor_model: ${asset_path_prefix}${tree_type}_trapdoor
+      ${namespace}:${tree_type}_door:
+        category: ${namespace}:${tree_type}_tree
+        data:
+          item_name: <!i><lang:item.${namespace}.${tree_type}_door>
+        settings:
+          fuel_time: ${door_fuel_time:-"${wood_fuel_time:-300} * 2 / 3"}
+        texture: ${asset_path_prefix}${tree_type}_door
+        behavior:
+          type: double_high_block_item
+          block:
+            behavior:
+              type: door_block
+              can_open_with_hand: true
+              can_open_by_wind_charge: true
+              sounds:
+                open: minecraft:block.wooden_door.open
+                close: minecraft:block.wooden_door.close
+            loot:
+              template: default:loot_table/door
+            settings:
+              template:
+                - default:sound/wood
+              overrides:
+                push_reaction: destroy
+                map_color: ${planks_map_color}
+                instrument: bass
+                hardness: 3.0
+                resistance: 3.0
+                burnable: true
+                tags:
+                  - minecraft:wooden_doors
+                  - minecraft:doors
+                  - minecraft:mineable/axe
+            states:
+              template: default:block_state/door
+              arguments:
+                door_base_block: oak_door
+                door_model: ${asset_path_prefix}${tree_type}_door
+                door_texture_top: ${asset_path_prefix}${tree_type}_door_top
+                door_texture_bottom: ${asset_path_prefix}${tree_type}_door_bottom
+      ${namespace}:${tree_type}_pressure_plate:
+        category: ${namespace}:${tree_type}_tree
+        data:
+          item_name: <!i><lang:item.${namespace}.${tree_type}_pressure_plate>
+        settings:
+          fuel_time: ${wood_fuel_time:-300}
+        model: ${asset_path_prefix}${tree_type}_pressure_plate
+        behavior:
+          type: block_item
+          block:
+            loot::template: default:loot_table/self
+            settings:
+              template:
+                - default:sound/wood
+                - default:hardness/planks
+              overrides:
+                burnable: true
+                push_reaction: destroy
+                map_color: ${planks_map_color:-wood}
+                instrument: bass
+                tags:
+                  - minecraft:mineable/axe
+                  - minecraft:wall_post_override
+                  - minecraft:wooden_pressure_plates
+                  - minecraft:pressure_plates
+            behaviors:
+              type: pressure_plate_block
+              sensitivity: all
+              pressed_time: 20
+              sounds:
+                on: minecraft:block.wooden_pressure_plate.click_on
+                off: minecraft:block.wooden_pressure_plate.click_off
+            states:
+              template: default:block_state/pressure_plate
+              arguments:
+                pressure_plate_model: ${asset_path_prefix}${tree_type}_pressure_plate
+                pressure_plate_texture: ${asset_path_prefix}${tree_type}_planks
+      ${namespace}:${tree_type}_fence_gate:
+        category: ${namespace}:${tree_type}_tree
+        data:
+          item_name: <!i><lang:item.${namespace}.${tree_type}_fence_gate>
+        settings:
+          fuel_time: ${wood_fuel_time:-300}
+        model: ${asset_path_prefix}${tree_type}_fence_gate
+        behavior:
+          type: block_item
+          block:
+            behaviors:
+              type: fence_gate_block
+              can_open_with_hand: true
+              can_open_by_wind_charge: true
+              sounds:
+                open: minecraft:block.fence_gate.open
+                close: minecraft:block.fence_gate.close
+            loot::template: default:loot_table/self
+            settings:
+              template:
+                - default:sound/wood
+                - default:hardness/planks
+              overrides:
+                map_color: ${planks_map_color:-wood}
+                instrument: bass
+                burnable: true
+                tags:
+                  - minecraft:fence_gates
+                  - minecraft:mineable/axe
+                  - minecraft:unstable_bottom_center
+            states:
+              template: default:block_state/fence_gate
+              arguments:
+                fence_gate_base_block: ${replaced_door_type}_fence_gate
+                fence_gate_model: ${asset_path_prefix}${tree_type}_fence_gate
+                fence_gate_texture: ${asset_path_prefix}${tree_type}_planks
+      ${namespace}:${tree_type}_fence:
+        category: ${namespace}:${tree_type}_tree
+        data:
+          item_name: <!i><lang:item.${namespace}.${tree_type}_fence>
+        settings:
+          fuel_time: ${wood_fuel_time:-300}
+        model:
+          path: ${asset_path_prefix}${tree_type}_fence_inventory
+          generation:
+            parent: minecraft:block/fence_inventory
+            textures:
+              texture: ${asset_path_prefix}${tree_type}_planks
+        behavior:
+          type: block_item
+          block:
+            loot::template: default:loot_table/self
+            settings:
+              template:
+                - default:hardness/planks
+                - default:sound/wood
+              overrides:
+                burn_chance: 5
+                fire_spread_chance: 20
+                burnable: true
+                is_suffocating: false
+                is_redstone_conductor: false
+                push_reaction: NORMAL
+                instrument: BASS
+                map_color: ${planks_map_color:-wood}
+                tags:
+                  - minecraft:fences
+                  - minecraft:mineable/axe
+                  - minecraft:wooden_fences
+            behavior:
+              type: fence_block
+              connectable_block_tag: minecraft:wooden_fences
+              can_leash: true
+            states:
+              template: default:block_state/fence
+              arguments:
+                fence_base_block: ${fence_type:-"oak"}_fence
+                fence_post_item: ${namespace}:${tree_type}_fence_post
+                fence_side_item: ${namespace}:${tree_type}_fence_side
+      ${namespace}:${tree_type}_fence_post:
+        data::item_name: <!i><lang:item.${namespace}.${tree_type}_fence>
+        model:
+          path: ${asset_path_prefix}${tree_type}_fence_post
+          generation:
+            parent: minecraft:block/fence_post
+            textures:
+              texture: ${asset_path_prefix}${tree_type}_planks
+      ${namespace}:${tree_type}_fence_side:
+        data::item_name: <!i><lang:item.${namespace}.${tree_type}_fence>
+        model:
+          path: ${asset_path_prefix}${tree_type}_fence_side
+          generation:
+            parent: minecraft:block/custom/fence_side
+            textures:
+              texture: ${asset_path_prefix}${tree_type}_planks
+      ${namespace}:${tree_type}_button:
+        category: ${namespace}:${tree_type}_tree
+        settings:
+          fuel_time: ${button_fuel_time:-"${wood_fuel_time:-300} / 3"}
+        data:
+          item_name: <!i><lang:item.${namespace}.${tree_type}_button>
+        model:
+          path: ${asset_path_prefix}${tree_type}_button
+          generation:
+            parent: minecraft:block/button_inventory
+            textures:
+              texture: ${asset_path_prefix}${tree_type}_planks
+        behavior:
+          type: block_item
+          block:
+            loot::template: default:loot_table/self
+            settings:
+              template:
+                - default:sound/wood
+                - default:hardness/button
+              overrides:
+                burnable: true
+                push_reaction: destroy
+                map_color: ${planks_map_color:-wood}
+                instrument: harp
+                tags:
+                  - minecraft:buttons
+                  - minecraft:mineable/axe
+                  - minecraft:wooden_buttons
+            behaviors:
+              - type: liquid_flowable_block
+              - type: face_attached_horizontal_directional_block
+              - type: button_block
+                ticks_to_stay_pressed: 30
+                can_be_activated_by_arrows: true
+                sounds:
+                  on: minecraft:block.wooden_button.click_on
+                  off: minecraft:block.wooden_button.click_off
+            states:
+              template: default:block_state/button
+              arguments:
+                button_base_block: oak_button
+                button_pressed_item: ${namespace}:${tree_type}_button_pressed
+                button_not_pressed_item: ${namespace}:${tree_type}_button_not_pressed
+      ${namespace}:${tree_type}_button_pressed:
+        data:
+          item_name: <!i><lang:item.${namespace}.${tree_type}_button>
+        model:
+          path: ${asset_path_prefix}${tree_type}_button_pressed
+          generation:
+            parent: minecraft:block/button_pressed
+            textures:
+              texture: ${asset_path_prefix}${tree_type}_planks
+      ${namespace}:${tree_type}_button_not_pressed:
+        data:
+          item_name: <!i><lang:item.${namespace}.${tree_type}_button>
+        model:
+          path: ${asset_path_prefix}${tree_type}_button_not_pressed
+          generation:
+            parent: minecraft:block/button
+            textures:
+              texture: ${asset_path_prefix}${tree_type}_planks
+    recipes:
+      ${namespace}:${tree_type}_planks:
+        type: shapeless
+        category: building
+        group: planks
+        ingredients:
+          - '#${namespace}:${tree_type}_logs'
+        result:
+          id: ${namespace}:${tree_type}_planks
+          count: 4
+      ${namespace}:${tree_type}_wood:
+        type: shaped
+        category: building
+        group: bark
+        pattern:
+          - AA
+          - AA
+        ingredients:
+          A: ${namespace}:${tree_type}_log
+        result:
+          id: ${namespace}:${tree_type}_wood
+          count: 3
+      ${namespace}:stripped_${tree_type}_wood:
+        type: shaped
+        category: building
+        group: bark
+        pattern:
+          - AA
+          - AA
+        ingredients:
+          A: ${namespace}:stripped_${tree_type}_log
+        result:
+          id: ${namespace}:stripped_${tree_type}_wood
+          count: 3
+      ${namespace}:${tree_type}_trapdoor:
+        type: shaped
+        category: redstone
+        group: wooden_trapdoor
+        pattern:
+          - AAA
+          - AAA
+        ingredients:
+          A: ${namespace}:${tree_type}_planks
+        result:
+          id: ${namespace}:${tree_type}_trapdoor
+          count: 2
+      ${namespace}:${tree_type}_door:
+        type: shaped
+        category: redstone
+        group: wooden_door
+        pattern:
+          - AA
+          - AA
+          - AA
+        ingredients:
+          A: ${namespace}:${tree_type}_planks
+        result:
+          id: ${namespace}:${tree_type}_door
+          count: 3
+      ${namespace}:${tree_type}_fence_gate:
+        type: shaped
+        category: redstone
+        group: wooden_fence_gate
+        pattern:
+          - ABA
+          - ABA
+        ingredients:
+          A: minecraft:stick
+          B: ${namespace}:${tree_type}_planks
+        result:
+          id: ${namespace}:${tree_type}_fence_gate
+          count: 1
+      ${namespace}:${tree_type}_pressure_plate:
+        type: shaped
+        category: redstone
+        group: wooden_pressure_plate
+        pattern:
+          - AA
+        ingredients:
+          A: ${namespace}:${tree_type}_planks
+        result:
+          id: ${namespace}:${tree_type}_pressure_plate
+          count: 1
+      ${namespace}:${tree_type}_button:
+        type: shapeless
+        category: redstone
+        group: wooden_button
+        ingredients:
+          - ${namespace}:${tree_type}_planks
+        result:
+          id: ${namespace}:${tree_type}_button
+          count: 1
+      ${namespace}:${tree_type}_fence:
+        type: shaped
+        category: misc
+        group: wooden_fence
+        pattern:
+          - ABA
+          - ABA
+        ingredients:
+          A: ${namespace}:${tree_type}_planks
+          B: minecraft:stick
+        result:
+          id: ${namespace}:${tree_type}_fence
+          count: 3
+
+# As there is a shortage of available states for slabs and stairs, an independent factory is set up to generate them
+$$>=1.20.3:
+  config_factory#extra:
+    instances:
+      - namespace: default
+        tree_type: palm
+        asset_path_prefix: minecraft:block/custom/
+        replaced_slab_type: cut_copper
+        planks_map_color: sand
+    blueprint:
+      items:
+        ${namespace}:${tree_type}_slab:
+          category: ${namespace}:${tree_type}_tree
+          data:
+            item_name: <!i><lang:item.${namespace}.${tree_type}_slab>
+          settings:
+            fuel_time: ${slab_fuel_time:-"${wood_fuel_time:-300} / 2"}
+          model: ${asset_path_prefix}${tree_type}_slab
+          behavior:
+            type: block_item
+            block:
+              behaviors:
+                type: slab_block
+              loot::template: default:loot_table/slab
+              settings:
+                template:
+                  - default:sound/wood
+                  - default:burn_data/planks
+                  - default:hardness/planks
+                overrides:
+                  map_color: ${planks_map_color}
+                  instrument: bass
+                  tags:
+                    - minecraft:wooden_slabs
+                    - minecraft:slabs
+                    - minecraft:mineable/axe
+              states:
+                template: default:block_state/slab
+                arguments:
+                  slab_base_block: petrified_oak_slab
+                  slab_texture: ${asset_path_prefix}${tree_type}_planks
+                  slab_model: ${asset_path_prefix}${tree_type}_slab
+                  planks_model: ${asset_path_prefix}${tree_type}_planks
+        ${namespace}:${tree_type}_stairs:
+          category: ${namespace}:${tree_type}_tree
+          data:
+            item_name: <!i><lang:item.${namespace}.${tree_type}_stairs>
+          settings:
+            fuel_time: ${wood_fuel_time:-300}
+          model: ${asset_path_prefix}${tree_type}_stairs
+          behavior:
+            type: block_item
+            block:
+              loot::template: default:loot_table/self
+              settings:
+                template:
+                  - default:sound/wood
+                  - default:hardness/planks
+                  - default:burn_data/planks
+                overrides:
+                  map_color: ${planks_map_color:-wood}
+                  instrument: bass
+                  tags:
+                    - minecraft:mineable/axe
+                    - minecraft:stairs
+                    - minecraft:wooden_stairs
+              behavior:
+                type: stairs_block
+              states:
+                template: default:block_state/stairs
+                arguments:
+                  stairs_base_block: ${replaced_slab_type}_stairs
+                  stairs_model: ${asset_path_prefix}${tree_type}_stairs
+                  stairs_texture: ${asset_path_prefix}${tree_type}_planks
+      recipes:
+        ${namespace}:${tree_type}_stairs:
+          type: shaped
+          category: building
+          group: wooden_stairs
+          pattern:
+            - "A  "
+            - "AA "
+            - "AAA"
+          ingredients:
+            A: ${namespace}:${tree_type}_planks
+          result:
+            id: ${namespace}:${tree_type}_stairs
+            count: 4
+        ${namespace}:${tree_type}_slab:
+          type: shaped
+          category: building
+          group: wooden_slab
+          pattern:
+            - AAA
+          ingredients:
+            A: ${namespace}:${tree_type}_planks
+          result:
+            id: ${namespace}:${tree_type}_slab
+            count: 6
+
+# Defines the tree's appearance using the same structure as Minecraft's vanilla tree feature.
+# Generate this configuration via a data pack editor (see: https://misode.github.io/worldgen/feature/) and export in YAML format.
+configured_feature:
+  default:palm_tree:
+    type: 'minecraft:tree'
+    config:
+      ignore_vines: true
+      force_dirt: false
+      minimum_size:
+        type: 'minecraft:two_layers_feature_size'
+        min_clipped_height: 10
+        limit: 1
+        lower_size: 0
+        upper_size: 2
+      dirt_provider:
+        type: 'minecraft:simple_state_provider'
+        state:
+          Name: 'minecraft:sand'
+      trunk_provider:
+        type: 'minecraft:simple_state_provider'
+        state:
+          Name: 'default:palm_log'
+          Properties:
+            axis: 'y'
+      foliage_provider:
+        type: 'minecraft:simple_state_provider'
+        state:
+          Name: 'default:palm_leaves'
+          Properties:
+            distance: '7'
+            persistent: 'false'
+            waterlogged: 'false'
+      trunk_placer:
+        type: 'minecraft:straight_trunk_placer'
+        base_height: 6
+        height_rand_a: 5
+        height_rand_b: 0
+      foliage_placer:
+        type: 'minecraft:cherry_foliage_placer'
+        radius: 5
+        offset: 0
+        height: 4
+        wide_bottom_layer_hole_chance: 0.8
+        corner_hole_chance: 1
+        hanging_leaves_chance: 0.8
+        hanging_leaves_extension_chance: 0.4
+      decorators: []
+      $$>=26.2:
+        below_trunk_provider:
+          type: 'minecraft:rule_based_state_provider'
+          rules:
+            - if_true:
+                type: 'minecraft:not'
+                predicate:
+                  type: 'minecraft:matching_block_tag'
+                  tag: 'minecraft:cannot_replace_below_tree_trunk'
+              then:
+                type: 'minecraft:simple_state_provider'
+                state:
+                  Name: 'minecraft:dirt'

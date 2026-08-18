@@ -1260,21 +1260,83 @@ public class BedrockItemLoader {
                 .load("minecraft:item/" + materialName, this.context.javaAssetsDir());
         if (resolved == null || resolved.display().isEmpty()) return;
 
-        this.registerPose(textureId, resolved.display());
+        // The parent has to travel with the display block, and this dropped it. It matters because it decides the
+        // fallback for any slot the merged display does not declare: without it every such slot falls back to
+        // item/generated's flat-sprite pose regardless of what the item actually is. A bow declares no head entry,
+        // so a worn bow was posed as a flat sprite rather than as a bow. This is the path nearly every item takes -
+        // anything with a `material` and no `model` of its own, which is most of a typical pack.
+        this.registerPose(textureId, resolved.display(), resolved.parent().orElse(null));
     }
 
-    private void registerPose(String textureId, Map<String, JavaBlockModel.DisplayTransform> display) {
-        this.registerPose(textureId, display, null);
-    }
-
+    /**
+     * There is deliberately <b>no</b> overload that omits {@code parent}. One existed, defaulting it to
+     * {@code null}, and the material path quietly used it — which mis-posed every item that had no model of its own.
+     * Making the argument required is what stops that recurring; pass {@code null} explicitly if a caller genuinely
+     * has no parent to offer.
+     */
     private void registerPose(String textureId, Map<String, JavaBlockModel.DisplayTransform> display,
                               String parent) {
+        this.warnAboutEngineOwnedContexts(display, parent);
+
         BedrockAnimationContext animCtx =
                 AnimationMapper.fromDisplay(textureId, display, parent, this.anchorKeys());
         if (animCtx.isEmpty()) return;
 
         animCtx.animation().ifPresent(anim -> this.context.registerAnimation(textureId.replace(":", "."), anim));
         this.animationContexts.put(textureId, animCtx);
+    }
+
+    /**
+     * Tells the user about a pose Bedrock will ignore, once per item and context.
+     * <p>
+     * Bedrock renders dropped items, item frames and shelves itself, so {@code ground}, {@code fixed} and
+     * {@code on_shelf} cannot be honoured. Silence there is worse than it sounds: an item built specifically to sit
+     * in a frame converts to output that looks complete, and nothing in the pack says why it does not match.
+     * <p>
+     * Only poses the author actually chose are reported. Nearly every item inherits {@code ground} and
+     * {@code fixed} from {@code item/generated} without knowing it, so warning on the merged display block would
+     * warn about every item ever converted and mean nothing — the value is compared against what the parent chain
+     * supplies and reported only if it differs.
+     */
+    private void warnAboutEngineOwnedContexts(Map<String, JavaBlockModel.DisplayTransform> display, String parent) {
+        for (String context : engineOwnedPosesIn(display, parent)) {
+            Logger.warn("Item " + this.itemId + " poses the '" + context + "' display context, which Bedrock"
+                    + " renders itself - dropped items, item frames and shelves are not a resource pack's to place,"
+                    + " so that pose has no effect. The held and worn poses convert normally.");
+        }
+    }
+
+    /**
+     * Which engine-owned contexts this display block poses deliberately, in declaration order.
+     * <p>
+     * Separate from the warning itself so the decision can be tested — the message cannot.
+     */
+    public static java.util.List<String> engineOwnedPosesIn(
+            Map<String, JavaBlockModel.DisplayTransform> display, String parent) {
+        Map<String, JavaBlockModel.DisplayTransform> inherited = DisplayPresets.forParent(parent);
+        java.util.List<String> deliberate = new java.util.ArrayList<>();
+
+        for (Map.Entry<String, JavaBlockModel.DisplayTransform> entry : display.entrySet()) {
+            if (!DisplayContext.isEngineOwned(entry.getKey())) continue;
+            if (samePose(entry.getValue(), inherited.get(entry.getKey()))) continue;
+            deliberate.add(entry.getKey());
+        }
+        return deliberate;
+    }
+
+    /**
+     * Whether two display entries say the same thing.
+     * <p>
+     * Not {@code equals}: {@code DisplayTransform} is a record over {@code float[]}, so its generated equality is
+     * array identity and would call every inherited pose a deliberate one.
+     */
+    private static boolean samePose(JavaBlockModel.DisplayTransform a, JavaBlockModel.DisplayTransform b) {
+        return b != null
+                && java.util.Arrays.equals(a.rotation(), b.rotation())
+                && java.util.Arrays.equals(a.translation(), b.translation())
+                && java.util.Arrays.equals(a.scale(), b.scale())
+                && java.util.Arrays.equals(a.rotationPivot(), b.rotationPivot())
+                && java.util.Arrays.equals(a.scalePivot(), b.scalePivot());
     }
 
     /**

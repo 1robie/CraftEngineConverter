@@ -1,0 +1,1 @@
+{"model":{"type":"condition","property":"using_item","on_true":{"type":"model","model":"minecraft:item/custom/topaz_shield_blocking"},"on_false":{"type":"model","model":"minecraft:item/custom/topaz_shield"}}}

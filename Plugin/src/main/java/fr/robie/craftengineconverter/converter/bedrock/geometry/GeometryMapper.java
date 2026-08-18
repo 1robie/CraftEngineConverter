@@ -18,7 +18,7 @@ public class GeometryMapper {
      * generated flat and lattice geometries set {@code (0, 8, -0.25)}, so one animation posed a 3D item and a 2D
      * item about two different points.
      */
-    private static final float[] ITEM_PIVOT = {0.0F, 8.0F, 0.0F};
+    public static final float[] ITEM_PIVOT = {0.0F, 8.0F, 0.0F};
 
     public BedrockGeometry mapGeometry(String identifier, JavaBlockModel model, int textureWidth, int textureHeight) {
         BedrockGeometry geo = new BedrockGeometry(identifier)

@@ -8,50 +8,25 @@ import fr.robie.yamllibrary.ConfigurationSection;
 import java.util.List;
 
 /**
- * Where the engine holds a custom item, before the model's own {@code display} transform is composed on top.
+ * An <b>optional</b> per-slot offset on top of the pose {@link PoseSolver} computes, read from the
+ * {@code held-item-anchors} config block.
  * <p>
- * <b>This is the file — or now the {@code held-item-anchors} config block — to change when a pose is off in game.</b>
- * A pose is the composition of an anchor and the model's {@code display} entry (see {@link Transform}); everything
- * else is derived, so an offset affecting every item is a wrong anchor and nothing else.
+ * <b>Leaving this empty is correct, and is the default.</b> This used to be where the pose itself lived — three
+ * constants tuned by looking at items in game, composed with the model's {@code display} entry as if a bone rotated
+ * about the origin rather than about its pivot. Both halves of that are now derived instead: see
+ * {@link PoseSolver} for the constants and their sources, and {@link Transform#aboutPivot} for the pivot. A pose
+ * that comes out wrong is therefore a bug in one of those, worth reporting, and not something to correct here — a
+ * nudge that fixes one item silently misplaces every other item sharing the slot.
  * <p>
- * The values are derived from vanilla's own attachables in the Bedrock resource pack, which is the only authoritative
- * source: Bedrock has no {@code display} block for held items, so a pose is an <b>animation whose position is an
- * offset in the holder's {@code rightItem}/{@code leftItem} bone space</b>. That is a different space from anything
- * Blockbench's display mode shows, and getting the two confused is what put an earlier version of this file at
- * {@code z = 20.8} — Blockbench's first-person <i>screen</i> position — which pushed every item out of view.
+ * What the block is still good for is a deliberate deviation: a pack that wants its items held a little differently
+ * from Java on purpose. The offset applies in <b>Bedrock axes, outside the model's own transform</b>, so it means
+ * what a user expects — {@code translation: [0, 2, 0]} raises the item two units, whatever the model does to itself.
  * <p>
- * The rule vanilla follows is that <b>the Y lift and the bone pivot trade off against each other</b>:
- * {@code geometry.spear} has no bone pivot and lifts {@code 24} in its animation, while {@code geometry.trident}
- * puts {@code 24} in the bone pivot and lifts {@code -2.5} — the same result. Reference points, all third-person:
- * <ul>
- *   <li>{@code spyglass} — bone pivot {@code [0,0,0]}, cubes at Y {@code 0..2}, position {@code [1, 22, 0]}</li>
- *   <li>{@code spear} — no bone pivot, position {@code [0, 24, -27]}</li>
- *   <li>{@code trident} — bone pivot {@code [0,24,0]}, position {@code [1.5, -2.5, -10.5]}</li>
- *   <li>{@code shield} — rotation {@code [-90, 0, 90]}; {@code trident} is {@code [97, -1.5, -49]}</li>
- * </ul>
- * So an origin-authored model wants roughly {@code +22} in Y for the third person and {@code +24} for the first.
- * Item geometry here spans Java's {@code 0..16} band, centred 8 units up, which is where the {@code 14} and
- * {@code 16} below come from — and reassuringly the hand-tuned constant this codebase used to ship was {@code 13}.
- * <p>
- * X and Z are zero because the bone binding already places the item at the hand; re-supplying the hand's own offset
- * in player space double-counts it. Left-hand slots mirror X, which is nothing to configure.
+ * Per-item entries under {@code items} are kept for the same reason, but should no longer be needed for shape: the
+ * long-model problem they existed for — a trident or spear thrown out along its shaft, doubled when the model scales
+ * itself up — was the origin-versus-pivot error, and is now solved rather than compensated.
  */
 public final class HandAnchors {
-
-    /** Third person, both hands. The {@code -90} pitch lays an upright-authored model into the hand. */
-    private static final Transform DEFAULT_THIRD_PERSON = new Transform(
-            new float[]{0, 14, 0}, new float[]{-90, 0, 0}, new float[]{1, 1, 1});
-
-    /** First person, both hands. Vanilla lifts a little higher here than in the third person. */
-    private static final Transform DEFAULT_FIRST_PERSON = new Transform(
-            new float[]{0, 16, 0}, new float[]{-90, 0, 0}, new float[]{1, 1, 1});
-
-    /**
-     * Worn on the head. Composes with {@code item/generated}'s own {@code translation [0,13,7]} and this
-     * {@code 0.625} to about {@code 28}, which is the constant that used to work.
-     */
-    private static final Transform DEFAULT_HEAD = new Transform(
-            new float[]{0, 20, 0}, new float[]{0, 0, 0}, new float[]{0.625F, 0.625F, 0.625F});
 
     /**
      * The inventory slot, which needs no anchor of its own: Java renders an item into a fixed 16-unit box, so the
@@ -68,13 +43,13 @@ public final class HandAnchors {
         throw new UnsupportedOperationException("HandAnchors is a utility class and cannot be instantiated.");
     }
 
-    /** The anchor for a slot, as configured. */
+    /** The nudge for a slot, as configured. Identity unless the pack has asked for one. */
     public static Transform forSlot(AttachableSlot slot) {
         return forSlot(slot, section(Keys.HELD_ITEM_ANCHORS), List.of());
     }
 
     /**
-     * The anchor for a slot, with any per-item override applied.
+     * The nudge for a slot, with any per-item override applied.
      * <p>
      * Named apart from {@link #forSlot(AttachableSlot, ConfigurationSection)} rather than overloading it: the two
      * second parameters are unrelated reference types, so a bare {@code null} would not resolve.
@@ -88,22 +63,21 @@ public final class HandAnchors {
     }
 
     /**
-     * The anchor for a slot, reading overrides from the given {@code held-item-anchors} section — {@code null} for
-     * none. Left-hand slots mirror only the anchor's X, as vanilla's own off-hand poses do, so there is nothing
-     * separate to configure for the off hand.
+     * The nudge for a slot, reading the given {@code held-item-anchors} section — {@code null} for none.
      * <p>
-     * Resolved in three layers, per channel: the built-in default, then the global slot block, then the first
-     * entry under {@code items} matching one of {@code overrideKeys}. One anchor cannot suit every shape — a
-     * trident is long and often scaled, so an offset that is imperceptible on a sword is thrown out along the
-     * shaft and doubled — and vanilla does not try: its own {@code geometry.spear} lifts {@code [0,24,-27]} with
-     * no bone pivot where {@code geometry.trident} pivots at {@code [0,24,0]} and lifts {@code [1.5,-2.5,-10.5]}.
+     * Resolved in three layers, per channel: identity, then the global slot block, then the first entry under
+     * {@code items} matching one of {@code overrideKeys}. Per channel rather than per block, so a config naming only
+     * {@code translation} does not reset the rotation and scale to nothing.
+     * <p>
+     * The off hand mirrors X, matching how the solver mirrors its own grip point, so an offset written once reads
+     * the same way in either hand.
      *
      * @param overrideKeys candidates in priority order, normally the item id then its base material
      */
     public static Transform forSlot(AttachableSlot slot, ConfigurationSection anchors,
                                     List<String> overrideKeys) {
         String key = slotKey(slot);
-        Transform global = configured(anchors, key, defaultFor(slot));
+        Transform global = configured(anchors, key, Transform.IDENTITY);
         Transform resolved = configured(itemOverride(anchors, overrideKeys), key, global);
         return slot.isOffHand() ? mirrorX(resolved) : resolved;
     }
@@ -113,14 +87,6 @@ public final class HandAnchors {
             case THIRD_PERSON_MAIN, THIRD_PERSON_OFF -> "third-person";
             case FIRST_PERSON_MAIN, FIRST_PERSON_OFF -> "first-person";
             case HEAD -> "head";
-        };
-    }
-
-    private static Transform defaultFor(AttachableSlot slot) {
-        return switch (slot) {
-            case THIRD_PERSON_MAIN, THIRD_PERSON_OFF -> DEFAULT_THIRD_PERSON;
-            case FIRST_PERSON_MAIN, FIRST_PERSON_OFF -> DEFAULT_FIRST_PERSON;
-            case HEAD -> DEFAULT_HEAD;
         };
     }
 

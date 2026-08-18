@@ -86,6 +86,79 @@ public record Transform(float[] translation, float[] rotation, float[] scale) {
     }
 
     /**
+     * The matrix a <b>Bedrock bone</b> with this animation and the given pivot produces:
+     * {@code T(position) · T(pivot) · R · S · T(-pivot)}.
+     * <p>
+     * This is not the same thing as {@link #toMatrix()}. A bone rotates and scales <b>about its pivot</b>, while a
+     * bare TRS does so about the origin, and the two agree only at the pivot itself. Emitting a pose computed the
+     * origin way into a bone whose pivot is not the origin is therefore right at one point and progressively wrong
+     * away from it — which is exactly the error that used to need per-item anchor tuning for long models, where
+     * "away from it" is the whole length of the shaft.
+     */
+    public float[] toMatrixAboutPivot(float[] pivot) {
+        float[] linear = this.rotateScaleMatrix();
+        float[] turned = rotate(linear, pivot);
+
+        float[] m = linear.clone();
+        m[3] = this.translation[0] + pivot[0] - turned[0];
+        m[7] = this.translation[1] + pivot[1] - turned[1];
+        m[11] = this.translation[2] + pivot[2] - turned[2];
+        return m;
+    }
+
+    /**
+     * The animation a Bedrock bone must carry to render as {@code target} — the inverse of
+     * {@link #toMatrixAboutPivot}, and the step that lets a pose be <b>solved</b> rather than approximated.
+     * <p>
+     * The rotation and scale read straight off {@code target}'s linear part, since neither the pivot nor the
+     * geometry's own placement touches it. The translation is the part that has to be solved, and it needs
+     * <b>both</b> offsets, which is what an earlier version of this got wrong.
+     * <p>
+     * The bone renders a point {@code x} of the geometry at {@code t + p + L·(x - p)}. The target, though, is
+     * expressed over the model's <i>centred</i> coordinates {@code c}, as {@code τ + Λ·c} — that is the space a Java
+     * {@code display} transform works in, because the client centres the box on the transform's pivot. The geometry
+     * supplies {@code x = c + e}, where {@code e} is where the geometry's own origin sits relative to that centre.
+     * Equating the two gives {@code L = Λ} and:
+     * <pre>
+     *   t = τ - p - L·(e - p)
+     * </pre>
+     * With {@code e == p} — which is this converter's case, since the emitted geometry is built so the box centre
+     * lands exactly on the bone pivot — the last term vanishes and {@code t = τ - p}. The version that shipped
+     * before instead computed {@code t = τ - p + L·p}, pairing with a matching pre-subtraction on the other side of
+     * the composition; the two used different {@code L}s and so did not cancel, which put every held item out by a
+     * fixed, scale-dependent offset.
+     *
+     * @param target          a row-major {@code T · R · S} over the model's centred coordinates
+     * @param pivot           the bone's own pivot, in model units
+     * @param geometryOffset  where the emitted geometry's origin sits relative to the model centre — normally the
+     *                        same as {@code pivot}; passed separately so the two are never silently conflated again
+     */
+    public static Transform aboutPivot(float[] target, float[] pivot, float[] geometryOffset) {
+        Transform origin = fromMatrix(target);
+
+        float[] offset = new float[3];
+        for (int axis = 0; axis < 3; axis++) {
+            offset[axis] = geometryOffset[axis] - pivot[axis];
+        }
+        float[] turned = rotate(target, offset);
+
+        float[] position = new float[3];
+        for (int axis = 0; axis < 3; axis++) {
+            position[axis] = origin.translation[axis] - pivot[axis] - turned[axis];
+        }
+        return new Transform(position, origin.rotation(), origin.scale());
+    }
+
+    /** {@code R · S} — the linear part, with no translation. */
+    private float[] rotateScaleMatrix() {
+        float[] m = this.toMatrix();
+        m[3] = 0;
+        m[7] = 0;
+        m[11] = 0;
+        return m;
+    }
+
+    /**
      * Blockbench's two pivot corrections, from {@code DisplayMode.updateDisplayBase}.
      * <p>
      * Neither pivot is a real node in Blockbench's scene graph; both are solved into the position instead. A
@@ -150,7 +223,7 @@ public record Transform(float[] translation, float[] rotation, float[] scale) {
         float[] reflected = reflectZ(rotationMatrix(this.rotation));
         return new Transform(
                 new float[]{-this.translation[0], this.translation[1], this.translation[2]},
-                eulerXyz(basisOf(reflected)),
+                eulerZyx(basisOf(reflected)),
                 this.scale.clone());
     }
 
@@ -240,6 +313,70 @@ public record Transform(float[] translation, float[] rotation, float[] scale) {
             z = 0;
         }
         return new float[]{(float) Math.toDegrees(x), (float) Math.toDegrees(y), (float) Math.toDegrees(z)};
+    }
+
+    /**
+     * {@code Rz · Ry · Rx} as a row-major 4×4 — the order a <b>Bedrock bone</b> rotates in, which is not the order a
+     * Java {@code display} transform rotates in.
+     * <p>
+     * Blockbench carries this as a per-format {@code euler_order} whose default is {@code 'ZYX'}
+     * ({@code js/io/format.ts:704}) and which <b>no format overrides</b>; it is applied to every bone and group mesh
+     * ({@code js/outliner/types/group.js:627}). The Java display transform escapes it because {@code display_base}
+     * and {@code display_area} are raw {@code THREE.Object3D}s ({@code js/display_mode/display_mode.js:824-825})
+     * that never have {@code rotation.order} set, so they keep three.js's default {@code 'XYZ'} — which is also
+     * vanilla's {@code rotationXYZ}.
+     * <p>
+     * Getting this wrong is invisible on a single-axis rotation and wrong on every other, which is why it survived:
+     * it corrupts the composed rotation of essentially every real item — {@code item/handheld}'s
+     * {@code [0,-90,55]}, {@code block/block}'s {@code [75,45,0]} — and then the position too, because the pose is
+     * solved from that rotation.
+     */
+    private static float[] rotationMatrixZyx(float[] degrees) {
+        double x = Math.toRadians(degrees[0]);
+        double y = Math.toRadians(degrees[1]);
+        double z = Math.toRadians(degrees[2]);
+
+        double sa = Math.sin(x), ca = Math.cos(x);
+        double sb = Math.sin(y), cb = Math.cos(y);
+        double sc = Math.sin(z), cc = Math.cos(z);
+
+        float[] m = new float[16];
+        m[0] = (float) (cc * cb);
+        m[1] = (float) (-sc * ca + cc * sb * sa);
+        m[2] = (float) (sc * sa + cc * sb * ca);
+        m[4] = (float) (sc * cb);
+        m[5] = (float) (cc * ca + sc * sb * sa);
+        m[6] = (float) (-cc * sa + sc * sb * ca);
+        m[8] = (float) (-sb);
+        m[9] = (float) (cb * sa);
+        m[10] = (float) (cb * ca);
+        m[15] = 1.0F;
+        return m;
+    }
+
+    /**
+     * Euler angles from a normalised basis in {@code ZYX} order, as three.js
+     * {@code Euler.setFromRotationMatrix} does it. The {@code 0.9999999} branch is the gimbal case: when Y is a
+     * quarter turn, X and Z describe the same rotation and only their sum is determined, so X is pinned to zero.
+     */
+    private static float[] eulerZyx(float[] basis) {
+        float m20 = basis[6];
+        double y = Math.asin(-Math.max(-1.0, Math.min(1.0, m20)));
+        double x;
+        double z;
+        if (Math.abs(m20) < 0.9999999) {
+            x = Math.atan2(basis[7], basis[8]);
+            z = Math.atan2(basis[3], basis[0]);
+        } else {
+            x = 0;
+            z = Math.atan2(-basis[1], basis[4]);
+        }
+        return new float[]{(float) Math.toDegrees(x), (float) Math.toDegrees(y), (float) Math.toDegrees(z)};
+    }
+
+    /** {@code Rz · Ry · Rx} for a Bedrock-order triple, exposed so a reader of a Bedrock file can rebuild it. */
+    public static float[] bedrockRotationMatrix(float[] degrees) {
+        return rotationMatrixZyx(degrees);
     }
 
     private static float[] multiply(float[] a, float[] b) {

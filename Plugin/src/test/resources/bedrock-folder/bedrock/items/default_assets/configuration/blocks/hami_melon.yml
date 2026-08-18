@@ -1,0 +1,209 @@
+items:
+  default:hami_melon_slice:
+    material: melon_slice
+    texture: minecraft:item/custom/hami_melon_slice
+    data:
+      item_name: <!i><lang:item.default.hami_melon_slice>
+      $$>=1.20.5:
+        food:
+          nutrition: 2
+          saturation: 1.0
+          can_always_eat: false
+    $$<=1.20.4:
+      settings:
+        food:
+          nutrition: 2
+          saturation: 1.0
+  default:hami_melon:
+    data:
+      item_name: <!i><lang:item.default.hami_melon>
+    model: minecraft:block/custom/hami_melon
+    behavior:
+      type: block_item
+      block: default:hami_melon
+  default:hami_melon_seeds:
+    data:
+      item_name: <!i><lang:item.default.hami_melon_seeds>
+    texture: minecraft:item/custom/hami_melon_seeds
+    behavior:
+      type: block_item
+      block: default:hami_melon_stem
+blocks:
+  default:hami_melon:
+    loot:
+      pools:
+        - rolls: 1
+          entries:
+            - type: alternatives
+              children:
+                - type: item
+                  item: default:hami_melon
+                  conditions:
+                    - type: enchantment
+                      predicate: minecraft:silk_touch>=1
+                - type: item
+                  item: default:hami_melon_slice
+                  functions:
+                    - type: set_count
+                      add: false
+                      count: 3~7
+                    - type: apply_bonus
+                      enchantment: minecraft:fortune
+                      formula:
+                        type: ore_drops
+                    - type: limit_count
+                      max: 9
+                    - type: explosion_decay
+    settings:
+      template:
+        - default:sound/wood
+        - default:hardness/melon
+      overrides:
+        map_color: 19
+        push_reaction: DESTROY
+        is_suffocating: true
+        is_redstone_conductor: true
+        tags:
+          - minecraft:enderman_holdable
+          - minecraft:mineable/axe
+          - minecraft:sword_efficient
+    state:
+      auto_state: solid
+      model:
+        path: minecraft:block/custom/hami_melon
+        # minecraft:block/cube_bottom_top
+        textures:
+          - minecraft:block/custom/hami_melon_bottom
+          - minecraft:block/custom/hami_melon
+          - minecraft:block/custom/hami_melon_top
+  default:hami_melon_stem:
+    settings:
+      template:
+        - default:sound/stem_crop
+        - default:hardness/none
+      overrides:
+        map_color: 7
+        push_reaction: DESTROY
+        is_suffocating: false
+        is_redstone_conductor: false
+        item: default:hami_melon_seeds
+        tags:
+          - minecraft:bee_growables
+          - minecraft:crops
+          - minecraft:maintains_farmland
+    behaviors:
+      - type: liquid_flowable_block
+      - type: stem_block
+        fruit: default:hami_melon
+        attached_stem: default:attached_hami_melon_stem
+        fruit_bottom_blocks:
+          - minecraft:farmland
+          - minecraft:dirt
+      - type: bush_block
+        bottom_blocks:
+          - minecraft:farmland
+    states:
+      properties:
+        age:
+          type: int
+          default: 0
+          min: 0
+          max: 7
+      appearances:
+        age=0:
+          state: pumpkin_stem[age=0]
+        age=1:
+          state: pumpkin_stem[age=1]
+        age=2:
+          state: pumpkin_stem[age=2]
+        age=3:
+          state: pumpkin_stem[age=3]
+        age=4:
+          state: pumpkin_stem[age=4]
+        age=5:
+          state: pumpkin_stem[age=5]
+        age=6:
+          state: pumpkin_stem[age=6]
+        age=7:
+          state: pumpkin_stem[age=7]
+      variants:
+        age=0:
+          appearance: age=0
+        age=1:
+          appearance: age=1
+        age=2:
+          appearance: age=2
+        age=3:
+          appearance: age=3
+        age=4:
+          appearance: age=4
+        age=5:
+          appearance: age=5
+        age=6:
+          appearance: age=6
+        age=7:
+          appearance: age=7
+  default:attached_hami_melon_stem:
+    settings:
+      template:
+        - default:sound/stem_crop
+        - default:hardness/none
+      overrides:
+        map_color: 7
+        push_reaction: DESTROY
+        is_suffocating: false
+        is_redstone_conductor: false
+        item: default:hami_melon_seeds
+        tags:
+          - minecraft:maintains_farmland
+    behaviors:
+      - type: liquid_flowable_block
+      - type: attached_stem_block
+        fruit: default:hami_melon
+        stem: default:hami_melon_stem
+      - type: bush_block
+        blacklist: false
+        bottom_blocks:
+          - minecraft:farmland
+    states:
+      properties:
+        facing:
+          type: horizontal_direction
+          default: north
+      appearances:
+        facing=east:
+          state: attached_pumpkin_stem[facing=east]
+        facing=south:
+          state: attached_pumpkin_stem[facing=south]
+        facing=west:
+          state: attached_pumpkin_stem[facing=west]
+        facing=north:
+          state: attached_pumpkin_stem[facing=north]
+      variants:
+        facing=east:
+          appearance: facing=east
+        facing=south:
+          appearance: facing=south
+        facing=west:
+          appearance: facing=west
+        facing=north:
+          appearance: facing=north
+recipes:
+  default:hami_melon:
+    type: shaped
+    pattern:
+      - AAA
+      - AAA
+      - AAA
+    ingredients:
+      A: default:hami_melon_slice
+    result:
+      id: default:hami_melon
+      count: 1
+  default:hami_melon_seeds:
+    type: shapeless
+    ingredients:
+      - default:hami_melon_slice
+    result:
+      id: default:hami_melon_seeds
+      count: 1

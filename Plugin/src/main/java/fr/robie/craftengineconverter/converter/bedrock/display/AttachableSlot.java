@@ -33,6 +33,18 @@ public enum AttachableSlot {
     THIRD_PERSON_OFF("third_person_off", "hold_third_person_off", DisplayContext.THIRD_PERSON_LEFT,
             "context.is_first_person == 0.0 && context.item_slot == 'off_hand'"),
 
+    /**
+     * Worn on the head, third person only — and that {@code is_first_person == 0.0} is <b>load bearing</b>, not an
+     * oversight.
+     * <p>
+     * It looks like a gap: a head item is on the head in both views, so pinning the third person appears to leave it
+     * unposed in the first. It does, and that is correct, because you cannot see your own head. Bedrock's
+     * first-person view swaps in an arm-only rig with no {@code head} bone, so letting the head slot animate there
+     * makes the geometry's {@code q.item_slot_to_bone_name(context.item_slot)} binding resolve to a bone that does
+     * not exist, and the client logs
+     * {@code binding expression ... returned a bone name that doesn't exist} for every head item. Dropping the clause
+     * bought nothing and produced exactly that.
+     */
     HEAD("head", "head", DisplayContext.HEAD,
             "context.is_first_person == 0.0 && context.item_slot == 'head'");
 

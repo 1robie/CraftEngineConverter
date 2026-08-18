@@ -1,0 +1,36 @@
+items:
+  default:reed:
+    data:
+      item_name: <!i><lang:item.default.reed>
+    texture: minecraft:item/custom/reed
+    behavior:
+      type: liquid_collision_block_item
+      block:
+        settings:
+          template:
+            - default:hardness/none
+            - default:sound/grass
+          overrides:
+            push_reaction: destroy
+            map_color: 60
+        behavior:
+          type: on_liquid_block
+          liquid_type: water
+          positions:
+            - 0,-1,0
+        loot:
+          template: default:loot_table/self
+        state:
+          auto_state: sugar_cane
+          model:
+            path: minecraft:block/custom/reed
+recipes:
+  default:paper_from_reed:
+    type: shaped
+    pattern:
+      - AAA
+    ingredients:
+      A: default:reed
+    result:
+      id: minecraft:paper
+      count: 3

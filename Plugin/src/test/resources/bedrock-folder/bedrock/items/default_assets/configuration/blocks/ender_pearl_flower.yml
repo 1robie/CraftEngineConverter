@@ -1,0 +1,136 @@
+items:
+  default:ender_pearl_flower_seeds:
+    data:
+      item_name: <!i><lang:item.default.ender_pearl_flower_seeds>
+    texture: minecraft:item/custom/ender_pearl_flower_seeds
+    behavior:
+      type: block_item
+      block: default:ender_pearl_flower
+blocks:
+  default:ender_pearl_flower:
+    settings:
+      template:
+        - default:hardness/none
+        - default:sound/grass
+      overrides:
+        item: default:ender_pearl_flower_seeds
+        push_reaction: destroy
+        map_color: 24
+    behaviors:
+      - type: liquid_flowable_block
+      - type: bush_block
+        bottom_blocks:
+          - minecraft:end_stone
+      - type: crop_block
+        grow_speed: 0.25
+        light_requirement: 0
+        is_bone_meal_target: true
+        bone_meal_age_bonus: 1
+    loot:
+      template: default:loot_table/seed_crop
+      arguments:
+        crop_item: minecraft:ender_pearl
+        crop_seed: default:ender_pearl_flower_seeds
+        ripe_age: 2
+    events:
+      - on: break
+        conditions:
+          - type: match_block_property
+            properties:
+              age: 2
+        functions:
+          - type: particle
+            x: <arg:block.block_x> + 0.5
+            y: <arg:block.block_y> + 0.5
+            z: <arg:block.block_z> + 0.5
+            particle: minecraft:end_rod
+            count: 15
+            offset_x: 0.05
+            offset_y: 0.05
+            offset_z: 0.05
+            speed: 0.1
+          - type: play_sound
+            sound: minecraft:entity.enderman.teleport
+            x: <arg:block.block_x> + 0.5
+            y: <arg:block.block_y> + 0.5
+            z: <arg:block.block_z> + 0.5
+      - on: right_click
+        conditions:
+          - type: match_block_property
+            properties:
+              age: 2
+          - type: match_item
+            id: default:ender_pearl_flower_seeds
+        functions:
+          - type: break_block
+            x: <arg:block.block_x>
+            y: <arg:block.block_y>
+            z: <arg:block.block_z>
+          - type: place_block
+            x: <arg:block.block_x>
+            y: <arg:block.block_y>
+            z: <arg:block.block_z>
+            block_state: default:ender_pearl_flower[age=0]
+          - type: set_count
+            add: true
+            count: -1
+          - type: swing_hand
+          - type: update_interaction_tick
+    states:
+      properties:
+        age:
+          type: int
+          default: 0
+          min: 0
+          max: 2
+      appearances:
+        stage_0:
+          auto_state: lower_tripwire
+          models:
+            - path: minecraft:block/custom/ender_pearl_flower_stage_0
+              generation:
+                parent: minecraft:block/cross
+                textures:
+                  cross: minecraft:block/custom/ender_pearl_flower_stage_0
+        stage_1:
+          auto_state: higher_tripwire
+          models:
+            - path: minecraft:block/custom/ender_pearl_flower_stage_1
+              generation:
+                parent: minecraft:block/cross
+                textures:
+                  cross: minecraft:block/custom/ender_pearl_flower_stage_1
+        stage_2:
+          auto_state: sugar_cane
+          models:
+            - path: minecraft:block/custom/ender_pearl_flower_stage_2
+              generation:
+                parent: minecraft:block/cross
+                textures:
+                  cross: minecraft:block/custom/ender_pearl_flower_stage_2
+      variants:
+        age=0:
+          appearance: stage_0
+        age=1:
+          appearance: stage_1
+        age=2:
+          appearance: stage_2
+vanilla_loots:
+  default:ender_pearl_flower_seeds_from_endermite:
+    type: entity
+    target: minecraft:endermite
+    override: false
+    loot:
+      pools:
+        - rolls: 1
+          conditions:
+            - type: table_bonus
+              enchantment: minecraft:looting
+              chances:
+                - 0.1
+                - 0.5
+                - 0.8
+                - 1
+          entries:
+            - type: item
+              item: default:ender_pearl_flower_seeds

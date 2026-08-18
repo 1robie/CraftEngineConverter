@@ -35,8 +35,15 @@ class ItemIconRendererTest {
     }
 
     /** A full-block cube with every face declared and textured from {@code #0}. */
+    /**
+     * A block-shaped model, and it declares that by its parent rather than relying on the icon renderer to guess.
+     * <p>
+     * The three-quarter view these tests reason about comes from {@code block/block}'s own {@code gui} entry. It used
+     * to arrive by a fallback that gave the block pose to <i>any</i> model with no gui entry, which is not what the
+     * client does - a plain sprite has no gui entry either and is drawn flat.
+     */
     private static JavaBlockModel cube(int tintIndex) {
-        JavaBlockModel model = new JavaBlockModel(null, true);
+        JavaBlockModel model = new JavaBlockModel("block/block", true);
         model.addTexture("0", "test/white");
 
         JavaBlockModel.Element element = new JavaBlockModel.Element(0, 0, 0, 16, 16, 16);

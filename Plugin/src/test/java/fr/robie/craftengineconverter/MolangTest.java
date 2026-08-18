@@ -3,7 +3,10 @@ package fr.robie.craftengineconverter;
 import fr.robie.craftengineconverter.api.configuration.bedrock.molang.Molang;
 import fr.robie.craftengineconverter.api.configuration.bedrock.molang.MolangMath;
 import fr.robie.craftengineconverter.api.configuration.bedrock.molang.MolangQuery;
+import fr.robie.craftengineconverter.api.configuration.bedrock.molang.MolangScript;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -104,6 +107,49 @@ class MolangTest {
 
         assertEquals("variable.timer ?? 0.0",
                 Molang.raw("variable.timer").orElse(Molang.number(0)).toString());
+    }
+
+    /**
+     * A frame index over uneven thresholds is a chain of ternaries, and an unbracketed chain leaves the meaning to
+     * Molang's associativity — which is documented nowhere and, being Molang, would fail by rendering a wrong frame
+     * rather than by complaining. Vanilla brackets its own nested ternaries (`creaking.entity.json`,
+     * `armadillo.entity.json`), so this does too.
+     */
+    @Test
+    void nestedTernariesAreBracketed() {
+        Molang inner = Molang.raw("q.b").then(Molang.number(2), Molang.number(1));
+        assertEquals("q.a ? 3.0 : (q.b ? 2.0 : 1.0)",
+                Molang.raw("q.a").then(Molang.number(3), inner).toString());
+
+        // And as the condition, where dropping the brackets would change which "?" binds to which ":".
+        assertEquals("(q.b ? 2.0 : 1.0) ? 3.0 : 4.0",
+                inner.then(Molang.number(3), Molang.number(4)).toString());
+    }
+
+    /** {@code pre_animation} holds statements, not expressions, and every one of vanilla's ends in a semicolon. */
+    @Test
+    void scriptStatementsAssignToAVariableAndEndInASemicolon() {
+        List<String> statements = new MolangScript()
+                .set("is_drawing", MolangQuery.MAIN_HAND_ITEM_USE_DURATION.greaterThan(0))
+                .set("bow_frame", Molang.variable("is_drawing").then(Molang.number(1), Molang.number(0)))
+                .statements();
+
+        assertEquals(List.of(
+                "variable.is_drawing = query.main_hand_item_use_duration > 0.0;",
+                "variable.bow_frame = variable.is_drawing ? 1.0 : 0.0;"), statements);
+    }
+
+    /**
+     * The same shape as {@link MolangQuery#chargeAmount()} with vanilla's hardcoded {@code / 10.0} replaced by the
+     * scale the Java pack declares — which is what makes a bow with a non-vanilla draw time change frames where its
+     * author meant it to.
+     */
+    @Test
+    void useProgressAppliesTheJavaScaleInPlaceOfVanillasDivisor() {
+        assertEquals(
+                "math.clamp((query.main_hand_item_max_duration - (query.main_hand_item_use_duration"
+                        + " - query.frame_alpha + 1.0)) * 0.05, 0.0, 1.0)",
+                MolangQuery.useProgress(0.05f).toString());
     }
 
     @Test

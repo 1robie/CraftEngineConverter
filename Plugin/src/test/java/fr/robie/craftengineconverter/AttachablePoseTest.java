@@ -6,10 +6,13 @@ import fr.robie.craftengineconverter.converter.bedrock.animation.AnimationMapper
 import fr.robie.craftengineconverter.converter.bedrock.animation.BedrockAnimationContext;
 import fr.robie.craftengineconverter.converter.bedrock.attachable.BedrockAttachable;
 import fr.robie.craftengineconverter.converter.bedrock.attachable.BedrockAttachableContext;
+import fr.robie.craftengineconverter.converter.bedrock.BedrockItemLoader;
 import fr.robie.craftengineconverter.api.configuration.loader.ConfigurationTrees;
 import fr.robie.craftengineconverter.converter.bedrock.display.AttachableSlot;
+import fr.robie.craftengineconverter.converter.bedrock.display.DisplayPoses;
 import fr.robie.craftengineconverter.converter.bedrock.display.DisplayPresets;
 import fr.robie.craftengineconverter.converter.bedrock.display.HandAnchors;
+import fr.robie.craftengineconverter.converter.bedrock.display.PoseSolver;
 import fr.robie.craftengineconverter.converter.bedrock.display.Transform;
 import fr.robie.craftengineconverter.converter.bedrock.geometry.BedrockGeometry;
 import fr.robie.craftengineconverter.converter.bedrock.geometry.DisplayContext;
@@ -28,7 +31,9 @@ import java.util.Set;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -206,34 +211,17 @@ class AttachablePoseTest {
         assertEquals(60.0F, tiltedRotation[0], EPSILON, "the model's 30 must fold into the anchor's -90");
     }
 
-    /**
-     * Why the hand-tuned formulas survived as long as they did, pinned as a test.
-     * <p>
-     * The third-person anchor is a pure X rotation and it composes on the left, so
-     * {@code Rx(-90) · Ry(y) · Rz(z)} <b>is</b> the XYZ Euler {@code (-90, y, z)} — exactly, not approximately.
-     * Every vanilla preset a tool inherits has {@code rotation[0] == 0} ({@code handheld} is {@code [0,-90,55]},
-     * {@code handheld_rod} is {@code [0,90,55]}), so per-axis passthrough was correct for precisely the cases the
-     * old constants were tuned against. It broke the moment a model set an X rotation — see
-     * {@link #aModelsXRotationIsNotDiscarded} — or a pivot.
-     * <p>
-     * Kept because it also proves the composition does not gratuitously perturb the common case: a handheld tool
-     * should come out where it always did.
-     */
-    @Test
-    void aPureXAnchorComposesChannelwiseWhenTheModelHasNoXRotation() {
-        Map<String, JavaBlockModel.DisplayTransform> declared = Map.of(
-                DisplayContext.THIRD_PERSON_RIGHT,
-                display(new float[]{0, 45, 55}, new float[]{0, 0, 0}, new float[]{1, 1, 1}));
-
-        float[] rotation = triple(boneOf(
-                AnimationMapper.fromDisplay("default:sword", declared), AttachableSlot.THIRD_PERSON_MAIN),
-                "rotation");
-
-        assertNotNull(rotation, "a composed rotation must be emitted");
-        assertEquals(90.0F, rotation[0], EPSILON, "the anchor's pitch, flipped for Bedrock");
-        assertEquals(-45.0F, rotation[1], EPSILON, "the model's Y, flipped for Bedrock");
-        assertEquals(55.0F, rotation[2], EPSILON, "the model's Z, which Bedrock does not flip");
-    }
+    // There used to be a test here called aPureXAnchorComposesChannelwiseWhenTheModelHasNoXRotation, pinning the
+    // coincidence that made the old hand-tuned per-axis formulas look right: with a pure-X hand rotation and a model
+    // whose display rotation has no X component, Rx(-90) . Ry(y) . Rz(z) *is* the XYZ Euler triple (-90, y, z), so
+    // channelwise passthrough was exact for precisely the vanilla presets the constants were tuned against.
+    //
+    // It is gone because the coincidence was an artifact of a mistake. It only holds if the emitted Bedrock rotation
+    // is read in the same XYZ order as the Java display transform, and it is not: a Bedrock bone rotates in ZYX
+    // (Blockbench's per-format euler_order, default 'ZYX', which no format overrides). Reading the emitted triple
+    // correctly, that channel alignment disappears - and the error it was hiding is worth 16 model units on every
+    // item/handheld tool. What the flip does to a rotation is now asserted where it belongs, on the matrix, in
+    // TransformTest; that the result lands where Java draws it is asserted in PoseChainTest.
 
     /** A model with no display at all still has to be posed, not left sitting at the bone's origin. */
     @Test
@@ -271,7 +259,25 @@ class AttachablePoseTest {
         assertEquals(DisplayContext.THIRD_PERSON_RIGHT, DisplayContext.canonical("thirdperson"));
         assertEquals(DisplayContext.FIRST_PERSON_RIGHT, DisplayContext.canonical("firstperson"));
         assertEquals(DisplayContext.GUI, DisplayContext.canonical("gui"));
-        assertEquals(null, DisplayContext.canonical("on_shelf"), "not a vanilla context");
+        // on_shelf is a real 1.21.9+ context and now survives parsing, so that a pose declared for it can be
+        // reported as one Bedrock will ignore rather than vanishing without a word.
+        assertEquals(DisplayContext.ON_SHELF, DisplayContext.canonical("on_shelf"));
+        assertEquals(null, DisplayContext.canonical("in_my_pocket"), "not a vanilla context");
+    }
+
+    /** The three contexts Bedrock renders itself, and which therefore have no attachable slot. */
+    @Test
+    void theEngineOwnedContextsAreTheOnesNoSlotCovers() {
+        for (String context : new String[]{DisplayContext.GROUND, DisplayContext.FIXED, DisplayContext.ON_SHELF}) {
+            assertTrue(DisplayContext.isEngineOwned(context), context + " is Bedrock's to render");
+            for (AttachableSlot slot : AttachableSlot.values()) {
+                assertNotEquals(context, slot.javaContext(), context + " must not claim an attachable slot");
+            }
+        }
+        for (AttachableSlot slot : AttachableSlot.values()) {
+            assertFalse(DisplayContext.isEngineOwned(slot.javaContext()),
+                    slot + " is posed by this converter, so it is not engine-owned");
+        }
     }
 
     // ---------------------------------------------------------------- configurable anchors
@@ -365,19 +371,309 @@ class AttachablePoseTest {
         assertEquals(main.translation()[1], off.translation()[1], EPSILON, "and only X");
     }
 
+    /** With nothing configured there is no offset at all — the solved pose stands on its own. */
+    @Test
+    void theDefaultNudgeIsIdentity() {
+        for (AttachableSlot slot : AttachableSlot.values()) {
+            assertTrue(HandAnchors.forSlot(slot, null).isIdentity(),
+                    slot + " must not be offset unless the pack asks for one");
+        }
+    }
+
     /**
-     * The default anchors have to keep the item near the hand. A first-person Z of any size pushes it past the
-     * camera and it disappears entirely, which is exactly what a wrong derivation did once.
+     * A configured offset means what a user means by it: two units up is two units up, in Bedrock axes, regardless
+     * of what the model's own transform does. Checked as a difference against the unconfigured pose so it tests the
+     * offset rather than restating the solver's own numbers.
      */
     @Test
-    void theDefaultAnchorsKeepTheItemNearTheHand() {
+    void aConfiguredNudgeShiftsTheSolvedPoseByThatMuch() {
+        Transform display = DisplayPoses.toTransform(
+                display(new float[]{0, -90, 55}, new float[]{0, 4, 0.5F}, new float[]{0.85F, 0.85F, 0.85F}));
+        Transform nudge = Transform.translating(0, 2, 0);
+
+        Transform plain = PoseSolver.solve(AttachableSlot.THIRD_PERSON_MAIN, display, GeometryMapper.ITEM_PIVOT);
+        Transform lifted = PoseSolver.solve(
+                AttachableSlot.THIRD_PERSON_MAIN, display, GeometryMapper.ITEM_PIVOT, nudge);
+
+        assertEquals(0.0F, lifted.translation()[0] - plain.translation()[0], EPSILON, "X must not move");
+        assertEquals(2.0F, lifted.translation()[1] - plain.translation()[1], EPSILON, "Y lifts by exactly the nudge");
+        assertEquals(0.0F, lifted.translation()[2] - plain.translation()[2], EPSILON, "Z must not move");
+        assertArrayEquals(plain.rotation(), lifted.rotation(), EPSILON, "a translation must not turn the model");
+    }
+
+    // ---------------------------------------------------------------- the solver
+
+    // Where the solved pose actually lands is checked by PoseChainTest, which builds each engine's render chain
+    // independently and compares cube corners. It used to be checked here, against
+    // `compose(restPose, display).toBedrock()` - the same composition the solver itself used, so the test could
+    // only ever confirm the code agreed with itself. It passed through three separately shipped wrong poses before
+    // that was noticed, which is why the grip points and the round trip now live in a file that shares no code
+    // with the solver.
+
+    /**
+     * The head slot carries <b>no net rotation</b>, and this test exists because a half turn was added here twice on
+     * plausible-sounding reasoning and reverted twice.
+     * <p>
+     * {@code CustomHeadLayer} really does contain {@code mulPose(Axis.YP.rotationDegrees(180))} - that part is not in
+     * doubt, it is right there in {@code iao.class}. What is easy to miss is the two things that cancel it: its own
+     * trailing {@code scale(0.625, -0.625, -0.625)}, which is {@code 0.625 * Rx(180)} rather than a plain scale, and
+     * the entity-wide {@code scale(-1, -1, 1)}, which is {@code Rz(180)}. Their product
+     * {@code Rz(180) * Ry(180) * Rx(180)} is the identity.
+     * <p>
+     * So a model that declares no head pose of its own is drawn unturned, and {@code item/generated}'s
+     * {@code [0,180,0]} head entry really does turn it half a circle rather than cancelling something.
+     */
+    @Test
+    void theHeadSlotCarriesNoNetRotation() {
+        assertEquals(0.0F, PoseSolver.restPose(AttachableSlot.HEAD).rotation()[1], EPSILON,
+                "the layer's half turn is cancelled by its own negative scale and the entity flip");
+
+        // Which way four units "in front of the model" ends up pointing, measured as a difference between two points
+        // so the pose's own translation drops out and only the turn is under test.
+        assertEquals(2.5F, headFacing(display(new float[]{0, 0, 0}, new float[]{0, 0, 0}, unit())), 1.0E-3F,
+                "no declared head pose means no turn, just the 0.625 scale");
+
+        // item/generated declares [0,180,0], so a generated item IS turned - the reverse of what was assumed before.
+        assertEquals(-2.5F, headFacing(DisplayPresets.generatedItem().get(DisplayContext.HEAD)), 1.0E-3F,
+                "generated's own half turn is a real turn, not a cancellation");
+    }
+
+    /**
+     * Where the head pose sends a point four units in front of the model centre, relative to where it sends the
+     * centre itself — so a positive Z still faces forward and a negative one has been turned around.
+     */
+    private static float headFacing(JavaBlockModel.DisplayTransform declared) {
+        Transform solved = PoseSolver.solve(
+                AttachableSlot.HEAD, DisplayPoses.toTransform(declared), GeometryMapper.ITEM_PIVOT);
+        Transform rendered = Transform.fromMatrix(solved.toMatrixAboutPivot(GeometryMapper.ITEM_PIVOT));
+
+        float[] centre = PoseSolver.MODEL_CENTRE.clone();
+        float[] front = {centre[0], centre[1], centre[2] + 4.0F};
+        rendered.applyTo(centre);
+        rendered.applyTo(front);
+        return front[2] - centre[2];
+    }
+
+    /**
+     * Java will not render an arbitrary {@code display} entry, and neither should this: translation is limited to
+     * {@code ±80}, scale to a magnitude of {@code 4}, and rotation is wrapped into a single turn.
+     */
+    @Test
+    void displayValuesAreClampedTheWayTheClientClampsThem() {
+        Transform clamped = DisplayPoses.toTransform(display(
+                new float[]{0, 540, 0}, new float[]{200, -200, 0}, new float[]{9, 9, -9}));
+
+        assertEquals(80.0F, clamped.translation()[0], EPSILON, "translation clamps to 80");
+        assertEquals(-80.0F, clamped.translation()[1], EPSILON, "and to -80");
+        assertEquals(180.0F, clamped.rotation()[1], EPSILON, "540 degrees is half a turn");
+        assertEquals(4.0F, clamped.scale()[0], EPSILON, "scale clamps to 4");
+        assertEquals(-4.0F, clamped.scale()[2], EPSILON, "a mirrored slot legitimately reaches -4");
+    }
+
+    /**
+     * The presets are the jar's, not Blockbench's copy of it. Blockbench pre-mirrors left-hand entries the client
+     * derives itself, and invents an {@code on_shelf} pose for {@code item/generated} that does not exist.
+     */
+    @Test
+    void thePresetsMatchTheVanillaJarRatherThanBlockbench() {
+        Map<String, JavaBlockModel.DisplayTransform> generated = DisplayPresets.generatedItem();
+        assertNull(generated.get(DisplayContext.ON_SHELF), "item/generated declares no on_shelf pose");
+        assertNull(generated.get(DisplayContext.THIRD_PERSON_LEFT), "the client mirrors, the jar does not declare");
+        assertNull(generated.get(DisplayContext.FIRST_PERSON_LEFT), "likewise");
+
+        JavaBlockModel.DisplayTransform head = generated.get(DisplayContext.HEAD);
+        assertArrayEquals(new float[]{0, 180, 0}, head.rotation(), EPSILON, "generated.head rotation");
+        assertArrayEquals(new float[]{0, 13, 7}, head.translation(), EPSILON, "generated.head translation");
+
+        // block/block is the other way round: it has the on_shelf pose and two genuinely different first-person
+        // entries, so dropping declared left-hand values is not blanket-safe.
+        Map<String, JavaBlockModel.DisplayTransform> block = DisplayPresets.block();
+        assertNotNull(block.get(DisplayContext.ON_SHELF), "block/block does declare on_shelf");
+        assertNull(block.get(DisplayContext.THIRD_PERSON_LEFT), "but not a third-person left hand");
+        assertEquals(225.0F, block.get(DisplayContext.FIRST_PERSON_LEFT).rotation()[1], EPSILON,
+                "block/block's first-person hands differ rather than being pre-negated");
+    }
+
+    /**
+     * The head slot must stay third-person only, and this is here because it looks like a bug and is not.
+     * <p>
+     * A head item is on the head in both views, so pinning {@code is_first_person == 0.0} reads like an oversight
+     * that leaves it unposed in the first. It is not: you cannot see your own head, and Bedrock's first-person view
+     * swaps in an arm-only rig with no {@code head} bone — so animating there makes the geometry's
+     * {@code q.item_slot_to_bone_name(context.item_slot)} binding resolve to a bone that does not exist and the
+     * client logs {@code binding expression ... returned a bone name that doesn't exist} for every head item.
+     * Removing the clause was tried, and produced exactly that.
+     */
+    @Test
+    void theHeadSlotStaysOutOfFirstPersonWhereThereIsNoHeadBone() {
+        assertFalse(matches(AttachableSlot.HEAD.condition(), "head", true),
+                "animating the head slot in first person binds to a bone the arm-only rig does not have");
+        assertTrue(matches(AttachableSlot.HEAD.condition(), "head", false), "head, third person");
+
+        // Every slot pins is_first_person, so no attachable ever animates against the first-person rig's missing
+        // bones. Losing this on any slot brings the Molang binding error back.
         for (AttachableSlot slot : AttachableSlot.values()) {
-            Transform anchor = HandAnchors.forSlot(slot, null);
-            assertTrue(Math.abs(anchor.translation()[2]) < 10.0F,
-                    slot + " anchor Z must stay small, was " + anchor.translation()[2]);
-            assertTrue(anchor.translation()[1] > 5.0F && anchor.translation()[1] < 32.0F,
-                    slot + " anchor Y must be within the player's height, was " + anchor.translation()[1]);
+            assertTrue(slot.condition().contains("context.is_first_person == 0.0")
+                            || slot.condition().contains("context.is_first_person == 1.0"),
+                    slot + " must pin which view it animates in");
         }
+    }
+
+    /**
+     * Every solved pose has to keep the model somewhere a player could see it.
+     * <p>
+     * This is the failure mode that has actually happened here: reading Blockbench's first-person <b>screen</b>
+     * distance of {@code 20.8} as if it were a hand offset pushed every item straight through the camera. It is a
+     * bound rather than a value, and it holds for the awkward display entries too — including the one whose
+     * translation is clamped to Java's {@code ±80} limit, where a wrong frame is what turns "far out" into "gone".
+     */
+    @Test
+    void everySolvedPoseKeepsTheModelOnThePlayer() {
+        for (AttachableSlot slot : AttachableSlot.values()) {
+            for (JavaBlockModel.DisplayTransform declared : awkwardDisplays()) {
+                Transform solved = PoseSolver.solve(
+                        slot, DisplayPoses.toTransform(declared), GeometryMapper.ITEM_PIVOT);
+                float[] centre = PoseSolver.MODEL_CENTRE.clone();
+                Transform.fromMatrix(solved.toMatrixAboutPivot(GeometryMapper.ITEM_PIVOT)).applyTo(centre);
+
+                String where = slot + " at " + describe(declared) + " lands at "
+                        + java.util.Arrays.toString(centre);
+
+                // The bound is derived from Java's own clamps rather than picked: a display entry may translate by up
+                // to 80 on each axis and scale by up to 4, so the box centre can legitimately reach
+                // 80 * sqrt(3) plus the frame's own ~32 of player height. Anything beyond that is the frame
+                // contributing an offset of its own, which is the failure this guards - reading Blockbench's
+                // first-person SCREEN distance as a hand offset once pushed every item through the camera.
+                float reach = 80.0F * (float) Math.sqrt(3.0) + 40.0F;
+                for (int axis = 0; axis < 3; axis++) {
+                    assertTrue(Float.isFinite(centre[axis]), where);
+                    assertTrue(Math.abs(centre[axis]) < reach, where);
+                }
+
+                // With a realistic display the pose has to stay on the body, which is the tight part of this test.
+                if (Math.abs(declared.translation()[0]) <= 16 && Math.abs(declared.translation()[1]) <= 16
+                        && Math.abs(declared.translation()[2]) <= 16 && Math.abs(declared.scale()[0]) <= 2) {
+                    assertTrue(Math.abs(centre[0]) < 40.0F, where);
+                    assertTrue(centre[1] > -8.0F && centre[1] < 56.0F, where);
+                    assertTrue(Math.abs(centre[2]) < 40.0F, where);
+                }
+            }
+        }
+    }
+
+    /**
+     * A pose Bedrock will ignore is reported, but only when the author chose it.
+     * <p>
+     * The filter matters more than the warning. Nearly every item inherits {@code ground} and {@code fixed} from
+     * {@code item/generated} without asking for them, so warning on the merged display block would warn about every
+     * item ever converted and be ignored on sight.
+     */
+    @Test
+    void onlyADeliberateEngineOwnedPoseIsReported() {
+        Map<String, JavaBlockModel.DisplayTransform> inheritedOnly =
+                new HashMap<>(DisplayPresets.generatedItem());
+        assertEquals(List.of(), BedrockItemLoader.engineOwnedPosesIn(inheritedOnly, "item/generated"),
+                "poses that came from the parent chain are not the author's doing");
+
+        Map<String, JavaBlockModel.DisplayTransform> chosen = new HashMap<>(inheritedOnly);
+        chosen.put(DisplayContext.FIXED, display(new float[]{0, 90, 0}, new float[]{0, 4, -5}, unit()));
+        chosen.put(DisplayContext.ON_SHELF, display(new float[]{0, 0, 0}, new float[]{11, 18.5F, 8.7F}, unit()));
+        assertEquals(Set.of(DisplayContext.FIXED, DisplayContext.ON_SHELF),
+                new HashSet<>(BedrockItemLoader.engineOwnedPosesIn(chosen, "item/generated")),
+                "an item built to sit in a frame or on a shelf deserves to be told it will not");
+
+        Map<String, JavaBlockModel.DisplayTransform> held = Map.of(
+                DisplayContext.THIRD_PERSON_RIGHT, display(new float[]{0, -90, 55}, new float[]{0, 4, 0.5F}, unit()));
+        assertEquals(List.of(), BedrockItemLoader.engineOwnedPosesIn(held, "item/handheld"),
+                "a held pose converts, so there is nothing to report");
+    }
+
+    /** Display entries worth solving against: identity, the gimbal case, a mirror, and a clamped translation. */
+    private static java.util.List<JavaBlockModel.DisplayTransform> awkwardDisplays() {
+        return java.util.List.of(
+                display(new float[]{0, 0, 0}, new float[]{0, 0, 0}, unit()),
+                // item/handheld: Y = -90 is the gimbal case, where the XYZ decomposition collapses X and Z.
+                display(new float[]{0, -90, 55}, new float[]{0, 4, 0.5F}, new float[]{0.85F, 0.85F, 0.85F}),
+                display(new float[]{30, 45, -20}, new float[]{2, -3, 1.5F}, new float[]{1.25F, 0.5F, 2.0F}),
+                display(new float[]{0, 180, 0}, new float[]{0, 13, 7}, new float[]{-1, 1, 1}),
+                display(new float[]{75, 45, 0}, new float[]{80, 80, -80}, new float[]{4, 4, 4}));
+    }
+
+    private static String describe(JavaBlockModel.DisplayTransform display) {
+        return "rotation " + java.util.Arrays.toString(display.rotation())
+                + " translation " + java.util.Arrays.toString(display.translation())
+                + " scale " + java.util.Arrays.toString(display.scale());
+    }
+
+    private static float[] unit() {
+        return new float[]{1, 1, 1};
+    }
+
+    /**
+     * The parent has to reach the pose, because it decides the fallback for slots the display does not declare.
+     * <p>
+     * A bow is the case that shows it: {@code item/bow} declares third and first person but no {@code head}, so a
+     * worn bow takes its head pose from its parent chain. Given the parent, that is {@code item/generated}'s
+     * {@code [0,180,0] / [0,13,7]}; without it the pose falls through to the same preset by accident for this item but
+     * not for a block-parented one, which is why the argument is required rather than defaulted.
+     */
+    @Test
+    void theParentDecidesTheFallbackForUndeclaredSlots() {
+        Map<String, JavaBlockModel.DisplayTransform> bowLike = Map.of(
+                DisplayContext.THIRD_PERSON_RIGHT,
+                display(new float[]{-80, 260, -40}, new float[]{-1, -2, 2.5F}, new float[]{0.9F, 0.9F, 0.9F}));
+
+        Transform withBlockParent = DisplayPoses.forSlot(AttachableSlot.HEAD, bowLike, "block/block");
+        Transform withItemParent = DisplayPoses.forSlot(AttachableSlot.HEAD, bowLike, "item/generated");
+        Transform withNoParent = DisplayPoses.forSlot(AttachableSlot.HEAD, bowLike, null);
+
+        // block/block declares no head entry either, so it drops through to generated - the two agree here.
+        assertArrayEquals(withItemParent.translation(), withNoParent.translation(), EPSILON,
+                "with no parent the fallback is item/generated");
+        assertArrayEquals(new float[]{0, 13, 7}, withItemParent.translation(), EPSILON,
+                "generated's head pose reached the slot");
+
+        // The parent is load bearing where the presets actually differ: the hand.
+        Transform handBlock = DisplayPoses.forSlot(AttachableSlot.THIRD_PERSON_MAIN, Map.of(), "block/block");
+        Transform handItem = DisplayPoses.forSlot(AttachableSlot.THIRD_PERSON_MAIN, Map.of(), "item/handheld");
+        assertFalse(java.util.Arrays.equals(handBlock.rotation(), handItem.rotation()),
+                "a block-parented item and a handheld one must not get the same hand pose");
+        assertEquals(0.375F, handBlock.scale()[0], EPSILON, "block/block's third-person scale");
+        assertEquals(0.85F, handItem.scale()[0], EPSILON, "item/handheld's third-person scale");
+        assertArrayEquals(withBlockParent.translation(), withItemParent.translation(), EPSILON,
+                "and both fall through to generated for the head");
+    }
+
+    /**
+     * The inventory icon has no rig and no bone, so unlike the held slots there is no frame to derive — Java draws
+     * the item into a fixed 16-unit box and the model's own {@code gui} entry is the whole transform. What there
+     * <i>is</i> to get wrong is the fallback, and it was wrong.
+     * <p>
+     * {@code item/generated} declares no {@code gui} entry on purpose: a flat sprite is drawn flat, facing the
+     * camera. Only {@code block/block} declares the three-quarter view. Handing back the block pose whenever an
+     * entry was missing drew every unresolved plain item as though it were a block.
+     */
+    @Test
+    void theInventoryIconFallsBackOnTheParentRatherThanAlwaysOnBlock() {
+        JavaBlockModel sprite = new JavaBlockModel("item/generated", true);
+        Transform flat = DisplayPoses.guiPose(sprite);
+        assertTrue(flat.isIdentity(),
+                "a flat sprite declares no gui pose and is drawn flat, got " + java.util.Arrays.toString(flat.rotation())
+                        + " scale " + java.util.Arrays.toString(flat.scale()));
+
+        JavaBlockModel block = new JavaBlockModel("block/cube_all", true);
+        Transform threeQuarter = DisplayPoses.guiPose(block);
+        // 225 comes back as -135: the same rotation, wrapped into (-180, 180] by Java's own trim.
+        assertArrayEquals(new float[]{30, -135, 0}, threeQuarter.rotation(), EPSILON,
+                "a block-parented item keeps block/block's three-quarter view");
+        assertEquals(0.625F, threeQuarter.scale()[0], EPSILON, "and its scale");
+
+        // A model that declares its own entry always wins, whatever the parent says.
+        JavaBlockModel declared = new JavaBlockModel("block/cube_all", true);
+        declared.addDisplay(DisplayContext.GUI,
+                display(new float[]{15, -25, -5}, new float[]{2, 3, 0}, new float[]{0.65F, 0.65F, 0.65F}));
+        assertArrayEquals(new float[]{15, -25, -5}, DisplayPoses.guiPose(declared).rotation(), EPSILON,
+                "the model's own gui entry wins over the parent preset");
     }
 
     // ---------------------------------------------------------------- attachable wiring
@@ -401,9 +697,13 @@ class AttachablePoseTest {
     }
 
     /** Evaluates the two Molang terms the conditions are built from. */
+    /**
+     * A condition that names no {@code is_first_person} clause applies in <b>both</b> views, which is the head
+     * slot's whole point — it is not held by the arm the first-person view replaces.
+     */
     private static boolean matches(String condition, String itemSlot, boolean firstPerson) {
-        boolean wantsFirstPerson = condition.contains("context.is_first_person == 1.0");
-        if (wantsFirstPerson != firstPerson) return false;
+        if (condition.contains("context.is_first_person == 1.0") && !firstPerson) return false;
+        if (condition.contains("context.is_first_person == 0.0") && firstPerson) return false;
         return condition.contains("context.item_slot == '" + itemSlot + "'");
     }
 

@@ -1,0 +1,2179 @@
+<meta charset="utf-8" />
+<title>Held Item Pose Calibrator</title>
+
+<!--
+  Theming note: the chrome tokenises and themes both ways, but the two viewports keep a deep ink ground in either
+  theme. That is deliberate - they are instrument displays, and on a light ground neither the Java green nor the
+  Bedrock magenta holds contrast against the grey reference rig.
+-->
+<style>
+  :root {
+    --ground:     #f4f3f0;
+    --surface:    #ffffff;
+    --surface-2:  #eceae6;
+    --line:       #d8d5cf;
+    --line-soft:  #e8e5e0;
+    --text:       #1d2029;
+    --text-dim:   #5c6070;
+    --text-faint: #8a8e9c;
+
+    /* Semantic: which engine a thing belongs to. Deliberately not the accent. */
+    --java:       #178a4a;
+    --bedrock:    #bf2472;
+    --ok:         #178a4a;
+    --warn:       #a9722a;
+    --bad:        #bf2472;
+
+    /* Accent: interactive only. Brass, kept quiet. */
+    --accent:     #a9722a;
+    --accent-ink: #ffffff;
+
+    /* Viewport, constant across themes. */
+    --vp:         #101219;
+    --vp-2:       #161a22;
+    --vp-grid:    #232833;
+    --vp-rig:     #6f7484;
+    --vp-java:    #3ddc84;
+    --vp-bedrock: #ff5fa2;
+
+    --mono: ui-monospace, "SF Mono", "Cascadia Mono", "Roboto Mono", Menlo, Consolas, monospace;
+    --sans: ui-sans-serif, system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ground:     #0c0e13;
+      --surface:    #14171d;
+      --surface-2:  #1c1f27;
+      --line:       #292d36;
+      --line-soft:  #1f232b;
+      --text:       #e7e6e3;
+      --text-dim:   #9ba1af;
+      --text-faint: #6b7280;
+      --java:       #3ddc84;
+      --bedrock:    #ff5fa2;
+      --ok:         #3ddc84;
+      --warn:       #d2a24e;
+      --bad:        #ff5fa2;
+      --accent:     #d2a24e;
+      --accent-ink: #14171d;
+    }
+  }
+
+  :root[data-theme="light"] {
+    --ground: #f4f3f0; --surface: #ffffff; --surface-2: #eceae6; --line: #d8d5cf; --line-soft: #e8e5e0;
+    --text: #1d2029; --text-dim: #5c6070; --text-faint: #8a8e9c;
+    --java: #178a4a; --bedrock: #bf2472; --ok: #178a4a; --warn: #a9722a; --bad: #bf2472;
+    --accent: #a9722a; --accent-ink: #ffffff;
+  }
+  :root[data-theme="dark"] {
+    --ground: #0c0e13; --surface: #14171d; --surface-2: #1c1f27; --line: #292d36; --line-soft: #1f232b;
+    --text: #e7e6e3; --text-dim: #9ba1af; --text-faint: #6b7280;
+    --java: #3ddc84; --bedrock: #ff5fa2; --ok: #3ddc84; --warn: #d2a24e; --bad: #ff5fa2;
+    --accent: #d2a24e; --accent-ink: #14171d;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+  }
+
+  header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 8px 20px;
+    padding: 18px 22px 14px;
+    border-bottom: 1px solid var(--line);
+    background: var(--surface);
+  }
+  header h1 {
+    margin: 0;
+    font-size: 19px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+  }
+  header p {
+    margin: 0;
+    max-width: 62ch;
+    color: var(--text-dim);
+    font-size: 13px;
+  }
+
+  main {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 330px;
+    gap: 0;
+    align-items: stretch;
+  }
+  @media (max-width: 900px) {
+    main { grid-template-columns: minmax(0, 1fr); }
+    .rail { border-left: none !important; border-top: 1px solid var(--line); }
+  }
+
+  /* ---------------------------------------------------------------- viewports */
+
+  .stage { padding: 16px; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+
+  .views {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    min-width: 0;
+  }
+  .views.overlay { grid-template-columns: 1fr; }
+  .views.overlay .view.is-bedrock { display: none; }
+
+  .view {
+    position: relative;
+    background: var(--vp);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    overflow: hidden;
+    min-width: 0;
+  }
+  .view canvas { display: block; width: 100%; height: 100%; cursor: grab; touch-action: none; }
+  .view canvas:active { cursor: grabbing; }
+
+  .view-label {
+    position: absolute;
+    top: 9px;
+    left: 11px;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    pointer-events: none;
+  }
+  .view.is-java .view-label { color: var(--vp-java); }
+  .view.is-bedrock .view-label { color: var(--vp-bedrock); }
+  .view-label small {
+    display: block;
+    letter-spacing: 0.06em;
+    text-transform: none;
+    color: #7d838f;
+    font-size: 10px;
+    margin-top: 2px;
+  }
+
+  .fitbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px 18px;
+    padding: 10px 13px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+  }
+  .fit-num {
+    font-family: var(--mono);
+    font-variant-numeric: tabular-nums;
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+  }
+  .chip {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 999px;
+    border: 1px solid currentColor;
+  }
+  .chip.ok   { color: var(--ok); }
+  .chip.warn { color: var(--warn); }
+  .chip.bad  { color: var(--bad); }
+  .axis-list {
+    display: flex;
+    gap: 14px;
+    font-family: var(--mono);
+    font-variant-numeric: tabular-nums;
+    font-size: 12px;
+    color: var(--text-dim);
+    margin-left: auto;
+  }
+  .axis-list b { color: var(--text); font-weight: 600; }
+
+  /* ---------------------------------------------------------------- rail */
+
+  .rail {
+    border-left: 1px solid var(--line);
+    background: var(--surface);
+    padding: 16px 18px 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    min-width: 0;
+  }
+
+  fieldset { border: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+  legend { padding: 0; }
+
+  .seg { display: flex; flex-wrap: wrap; gap: 4px; }
+  .seg button {
+    font: inherit;
+    font-size: 12px;
+    padding: 5px 9px;
+    background: var(--surface-2);
+    color: var(--text-dim);
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    cursor: pointer;
+  }
+  .seg button:hover { color: var(--text); }
+  .seg button[aria-pressed="true"] {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--accent-ink);
+    font-weight: 600;
+  }
+  .seg button:focus-visible, .btn:focus-visible, input:focus-visible, select:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+  }
+
+  select {
+    font: inherit;
+    font-size: 12px;
+    width: 100%;
+    padding: 5px 7px;
+    background: var(--surface-2);
+    color: var(--text);
+    border: 1px solid var(--line);
+    border-radius: 3px;
+  }
+
+  .rows { display: flex; flex-direction: column; gap: 6px; }
+  .row {
+    display: grid;
+    grid-template-columns: 58px minmax(0, 1fr) 62px;
+    align-items: center;
+    gap: 8px;
+  }
+  .row > label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+  }
+  .row input[type="range"] { width: 100%; accent-color: var(--accent); min-width: 0; }
+  .row input[type="number"] {
+    font-family: var(--mono);
+    font-variant-numeric: tabular-nums;
+    font-size: 12px;
+    width: 100%;
+    padding: 3px 5px;
+    background: var(--surface-2);
+    color: var(--text);
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    text-align: right;
+  }
+
+  .derived {
+    font-family: var(--mono);
+    font-variant-numeric: tabular-nums;
+    font-size: 11.5px;
+    color: var(--text-dim);
+    background: var(--surface-2);
+    border: 1px solid var(--line-soft);
+    border-radius: 3px;
+    padding: 9px 11px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .derived div { display: flex; justify-content: space-between; gap: 12px; }
+  .derived span:last-child { color: var(--text); }
+
+  pre {
+    font-family: var(--mono);
+    font-size: 11px;
+    line-height: 1.55;
+    margin: 0;
+    padding: 11px;
+    background: var(--surface-2);
+    border: 1px solid var(--line-soft);
+    border-radius: 3px;
+    overflow-x: auto;
+    white-space: pre;
+    color: var(--text);
+  }
+
+  .btn {
+    font: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 7px 11px;
+    background: var(--accent);
+    color: var(--accent-ink);
+    border: 1px solid var(--accent);
+    border-radius: 3px;
+    cursor: pointer;
+  }
+  .btn.ghost { background: transparent; color: var(--text-dim); border-color: var(--line); font-weight: 500; }
+  .btn.ghost:hover { color: var(--text); }
+  .btnrow { display: flex; gap: 6px; flex-wrap: wrap; }
+
+  .note { font-size: 12px; color: var(--text-dim); margin: 0; }
+  .note code {
+    font-family: var(--mono);
+    font-size: 11px;
+    background: var(--surface-2);
+    padding: 1px 4px;
+    border-radius: 2px;
+  }
+  .swatch { display: inline-block; width: 9px; height: 9px; border-radius: 2px; vertical-align: baseline; }
+
+  hr { border: none; border-top: 1px solid var(--line-soft); margin: 0; }
+
+  .drop {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 5px;
+    padding: 14px;
+    border: 1px dashed var(--line);
+    border-radius: 4px;
+    background: var(--surface-2);
+    font-size: 12px;
+    color: var(--text-dim);
+    cursor: pointer;
+  }
+  .drop strong { color: var(--text); font-weight: 600; font-size: 13px; }
+  .drop code {
+    font-family: var(--mono);
+    font-size: 11px;
+    background: var(--surface);
+    padding: 0 3px;
+    border-radius: 2px;
+  }
+  .drop input[type="file"] { display: none; }
+  .drop.is-over { border-color: var(--accent); border-style: solid; background: var(--surface); }
+  .drop:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  details summary { margin-bottom: 6px; }
+
+  .check {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--text-dim);
+    cursor: pointer;
+  }
+  .check input { accent-color: var(--accent); }
+
+  textarea {
+    font-family: var(--mono);
+    font-size: 11px;
+    width: 100%;
+    padding: 7px 8px;
+    background: var(--surface-2);
+    color: var(--text);
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    resize: vertical;
+  }
+
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+
+<header>
+  <div>
+    <div class="eyebrow">Bedrock attachable &middot; frame calibration</div>
+    <h1>Held Item Pose Calibrator</h1>
+  </div>
+  <p>
+    Left is fixed: where the Java client draws the item, from Java's own numbers. Right is what the converter emits,
+    and it is the only side that moves as you edit. Drag either viewport to orbit; scroll to zoom.
+  </p>
+</header>
+
+<main>
+  <section class="stage">
+    <div class="views" id="views">
+      <div class="view is-java">
+        <div class="view-label">Java<small>display transform on the rig</small></div>
+        <canvas id="cv-java"></canvas>
+      </div>
+      <div class="view is-bedrock">
+        <div class="view-label">Bedrock<small>emitted animation on the bound bone</small></div>
+        <canvas id="cv-bedrock"></canvas>
+      </div>
+    </div>
+
+    <div class="fitbar">
+      <div>
+        <div class="eyebrow">Offset from Java's placement</div>
+        <span class="fit-num" id="fit-num">0.00</span>
+        <span style="font-size:11px;color:var(--text-dim)">model units</span>
+      </div>
+      <span class="chip ok" id="fit-chip">Matches Java</span>
+      <div class="axis-list">
+        <span>&Delta;X <b id="dx">0.00</b></span>
+        <span>&Delta;Y <b id="dy">0.00</b></span>
+        <span>&Delta;Z <b id="dz">0.00</b></span>
+        <span>from fist <b id="dfist">0.00</b></span>
+        <span>gripped at <b id="dgrip">-</b></span>
+        <span>off arm axis <b id="dtilt">0</b></span>
+      </div>
+    </div>
+
+    <p class="note">
+      <span class="swatch" style="background:var(--vp-java)"></span> Java item &nbsp;
+      <span class="swatch" style="background:var(--vp-bedrock)"></span> Bedrock item &nbsp;
+      <span class="swatch" style="background:var(--vp-rig)"></span> player rig, drawn identically in both &mdash;
+      it is the same body. The small cross marks Bedrock's <code>rightItem</code> bone.
+    </p>
+  </section>
+
+  <aside class="rail">
+    <fieldset>
+      <legend class="eyebrow">Slot</legend>
+      <div class="seg" id="seg-slot"></div>
+    </fieldset>
+
+    <fieldset>
+      <legend class="eyebrow">Test model &amp; display entry</legend>
+      <select id="sel-model"></select>
+      <p class="note" id="model-note"></p>
+    </fieldset>
+
+    <fieldset>
+      <legend class="eyebrow">Your own pack</legend>
+      <div class="drop" id="drop" tabindex="0" role="button"
+           aria-label="Drop your pack folder or model files here">
+        <strong>Drop a folder or files</strong>
+        <span>the <code>assets</code> folder in one go, or <code>items</code>, <code>models</code> and
+          <code>textures</code> one at a time &mdash; <strong>drops add up</strong></span>
+        <input type="file" id="picker" multiple webkitdirectory />
+        <button class="btn ghost" type="button" id="btn-pick">Choose files</button>
+      </div>
+      <p class="note" id="load-msg"></p>
+      <p class="note" id="pack-note"></p>
+      <div class="btnrow"><button class="btn ghost" type="button" id="btn-clear">Clear pack</button></div>
+      <details id="paste-fallback">
+        <summary class="eyebrow" style="cursor:pointer">Or paste one model&rsquo;s JSON</summary>
+        <textarea id="paste" rows="4" spellcheck="false"
+          placeholder='{"elements":[...], "display":{"thirdperson_righthand":{...}}}'></textarea>
+        <div class="btnrow" style="margin-top:6px">
+          <button class="btn ghost" type="button" id="btn-load">Load pasted</button>
+        </div>
+      </details>
+    </fieldset>
+
+    <fieldset>
+      <legend class="eyebrow">Arm angle &mdash; 22.5 matches Blockbench's display view</legend>
+      <div class="rows" id="rows-arm"></div>
+    </fieldset>
+
+    <fieldset>
+      <legend class="eyebrow">View</legend>
+      <div class="seg" id="seg-view">
+        <button type="button" data-v="side" aria-pressed="true">Side by side</button>
+        <button type="button" data-v="over" aria-pressed="false">Overlay</button>
+      </div>
+      <label class="check">
+        <input type="checkbox" id="chk-eye" checked />
+        Look through the eye on first-person slots
+      </label>
+    </fieldset>
+
+    <fieldset>
+      <legend class="eyebrow">Right-hand viewport shows</legend>
+      <div class="seg" id="seg-source">
+        <button type="button" data-s="file" aria-pressed="true">Emitted file</button>
+        <button type="button" data-s="solve" aria-pressed="false">Proposed frame</button>
+      </div>
+      <p class="note" id="source-note"></p>
+    </fieldset>
+
+    <hr />
+
+    <fieldset>
+      <legend class="eyebrow">Where the item box goes <span id="lbl-space"></span></legend>
+      <div class="rows" id="rows-target"></div>
+    </fieldset>
+
+    <fieldset>
+      <legend class="eyebrow">Lay-down rotation &amp; scale</legend>
+      <div class="rows" id="rows-rot"></div>
+    </fieldset>
+
+    <details id="nudge-block">
+      <summary class="eyebrow" style="cursor:pointer">Your held-item-anchors, if you have any set</summary>
+      <p class="note" style="margin-top:6px">
+        The converter applies these <em>on top of</em> the constants. Enter what is in your
+        <code>bedrock.yml</code> so this tool shows what your pack will really do.
+      </p>
+      <div class="rows" id="rows-nudge"></div>
+    </details>
+
+    <div class="derived" id="derived"></div>
+
+    <div class="btnrow">
+      <button class="btn ghost" type="button" id="btn-reset">Reset slot</button>
+      <button class="btn ghost" type="button" id="btn-hand">Snap to hand bone</button>
+    </div>
+    <div class="btnrow">
+      <button class="btn" type="button" id="btn-match">Match Java</button>
+      <span class="note" id="match-msg"></span>
+    </div>
+
+    <hr />
+
+    <fieldset>
+      <legend class="eyebrow">bedrock.yml &mdash; keep this empty</legend>
+      <pre id="out-yaml"></pre>
+      <div class="btnrow"><button class="btn" type="button" id="btn-copy-yaml">Copy</button></div>
+    </fieldset>
+
+    <fieldset>
+      <legend class="eyebrow">Frame constants, for PoseSolver &mdash; the only place to change</legend>
+      <pre id="out-java"></pre>
+      <div class="btnrow"><button class="btn ghost" type="button" id="btn-copy-java">Copy</button></div>
+    </fieldset>
+  </aside>
+</main>
+
+<script>
+"use strict";
+
+/* ============================================================ maths
+   Everything is in Java-handed space: Y up from the feet, +X to the player's right, one unit per sixteenth of a
+   block. That is also Blockbench's internal space for the Bedrock format, which is what makes the two sides
+   comparable at all. A Bedrock animation *file* stores something different, converted at the boundary only.        */
+
+const D2R = Math.PI / 180;
+
+/** Rx . Ry . Rz - the order a Java display transform rotates in (three.js default on display_base). */
+function matXyz(d) {
+  const a = Math.cos(d[0] * D2R), b = Math.sin(d[0] * D2R);
+  const c = Math.cos(d[1] * D2R), e = Math.sin(d[1] * D2R);
+  const f = Math.cos(d[2] * D2R), g = Math.sin(d[2] * D2R);
+  return [
+    c * f, -c * g, e,
+    a * g + b * e * f, a * f - b * e * g, -b * c,
+    b * g - a * e * f, b * f + a * e * g, a * c
+  ];
+}
+
+/** Rz . Ry . Rx - the order a Bedrock BONE rotates in (Blockbench euler_order, default 'ZYX', never overridden). */
+function matZyx(d) {
+  const sa = Math.sin(d[0] * D2R), ca = Math.cos(d[0] * D2R);
+  const sb = Math.sin(d[1] * D2R), cb = Math.cos(d[1] * D2R);
+  const sc = Math.sin(d[2] * D2R), cc = Math.cos(d[2] * D2R);
+  return [
+    cc * cb, -sc * ca + cc * sb * sa, sc * sa + cc * sb * ca,
+    sc * cb, cc * ca + sc * sb * sa, -cc * sa + sc * sb * ca,
+    -sb, cb * sa, cb * ca
+  ];
+}
+
+const mul3 = (A, B) => {
+  const o = new Array(9);
+  for (let r = 0; r < 3; r++) for (let c = 0; c < 3; c++) {
+    o[r * 3 + c] = A[r * 3] * B[c] + A[r * 3 + 1] * B[3 + c] + A[r * 3 + 2] * B[6 + c];
+  }
+  return o;
+};
+const ap3 = (M, v) => [
+  M[0] * v[0] + M[1] * v[1] + M[2] * v[2],
+  M[3] * v[0] + M[4] * v[1] + M[5] * v[2],
+  M[6] * v[0] + M[7] * v[1] + M[8] * v[2]
+];
+const diag = (s) => [s[0], 0, 0, 0, s[1], 0, 0, 0, s[2]];
+const add = (a, b) => [a[0] + b[0], a[1] + b[1], a[2] + b[2]];
+const sub = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
+
+/** A 3x3 inverse, by adjugate over determinant. Returns null for a singular matrix, e.g. a zero scale axis. */
+function inv3(m) {
+  const a = m[0], b = m[1], c = m[2], d = m[3], e = m[4], f = m[5], g = m[6], h = m[7], i = m[8];
+  const A = e * i - f * h, B = -(d * i - f * g), C = d * h - e * g;
+  const det = a * A + b * B + c * C;
+  if (!det || !isFinite(det)) return null;
+  return [
+    A / det, (c * h - b * i) / det, (b * f - c * e) / det,
+    B / det, (a * i - c * g) / det, (c * d - a * f) / det,
+    C / det, (b * g - a * h) / det, (a * e - b * d) / det
+  ];
+}
+
+/** An affine transform as a linear part and a translation: x -> L.x + t. */
+function affine(L, t) { return { L: L, t: t }; }
+function affineMul(A, B) { return affine(mul3(A.L, B.L), add(ap3(A.L, B.t), A.t)); }
+function affineInv(A) {
+  const L = inv3(A.L);
+  if (!L) return null;
+  return affine(L, [-ap3(L, A.t)[0], -ap3(L, A.t)[1], -ap3(L, A.t)[2]]);
+}
+
+/** Euler XYZ and a scale triple out of a 3x3, with a negative determinant parked on X as Blockbench does. */
+function decompose3(L) {
+  const sx0 = Math.hypot(L[0], L[3], L[6]);
+  const sy = Math.hypot(L[1], L[4], L[7]);
+  const sz = Math.hypot(L[2], L[5], L[8]);
+  const det = L[0] * (L[4] * L[8] - L[5] * L[7]) - L[1] * (L[3] * L[8] - L[5] * L[6])
+    + L[2] * (L[3] * L[7] - L[4] * L[6]);
+  const sx = det < 0 ? -sx0 : sx0;
+  const basis = [
+    L[0] / (sx || 1), L[1] / (sy || 1), L[2] / (sz || 1),
+    L[3] / (sx || 1), L[4] / (sy || 1), L[5] / (sz || 1),
+    L[6] / (sx || 1), L[7] / (sy || 1), L[8] / (sz || 1)
+  ];
+  return { rotation: eulerXyz(basis), scale: [sx, sy, sz] };
+}
+
+/** Euler ZYX from a 3x3, as three.js Euler.setFromRotationMatrix order 'ZYX'. */
+function eulerZyx(m) {
+  const m20 = m[6];
+  const y = Math.asin(-Math.max(-1, Math.min(1, m20)));
+  let x, z;
+  if (Math.abs(m20) < 0.9999999) { x = Math.atan2(m[7], m[8]); z = Math.atan2(m[3], m[0]); }
+  else { x = 0; z = Math.atan2(-m[1], m[4]); }
+  return [x / D2R, y / D2R, z / D2R];
+}
+
+/** Euler XYZ from a 3x3. */
+function eulerXyz(m) {
+  const m02 = m[2];
+  const y = Math.asin(Math.max(-1, Math.min(1, m02)));
+  let x, z;
+  if (Math.abs(m02) < 0.9999999) { x = Math.atan2(-m[5], m[8]); z = Math.atan2(-m[1], m[0]); }
+  else { x = Math.atan2(m[7], m[4]); z = 0; }
+  return [x / D2R, y / D2R, z / D2R];
+}
+
+/** M . R . M for M = diag(1,1,-1): negates entries where exactly one index is Z. */
+function reflectZ(m) {
+  const o = m.slice();
+  for (let r = 0; r < 3; r++) for (let c = 0; c < 3; c++) {
+    if ((r === 2) !== (c === 2)) o[r * 3 + c] = -o[r * 3 + c];
+  }
+  return o;
+}
+
+/* ============================================================ the reference rig and the frames */
+
+/** Bedrock's rightItem / leftItem bone pivot, in Java-handed space. From the vanilla player geometry. */
+const HAND_BONE = { main: [6, 15, 1], off: [-6, 15, 1] };
+
+/** Java's own item anchor, which is 3 below and 3 in front of its own hand bone. */
+const JAVA_ANCHOR = { main: [6, 12, -2], off: [-6, 12, -2] };
+
+/** Where a bound bone's own origin lands: the target bone's pivot, less 24 on Y. */
+const BIND = { main: [6, -9, 1], off: [-6, -9, 1], head: [0, 0, 0] };
+
+/** The Java model box centre - the display transform's pivot, and the emitted bone's pivot. */
+const CENTRE = [0, 8, 0];
+const PIVOT = [0, 8, 0];
+
+const SLOTS = [
+  { id: "tp_main", label: "3rd main", hand: "main", first: false },
+  { id: "tp_off", label: "3rd off", hand: "off", first: false },
+  { id: "fp_main", label: "1st main", hand: "main", first: true },
+  { id: "fp_off", label: "1st off", hand: "off", first: true },
+  { id: "head", label: "Head", hand: "head", first: false }
+];
+
+/**
+ * The LEFT panel's frame, and it is deliberately NOT editable.
+ * <p>
+ * These are Java's own numbers: it puts the item at its own anchor, 3 below and 3 in front of its hand bone. The
+ * left panel is the invariant being aimed at; only the right panel moves as you edit. Wiring both panels to the same
+ * editable frame - which this tool did at first - makes them agree by construction and the residual measures nothing,
+ * which is exactly the mistake that let three wrong poses ship.
+ */
+const JAVA_REFERENCE = {
+  tp_main: { target: JAVA_ANCHOR.main, rot: [-90, 0, 0], scale: 1 },
+  tp_off: { target: JAVA_ANCHOR.off, rot: [-90, 0, 0], scale: 1 },
+  fp_main: { target: JAVA_ANCHOR.main, rot: [-90, 0, 0], scale: 1 },
+  fp_off: { target: JAVA_ANCHOR.off, rot: [-90, 0, 0], scale: 1 },
+  head: { target: [0, 28, 0], rot: [0, 0, 0], scale: 0.625 }
+};
+
+/** The shipped defaults, so "reset" means something and the diff is meaningful. */
+const DEFAULTS = {
+  tp_main: { target: [6, 12, -2], rot: [-90, 0, 0], scale: 1 },
+  tp_off: { target: [-6, 12, -2], rot: [-90, 0, 0], scale: 1 },
+  fp_main: { target: [6, 12, -2], rot: [-90, 0, 0], scale: 1 },
+  fp_off: { target: [-6, 12, -2], rot: [-90, 0, 0], scale: 1 },
+  head: { target: [0, 28, 0], rot: [0, 0, 0], scale: 0.625 }
+};
+
+/* ============================================================ test models and display entries
+   Boxes are in raw Java model coordinates, 0..16. The display entries are transcribed from the 1.21.11 jar.        */
+
+const MODELS = {
+  sprite: {
+    name: "Flat sprite (item/generated)",
+    boxes: null,
+    display: { tp: { r: [0, 0, 0], t: [0, 3, 1], s: 0.55 }, fp: { r: [0, -90, 25], t: [1.13, 3.2, 1.13], s: 0.68 },
+               head: { r: [0, 180, 0], t: [0, 13, 7], s: 1 } }
+  },
+  sword: {
+    name: "Sword (item/handheld)",
+    boxes: [
+      [7, 6, 7.5, 9, 16, 8.5],
+      [5, 5, 7.5, 11, 6, 8.5],
+      [7.25, 1, 7.5, 8.75, 5, 8.5]
+    ],
+    display: { tp: { r: [0, -90, 55], t: [0, 4, 0.5], s: 0.85 }, fp: { r: [0, -90, 25], t: [1.13, 3.2, 1.13], s: 0.68 },
+               head: { r: [0, 180, 0], t: [0, 13, 7], s: 1 } }
+  },
+  rod: {
+    name: "Rod (item/handheld_rod)",
+    boxes: [[7.25, 1, 7.5, 8.75, 15, 8.5], [8.75, 13, 7.5, 12, 14, 8.5]],
+    display: { tp: { r: [0, 90, 55], t: [0, 4, 2.5], s: 0.85 }, fp: { r: [0, 90, 25], t: [0, 1.6, 0.8], s: 0.68 },
+               head: { r: [0, 180, 0], t: [0, 13, 7], s: 1 } }
+  },
+  block: {
+    name: "Full block (block/block)",
+    boxes: [[0, 0, 0, 16, 16, 16]],
+    display: { tp: { r: [75, 45, 0], t: [0, 2.5, 0], s: 0.375 }, fp: { r: [0, 45, 0], t: [0, 0, 0], s: 0.40 },
+               head: { r: [0, 180, 0], t: [0, 13, 7], s: 1 } }
+  },
+  bow: {
+    name: "Bow (item/bow)",
+    boxes: null,
+    display: { tp: { r: [-80, 260, -40], t: [-1, -2, 2.5], s: 0.9 },
+               fp: { r: [0, -90, 25], t: [1.13, 3.2, 1.13], s: 0.68 },
+               head: { r: [0, 180, 0], t: [0, 13, 7], s: 1 } }
+  },
+  spear: {
+    name: "Spear (item/spear_in_hand)",
+    boxes: null,
+    display: { tp: { r: [5, 270, -40], t: [0, 2, 2], s: 1.7 },
+               fp: { r: [-20, 90, -35], t: [3.13, 2.0, 0.13], s: 1.36 },
+               head: { r: [0, 180, 0], t: [0, 13, 7], s: 1 } }
+  },
+  tall: {
+    name: "Tall banner (no display entry)",
+    boxes: [[6, 0, 7, 10, 16, 9], [5, 14, 6.5, 11, 16, 9.5]],
+    display: { tp: null, fp: null, head: null }
+  }
+};
+
+/**
+ * The quad the client generates for a model with no elements - every plain item, and every one of the vanilla
+ * parents above. There is no geometry in the file at all: the shape is a flat 16x16 plane and everything you
+ * recognise as the item lives in the texture. That is why an untextured preview of a sword tells you nothing about
+ * where its crossguard is, and why this tool draws the texture when it has one.
+ */
+const SPRITE_BOX = [0, 0, 7.5, 16, 16, 8.5];
+
+function boxesOf(model) {
+  return model.boxes && model.boxes.length ? model.boxes : [SPRITE_BOX];
+}
+
+/** The player, drawn identically in both viewports because it is the same body. */
+const RIG = [
+  [-4, 24, -4, 4, 32, 4],
+  [-4, 12, -2, 4, 24, 2],
+  [4, 12, -2, 8, 24, 2],
+  [-8, 12, -2, -4, 24, 2],
+  [0.1, 0, -2, 4, 12, 2],
+  [-4, 0, -2, -0.1, 12, 2]
+];
+
+/**
+ * A pasted Java item model, turned into the shape this tool draws.
+ * <p>
+ * Only two things are needed: the element boxes, to see the shape, and the display block, to pose it. A model that
+ * declares no display entry for a slot is shown unposed, which is what the client does. `parent` is honoured only far
+ * enough to pick the right built-in preset, since the parent file is not available here.
+ */
+function parsePastedModel(text) {
+  const json = JSON.parse(text);
+  const boxes = (json.elements || [])
+    .filter(e => Array.isArray(e.from) && Array.isArray(e.to))
+    .map(e => [e.from[0], e.from[1], e.from[2], e.to[0], e.to[1], e.to[2]]);
+  if (!boxes.length) throw new Error("no elements with from/to");
+
+  const parent = String(json.parent || "").replace(/^minecraft:/, "");
+  const inherited = parent.indexOf("handheld_rod") === 0 || parent.indexOf("item/handheld_rod") === 0 ? MODELS.rod
+    : parent.indexOf("handheld") >= 0 ? MODELS.sword
+    : parent.indexOf("block/") === 0 ? MODELS.block
+    : MODELS.sprite;
+
+  const pick = (key, fallback) => {
+    const d = (json.display || {})[key];
+    if (!d) return fallback;
+    const r = d.rotation || [0, 0, 0];
+    const t = d.translation || [0, 0, 0];
+    const sc = d.scale || [1, 1, 1];
+    return { r: [r[0], r[1], r[2]], t: [t[0], t[1], t[2]], s: sc[0] };
+  };
+
+  return {
+    name: "Pasted model",
+    boxes: boxes,
+    pasted: true,
+    display: {
+      tp: pick("thirdperson_righthand", inherited.display.tp),
+      fp: pick("firstperson_righthand", inherited.display.fp),
+      head: pick("head", inherited.display.head)
+    }
+  };
+}
+
+/* ============================================================ loading a real pack
+   A dropped folder arrives as a flat list of files. Everything is indexed by path so references can be followed the
+   way the client follows them: an item definition names a model, a model names a parent and textures, and each of
+   those may or may not be in the drop. Anything missing falls back to the built-in vanilla preset, which is the same
+   thing the converter does when the vanilla assets are not cached.                                                  */
+
+/** path (lower case, forward slashes) -> File */
+const PACK = new Map();
+
+/** Walks a dropped DataTransferItem, which may be a whole directory tree. */
+function collectEntry(entry, prefix, out) {
+  return new Promise(resolve => {
+    if (!entry) return resolve();
+    if (entry.isFile) {
+      entry.file(file => { out.push([prefix + entry.name, file]); resolve(); }, () => resolve());
+      return;
+    }
+    const reader = entry.createReader();
+    const all = [];
+    const readBatch = () => reader.readEntries(batch => {
+      if (!batch.length) {
+        Promise.all(all.map(e => collectEntry(e, prefix + entry.name + "/", out))).then(() => resolve());
+        return;
+      }
+      all.push.apply(all, batch);
+      readBatch();
+    }, () => resolve());
+    readBatch();
+  });
+}
+
+/** The first indexed path ending in `suffix`. References are namespaced and relative, so a suffix match is enough. */
+function findFile(suffix) {
+  const want = suffix.toLowerCase();
+  for (const key of PACK.keys()) if (key.endsWith(want)) return PACK.get(key);
+  return null;
+}
+
+function readText(file) {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(String(r.result));
+    r.onerror = () => reject(new Error("could not read " + file.name));
+    r.readAsText(file);
+  });
+}
+
+function readImage(file) {
+  return new Promise(resolve => {
+    const r = new FileReader();
+    r.onload = () => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = () => resolve(null);
+      img.src = String(r.result);
+    };
+    r.onerror = () => resolve(null);
+    r.readAsDataURL(file);
+  });
+}
+
+/** Strips the namespace and any leading folder, leaving something like `item/topaz_sword`. */
+function refPath(ref) {
+  const value = String(ref || "").replace(/^\w+:/, "");
+  return value.indexOf("/") < 0 ? "item/" + value : value;
+}
+
+/**
+ * The model an item definition points at for the HAND.
+ * <p>
+ * A 1.21.4+ definition can select a different model per display context - the spear here uses one model for the gui
+ * and another, `_in_hand`, for everything else - so the fallback branch is the one that matters for a held pose.
+ */
+function heldModelRef(definition) {
+  const walk = node => {
+    if (!node || typeof node !== "object") return null;
+    if (node.type === "model" || node.type === "minecraft:model") return node.model || null;
+    // Priority is the RESTING model: a bow at rest rather than mid-pull, a rod not cast, a spear in hand rather
+    // than in the inventory. "fallback" covers select and range_dispatch; "on_false" covers condition.
+    return walk(node.fallback)
+      || walk(node.on_false)
+      || walk(node.on_true)
+      || (Array.isArray(node.cases) && node.cases.length ? walk(node.cases[0].model) : null)
+      || (Array.isArray(node.entries) && node.entries.length ? walk(node.entries[0].model) : null);
+  };
+  return walk(definition.model) || walk(definition);
+}
+
+/** The built-in preset a vanilla parent name maps onto, for parents that are not in the drop. */
+function presetForParent(parent) {
+  const name = refPath(parent);
+  if (name.indexOf("item/spear_in_hand") === 0) return MODELS.spear;
+  if (name.indexOf("item/bow") === 0 || name.indexOf("item/crossbow") === 0) return MODELS.bow;
+  if (name.indexOf("item/fishing_rod") === 0 || name.indexOf("item/handheld_rod") === 0) return MODELS.rod;
+  if (name.indexOf("item/handheld") === 0) return MODELS.sword;
+  if (name.indexOf("block/") === 0) return MODELS.block;
+  return MODELS.sprite;
+}
+
+/** Reads a model and its parent chain out of the drop, merging display, elements and textures as the client does. */
+async function loadModelChain(ref, depth) {
+  const path = refPath(ref);
+  const file = findFile("models/" + path + ".json") || findFile(path + ".json");
+  if (!file || depth > 8) return { display: {}, elements: null, textures: {}, parent: ref, missing: !file };
+
+  const json = JSON.parse(await readText(file));
+  const inherited = json.parent
+    ? await loadModelChain(json.parent, depth + 1)
+    : { display: {}, elements: null, textures: {}, parent: null };
+
+  return {
+    display: Object.assign({}, inherited.display, json.display || {}),
+    elements: (json.elements && json.elements.length) ? json.elements : inherited.elements,
+    textures: Object.assign({}, inherited.textures, json.textures || {}),
+    parent: json.parent || inherited.parent,
+    // The deepest parent that was not in the drop decides which built-in preset fills the gaps.
+    unresolved: inherited.missing ? inherited.parent : inherited.unresolved
+  };
+}
+
+/** Turns a resolved chain into the shape this tool draws, loading textures for each face. */
+async function buildFromChain(name, chain) {
+  const preset = presetForParent(chain.unresolved || chain.parent || "item/generated");
+  const entry = key => {
+    const d = chain.display[key];
+    if (!d) return null;
+    const r = d.rotation || [0, 0, 0], t = d.translation || [0, 0, 0], sc = d.scale || [1, 1, 1];
+    return { r: [r[0], r[1], r[2]], t: [t[0], t[1], t[2]], s: sc[0] };
+  };
+
+  const resolveTexture = async ref => {
+    let value = ref;
+    for (let hop = 0; hop < 8 && value && value[0] === "#"; hop++) value = chain.textures[value.slice(1)];
+    if (!value || value[0] === "#") return null;
+    const file = findFile("textures/" + refPath(value) + ".png");
+    return file ? await readImage(file) : null;
+  };
+
+  let boxes = null, faces = null;
+  if (chain.elements && chain.elements.length) {
+    boxes = [];
+    faces = [];
+    for (const e of chain.elements) {
+      if (!Array.isArray(e.from) || !Array.isArray(e.to)) continue;
+      boxes.push([e.from[0], e.from[1], e.from[2], e.to[0], e.to[1], e.to[2]]);
+      const perFace = {};
+      for (const dir of Object.keys(e.faces || {})) {
+        const f = e.faces[dir];
+        const uv = f.uv || [0, 0, 16, 16];
+        perFace[dir] = { uv: uv, tex: await resolveTexture(f.texture) };
+      }
+      faces.push(perFace);
+    }
+  } else {
+    // No elements: the client generates a flat plane per texture layer and stacks them - layer0, layer1, and so on
+    // for an item whose sprite is built from several images. Each layer gets a hair more thickness than the last so
+    // the painter's sort draws it in front of the one below.
+    boxes = [];
+    faces = [];
+    for (let layer = 0; layer < 8; layer++) {
+      const key = "layer" + layer;
+      if (!chain.textures[key]) break;
+      const tex = await resolveTexture("#" + key);
+      if (!tex) continue;
+      const grow = layer * 0.02;
+      boxes.push([0, 0, SPRITE_BOX[2] - grow, 16, 16, SPRITE_BOX[5] + grow]);
+      faces.push({
+        south: { uv: [0, 0, 16, 16], tex: tex },
+        north: { uv: [16, 0, 0, 16], tex: tex }
+      });
+    }
+    if (!boxes.length) { boxes = null; faces = null; }
+  }
+
+  return {
+    name: name,
+    boxes: boxes,
+    faces: faces,
+    textureRef: chain.textures.layer0 ? refPath(chain.textures.layer0) : null,
+    display: {
+      tp: entry("thirdperson_righthand") || preset.display.tp,
+      fp: entry("firstperson_righthand") || preset.display.fp,
+      head: entry("head") || preset.display.head
+    }
+  };
+}
+
+/**
+ * The converted Bedrock pack, when it is in the drop.
+ * <p>
+ * This matters more than it looks. Without it the right-hand viewport <b>re-solves</b> the pose from the same
+ * constants the converter uses, so it can only ever show what this tool believes - not what the pack actually
+ * contains. Reading the emitted geometry and animation back means the right-hand side is the real file, the same
+ * thing Blockbench shows when you open the .geo.json and switch to Animate.
+ */
+async function indexConverted() {
+  const geometries = new Map();
+  const animations = new Map();
+  const attachables = [];
+
+  for (const key of PACK.keys()) {
+    if (!key.endsWith(".json")) continue;
+    let json;
+    try {
+      json = JSON.parse(await readText(PACK.get(key)));
+    } catch (err) {
+      continue;
+    }
+    if (Array.isArray(json["minecraft:geometry"])) {
+      for (const geo of json["minecraft:geometry"]) {
+        const id = geo.description && geo.description.identifier;
+        if (id) geometries.set(id, geo);
+      }
+    } else if (json.animations && !json["minecraft:attachable"]) {
+      for (const name of Object.keys(json.animations)) animations.set(name, json.animations[name]);
+    } else if (json["minecraft:attachable"]) {
+      attachables.push(json["minecraft:attachable"].description);
+    }
+  }
+  return { geometries: geometries, animations: animations, attachables: attachables };
+}
+
+/** A number, or null when the value is a Molang expression this tool cannot evaluate. */
+function numeric(value) {
+  return typeof value === "number" ? value : null;
+}
+
+function tripleOf(node, fallback) {
+  if (node === undefined || node === null) return fallback;
+  const raw = Array.isArray(node) ? node : [node, node, node];
+  const out = [];
+  for (let i = 0; i < 3; i++) {
+    const v = numeric(raw[i]);
+    if (v === null) return null;                       // a Molang channel: leave it to the caller to report
+    out.push(v);
+  }
+  return out;
+}
+
+/** The emitted bone animation for one slot, in FILE space, or null when it is absent or Molang-driven. */
+function emittedAnimation(animations, description, slotKey) {
+  const name = description.animations && description.animations[slotKey];
+  if (!name) return null;
+  const animation = animations.get(name);
+  const bone = animation && animation.bones && (animation.bones.bone
+    || animation.bones[Object.keys(animation.bones)[0]]);
+  if (!bone) return null;
+
+  const position = tripleOf(bone.position, [0, 0, 0]);
+  const rotation = tripleOf(bone.rotation, [0, 0, 0]);
+  const scale = tripleOf(bone.scale, [1, 1, 1]);
+  if (!position || !rotation || !scale) return { molang: true, name: name };
+  return { position: position, rotation: rotation, scale: scale, name: name };
+}
+
+/** The emitted geometry's cubes and face UVs, converted into Blockbench-internal space. */
+async function emittedGeometry(geo, description, sourceTexture) {
+  const bone = (geo.bones || [])[0];
+  if (!bone) return null;
+
+  // An attachable's texture map is not always keyed "default". An animated source has no .mcmeta on the Bedrock
+  // side, so the converter splits it into frame_0..frame_N; there is also always an "enchanted" glint entry, and
+  // picking that by accident is how a textured item ends up looking blank.
+  const map = description.textures || {};
+  const preferred = map.default
+    || map.frame_0
+    || map[Object.keys(map).filter(k => k !== "enchanted" && k.indexOf("glint") < 0)[0]];
+  let image = null;
+  if (preferred) {
+    const file = findFile(String(preferred).replace(/^.*?textures\//, "textures/") + ".png");
+    if (file) image = await readImage(file);
+  }
+  // Failing that, borrow the source item's texture. The converter copies the same item sprite across, so the UVs
+  // still land; the panel says so rather than pretending it is the emitted texture.
+  let borrowed = false;
+  if (!image && sourceTexture) { image = sourceTexture; borrowed = true; }
+
+  const boxes = [];
+  const faces = [];
+  for (const cube of bone.cubes || []) {
+    const o = cube.origin || [0, 0, 0];
+    const size = cube.size || [0, 0, 0];
+    // Blockbench reads a Bedrock cube back with X mirrored: from.x = -(origin.x + size.x).
+    boxes.push([-(o[0] + size[0]), o[1], o[2], -o[0], o[1] + size[1], o[2] + size[2]]);
+
+    const perFace = {};
+    const uvs = cube.uv;
+    if (uvs && !Array.isArray(uvs)) {
+      for (const dir of Object.keys(uvs)) {
+        const f = uvs[dir];
+        if (!f || !f.uv) continue;
+        const uv = f.uv, span = f.uv_size || [0, 0];
+        perFace[dir] = { uv: [uv[0], uv[1], uv[0] + span[0], uv[1] + span[1]], tex: image };
+      }
+    }
+    faces.push(Object.keys(perFace).length ? perFace : null);
+  }
+
+  return {
+    boxes: boxes,
+    faces: faces.some(f => f) ? faces.map(f => f || {}) : null,
+    pivot: bone.pivot ? [-bone.pivot[0], bone.pivot[1], bone.pivot[2]] : [0, 0, 0],
+    binding: !!bone.binding,
+    borrowedTexture: borrowed,
+    hasTexture: !!image
+  };
+}
+
+/** Everything in the drop that looks like a held item, keyed for the dropdown. */
+async function indexPack() {
+  const definitions = [];
+  const models = [];
+  for (const key of PACK.keys()) {
+    if (!key.endsWith(".json")) continue;
+    if (key.indexOf("/items/") >= 0 || key.indexOf("items/") === 0) definitions.push(key);
+    else if (key.indexOf("/models/") >= 0 || key.indexOf("models/") === 0) models.push(key);
+  }
+
+  const converted = await indexConverted();
+
+  let added = 0;
+  const sources = definitions.length ? definitions : models;
+  for (const key of sources) {
+    const short = key.split("/").pop().replace(/\.json$/, "");
+    try {
+      const json = JSON.parse(await readText(PACK.get(key)));
+      const ref = definitions.length ? heldModelRef(json) : key.replace(/^.*models\//, "").replace(/\.json$/, "");
+      if (!ref) continue;
+      const chain = await loadModelChain(ref, 0);
+      if (!chain.elements && !chain.textures.layer0 && !Object.keys(chain.display).length) continue;
+      MODELS["pack:" + short] = await buildFromChain(short, chain);
+      added++;
+    } catch (err) {
+      // A definition this tool cannot read is skipped rather than failing the whole drop.
+    }
+  }
+  // Now attach whatever the converted pack has to say, matched on the identifier the converter builds from the item
+  // id: "default:topaz_sword" becomes "geometry.default.topaz_sword".
+  for (const description of converted.attachables) {
+    const id = String(description.identifier || "");
+    const short = id.split(/[:/]/).pop();
+    const geoId = description.geometry && (description.geometry.default
+      || description.geometry[Object.keys(description.geometry)[0]]);
+    const geo = geoId ? converted.geometries.get(geoId) : null;
+    if (!geo) continue;
+
+    // The source model's texture, if this item also came from the source pack, so the emitted side can borrow it.
+    const existing = MODELS["pack:" + short];
+    let sourceTexture = null;
+    if (existing && existing.faces) {
+      for (const face of existing.faces) {
+        for (const dir of Object.keys(face || {})) if (face[dir].tex) { sourceTexture = face[dir].tex; break; }
+        if (sourceTexture) break;
+      }
+    }
+
+    const shape = await emittedGeometry(geo, description, sourceTexture);
+    if (!shape) continue;
+
+    const emitted = {
+      shape: shape,
+      anim: {
+        tp: emittedAnimation(converted.animations, description, "third_person"),
+        fp: emittedAnimation(converted.animations, description, "first_person"),
+        head: emittedAnimation(converted.animations, description, "head")
+      }
+    };
+
+    const key = MODELS["pack:" + short] ? "pack:" + short : "bed:" + short;
+    if (!MODELS[key]) {
+      // The converted pack alone, with no source model to compare against.
+      MODELS[key] = { name: short + " (converted only)", boxes: null, faces: null, display: MODELS.sprite.display };
+      added++;
+    }
+    MODELS[key].emitted = emitted;
+  }
+  return added;
+}
+
+/**
+ * Drops <b>accumulate</b>. Models, item definitions and textures usually live in sibling folders, so dropping them
+ * one at a time is the normal way to use this - and clearing the index on each drop, which this used to do, threw
+ * away everything but the last folder and left every item untextured.
+ */
+async function ingest(pairs) {
+  const msg = document.getElementById("load-msg");
+  const before = PACK.size;
+  for (const [path, file] of pairs) PACK.set(path.replace(/\\/g, "/").toLowerCase(), file);
+  for (const key of Object.keys(MODELS)) if (key.indexOf("pack:") === 0) delete MODELS[key];
+
+  msg.textContent = "Reading " + PACK.size + " file(s)...";
+  let added = 0;
+  try {
+    added = await indexPack();
+  } catch (err) {
+    msg.textContent = "Could not read that: " + err.message;
+    return;
+  }
+
+  const counts = tally();
+  if (!added) {
+    msg.textContent = summary(counts) + " - no item models yet. "
+      + (counts.models ? "Add the items/ folder." : "Add the models/ folder, or the assets folder above it.");
+    updatePackNote(counts);
+    return;
+  }
+
+  const keys = Object.keys(MODELS).filter(k => k.indexOf("pack:") === 0);
+  if (keys.indexOf(state.model) < 0) state.model = keys[0];
+  buildModelSelect();
+  render();
+  msg.textContent = added + " item(s) from " + summary(counts)
+    + (PACK.size === before ? "" : " (+" + (PACK.size - before) + " new)");
+  updatePackNote(counts);
+}
+
+function tally() {
+  let models = 0, items = 0, textures = 0;
+  for (const key of PACK.keys()) {
+    if (key.endsWith(".png")) textures++;
+    else if (key.indexOf("items/") >= 0 && key.endsWith(".json")) items++;
+    else if (key.indexOf("models/") >= 0 && key.endsWith(".json")) models++;
+  }
+  return { models: models, items: items, textures: textures };
+}
+
+function summary(c) {
+  return c.items + " definition(s), " + c.models + " model(s), " + c.textures + " texture(s)";
+}
+
+/** Names the items still missing a texture, and what they were looking for, so a gap is diagnosable. */
+function updatePackNote(counts) {
+  const note = document.getElementById("pack-note");
+  const keys = Object.keys(MODELS).filter(k => k.indexOf("pack:") === 0);
+  const untextured = keys.filter(k => {
+    const f = MODELS[k].faces;
+    if (!f || !f.length) return true;
+    return !f.some(face => Object.keys(face).some(d => face[d].tex));
+  });
+  if (!keys.length) { note.textContent = ""; return; }
+  if (!untextured.length) {
+    note.textContent = "All " + keys.length + " item(s) textured.";
+    return;
+  }
+  const wanted = untextured.slice(0, 4).map(k => {
+    const ref = MODELS[k].textureRef;
+    return MODELS[k].name + (ref ? " (wants textures/" + ref + ".png)" : "");
+  });
+  note.textContent = untextured.length + " of " + keys.length + " item(s) have no texture: "
+    + wanted.join(", ") + (untextured.length > 4 ? ", ..." : "")
+    + ". Drop the textures folder as well - drops add up.";
+}
+
+function clearPack() {
+  PACK.clear();
+  for (const key of Object.keys(MODELS)) if (key.indexOf("pack:") === 0) delete MODELS[key];
+  state.model = "sword";
+  buildModelSelect();
+  render();
+  document.getElementById("load-msg").textContent = "Cleared.";
+  document.getElementById("pack-note").textContent = "";
+}
+
+/* ============================================================ the two chains */
+
+/** The display entry for the current slot, as a TRS. Null means the model declares none - identity. */
+function displayFor(model, slot) {
+  const d = MODELS[model].display[slot.hand === "head" ? "head" : (slot.first ? "fp" : "tp")];
+  if (!d) return { r: [0, 0, 0], t: [0, 0, 0], s: [1, 1, 1] };
+  const mirror = slot.hand === "off";
+  return {
+    r: mirror ? [d.r[0], -d.r[1], -d.r[2]] : d.r.slice(),
+    t: mirror ? [-d.t[0], d.t[1], d.t[2]] : d.t.slice(),
+    s: [d.s, d.s, d.s]
+  };
+}
+
+/** Java: centre the box, apply the display TRS, then the slot's frame. */
+function javaPoint(p, disp, frame) {
+  const c = sub(p, [8, 8, 8]);
+  const q = add(ap3(mul3(matXyz(disp.r), diag(disp.s)), c), disp.t);
+  return add(ap3(mul3(matXyz(frame.rot), diag([frame.scale, frame.scale, frame.scale])), q), frame.target);
+}
+
+/**
+ * Solve the bone animation, exactly as PoseSolver does: compose in Java space, decompose about the pivot, then
+ * convert once to what the animation file stores.
+ */
+function solve(disp, frame, bind) {
+  const grip = sub(frame.target, bind);
+  const S = [frame.scale, frame.scale, frame.scale];
+  const Lr = mul3(matXyz(frame.rot), diag(S));
+  const tau = add(ap3(Lr, disp.t), grip);
+  const L = mul3(Lr, mul3(matXyz(disp.r), diag(disp.s)));
+
+  // t = tau - pivot - L . (e - pivot); here e == pivot, so the last term vanishes.
+  const off = sub(CENTRE, PIVOT);
+  const t = sub(sub(tau, PIVOT), ap3(L, off));
+
+  // Scale from the column lengths, sign parked on X for a negative determinant, then the rotation basis.
+  const sx0 = Math.hypot(L[0], L[3], L[6]), sy0 = Math.hypot(L[1], L[4], L[7]), sz0 = Math.hypot(L[2], L[5], L[8]);
+  const det = L[0] * (L[4] * L[8] - L[5] * L[7]) - L[1] * (L[3] * L[8] - L[5] * L[6]) + L[2] * (L[3] * L[7] - L[4] * L[6]);
+  const sx = det < 0 ? -sx0 : sx0;
+  const basis = [
+    L[0] / (sx || 1), L[1] / (sy0 || 1), L[2] / (sz0 || 1),
+    L[3] / (sx || 1), L[4] / (sy0 || 1), L[5] / (sz0 || 1),
+    L[6] / (sx || 1), L[7] / (sy0 || 1), L[8] / (sz0 || 1)
+  ];
+
+  // The one conversion to file space: position X negated, rotation reflected and read back in Bedrock's ZYX order.
+  return {
+    position: [-t[0], t[1], t[2]],
+    rotation: eulerZyx(reflectZ(matXyz(eulerXyz(basis)))),
+    scale: [sx, sy0, sz0],
+    grip: grip
+  };
+}
+
+/** Bedrock: read the file values back, rotate about the bone pivot in ZYX, then place at the bound origin. */
+/**
+ * A point of an ALREADY-INTERNAL geometry through the bone and its binding - no Java-model conversion, because the
+ * geometry came from the emitted file rather than from a Java model.
+ */
+function bedrockRaw(geometryPoint, internalPos, internalRot, scale, pivot, bind) {
+  const L = mul3(matZyx(internalRot), diag(scale));
+  return add(add(add(ap3(L, sub(geometryPoint, pivot)), pivot), internalPos), bind);
+}
+
+function bedrockPoint(p, anim, bind) {
+  const gi = add(sub(p, [8, 8, 8]), CENTRE);           // the emitted geometry, read back into Java-handed space
+  const rot = [-anim.rotation[0], -anim.rotation[1], anim.rotation[2]];
+  const pos = [-anim.position[0], anim.position[1], anim.position[2]];
+  const L = mul3(matZyx(rot), diag(anim.scale));
+  return add(add(add(ap3(L, sub(gi, PIVOT)), PIVOT), pos), bind);
+}
+
+/** Rx(arm) about the shoulder. Applied to both chains and to the arm itself, so nothing drifts apart. */
+function poseArm(p, hand) {
+  if (hand === "head" || !state.arm) return p;
+  const pivot = [hand === "off" ? -5 : 5, 22, 0];
+  const d = sub(p, pivot);
+  const a = state.arm * D2R;
+  return add([d[0], d[1] * Math.cos(a) - d[2] * Math.sin(a), d[1] * Math.sin(a) + d[2] * Math.cos(a)], pivot);
+}
+
+/* ============================================================ renderer
+   Orthographic, painter's algorithm over quads, flat shaded by face normal. No dependencies.                       */
+
+/**
+ * Corner order per face is top-left, top-right, bottom-right, bottom-left as seen from outside, matched to the UV
+ * rectangle in the same order - the ordering ItemIconRenderer uses, so a texture lands the right way up.
+ */
+const FACES = [
+  { dir: "north", c: [[1, 1, 0], [0, 1, 0], [0, 0, 0], [1, 0, 0]], n: [0, 0, -1] },
+  { dir: "south", c: [[0, 1, 1], [1, 1, 1], [1, 0, 1], [0, 0, 1]], n: [0, 0, 1] },
+  { dir: "west", c: [[0, 1, 0], [0, 1, 1], [0, 0, 1], [0, 0, 0]], n: [-1, 0, 0] },
+  { dir: "east", c: [[1, 1, 1], [1, 1, 0], [1, 0, 0], [1, 0, 1]], n: [1, 0, 0] },
+  { dir: "up", c: [[0, 1, 0], [1, 1, 0], [1, 1, 1], [0, 1, 1]], n: [0, 1, 0] },
+  { dir: "down", c: [[0, 0, 1], [1, 0, 1], [1, 0, 0], [0, 0, 0]], n: [0, -1, 0] }
+];
+
+function boxQuads(box, warp, colour, alpha, faces) {
+  const [x0, y0, z0, x1, y1, z1] = box;
+  const out = [];
+  for (const f of FACES) {
+    const face = faces ? faces[f.dir] : null;
+    if (faces && !face) continue;              // a face the model does not declare is a hole, as it is in game
+    const pts = [];
+    for (let i = 0; i < 4; i++) {
+      const c = f.c[i];
+      pts.push(warp([x0 + c[0] * (x1 - x0), y0 + c[1] * (y1 - y0), z0 + c[2] * (z1 - z0)]));
+    }
+    out.push({ pts: pts, n: f.n, colour: colour, alpha: alpha,
+               tex: face ? face.tex : null, uv: face ? face.uv : null });
+  }
+  return out;
+}
+
+const camera = { yaw: -32, pitch: 16, zoom: 1 };
+
+/**
+ * The first-person eye, from Blockbench's own first-person camera preset
+ * ({@code formats/bedrock/attachable_preview.js}, {@code camera_preset_1st_mf}): inside the head at
+ * {@code y = 27.41} looking straight ahead, 70 degrees of field of view. Orthographic is the wrong projection for
+ * this - what matters in first person is what falls inside the frame, which is a perspective question.
+ */
+const EYE = { position: [0, 27.41, 0], fov: 70.25, forward: -1 };
+
+function isFirstPerson() {
+  return state.slot === "fp_main" || state.slot === "fp_off";
+}
+
+function useEye() {
+  return state.eye && isFirstPerson();
+}
+
+function project(p, w, h) {
+  if (useEye()) return projectFromEye(p, w, h);
+
+  const cy = Math.cos(camera.yaw * D2R), sy = Math.sin(camera.yaw * D2R);
+  const cp = Math.cos(camera.pitch * D2R), sp = Math.sin(camera.pitch * D2R);
+  const x = p[0] * cy + p[2] * sy;
+  const z = -p[0] * sy + p[2] * cy;
+  const y = p[1] * cp - z * sp;
+  const depth = p[1] * sp + z * cp;
+  const scale = (Math.min(w, h) / 46) * camera.zoom;
+  return [w / 2 + x * scale, h - 14 - (y - 2) * scale, depth];
+}
+
+/**
+ * Perspective projection from inside the head. Camera space is right-handed with the forward axis negated so a point
+ * in front of the eye has positive depth; anything at or behind the eye is dropped rather than mirrored through the
+ * origin, which is what makes a naive divide draw geometry that is actually behind you.
+ */
+function projectFromEye(p, w, h) {
+  const d = sub(p, EYE.position);
+  const depth = d[2] * EYE.forward;
+  const right = d[0] * -EYE.forward;
+  const up = d[1];
+
+  if (depth <= 0.05) return [-1e6, -1e6, -depth];
+
+  const focal = (h / 2) / Math.tan((EYE.fov / 2) * D2R);
+  return [w / 2 + (right * focal) / depth, h / 2 - (up * focal) / depth, -depth];
+}
+
+function shade(hex, k) {
+  const n = parseInt(hex.slice(1), 16);
+  const r = Math.min(255, Math.round(((n >> 16) & 255) * k));
+  const g = Math.min(255, Math.round(((n >> 8) & 255) * k));
+  const b = Math.min(255, Math.round((n & 255) * k));
+  return "rgb(" + r + "," + g + "," + b + ")";
+}
+
+function draw(canvas, layers) {
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  if (!w || !h) return;
+  canvas.width = Math.round(w * dpr);
+  canvas.height = Math.round(h * dpr);
+  const g = canvas.getContext("2d");
+  g.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+  g.fillStyle = getCss("--vp");
+  g.fillRect(0, 0, w, h);
+
+  // Ground grid, so vertical drift is readable.
+  g.strokeStyle = getCss("--vp-grid");
+  g.lineWidth = 1;
+  for (let i = -16; i <= 16; i += 8) {
+    line(g, project([i, 0, -16], w, h), project([i, 0, 16], w, h));
+    line(g, project([-16, 0, i], w, h), project([16, 0, i], w, h));
+  }
+
+  const quads = [];
+  for (const layer of layers) {
+    for (let i = 0; i < layer.boxes.length; i++) {
+      quads.push.apply(quads, boxQuads(layer.boxes[i], layer.warp, layer.colour, layer.alpha,
+        layer.faces ? layer.faces[i] : null));
+    }
+  }
+  const screen = quads.map(q => {
+    const pts = q.pts.map(p => project(p, w, h));
+    return { pts: pts, d: (pts[0][2] + pts[1][2] + pts[2][2] + pts[3][2]) / 4, q: q };
+  });
+  screen.sort((a, b) => a.d - b.d);
+
+  for (const s of screen) {
+    const n = s.q.n;
+    const k = 0.55 + 0.45 * Math.abs(n[1]) + 0.16 * Math.abs(n[0]);
+    g.beginPath();
+    g.moveTo(s.pts[0][0], s.pts[0][1]);
+    for (let i = 1; i < 4; i++) g.lineTo(s.pts[i][0], s.pts[i][1]);
+    g.closePath();
+    if (s.q.tex && s.q.tex.complete && s.q.tex.naturalWidth) {
+      // Affine texture map: under orthographic projection a box face stays a parallelogram, so three corners
+      // determine the mapping exactly and no perspective correction is needed.
+      drawTextured(g, s.pts, s.q);
+      g.globalAlpha = 0.32;
+      g.fillStyle = s.q.colour;
+      g.fill();                                  // a wash, so Java and Bedrock stay tellable apart
+    } else {
+      g.globalAlpha = s.q.alpha;
+      g.fillStyle = shade(s.q.colour, k);
+      g.fill();
+    }
+    g.globalAlpha = Math.min(1, s.q.alpha + 0.25);
+    g.strokeStyle = shade(s.q.colour, k * 0.55);
+    g.stroke();
+  }
+  g.globalAlpha = 1;
+
+  if (useEye()) {
+    // A crosshair, because in first person the question is where the item sits relative to the centre of the screen.
+    g.strokeStyle = "#8b91a0";
+    g.lineWidth = 1;
+    line(g, [w / 2 - 6, h / 2], [w / 2 + 6, h / 2]);
+    line(g, [w / 2, h / 2 - 6], [w / 2, h / 2 + 6]);
+  }
+
+  // The hand bone, as a small cross - the thing the item is being lined up with.
+  const slot = SLOTS.find(s => s.id === state.slot);
+  if (slot.hand !== "head" && !useEye()) {
+    const c = project(HAND_BONE[slot.hand], w, h);
+    g.strokeStyle = "#9aa0ae";
+    g.lineWidth = 1;
+    line(g, [c[0] - 5, c[1]], [c[0] + 5, c[1]]);
+    line(g, [c[0], c[1] - 5], [c[0], c[1] + 5]);
+  }
+}
+
+/** One textured quad, clipped to its own outline. */
+function drawTextured(g, pts, q) {
+  const tex = q.tex;
+  const w = tex.naturalWidth;
+  // An animated texture is a vertical strip of square frames, so UVs span one frame, not the whole file. Frame 0 is
+  // what the client shows at rest - without this a 16x80 five-frame sword squashes all five frames onto the item.
+  const h = (tex.naturalHeight > w && tex.naturalHeight % w === 0) ? w : tex.naturalHeight;
+  const sx = w / 16, sy = h / 16;
+  const u0 = q.uv[0] * sx, v0 = q.uv[1] * sy, u1 = q.uv[2] * sx, v1 = q.uv[3] * sy;
+  const du = u1 - u0, dv = v1 - v0;
+  if (!du || !dv) return;
+
+  const a = (pts[1][0] - pts[0][0]) / du, b = (pts[1][1] - pts[0][1]) / du;
+  const c = (pts[3][0] - pts[0][0]) / dv, d = (pts[3][1] - pts[0][1]) / dv;
+
+  g.save();
+  g.clip();
+  g.globalAlpha = 1;
+  g.imageSmoothingEnabled = false;
+  g.transform(a, b, c, d, pts[0][0] - a * u0 - c * v0, pts[0][1] - b * u0 - d * v0);
+  g.drawImage(tex, 0, 0, w, h, 0, 0, w, h);
+  g.restore();
+}
+
+function line(g, a, b) { g.beginPath(); g.moveTo(a[0], a[1]); g.lineTo(b[0], b[1]); g.stroke(); }
+function getCss(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+
+/* ============================================================ state and wiring */
+
+const state = {
+  // held-item-anchors from bedrock.yml, keyed exactly as the config is. The tool has to know about these: the
+  // converter applies them ON TOP of the frame constants, so a tool that ignored them would report a match while the
+  // pack it produced was somewhere else entirely. That happened.
+  nudges: {
+    "third-person": { t: [0, 0, 0], r: [0, 0, 0], s: 1 },
+    "first-person": { t: [0, 0, 0], r: [0, 0, 0], s: 1 },
+    "head": { t: [0, 0, 0], r: [0, 0, 0], s: 1 }
+  },
+  bedSource: "file",
+  eye: true,
+  arm: 22.5,
+  slot: "tp_main",
+  model: "sword",
+  view: "side",
+  frames: JSON.parse(JSON.stringify(DEFAULTS))
+};
+
+const AXES = ["X", "Y", "Z"];
+
+function buildSlotSeg() {
+  const host = document.getElementById("seg-slot");
+  host.innerHTML = "";
+  for (const s of SLOTS) {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.textContent = s.label;
+    b.setAttribute("aria-pressed", String(s.id === state.slot));
+    b.addEventListener("click", () => { state.slot = s.id; buildSlotSeg(); buildRows(); render(); });
+    host.appendChild(b);
+  }
+}
+
+function buildModelSelect() {
+  const sel = document.getElementById("sel-model");
+  sel.innerHTML = "";
+  for (const key of Object.keys(MODELS)) {
+    const o = document.createElement("option");
+    o.value = key;
+    o.textContent = MODELS[key].name;
+    if (key === state.model) o.selected = true;
+    sel.appendChild(o);
+  }
+  // Assigned rather than added, so rebuilding the list cannot stack duplicate handlers.
+  sel.onchange = () => { state.model = sel.value; render(); };
+}
+
+function numRow(host, label, get, set, min, max, step) {
+  const row = document.createElement("div");
+  row.className = "row";
+
+  const lab = document.createElement("label");
+  lab.textContent = label;
+
+  const range = document.createElement("input");
+  range.type = "range";
+  range.min = min; range.max = max; range.step = step; range.value = get();
+
+  const num = document.createElement("input");
+  num.type = "number";
+  num.step = step; num.value = get();
+
+  const id = "f-" + label.replace(/\W+/g, "-");
+  num.id = id;
+  lab.setAttribute("for", id);
+
+  range.addEventListener("input", () => { set(parseFloat(range.value)); num.value = range.value; render(); });
+  num.addEventListener("input", () => {
+    const v = parseFloat(num.value);
+    if (!Number.isFinite(v)) return;
+    set(v); range.value = v; render();
+  });
+
+  row.append(lab, range, num);
+  host.appendChild(row);
+}
+
+function buildArmRow() {
+  const host = document.getElementById("rows-arm");
+  host.innerHTML = "";
+  numRow(host, "Arm", () => state.arm, v => { state.arm = v; }, -40, 90, 0.5);
+}
+
+function buildNudgeRows() {
+  const host = document.getElementById("rows-nudge");
+  host.innerHTML = "";
+  const slot = SLOTS.find(x => x.id === state.slot);
+  const n = state.nudges[nudgeKeyFor(slot)];
+  AXES.forEach((ax, i) => numRow(host, "Off " + ax, () => n.t[i], v => { n.t[i] = v; }, -32, 32, 0.25));
+  AXES.forEach((ax, i) => numRow(host, "OffRot " + ax, () => n.r[i], v => { n.r[i] = v; }, -180, 180, 1));
+  numRow(host, "OffScale", () => n.s, v => { n.s = v; }, 0.05, 4, 0.005);
+}
+
+function buildRows() {
+  const f = state.frames[state.slot];
+  const slot = SLOTS.find(s => s.id === state.slot);
+
+  document.getElementById("lbl-space").textContent =
+    "";
+
+  const t = document.getElementById("rows-target");
+  t.innerHTML = "";
+  AXES.forEach((ax, i) => numRow(t, "Target " + ax, () => f.target[i], v => { f.target[i] = v; }, -40, 40, 0.25));
+
+  const r = document.getElementById("rows-rot");
+  r.innerHTML = "";
+  AXES.forEach((ax, i) => numRow(r, "Rot " + ax, () => f.rot[i], v => { f.rot[i] = v; }, -180, 180, 1));
+  numRow(r, "Scale", () => f.scale, v => { f.scale = v; }, 0.05, 4, 0.005);
+
+  buildNudgeRows();
+}
+
+function nudgeKeyFor(slot) {
+  if (slot.hand === "head") return "head";
+  return slot.first ? "first-person" : "third-person";
+}
+
+/**
+ * The frame the converter will actually use: the constant with held-item-anchors composed outside it, exactly as
+ * PoseSolver.restPose does ({@code compose(nudge, rest)}), with the off hand mirroring the offset's X the way
+ * HandAnchors does.
+ */
+function effectiveFrame(slotId) {
+  const slot = SLOTS.find(x => x.id === slotId);
+  const f = state.frames[slotId];
+  const n = state.nudges[nudgeKeyFor(slot)];
+
+  const nt = slot.hand === "off" ? [-n.t[0], n.t[1], n.t[2]] : n.t.slice();
+  const Ln = mul3(matXyz(n.r), diag([n.s, n.s, n.s]));
+  const Lf = mul3(matXyz(f.rot), diag([f.scale, f.scale, f.scale]));
+  const parts = decompose3(mul3(Ln, Lf));
+
+  return {
+    target: add(ap3(Ln, f.target), nt),
+    rot: parts.rotation,
+    scale: (parts.scale[0] + parts.scale[1] + parts.scale[2]) / 3,
+    nudged: nt.some(v => v) || n.r.some(v => v) || n.s !== 1
+  };
+}
+
+function currentBind(slot) {
+  return slot.hand === "head" ? BIND.head : BIND[slot.hand];
+}
+
+function render() {
+  const slot = SLOTS.find(s => s.id === state.slot);
+  const frame = effectiveFrame(state.slot);
+  const bind = currentBind(slot);
+  const disp = displayFor(state.model, slot);
+  const anim = solve(disp, frame, bind);
+  const boxes = boxesOf(MODELS[state.model]);
+
+  const reference = JAVA_REFERENCE[state.slot];
+  const arm = p => poseArm(p, slot.hand);
+  const armBox = slot.hand === "off" ? RIG[3] : RIG[2];
+  const rigLayer = { boxes: RIG.filter(b => b !== armBox), warp: p => p, colour: getCss("--vp-rig"), alpha: 0.3 };
+  const armLayer = { boxes: [armBox], warp: arm, colour: getCss("--vp-rig"), alpha: 0.42 };
+  const faces = MODELS[state.model].faces || null;
+  const javaLayer = { boxes: boxes, faces: faces, warp: p => arm(javaPoint(p, disp, reference)),
+    colour: getCss("--vp-java"), alpha: 0.95 };
+
+  // Prefer the real emitted files over a re-solve. Re-solving can only reproduce what this tool already believes;
+  // the file is what the game and Blockbench actually read.
+  const slotKey = slot.hand === "head" ? "head" : (slot.first ? "fp" : "tp");
+  const emitted = MODELS[state.model].emitted;
+  const available = emitted && emitted.anim[slotKey] && !emitted.anim[slotKey].molang
+    ? emitted.anim[slotKey] : null;
+  // Editing the frame cannot move a pose that was read from a file - that needs a reconversion. So when the frame is
+  // being edited the viewport switches to the proposed pose, and says which one it is showing.
+  const fromFile = state.bedSource === "file" ? available : null;
+  document.getElementById("source-note").textContent = !available
+    ? (emitted ? "This slot's animation is Molang-driven, so only the proposed frame can be drawn."
+               : "No converted pack loaded, so this is the proposed frame.")
+    : (fromFile ? "The real emitted animation. Editing the frame will not move it - re-convert to apply."
+                : "The pose the current frame would produce. Not yet in your pack.");
+
+  let bedLayer;
+  if (fromFile) {
+    const shape = emitted.shape;
+    // File space to Blockbench-internal: position X negated, rotation X and Y negated, scale untouched.
+    const filePos = [-fromFile.position[0], fromFile.position[1], fromFile.position[2]];
+    const fileRot = [-fromFile.rotation[0], -fromFile.rotation[1], fromFile.rotation[2]];
+    bedLayer = {
+      boxes: shape.boxes,
+      faces: shape.faces,
+      warp: p => arm(bedrockRaw(p, filePos, fileRot, fromFile.scale, shape.pivot,
+        shape.binding ? bind : [0, 0, 0])),
+      colour: getCss("--vp-bedrock"),
+      alpha: 0.95
+    };
+  } else {
+    bedLayer = { boxes: boxes, faces: faces, warp: p => arm(bedrockPoint(p, anim, bind)),
+      colour: getCss("--vp-bedrock"), alpha: 0.95 };
+  }
+
+  const views = document.getElementById("views");
+  views.classList.toggle("overlay", state.view === "over");
+
+  // Through the eye, the head cube is AROUND the camera and its inner faces fill the frame, so the body is dropped
+  // and only the arm is kept - which is the part the item relates to. Blockbench drops the rig entirely here.
+  const body = useEye() ? [armLayer] : [rigLayer, armLayer];
+
+  if (state.view === "over") {
+    javaLayer.alpha = 0.62; bedLayer.alpha = 0.62;
+    draw(document.getElementById("cv-java"), body.concat([javaLayer, bedLayer]));
+  } else {
+    draw(document.getElementById("cv-java"), body.concat([javaLayer]));
+    draw(document.getElementById("cv-bedrock"), body.concat([bedLayer]));
+  }
+
+  // How far the emitted pose sits from Java's own placement, worst axis over every box corner. Only the right
+  // panel moves as you edit, so this is a real measurement rather than the solver agreeing with itself.
+  const worst = [0, 0, 0];
+  for (const box of boxes) {
+    for (let i = 0; i < 8; i++) {
+      const p = [box[(i & 1) ? 3 : 0], box[(i & 2) ? 4 : 1], box[(i & 4) ? 5 : 2]];
+      const j = javaPoint(p, disp, reference);
+      const b = bedrockPoint(p, anim, bind);
+      for (let a = 0; a < 3; a++) worst[a] = Math.max(worst[a], Math.abs(b[a] - j[a]));
+    }
+  }
+  const max = Math.max(worst[0], worst[1], worst[2]);
+  document.getElementById("fit-num").textContent = max.toFixed(2);
+  document.getElementById("dx").textContent = worst[0].toFixed(2);
+  document.getElementById("dy").textContent = worst[1].toFixed(2);
+  document.getElementById("dz").textContent = worst[2].toFixed(2);
+
+  const chip = document.getElementById("fit-chip");
+  chip.className = "chip " + (max < 0.05 ? "ok" : max < 3.5 ? "warn" : "bad");
+  chip.textContent = max < 0.05 ? "Matches Java" : max < 3.5 ? "Offset on purpose" : "Far off";
+
+  // The measurement that actually decides whether it looks right: how far the item's centre is from the fist the
+  // player can see. Offsetting from Java's coordinates is fine; floating away from the hand is not.
+  let fist = 0;
+  if (slot.hand !== "head") {
+    const centre = bedrockPoint([8, 8, 8], anim, bind);
+    fist = Math.hypot.apply(null, sub(centre, HAND_BONE[slot.hand]));
+  }
+  document.getElementById("dfist").textContent = slot.hand === "head" ? "n/a" : fist.toFixed(2);
+
+  // Which end of the model is in the fist, and how far the long axis is from the arm's own direction. "Held by the
+  // crossguard" is the first number being large; "parallel to my arm" is the second being near zero.
+  const lowEnd = bedrockPoint([8, 0, 8], anim, bind);
+  const highEnd = bedrockPoint([8, 16, 8], anim, bind);
+  const axis = sub(highEnd, lowEnd);
+  const len = Math.hypot(axis[0], axis[1], axis[2]) || 1;
+  const offArm = Math.acos(Math.min(1, Math.abs(axis[1]) / len)) / D2R;
+  const held = slot.hand === "head" ? "n/a"
+    : (Math.hypot.apply(null, sub(lowEnd, HAND_BONE[slot.hand])) <
+       Math.hypot.apply(null, sub(highEnd, HAND_BONE[slot.hand])) ? "bottom" : "top");
+  document.getElementById("dgrip").textContent = held;
+  document.getElementById("dtilt").textContent = offArm.toFixed(0) + String.fromCharCode(176);
+
+  // Derived readout: what the pack will actually contain.
+  const fx = n => (Math.round(n * 1e4) / 1e4).toString();
+  document.getElementById("derived").innerHTML = [
+    ["Grip, in the bone frame", "[" + anim.grip.map(fx).join(", ") + "]"],
+    ["Hand bone", slot.hand === "head" ? "n/a (head)" : "[" + HAND_BONE[slot.hand].join(", ") + "]"],
+    ["Bound origin", "[" + bind.join(", ") + "]"],
+    ["animation position", "[" + anim.position.map(fx).join(", ") + "]"],
+    ["animation rotation", "[" + anim.rotation.map(fx).join(", ") + "]"],
+    ["animation scale", "[" + anim.scale.map(fx).join(", ") + "]"]
+  ].map(r => "<div><span>" + r[0] + "</span><span>" + r[1] + "</span></div>").join("");
+
+  for (const el of document.querySelectorAll(".view-label small")) {
+    el.textContent = useEye()
+      ? "through the eye, 70 deg field of view"
+      : (el.closest(".is-java") ? "display transform on the rig" : "emitted animation on the bound bone");
+  }
+
+  const d = MODELS[state.model].display[slot.hand === "head" ? "head" : (slot.first ? "fp" : "tp")];
+  const borrowed = emitted && emitted.shape.borrowedTexture;
+  const noTex = emitted && !emitted.shape.hasTexture;
+  document.getElementById("model-note").textContent = (noTex
+    ? "the emitted geometry has no texture in this drop - add the converted pack's textures folder. "
+    : borrowed ? "the emitted side is borrowing the source texture. " : "") + (d
+    ? "display: rotation [" + d.r.join(", ") + "]  translation [" + d.t.join(", ") + "]  scale " + d.s
+    : "this model declares no display entry for this slot, so it is shown unposed");
+
+  writeOutputs();
+}
+
+function writeOutputs() {
+  // The yaml block is a nudge: it applies outside the model's own transform, so it is the plain delta from default.
+  const lines = ["held-item-anchors:"];
+  const seen = { "third-person": ["tp_main", "tp_off"], "first-person": ["fp_main", "fp_off"], "head": ["head"] };
+  let any = false;
+  for (const key of Object.keys(seen)) {
+    const id = seen[key][0];
+    const f = state.frames[id], d = DEFAULTS[id];
+    const dt = sub(f.target, d.target);
+    const dr = sub(f.rot, d.rot);
+    const ds = f.scale / d.scale;
+    const parts = [];
+    if (dt.some(v => Math.abs(v) > 1e-6)) parts.push("    translation: [" + dt.map(n => +n.toFixed(4)).join(", ") + "]");
+    if (dr.some(v => Math.abs(v) > 1e-6)) parts.push("    rotation: [" + dr.map(n => +n.toFixed(4)).join(", ") + "]");
+    if (Math.abs(ds - 1) > 1e-6) parts.push("    scale: [" + [ds, ds, ds].map(n => +n.toFixed(4)).join(", ") + "]");
+    if (parts.length) { lines.push("  " + key + ":"); lines.push.apply(lines, parts); any = true; }
+    else lines.push("  " + key + ": {}");
+  }
+  // Deliberately NOT a second way to express the same correction. Emitting both a yml block and a set of constants
+  // invites applying both, which doubles the offset - the single most expensive mistake this tool has caused.
+  const nudged = Object.keys(state.nudges).filter(k => {
+    const n = state.nudges[k];
+    return n.t.some(v => v) || n.r.some(v => v) || n.s !== 1;
+  });
+  document.getElementById("out-yaml").textContent = nudged.length
+    ? "# You have offsets set for: " + nudged.join(", ")
+      + "\n# The constants below are the frame BEFORE those offsets, so do not apply both."
+      + "\n# Press Match Java to fold the offset into the constant and clear this."
+      + "\nheld-item-anchors:\n  third-person: {}\n  first-person: {}\n  head: {}"
+    : "held-item-anchors:\n  third-person: {}\n  first-person: {}\n  head: {}"
+      + "\n\n# Leave these empty. The constants below carry the whole pose.";
+
+  const f = n => {
+    const v = Math.round(n * 1e4) / 1e4;
+    return (Number.isInteger(v) ? v + ".0" : String(v)) + "F";
+  };
+  const t = state.frames, out = [];
+  out.push("private static final Frame JAVA_MAIN_HAND = new Frame(");
+  out.push("        new float[]{" + t.tp_main.target.map(f).join(", ") + "}, new float[]{"
+    + t.tp_main.rot.map(f).join(", ") + "}, " + f(t.tp_main.scale) + ");");
+  out.push("private static final Frame JAVA_OFF_HAND = new Frame(");
+  out.push("        new float[]{" + t.tp_off.target.map(f).join(", ") + "}, new float[]{"
+    + t.tp_off.rot.map(f).join(", ") + "}, " + f(t.tp_off.scale) + ");");
+  out.push("private static final Frame JAVA_HEAD = new Frame(");
+  out.push("        new float[]{" + t.head.target.map(f).join(", ") + "}, new float[]{"
+    + t.head.rot.map(f).join(", ") + "}, " + f(t.head.scale) + ");");
+  out.push("");
+  out.push("// grip = target - bound origin");
+  out.push("private static final float[] FIRST_PERSON_GRIP =");
+  out.push("        {" + sub(t.fp_main.target, BIND.main).map(f).join(", ") + "};");
+  document.getElementById("out-java").textContent = out.join("\n");
+}
+
+/**
+ * The frame that would make the Bedrock side land exactly where the Java side does.
+ * <p>
+ * Measured rather than assumed. The right-hand viewport may be showing a pose emitted by an <i>older</i> build, so
+ * the correction is derived from what is actually on screen: take the affine transform each side applies to the same
+ * model, compose the one that carries Bedrock's onto Java's, and apply it outside the current frame. When the loaded
+ * pack was built by the current solver this reduces to Java's own reference, which is the sanity check.
+ *
+ * @return {position, rotation, scale, delta} or null when there is nothing to measure
+ */
+function solveMatchingFrame() {
+  const slot = SLOTS.find(s => s.id === state.slot);
+  const frame = effectiveFrame(state.slot);
+  const reference = JAVA_REFERENCE[state.slot];
+  const bind = currentBind(slot);
+  const disp = displayFor(state.model, slot);
+
+  // Java, over the model's centred coordinates.
+  const refScale = [reference.scale, reference.scale, reference.scale];
+  const Lref = mul3(matXyz(reference.rot), diag(refScale));
+  const Ldisp = mul3(matXyz(disp.r), diag(disp.s));
+  const B = affine(mul3(Lref, Ldisp), add(ap3(Lref, disp.t), reference.target));
+
+  // Bedrock, over the same centred coordinates. Prefer the emitted file; fall back to the live solve.
+  const slotKey = slot.hand === "head" ? "head" : (slot.first ? "fp" : "tp");
+  const emitted = MODELS[state.model].emitted;
+  const fromFile = emitted && emitted.anim[slotKey] && !emitted.anim[slotKey].molang ? emitted.anim[slotKey] : null;
+
+  let A;
+  if (fromFile) {
+    const pos = [-fromFile.position[0], fromFile.position[1], fromFile.position[2]];
+    const rot = [-fromFile.rotation[0], -fromFile.rotation[1], fromFile.rotation[2]];
+    const piv = emitted.shape.pivot;
+    const bindHere = emitted.shape.binding ? bind : [0, 0, 0];
+    const L = mul3(matZyx(rot), diag(fromFile.scale));
+    // x -> L(x - piv) + piv + pos + bind, then re-based onto centred coords (internal = centred + CENTRE).
+    const t = add(add(sub(piv, ap3(L, piv)), pos), bindHere);
+    A = affine(L, add(ap3(L, CENTRE), t));
+  } else {
+    const anim = solve(disp, frame, bind);
+    const pos = [-anim.position[0], anim.position[1], anim.position[2]];
+    const rot = [-anim.rotation[0], -anim.rotation[1], anim.rotation[2]];
+    const L = mul3(matZyx(rot), diag(anim.scale));
+    const t = add(add(sub(PIVOT, ap3(L, PIVOT)), pos), bind);
+    A = affine(L, add(ap3(L, CENTRE), t));
+  }
+
+  const inverse = affineInv(A);
+  if (!inverse) return null;
+
+  // C carries Bedrock's placement onto Java's; the new frame is C applied outside the current one.
+  const C = affineMul(B, inverse);
+  const Lframe = mul3(matXyz(frame.rot), diag([frame.scale, frame.scale, frame.scale]));
+  const next = affineMul(C, affine(Lframe, frame.target));
+  const parts = decompose3(next.L);
+
+  // A rotation has many Euler triples. If the solve did not actually turn the model, keep the triple that is already
+  // there rather than swapping (-90,180,0) for the equivalent (90,0,180) and making the output box look changed.
+  let rotation = parts.rotation;
+  const wanted = matXyz(rotation), current = matXyz(frame.rot);
+  let same = true;
+  for (let i = 0; i < 9; i++) if (Math.abs(wanted[i] - current[i]) > 1e-4) same = false;
+  if (same) rotation = frame.rot.slice();
+
+  const delta = sub(next.t, frame.target);
+  return {
+    target: next.t,
+    rotation: rotation,
+    scale: (parts.scale[0] + parts.scale[1] + parts.scale[2]) / 3,
+    delta: delta,
+    fromFile: !!fromFile
+  };
+}
+
+/* ---------------------------------------------------------------- interaction */
+
+function orbit(canvas) {
+  let dragging = false, lx = 0, ly = 0;
+  canvas.addEventListener("pointerdown", e => {
+    dragging = true; lx = e.clientX; ly = e.clientY; canvas.setPointerCapture(e.pointerId);
+  });
+  canvas.addEventListener("pointermove", e => {
+    if (!dragging) return;
+    camera.yaw += (e.clientX - lx) * 0.5;
+    camera.pitch = Math.max(-85, Math.min(85, camera.pitch + (e.clientY - ly) * 0.4));
+    lx = e.clientX; ly = e.clientY;
+    render();
+  });
+  canvas.addEventListener("pointerup", e => { dragging = false; canvas.releasePointerCapture(e.pointerId); });
+  canvas.addEventListener("wheel", e => {
+    e.preventDefault();
+    camera.zoom = Math.max(0.4, Math.min(4, camera.zoom * (e.deltaY > 0 ? 0.92 : 1.08)));
+    render();
+  }, { passive: false });
+}
+
+function copyTo(button, text) {
+  navigator.clipboard.writeText(text).then(() => {
+    const was = button.textContent;
+    button.textContent = "Copied";
+    setTimeout(() => { button.textContent = was; }, 1200);
+  }).catch(() => { button.textContent = "Press Ctrl+C"; });
+}
+
+document.getElementById("seg-view").addEventListener("click", e => {
+  const b = e.target.closest("button");
+  if (!b) return;
+  state.view = b.dataset.v;
+  for (const other of e.currentTarget.querySelectorAll("button")) {
+    other.setAttribute("aria-pressed", String(other === b));
+  }
+  render();
+});
+
+(function wireDrop() {
+  const zone = document.getElementById("drop");
+  const picker = document.getElementById("picker");
+
+  const stop = e => { e.preventDefault(); e.stopPropagation(); };
+  for (const type of ["dragenter", "dragover"]) {
+    zone.addEventListener(type, e => { stop(e); zone.classList.add("is-over"); });
+  }
+  for (const type of ["dragleave", "dragend"]) {
+    zone.addEventListener(type, e => { stop(e); zone.classList.remove("is-over"); });
+  }
+  // The window handlers stop the browser navigating away when a drop lands slightly off target.
+  for (const type of ["dragover", "drop"]) window.addEventListener(type, e => e.preventDefault());
+
+  zone.addEventListener("drop", async e => {
+    stop(e);
+    zone.classList.remove("is-over");
+    const out = [];
+    const items = e.dataTransfer.items;
+    if (items && items.length && items[0].webkitGetAsEntry) {
+      const entries = [];
+      for (const item of items) {
+        const entry = item.webkitGetAsEntry();
+        if (entry) entries.push(entry);
+      }
+      await Promise.all(entries.map(entry => collectEntry(entry, "", out)));
+    } else {
+      for (const file of e.dataTransfer.files) out.push([file.name, file]);
+    }
+    ingest(out);
+  });
+
+  const open = () => picker.click();
+  zone.addEventListener("click", e => { if (e.target.tagName !== "INPUT") open(); });
+  zone.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); open(); } });
+  document.getElementById("btn-pick").addEventListener("click", e => { e.stopPropagation(); open(); });
+  document.getElementById("btn-clear").addEventListener("click", e => { e.stopPropagation(); clearPack(); });
+  picker.addEventListener("change", () => {
+    const out = [];
+    for (const file of picker.files) out.push([file.webkitRelativePath || file.name, file]);
+    ingest(out);
+  });
+})();
+
+document.getElementById("btn-load").addEventListener("click", () => {
+  const msg = document.getElementById("load-msg");
+  const text = document.getElementById("paste").value.trim();
+  if (!text) { msg.textContent = "Paste a model first."; return; }
+  try {
+    MODELS.pasted = parsePastedModel(text);
+    state.model = "pasted";
+    buildModelSelect();
+    render();
+    msg.textContent = MODELS.pasted.boxes.length + " element(s) loaded.";
+  } catch (err) {
+    msg.textContent = "Could not read that: " + err.message;
+  }
+});
+
+document.getElementById("btn-reset").addEventListener("click", () => {
+  state.frames[state.slot] = JSON.parse(JSON.stringify(DEFAULTS[state.slot]));
+  buildRows(); render();
+});
+
+document.getElementById("seg-source").addEventListener("click", e => {
+  const b = e.target.closest("button");
+  if (!b) return;
+  state.bedSource = b.dataset.s;
+  for (const other of e.currentTarget.querySelectorAll("button")) {
+    other.setAttribute("aria-pressed", String(other === b));
+  }
+  render();
+});
+
+document.getElementById("chk-eye").addEventListener("change", e => {
+  state.eye = e.currentTarget.checked;
+  render();
+});
+
+document.getElementById("btn-match").addEventListener("click", () => {
+  const msg = document.getElementById("match-msg");
+  const solved = solveMatchingFrame();
+  if (!solved) { msg.textContent = "Nothing to measure for this slot."; return; }
+
+  const frame = state.frames[state.slot];
+  frame.target = solved.target.map(v => Math.round(v * 1e3) / 1e3);
+  frame.rot = solved.rotation.map(v => Math.round(v * 1e3) / 1e3);
+  frame.scale = Math.round(solved.scale * 1e4) / 1e4;
+
+  // The answer is now entirely in the constant, so the yml offset must go to zero. Leaving it set would apply the
+  // same correction twice - which is exactly how a "matching" frame produced a pack that was 3 units out.
+  const cleared = state.nudges[nudgeKeyFor(SLOTS.find(x => x.id === state.slot))];
+  const hadNudge = cleared.t.some(v => v) || cleared.r.some(v => v) || cleared.s !== 1;
+  cleared.t = [0, 0, 0];
+  cleared.r = [0, 0, 0];
+  cleared.s = 1;
+
+  // Both hands share one frame in practice, so keep them consistent rather than letting one drift.
+  if (state.slot === "tp_main" || state.slot === "tp_off") {
+    const other = state.slot === "tp_main" ? "tp_off" : "tp_main";
+    state.frames[other].target = [-frame.target[0], frame.target[1], frame.target[2]];
+    state.frames[other].rot = frame.rot.slice();
+    state.frames[other].scale = frame.scale;
+  }
+  buildNudgeRows();
+
+  // Show what was just solved, otherwise the viewport keeps drawing the old emitted file and the button looks inert.
+  state.bedSource = "solve";
+  for (const b of document.querySelectorAll("#seg-source button")) {
+    b.setAttribute("aria-pressed", String(b.dataset.s === "solve"));
+  }
+
+  buildRows();
+  render();
+  const moved = Math.hypot(solved.delta[0], solved.delta[1], solved.delta[2]);
+  msg.textContent = (moved < 0.01 ? "Already matching" : "Moved " + moved.toFixed(2) + " units")
+    + (solved.fromFile ? ", measured against the emitted file." : ", measured against the proposed frame.")
+    + " Showing the proposed pose."
+    + (hadNudge ? " Cleared held-item-anchors for this slot - it is in the constant now." : "");
+});
+
+document.getElementById("btn-hand").addEventListener("click", () => {
+  const slot = SLOTS.find(s => s.id === state.slot);
+  if (slot.hand === "head") return;
+  state.frames[state.slot].target = HAND_BONE[slot.hand].slice();
+  buildRows(); render();
+});
+
+document.getElementById("btn-copy-yaml").addEventListener("click", e =>
+  copyTo(e.currentTarget, document.getElementById("out-yaml").textContent));
+document.getElementById("btn-copy-java").addEventListener("click", e =>
+  copyTo(e.currentTarget, document.getElementById("out-java").textContent));
+
+for (const id of ["cv-java", "cv-bedrock"]) orbit(document.getElementById(id));
+
+function sizeViews() {
+  const h = Math.max(280, Math.min(520, Math.round(window.innerHeight * 0.52)));
+  for (const id of ["cv-java", "cv-bedrock"]) document.getElementById(id).style.height = h + "px";
+  render();
+}
+window.addEventListener("resize", sizeViews);
+if (window.matchMedia) {
+  window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", render);
+}
+new MutationObserver(render).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+
+buildSlotSeg();
+buildModelSelect();
+buildArmRow();
+buildRows();
+sizeViews();
+</script>
