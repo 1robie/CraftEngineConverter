@@ -41,6 +41,7 @@ import org.bukkit.Material;
 import fr.robie.yamllibrary.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -754,9 +755,11 @@ public class IAConverter extends Converter {
         }
 
         RecipeResult result = this.convertRecipeResult(iaRecipe, recipeId, fileName);
-        if (result != null) {
-            recipe.setResult(result);
+        if (result == null) {
+            this.logDebug(Message.WARNING__CONVERTER__IA__RECIPES__SKIPPED_NO_RESULT, Logger.LogType.WARNING, Placeholder.of("recipe", recipeId, "file", fileName));
+            return null;
         }
+        recipe.setResult(result);
 
         return recipe;
     }
@@ -778,15 +781,18 @@ public class IAConverter extends Converter {
                 continue;
             }
 
-            String finalRecipeId = machines.size() > 1 ? baseRecipeId + "_" + (i + 1) : baseRecipeId;
+            CookingRecipe cookingRecipe = this.buildCookingRecipe(iaRecipe, recipeType, recipeId, fileName);
+            if (cookingRecipe == null) {
+                continue;
+            }
 
-            ConfigurationSection ceRecipe = recipesSection.createSection(finalRecipeId);
-            this.convertSingleCookingRecipe(iaRecipe, ceRecipe, recipeType, recipeId, fileName);
+            String finalRecipeId = machines.size() > 1 ? baseRecipeId + "_" + (i + 1) : baseRecipeId;
+            cookingRecipe.serialize(recipesSection.createSection(finalRecipeId));
         }
     }
 
-    private void convertSingleCookingRecipe(ConfigurationSection iaRecipe, ConfigurationSection ceRecipe,
-                                            RecipeType recipeType, String recipeId, String fileName) {
+    private @Nullable CookingRecipe buildCookingRecipe(ConfigurationSection iaRecipe, RecipeType recipeType,
+                                                       String recipeId, String fileName) {
         CookingRecipe cookingRecipe = new CookingRecipe(recipeType);
 
         ConfigurationSection ingredientSection = iaRecipe.getConfigurationSection("ingredient");
@@ -807,12 +813,14 @@ public class IAConverter extends Converter {
         cookingRecipe.setTime(cookTime);
 
         RecipeResult result = this.convertRecipeResult(iaRecipe, recipeId, fileName);
-        if (result != null) {
-            cookingRecipe.setResult(result);
+        if (result == null) {
+            this.logDebug(Message.WARNING__CONVERTER__IA__RECIPES__SKIPPED_NO_RESULT, Logger.LogType.WARNING, Placeholder.of("recipe", recipeId, "file", fileName));
+            return null;
         }
+        cookingRecipe.setResult(result);
 
         cookingRecipe.setCategory(CookingRecipeCategory.MISC);
-        cookingRecipe.serialize(ceRecipe);
+        return cookingRecipe;
     }
 
     private AbstractRecipe convertSmithingRecipe(ConfigurationSection iaRecipe, String recipeId, String fileName) {
@@ -845,9 +853,11 @@ public class IAConverter extends Converter {
         }
 
         RecipeResult result = this.convertRecipeResult(iaRecipe, recipeId, fileName);
-        if (result != null) {
-            smithingRecipe.setResult(result);
+        if (result == null) {
+            this.logDebug(Message.WARNING__CONVERTER__IA__RECIPES__SKIPPED_NO_RESULT, Logger.LogType.WARNING, Placeholder.of("recipe", recipeId, "file", fileName));
+            return null;
         }
+        smithingRecipe.setResult(result);
 
         return smithingRecipe;
     }
@@ -862,7 +872,7 @@ public class IAConverter extends Converter {
         };
     }
 
-    private String convertItemReference(String itemReference, String recipeId, String fileName) {
+    private @Nullable String convertItemReference(String itemReference, String recipeId, String fileName) {
         if (!this.isValidString(itemReference)) {
             return null;
         }
@@ -902,8 +912,8 @@ public class IAConverter extends Converter {
         placeholderBuilder.register("item", itemReference)
                 .register("recipe", recipeId)
                 .register("file", fileName);
-                this.logDebug(Message.WARNING__CONVERTER__IA__RECIPES__ITEM_REFERENCE_CONVERSION_FAILURE, Logger.LogType.WARNING, placeholderBuilder.build());
-        return itemReferenceLowerCase;
+        this.logDebug(Message.WARNING__CONVERTER__IA__RECIPES__ITEM_REFERENCE_CONVERSION_FAILURE, Logger.LogType.WARNING, placeholderBuilder.build());
+        return null;
     }
 
     private RecipeResult convertRecipeResult(ConfigurationSection iaRecipe, String recipeId, String fileName) {

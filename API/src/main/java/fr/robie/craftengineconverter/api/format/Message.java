@@ -180,6 +180,7 @@ public enum Message implements fr.robie.messageflow.model.Message {
     WARNING__CONVERTER__IA__RECIPES__ANVIL_REPAIR_NOT_IMPLEMENTED("warning.converter.ia.recipes.anvil-repair-not-implemented", "Anvil Repair recipe conversion not implemented yet for recipe: §e%recipe%§c"),
     WARNING__CONVERTER__IA__RECIPES__UNSUPPORTED_TYPE("warning.converter.ia.recipes.unsupported-type", "Unsupported recipe type: §e%type%§c for recipe: §e%recipe%§c"),
     WARNING__CONVERTER__IA__RECIPES__UNKNOWN_MACHINE_TYPE("warning.converter.ia.recipes.unknown-machine-type", "Unknown machine type: §e%machine%§c for recipe: §e%recipe%§c"),
+    WARNING__CONVERTER__IA__RECIPES__SKIPPED_NO_RESULT("warning.converter.ia.recipes.skipped-no-result", "Skipped recipe (its result could not be resolved): §e%recipe%§c in file: §e%file%§c"),
     WARNING__CONVERTER__IA__RECIPES__SMITHING_MISSING_BASE("warning.converter.ia.recipes.smithing-missing-base", "Missing required 'base' for smithing recipe: §e%recipe%§c in file: §e%file%§c"),
     WARNING__CONVERTER__IA__RECIPES__UNKNOWN_ITEM_REFERENCE("warning.converter.ia.recipes.unknown-item-reference", "Unknown ItemsAdder item: §e%item%§c for recipe: §e%recipe%§c in file: §e%file%§c"),
     WARNING__CONVERTER__IA__RECIPES__ITEM_REFERENCE_CONVERSION_FAILURE("warning.converter.ia.recipes.item-reference-conversion-failure", "Could not convert item reference: §e%item%§c for recipe: §e%recipe%§c in file: §e%file%§c"),
