@@ -31,8 +31,12 @@ public class DataBaseManager implements StorageManager {
 
     private final Map<Class<?>, TypedCache<?>> caches = new ConcurrentHashMap<>();
 
-    private static final int MAX_BATCH_SIZE = 250; // Max objects to process per batch
-    private static final long SAVE_INTERVAL_TICKS = 1200L; // 5 minutes (6000 ticks = 300 seconds) -> 1 min (1200 ticks = 60 seconds)
+    private static final int MAX_BATCH_SIZE = 250; // Max rows per INSERT
+    private static final long SAVE_INTERVAL_TICKS = 1200L; // 1 minute; only a floor, overflow drains sooner
+    /** Ceiling on one save cycle, so a large backlog cannot monopolise the connection in a single pass. */
+    private static final int MAX_OBJECTS_PER_SAVE = 25_000;
+    /** Pending rows that trigger a drain without waiting for the next cycle. */
+    private static final int OVERFLOW_THRESHOLD = 2_000;
 
     public DataBaseManager(CraftEngineConverterPlugin plugin) {
         this.plugin = plugin;
@@ -139,6 +143,9 @@ public class DataBaseManager implements StorageManager {
         MigrationManager.setDatabaseConfiguration(databaseConnection.getDatabaseConfiguration());
         MigrationManager.execute(databaseConnection, logger);
 
+        for (TypedCache<?> cache : this.caches.values()) {
+            cache.onOverflow(OVERFLOW_THRESHOLD, () -> this.drainSoon(cache));
+        }
         this.plugin.getFoliaCompatibilityManager().runTimerAsync(this::saveAll, SAVE_INTERVAL_TICKS, SAVE_INTERVAL_TICKS);
     }
 
@@ -152,8 +159,18 @@ public class DataBaseManager implements StorageManager {
         }
 
         for (TypedCache<?> cache : this.caches.values()) {
-            cache.processBatch();
+            cache.drain(MAX_OBJECTS_PER_SAVE);
         }
+    }
+
+    /**
+     * Drains a cache off the main thread as soon as it has built up, instead of waiting for the next save.
+     * <p>
+     * A conversion produces rows far faster than one scheduled cycle used to remove them, so the buffer grew for as
+     * long as the conversion ran - holding every pending row, and its key, in memory the whole time.
+     */
+    private void drainSoon(TypedCache<?> cache) {
+        this.plugin.getFoliaCompatibilityManager().runAsync(() -> cache.drain(MAX_OBJECTS_PER_SAVE));
     }
 
     /**
