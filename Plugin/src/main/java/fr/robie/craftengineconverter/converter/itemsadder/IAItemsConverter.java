@@ -334,7 +334,7 @@ public class IAItemsConverter extends ItemConverter {
                 if (glow) {
                     String color = glowSection.getString("color");
                     try {
-                        this.craftEngineItemsConfiguration.addItemConfiguration(new GlowDropColorConfiguration(DyeColor.valueOf(color.toLowerCase(Locale.ROOT))));
+                        this.craftEngineItemsConfiguration.addItemConfiguration(new GlowDropColorConfiguration(DyeColor.valueOf(color.toUpperCase(Locale.ROOT))));
                     } catch (Exception e) {
                         Placeholder.Builder builder = Placeholder.builder();
                         builder.register("converter", "IAItemsConverter")
