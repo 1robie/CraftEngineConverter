@@ -169,6 +169,7 @@ public enum Message implements fr.robie.messageflow.model.Message {
     WARNING__CONVERTER__IA__FURNITURE__UNKNOWN_DISPLAY_TRANSFORM("warning.converter.ia.furniture.unknown-display-transform", "§cUnknown furniture display transform type §e%transform%§c for item §e%item%§c."),
     WARNING__CONVERTER__IA__ITEMS__NO_SECTION("warning.converter.ia.items.no-section", "No 'items' section found in: §e%file%§c"),
     WARNING__CONVERTER__IA__ITEMS__SKIPPED_NO_SECTION("warning.converter.ia.items.skipped-no-section", "Skipped item (no section): §e%item%§c in file: §e%file%§c"),
+    WARNING__CONVERTER__IA__EMOJIS__NOT_APPLICABLE("warning.converter.ia.emojis.not-applicable", "ItemsAdder has no dedicated emoji configuration; its emojis are declared as font images and are converted by the images converter."),
     WARNING__CONVERTER__IA__IMAGES__NONE_FOUND("warning.converter.ia.images.none-found", "No ItemsAdder font images found to convert"),
     WARNING__CONVERTER__IA__LANGUAGES__NONE_FOUND("warning.converter.ia.languages.none-found", "No ItemsAdder language files found to convert"),
     WARNING__CONVERTER__IA__SOUNDS__NO_SECTION("warning.converter.ia.sounds.no-section", "No 'sounds' section found in: §e%file%§c"),

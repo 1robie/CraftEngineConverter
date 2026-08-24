@@ -234,7 +234,7 @@ public class IAConverter extends Converter {
 
     @Override
     public CompletableFuture<Void> convertEmojis(boolean async, Optional<Player> player) {
-        return null;
+        return this.executeTask(async, () -> this.log(Message.WARNING__CONVERTER__IA__EMOJIS__NOT_APPLICABLE, Logger.LogType.INFO, Placeholder.empty()));
     }
 
     @Override
