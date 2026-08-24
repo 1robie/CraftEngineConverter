@@ -43,7 +43,14 @@ public class WorldConverterManager implements Listener {
     private final Map<String, LongOpenHashSet> processedChunksByWorld = new ConcurrentHashMap<>();
     private final CraftEnginePlacementTracker placementTracker;
     private final FoliaCompatibilityManager foliaCompatibilityManager;
-    private final List<CompletableFuture<Void>> conversionTasks = new ArrayList<>();
+    /**
+     * Conversions still running, added as a chunk starts one and removed as it finishes.
+     * <p>
+     * Those two happen on different threads - a chunk is scanned on its region's thread, while the completion
+     * callback runs on whichever thread finished the last batch - and the set is iterated by the status and
+     * shutdown paths at the same time. An ArrayList corrupts under that, or throws part way through a walk.
+     */
+    private final Set<CompletableFuture<Void>> conversionTasks = ConcurrentHashMap.newKeySet();
     private final StorageManager storageManager;
     private final ServerProfile serverProfile;
 

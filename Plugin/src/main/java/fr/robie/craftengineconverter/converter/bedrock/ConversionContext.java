@@ -72,7 +72,7 @@ public class ConversionContext {
     private final fr.robie.craftengineconverter.converter.bedrock.geometry.JavaModelResolver javaModelResolver =
             new fr.robie.craftengineconverter.converter.bedrock.geometry.JavaModelResolver();
     // Icons drawn from a 3D model, by texture id. See registerRenderedIcon.
-    private final Map<String, java.awt.image.BufferedImage> renderedIcons = new HashMap<>();
+    private final Map<String, byte[]> renderedIcons = new HashMap<>();
     // Areas to tint, by pack-relative texture path. See registerTintRegions.
     private final Map<String, java.util.List<ModelTextureTinter.TintRegion>> tintRegions =
             new java.util.LinkedHashMap<>();
@@ -274,7 +274,7 @@ public class ConversionContext {
         if (firstTd.getTextures().isEmpty()) return;
 
         String firstTex = firstTd.getTextures().getFirst();
-        java.awt.image.BufferedImage rendered = this.renderedIcons.get(iconKey(firstTd.getBedrockIdentifier()));
+        byte[] rendered = this.renderedIcons.get(iconKey(firstTd.getBedrockIdentifier()));
 
         // A rendered icon is named after the item, not its texture. Several items can share one texture and still
         // have different models — sofa, sofa_inner and sleeper_sofa all use item/custom/sofa — so deriving the
@@ -295,7 +295,7 @@ public class ConversionContext {
             java.nio.file.Files.createDirectories(dstPng.getParent());
 
             if (rendered != null) {
-                javax.imageio.ImageIO.write(rendered, "png", dstPng.toFile());
+                java.nio.file.Files.write(dstPng, rendered);
             } else {
                 Path srcPng = this.texturesDir.resolve(firstTex.substring("textures/".length()) + ".png");
                 java.nio.file.Files.copy(srcPng, dstPng, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
@@ -413,9 +413,23 @@ public class ConversionContext {
                 + " worn overlay is per pattern");
     }
 
+    /**
+     * Keeps a rendered icon until the mapping that needs it is added, as encoded PNG rather than as pixels.
+     * <p>
+     * Every icon rendered during a conversion stays here - several items can share one, so an entry cannot be
+     * dropped after its first reader - and a raster is around sixteen kilobytes at the default size, sixteen times
+     * that at the largest. Encoded, the same icon is one or two, and it is the form it gets written in anyway.
+     */
     public void registerRenderedIcon(String textureId, java.awt.image.BufferedImage icon) {
         if (textureId == null || icon == null) return;
-        this.renderedIcons.put(iconKey(textureId), icon);
+
+        try (java.io.ByteArrayOutputStream encoded = new java.io.ByteArrayOutputStream()) {
+            javax.imageio.ImageIO.write(icon, "png", encoded);
+            this.renderedIcons.put(iconKey(textureId), encoded.toByteArray());
+        } catch (Exception e) {
+            fr.robie.messageflow.logger.Logger.warn("Could not encode a rendered icon for " + textureId
+                    + ": " + e.getMessage());
+        }
     }
 
     /**
