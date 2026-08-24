@@ -11,7 +11,7 @@ import fr.robie.craftengineconverter.api.progress.BukkitProgressBar;
 import fr.robie.craftengineconverter.common.BlockStatesMapper;
 import fr.robie.craftengineconverter.common.CraftEnginePlacementTracker;
 import fr.robie.craftengineconverter.common.converter.WorldConverter;
-import fr.robie.craftengineconverter.common.records.ChunkPosition;
+import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import fr.robie.messageflow.logger.Logger;
 import net.momirealms.craftengine.bukkit.api.CraftEngineBlocks;
 import org.bukkit.*;
@@ -29,10 +29,18 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class WorldConverterManager implements Listener {
     private final Set<WorldConverter> converters = new HashSet<>();
-    private final Set<ChunkPosition> processedChunks = new HashSet<>();
+    /**
+     * Chunks already scanned this session, packed as x and z into one long per world.
+     * <p>
+     * A record per chunk carried a world-name reference and its own object header for two numbers, and nothing ever
+     * evicts them - a server that stays up long enough to walk a million chunks paid tens of megabytes for a set of
+     * "already looked at this". Two ints fit in a long exactly.
+     */
+    private final Map<String, LongOpenHashSet> processedChunksByWorld = new ConcurrentHashMap<>();
     private final CraftEnginePlacementTracker placementTracker;
     private final FoliaCompatibilityManager foliaCompatibilityManager;
     private final List<CompletableFuture<Void>> conversionTasks = new ArrayList<>();
@@ -57,14 +65,12 @@ public class WorldConverterManager implements Listener {
         int z = chunk.getZ();
         World world = chunk.getWorld();
         String worldName = world.getName();
-        ChunkPosition position = new ChunkPosition(worldName, x, z);
-        if (this.processedChunks.contains(position) || !chunk.isLoaded()) {
+        if (this.alreadyProcessed(worldName, x, z) || !chunk.isLoaded()) {
             if (progressBar != null) {
                 progressBar.increment();
             }
             return;
         }
-        this.processedChunks.add(position);
 
         @NotNull Entity[] entities = chunk.getEntities();
         List<EntityHistory> entityHistories = new ArrayList<>();
@@ -191,7 +197,7 @@ public class WorldConverterManager implements Listener {
                 progressBar.increment();
             }
             if (ex != null) {
-                Logger.error("[WorldConverterManager] Error during chunk conversion at " + position, ex);
+                Logger.error("[WorldConverterManager] Error during chunk conversion at " + worldName + " " + x + "," + z, ex);
             }
         });
     }
@@ -235,15 +241,34 @@ public class WorldConverterManager implements Listener {
         this.converters.add(converter);
     }
 
+    /**
+     * Whether this chunk has been scanned before, marking it scanned if not.
+     *
+     * @return true when it had already been seen
+     */
+    private boolean alreadyProcessed(String worldName, int chunkX, int chunkZ) {
+        LongOpenHashSet processed = this.processedChunksByWorld.computeIfAbsent(worldName, world -> new LongOpenHashSet());
+        long key = ((long) chunkX << 32) | (chunkZ & 0xFFFFFFFFL);
+        synchronized (processed) {
+            return !processed.add(key);
+        }
+    }
+
     public void clearProcessedChunks() {
-        this.processedChunks.clear();
+        this.processedChunksByWorld.clear();
     }
 
     /**
      * Get the number of processed chunks
      */
     public int getProcessedChunksCount() {
-        return this.processedChunks.size();
+        int total = 0;
+        for (LongOpenHashSet processed : this.processedChunksByWorld.values()) {
+            synchronized (processed) {
+                total += processed.size();
+            }
+        }
+        return total;
     }
 
     /**
