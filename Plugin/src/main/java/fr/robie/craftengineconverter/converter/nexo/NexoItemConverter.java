@@ -19,6 +19,7 @@ import fr.robie.craftengineconverter.api.configuration.item.behavior.block.state
 import fr.robie.craftengineconverter.api.configuration.item.behavior.block.states.defaults.PillarBlockState;
 import fr.robie.craftengineconverter.api.configuration.item.behavior.furniture.*;
 import fr.robie.craftengineconverter.api.configuration.item.behavior.furniture.element.ItemDisplayElement;
+import fr.robie.craftengineconverter.api.configuration.item.behavior.furniture.hitbox.BaseHitbox;
 import fr.robie.craftengineconverter.api.configuration.item.behavior.furniture.hitbox.HappyGhastHitbox;
 import fr.robie.craftengineconverter.api.configuration.item.behavior.furniture.hitbox.Hitbox;
 import fr.robie.craftengineconverter.api.configuration.item.behavior.furniture.hitbox.InteractionHitbox;
@@ -82,7 +83,6 @@ import org.bukkit.inventory.ItemFlag;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public class NexoItemConverter extends ItemConverter {
     private final ConfigurationSection nexoItemSection;
@@ -2412,15 +2412,15 @@ public class NexoItemConverter extends ItemConverter {
         };
 
         // --- Seats ---
-        FloatsUtils seatPosition = new FloatsUtils(3, new float[]{0f, 0f, 0f});
-        List<String> seats = nexoFurnitureMechanicsSection.getStringList("seats");
-        if (!seats.isEmpty()) {
-            String seat = seats.getFirst();
+        // Nexo writes each seat as an "x,y,z" offset from the furniture origin, and allows any number of them.
+        List<float[]> seatPositions = new ArrayList<>();
+        for (String seat : nexoFurnitureMechanicsSection.getStringList("seats")) {
             String[] split = seat.split(",", 3);
             try {
-                seatPosition.setValue(0, Float.parseFloat(split[0].trim()));
-                seatPosition.setValue(1, Float.parseFloat(split[1].trim()));
-                seatPosition.setValue(2, Float.parseFloat(split[2].trim()));
+                seatPositions.add(new float[]{
+                        Float.parseFloat(split[0].trim()),
+                        Float.parseFloat(split[1].trim()),
+                        Float.parseFloat(split[2].trim())});
             } catch (Exception e) {
                 Logger.debug(Message.WARNING__FURNITURE__INVALID_SEAT_FORMAT, Placeholder.of("item", this.itemId, "value", seat));
             }
@@ -2605,8 +2605,6 @@ public class NexoItemConverter extends ItemConverter {
                 List<Hitbox> hitboxList = new ArrayList<>();
                 ConfigurationSection nexoHitboxesSection = nexoFurnitureMechanicsSection.getConfigurationSection("hitbox");
                 if (this.isNotNull(nexoHitboxesSection)) {
-                    AtomicBoolean seatsAdded = new AtomicBoolean(false);
-
                     // Barriers
                     for (Position pos : this.expandBarrierPositions(nexoHitboxesSection.getStringList("barriers"))) {
                         ShulkerHitbox hitbox = new ShulkerHitbox();
@@ -2637,9 +2635,6 @@ public class NexoItemConverter extends ItemConverter {
                                 String dir = parts[3].toUpperCase(Locale.ROOT);
                                 hitbox.setDirection(this.getDirectionFromString(dir));
                             }
-                            if (seatPosition.isUpdated() && !seatsAdded.getAndSet(true)) {
-                                hitbox.addSeat(seatPosition.getValue(0), seatPosition.getValue(1), seatPosition.getValue(2), 0);
-                            }
                             hitboxList.add(hitbox);
                         } catch (NumberFormatException e) {
                             Logger.debug(Message.WARNING__FURNITURE__NON_NUMERIC_SHULKER_VALUES, Placeholder.of("item", this.itemId, "entry", shulker));
@@ -2664,9 +2659,6 @@ public class NexoItemConverter extends ItemConverter {
                             HappyGhastHitbox hitbox = new HappyGhastHitbox();
                             hitbox.setPosition(Float.parseFloat(coords[0]), Float.parseFloat(coords[1]), Float.parseFloat(coords[2]));
                             hitbox.setScale(Float.parseFloat(parts[1]));
-                            if (seatPosition.isUpdated() && !seatsAdded.getAndSet(true)) {
-                                hitbox.addSeat(seatPosition.getValue(0), seatPosition.getValue(1), seatPosition.getValue(2), 0);
-                            }
                             hitboxList.add(hitbox);
                         } catch (NumberFormatException e) {
                             Logger.debug(Message.WARNING__FURNITURE__NON_NUMERIC_GHAST_VALUES, Placeholder.of("item", this.itemId, "entry", ghast));
@@ -2696,6 +2688,18 @@ public class NexoItemConverter extends ItemConverter {
                             hitboxList.add(hitbox);
                         } catch (NumberFormatException e) {
                             Logger.debug(Message.WARNING__FURNITURE__NON_NUMERIC_INTERACTION_VALUES, Placeholder.of("item", this.itemId, "entry", interaction));
+                        }
+                    }
+                }
+
+                // CraftEngine keys seats by their offset and shares them across a furniture's hitboxes, so they all
+                // hang off one hitbox rather than being spread over them.
+                if (!seatPositions.isEmpty()) {
+                    if (hitboxList.isEmpty()) {
+                        this.reportUnsupported("Mechanics.furniture.seats (no hitbox to sit on)");
+                    } else if (hitboxList.getFirst() instanceof BaseHitbox seatHitbox) {
+                        for (float[] seat : seatPositions) {
+                            seatHitbox.addSeat(seat[0], seat[1], seat[2], 0);
                         }
                     }
                 }
