@@ -2014,7 +2014,7 @@ public class NexoItemConverter extends ItemConverter {
                     );
                 }
             }
-        } else if (nexoCustomBlockType.equalsIgnoreCase("TRIPWIRE")) {
+        } else if (nexoCustomBlockType.equalsIgnoreCase("STRINGBLOCK")) {
             state = CraftEngineBlockState.TRIPWIRE;
             if (customVariation >= 0) {
                 BlockData blockData = Bukkit.createBlockData(Material.TRIPWIRE);
