@@ -165,6 +165,8 @@ public enum Message implements fr.robie.messageflow.model.Message {
     WARNING__FURNITURE__NON_NUMERIC_BARRIER_RANGE_BOUNDS("warning.furniture.non-numeric-barrier-range-bounds", "§cNon-numeric range bounds §e%range%§c in barrier entry §e%entry%§c."),
     WARNING__FURNITURE__NON_NUMERIC_BARRIER_VALUE("warning.furniture.non-numeric-barrier-value", "§cNon-numeric value §e%value%§c in barrier entry §e%entry%§c."),
 
+    WARNING__CONVERTER__DUPLICATE_ITEM_ID("warning.converter.duplicate-item-id", "§eTwo items resolve to the same id §6%item%§e (§6%first-file%§e and §6%second-file%§e); keeping the first one."),
+    WARNING__CONVERTER__AMBIGUOUS_DEPENDENCY("warning.converter.ambiguous-dependency", "§eItem id §6%raw-item%§e is defined in more than one namespace (§6%first%§e, §6%second%§e); dependencies on it resolve to the first."),
     WARNING__CONVERTER__CIRCULAR_DEPENDENCY("warning.converter.circular-dependency", "§eCircular dependency detected, falling back to original order for unresolved items."),
     WARNING__CONVERTER__IA__FURNITURE__UNKNOWN_DISPLAY_TRANSFORM("warning.converter.ia.furniture.unknown-display-transform", "§cUnknown furniture display transform type §e%transform%§c for item §e%item%§c."),
     WARNING__CONVERTER__IA__ITEMS__NO_SECTION("warning.converter.ia.items.no-section", "No 'items' section found in: §e%file%§c"),

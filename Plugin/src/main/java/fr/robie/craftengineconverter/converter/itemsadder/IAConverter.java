@@ -167,8 +167,22 @@ public class IAConverter extends Converter {
         ctx.scanWithDependencies();
         ctx.convertInOrder(progressBar, (rawItemId, converter) -> {
             PluginNameMapper pluginNameMapper = PluginNameMapper.getInstance();
-            pluginNameMapper.storeMapping(Plugins.ITEMS_ADDER, rawItemId, ctx.getFinalId(rawItemId));
-            pluginNameMapper.storeMapping(Plugins.ITEMS_ADDER, ctx.getFinalId(rawItemId), ctx.getFinalId(rawItemId));
+            String finalItemId = converter.getItemId();
+            pluginNameMapper.storeMapping(Plugins.ITEMS_ADDER, finalItemId, finalItemId);
+
+            // An unqualified id is only unambiguous while a single namespace claims it, so the first one wins and the
+            // rest are reported - a "namespace:id" reference still resolves correctly for every one of them.
+            String claimedBy = pluginNameMapper.getNewName(Plugins.ITEMS_ADDER, rawItemId);
+            if (claimedBy == null) {
+                pluginNameMapper.storeMapping(Plugins.ITEMS_ADDER, rawItemId, finalItemId);
+            } else if (!claimedBy.equals(finalItemId)) {
+                this.logDebug(Message.WARNING__CONVERTER__AMBIGUOUS_DEPENDENCY, Logger.LogType.WARNING,
+                        Placeholder.builder()
+                                .register("raw-item", rawItemId)
+                                .register("first", claimedBy)
+                                .register("second", finalItemId)
+                                .build());
+            }
         });
         ctx.saveAll(outputFolder, this);
     }

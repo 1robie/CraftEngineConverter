@@ -118,7 +118,7 @@ public class NexoConverter extends Converter {
         );
         ctx.scanWithDependencies();
         ctx.convertInOrder(progress, (rawItemId, converter) ->
-                PluginNameMapper.getInstance().storeMapping(Plugins.NEXO, rawItemId, ctx.getFinalId(rawItemId))
+                PluginNameMapper.getInstance().storeMapping(Plugins.NEXO, rawItemId, converter.getItemId())
         );
         ctx.saveAll(outputBase, this);
     }

@@ -480,9 +480,14 @@ public abstract class Converter extends ObjectUtils {
         private final List<ConfigFile> fileList;
         private final Set<ConfigFile> scannedFiles = new HashSet<>();
 
-        private final Map<String, T> convertersByRawId = new LinkedHashMap<>();
-        private final Map<String, ConfigFile> fileByRawId = new HashMap<>();
-        private final Map<String, String> finalIdByRawId = new HashMap<>();
+        // Keyed by final item id, which is the only identifier guaranteed to be unique: ItemsAdder scopes item ids
+        // per namespace, so two packs may legitimately both define "ruby".
+        private final Map<String, T> convertersById = new LinkedHashMap<>();
+        private final Map<String, ConfigFile> fileById = new HashMap<>();
+        // Dependencies are declared with raw ids, so they need a way back to a final id. Ambiguous raw ids resolve to
+        // the first item that claimed them.
+        private final Map<String, String> idByRawId = new HashMap<>();
+        private final Map<String, String> rawIdById = new HashMap<>();
 
         private final Map<ConfigFile, YamlConfiguration> convertedConfigByFile = new LinkedHashMap<>();
         private final Map<ConfigFile, ConfigurationSection> itemsSectionByFile = new LinkedHashMap<>();
@@ -522,9 +527,9 @@ public abstract class Converter extends ObjectUtils {
             boolean pendingDependenciesFound = true;
             while (pendingDependenciesFound) {
                 pendingDependenciesFound = false;
-                for (T converter : new ArrayList<>(this.convertersByRawId.values())) {
+                for (T converter : new ArrayList<>(this.convertersById.values())) {
                     for (String depRawId : converter.getDependencies()) {
-                        if (!this.convertersByRawId.containsKey(depRawId) && this.scanFileContaining(depRawId)) {
+                        if (!this.idByRawId.containsKey(depRawId) && this.scanFileContaining(depRawId)) {
                             pendingDependenciesFound = true;
                         }
                     }
@@ -554,6 +559,16 @@ public abstract class Converter extends ObjectUtils {
                 }
                 String finalItemId = this.finalIdBuilder.build(configFile, rawItemId);
                 try {
+                    ConfigFile owner = this.fileById.get(finalItemId);
+                    if (owner != null) {
+                        Logger.warn(Message.WARNING__CONVERTER__DUPLICATE_ITEM_ID, Placeholder.builder()
+                                .register("item", finalItemId)
+                                .register("first-file", owner.sourceFile().getName())
+                                .register("second-file", configFile.sourceFile().getName())
+                                .build());
+                        continue;
+                    }
+
                     T converter = this.factory.create(
                             configFile, rawItemId, finalItemId, itemSection,
                             convertedConfig
@@ -561,9 +576,18 @@ public abstract class Converter extends ObjectUtils {
                     if (converter == null) {
                         continue;
                     }
-                    this.convertersByRawId.put(rawItemId, converter);
-                    this.fileByRawId.put(rawItemId, configFile);
-                    this.finalIdByRawId.put(rawItemId, finalItemId);
+                    this.convertersById.put(finalItemId, converter);
+                    this.fileById.put(finalItemId, configFile);
+                    this.rawIdById.put(finalItemId, rawItemId);
+
+                    String claimedBy = this.idByRawId.putIfAbsent(rawItemId, finalItemId);
+                    if (claimedBy != null) {
+                        Logger.warn(Message.WARNING__CONVERTER__AMBIGUOUS_DEPENDENCY, Placeholder.builder()
+                                .register("raw-item", rawItemId)
+                                .register("first", claimedBy)
+                                .register("second", finalItemId)
+                                .build());
+                    }
                 } catch (Exception e) {
                     Logger.error(Message.ERROR__CONVERTER__ITEM_LOAD_FAILURE, e, Placeholder.of("item", finalItemId, "file", configFile.sourceFile().getName()));
                 }
@@ -571,7 +595,7 @@ public abstract class Converter extends ObjectUtils {
         }
 
         private boolean scanFileContaining(String rawItemId) {
-            if (this.fileByRawId.containsKey(rawItemId)) {
+            if (this.idByRawId.containsKey(rawItemId)) {
                 return false;
             }
             for (ConfigFile file : this.fileList) {
@@ -579,7 +603,7 @@ public abstract class Converter extends ObjectUtils {
                     continue;
                 }
                 this.scanFile(file);
-                if (this.fileByRawId.containsKey(rawItemId)) {
+                if (this.idByRawId.containsKey(rawItemId)) {
                     return true;
                 }
             }
@@ -589,76 +613,88 @@ public abstract class Converter extends ObjectUtils {
 
 
         private List<String> topologicalSort() {
-            Map<String, Integer> pendingDepsCountByRawId = new LinkedHashMap<>();
-            Map<String, List<String>> dependantsByRawId = new HashMap<>();
+            Map<String, Integer> pendingDepsCountById = new LinkedHashMap<>();
+            Map<String, List<String>> dependantsById = new HashMap<>();
 
-            for (String rawItemId : this.convertersByRawId.keySet()) {
-                pendingDepsCountByRawId.put(rawItemId, 0);
-                dependantsByRawId.put(rawItemId, new ArrayList<>());
+            for (String itemId : this.convertersById.keySet()) {
+                pendingDepsCountById.put(itemId, 0);
+                dependantsById.put(itemId, new ArrayList<>());
             }
-            for (Map.Entry<String, T> entry : this.convertersByRawId.entrySet()) {
-                for (String depRawId : entry.getValue().getDependencies()) {
-                    if (!this.convertersByRawId.containsKey(depRawId)) {
-                        continue;
-                    }
-                    dependantsByRawId.get(depRawId).add(entry.getKey());
-                    pendingDepsCountByRawId.merge(entry.getKey(), 1, Integer::sum);
+            for (Map.Entry<String, T> entry : this.convertersById.entrySet()) {
+                for (String depId : this.resolveDependencies(entry.getValue())) {
+                    dependantsById.get(depId).add(entry.getKey());
+                    pendingDepsCountById.merge(entry.getKey(), 1, Integer::sum);
                 }
             }
             Queue<String> resolvedQueue = new LinkedList<>();
-            for (Map.Entry<String, Integer> entry : pendingDepsCountByRawId.entrySet()) {
+            for (Map.Entry<String, Integer> entry : pendingDepsCountById.entrySet()) {
                 if (entry.getValue() == 0) {
                     resolvedQueue.add(entry.getKey());
                 }
             }
-            List<String> sortedRawIds = new ArrayList<>();
+            List<String> sortedIds = new ArrayList<>();
             while (!resolvedQueue.isEmpty()) {
-                String currentRawId = resolvedQueue.poll();
-                sortedRawIds.add(currentRawId);
-                for (String dependantRawId : dependantsByRawId.getOrDefault(currentRawId, Collections.emptyList())) {
-                    if (pendingDepsCountByRawId.merge(dependantRawId, -1, Integer::sum) == 0) {
-                        resolvedQueue.add(dependantRawId);
+                String currentId = resolvedQueue.poll();
+                sortedIds.add(currentId);
+                for (String dependantId : dependantsById.getOrDefault(currentId, Collections.emptyList())) {
+                    if (pendingDepsCountById.merge(dependantId, -1, Integer::sum) == 0) {
+                        resolvedQueue.add(dependantId);
                     }
                 }
             }
-            if (sortedRawIds.size() != this.convertersByRawId.size()) {
+            if (sortedIds.size() != this.convertersById.size()) {
                 Logger.warn(Message.WARNING__CONVERTER__CIRCULAR_DEPENDENCY);
-                this.convertersByRawId.keySet().stream()
-                        .filter(rawId -> !sortedRawIds.contains(rawId))
-                        .forEach(sortedRawIds::add);
+                Set<String> sorted = new HashSet<>(sortedIds);
+                this.convertersById.keySet().stream()
+                        .filter(itemId -> !sorted.contains(itemId))
+                        .forEach(sortedIds::add);
             }
-            return sortedRawIds;
+            return sortedIds;
+        }
+
+        /**
+         * Translates a converter's declared dependencies - which are raw, unqualified ids - into the final ids this
+         * context is keyed by, dropping the ones that no scanned file provides.
+         */
+        private List<String> resolveDependencies(T converter) {
+            List<String> resolved = new ArrayList<>();
+            for (String depRawId : converter.getDependencies()) {
+                String depId = this.idByRawId.get(depRawId);
+                if (depId != null && this.convertersById.containsKey(depId)) {
+                    resolved.add(depId);
+                }
+            }
+            return resolved;
         }
 
         public void convertInOrder(BukkitProgressBar progress, @Nullable ItemPostProcessor<T> itemPostProcessor) {
-            List<String> sortedRawIds = this.topologicalSort();
+            List<String> sortedIds = this.topologicalSort();
 
-            for (String rawItemId : sortedRawIds) {
-                T converter = this.convertersByRawId.get(rawItemId);
+            for (String finalItemId : sortedIds) {
+                T converter = this.convertersById.get(finalItemId);
                 if (converter == null) {
                     continue;
                 }
                 try {
                     converter.convertItem();
                     if (itemPostProcessor != null) {
-                        itemPostProcessor.process(rawItemId, converter);
+                        itemPostProcessor.process(this.rawIdById.get(finalItemId), converter);
                     }
-                    this.injectResolvedDependency(rawItemId, converter);
+                    this.injectResolvedDependency(this.rawIdById.get(finalItemId), converter);
                 } catch (Exception e) {
-                    Logger.error(Message.ERROR__CONVERTER__ITEM_CONVERT_EXCEPTION, e, Placeholder.of("item", this.finalIdByRawId.get(rawItemId)));
+                    Logger.error(Message.ERROR__CONVERTER__ITEM_CONVERT_EXCEPTION, e, Placeholder.of("item", finalItemId));
                 } finally {
                     progress.increment();
                 }
             }
 
-            for (String rawItemId : sortedRawIds) {
-                T converter = this.convertersByRawId.get(rawItemId);
+            for (String finalItemId : sortedIds) {
+                T converter = this.convertersById.get(finalItemId);
                 if (converter == null || converter.isInternalOnly()) {
                     continue;
                 }
 
-                String finalItemId = this.finalIdByRawId.get(rawItemId);
-                ConfigFile configFile = this.fileByRawId.get(rawItemId);
+                ConfigFile configFile = this.fileById.get(finalItemId);
 
                 try {
                     converter.getCraftEngineItemsConfiguration().serialize(
@@ -698,48 +734,15 @@ public abstract class Converter extends ObjectUtils {
 
 
         public void injectResolvedDependency(String rawItemId, T resolvedConverter) {
-            for (T converter : this.convertersByRawId.values()) {
+            for (T converter : this.convertersById.values()) {
                 if (converter.getDependencies().contains(rawItemId)) {
                     converter.addResolvedDependency(rawItemId, resolvedConverter);
                 }
             }
         }
 
-
-        public T getConverter(String rawItemId) {
-            return this.convertersByRawId.get(rawItemId);
-        }
-
-        public ConfigFile getFile(String rawItemId) {
-            return this.fileByRawId.get(rawItemId);
-        }
-
-        public String getFinalId(String rawItemId) {
-            return this.finalIdByRawId.get(rawItemId);
-        }
-
-        public YamlConfiguration getConvertedConfig(ConfigFile file) {
-            return this.convertedConfigByFile.get(file);
-        }
-
-        public ConfigurationSection getItemsSection(ConfigFile file) {
-            return this.itemsSectionByFile.get(file);
-        }
-
         public List<String> getFinalItemIds(ConfigFile file) {
             return this.finalItemIdsByFile.getOrDefault(file, Collections.emptyList());
-        }
-
-        public void addFinalItemId(ConfigFile file, String finalItemId) {
-            this.finalItemIdsByFile.get(file).add(finalItemId);
-        }
-
-        public List<ConfigFile> getFiles() {
-            return this.fileList;
-        }
-
-        public Set<String> getAllRawIds() {
-            return this.convertersByRawId.keySet();
         }
 
     }
