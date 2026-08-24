@@ -79,6 +79,8 @@ import org.bukkit.block.data.type.Tripwire;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemFlag;
 
+import org.jetbrains.annotations.Nullable;
+
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -1982,7 +1984,7 @@ public class NexoItemConverter extends ItemConverter {
             "beacon_base_block", "is_falling", "sapling", "drop");
 
     private static final Set<String> HANDLED_FURNITURE_KEYS = Set.of(
-            "modelengine_id", "better-model", "block_sounds", "rotatable", "restricted_rotation", "seats",
+            "modelengine_id", "better-model", "block_sounds", "restricted_rotation", "seats",
             "properties", "drop", "limited_placing", "hitbox");
 
     @Override
@@ -2309,6 +2311,10 @@ public class NexoItemConverter extends ItemConverter {
         this.getCraftEngineItemsConfiguration().addItemConfiguration(blockConfiguration);
     }
 
+    private String upperCaseOrEmpty(@Nullable String value) {
+        return value == null ? "" : value.toUpperCase(Locale.ROOT);
+    }
+
     private void convertFurnitureMechanic(ConfigurationSection nexoFurnitureMechanicsSection) {
         String nexoMEGModel = nexoFurnitureMechanicsSection.getString("modelengine_id");
         String nexoBetterModel = nexoFurnitureMechanicsSection.getString("better-model");
@@ -2325,18 +2331,14 @@ public class NexoItemConverter extends ItemConverter {
         }
 
         // --- Rotation ---
-        FurnitureRotation furnitureRotation = FurnitureRotation.EIGHT;
-        if (!nexoFurnitureMechanicsSection.getBoolean("rotatable", true)) {
-            furnitureRotation = FurnitureRotation.FOUR;
-        }
-        String restrictedRotation = nexoFurnitureMechanicsSection.getString("restricted_rotation");
-        if (this.isValidString(restrictedRotation)) {
-            if (restrictedRotation.equals("VERY_STRICT")) {
-                furnitureRotation = FurnitureRotation.FOUR;
-            } else if (restrictedRotation.equals("STRICT")) {
-                furnitureRotation = FurnitureRotation.EIGHT;
-            }
-        }
+        // Nexo snaps placement yaw by restricted_rotation - VERY_STRICT in 45 degree steps, STRICT in 22.5 - and
+        // defaults to STRICT when the key is absent or unrecognised. `rotatable` is a different feature entirely
+        // (whether a player may turn furniture that is already placed), so it must not change the placement rule.
+        FurnitureRotation furnitureRotation = switch (this.upperCaseOrEmpty(nexoFurnitureMechanicsSection.getString("restricted_rotation"))) {
+            case "NONE" -> FurnitureRotation.ANY;
+            case "VERY_STRICT" -> FurnitureRotation.EIGHT;
+            default -> FurnitureRotation.SIXTEEN;
+        };
 
         // --- Seats ---
         FloatsUtils seatPosition = new FloatsUtils(3, new float[]{0f, 0f, 0f});
