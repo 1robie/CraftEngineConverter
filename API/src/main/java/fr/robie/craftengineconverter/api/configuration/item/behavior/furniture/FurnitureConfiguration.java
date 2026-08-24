@@ -8,7 +8,9 @@ import fr.robie.yamllibrary.file.YamlConfiguration;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.EnumMap;
+import java.util.List;
 import java.util.Map;
 
 public class FurnitureConfiguration implements ItemConfigurationSerializable {
@@ -16,6 +18,7 @@ public class FurnitureConfiguration implements ItemConfigurationSerializable {
     private final Map<FurniturePlacement, Placement> placements = new EnumMap<>(FurniturePlacement.class);
     private LootConfiguration loot;
     private Event events;
+    private final List<FurnitureBehavior> behaviors = new ArrayList<>();
 
     @NotNull
     public FurnitureSettings getOrCreateSettings(String itemId) {
@@ -35,6 +38,10 @@ public class FurnitureConfiguration implements ItemConfigurationSerializable {
 
     public void setEvents(@Nullable Event events) {
         this.events = events;
+    }
+
+    public void addBehavior(@NotNull FurnitureBehavior behavior) {
+        this.behaviors.add(behavior);
     }
 
     @Override
@@ -69,6 +76,14 @@ public class FurnitureConfiguration implements ItemConfigurationSerializable {
 
         if (this.events != null) {
             this.events.serialize(furnitureSection);
+        }
+
+        if (!this.behaviors.isEmpty()) {
+            List<Map<String, Object>> serializedBehaviors = new ArrayList<>(this.behaviors.size());
+            for (FurnitureBehavior behavior : this.behaviors) {
+                serializedBehaviors.add(behavior.serialize());
+            }
+            furnitureSection.set("behavior", serializedBehaviors);
         }
 
         if (!this.placements.isEmpty()) {

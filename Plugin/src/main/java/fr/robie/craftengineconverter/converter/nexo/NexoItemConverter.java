@@ -2056,7 +2056,7 @@ public class NexoItemConverter extends ItemConverter {
 
     private static final Set<String> HANDLED_FURNITURE_KEYS = Set.of(
             "modelengine_id", "better-model", "block_sounds", "restricted_rotation", "seats",
-            "properties", "drop", "limited_placing", "hitbox");
+            "properties", "drop", "limited_placing", "hitbox", "storage");
 
     @Override
     public void reportUnsupportedConfiguration() {
@@ -2382,6 +2382,30 @@ public class NexoItemConverter extends ItemConverter {
         this.getCraftEngineItemsConfiguration().addItemConfiguration(blockConfiguration);
     }
 
+    /**
+     * Nexo's storage furniture. Only the plain STORAGE type has a CraftEngine counterpart - the others are a player's
+     * ender chest, a personal stash, a bin or a shulker's own inventory, none of which is furniture-owned storage.
+     */
+    private void convertFurnitureStorage(ConfigurationSection nexoFurnitureMechanicsSection, FurnitureConfiguration furnitureConfiguration) {
+        ConfigurationSection storageSection = nexoFurnitureMechanicsSection.getConfigurationSection("storage");
+        if (this.isNull(storageSection)) {
+            return;
+        }
+
+        String type = storageSection.getString("type", "STORAGE");
+        if (!type.equalsIgnoreCase("STORAGE")) {
+            this.reportUnsupported("Mechanics.furniture.storage (type " + type.toUpperCase(Locale.ROOT) + ")");
+            return;
+        }
+
+        furnitureConfiguration.addBehavior(new SimpleStorageFurnitureBehavior(
+                storageSection.getInt("rows", 6),
+                storageSection.getString("title", "Storage"),
+                storageSection.getString("open_sound", "minecraft:block.chest.open"),
+                storageSection.getString("close_sound", "minecraft:block.chest.close")
+        ));
+    }
+
     private String upperCaseOrEmpty(@Nullable String value) {
         return value == null ? "" : value.toUpperCase(Locale.ROOT);
     }
@@ -2467,6 +2491,9 @@ public class NexoItemConverter extends ItemConverter {
                 }
             }
         }
+
+        // --- Storage ---
+        this.convertFurnitureStorage(nexoFurnitureMechanicsSection, furnitureConfiguration);
 
         // --- Loot ---
         ConfigurationSection dropSection = nexoFurnitureMechanicsSection.getConfigurationSection("drop");
