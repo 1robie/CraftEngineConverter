@@ -84,9 +84,13 @@ public class NexoConverter extends Converter {
             return;
         }
 
+        // Templates span every file, so they have to be known before anything is counted: an item that only exists to
+        // be inherited from is never converted, and must not be counted towards the progress bar either.
+        NexoItemTemplates templates = NexoItemTemplates.collect(toConvert);
+
         int totalItems = 0;
         for (ConfigFile configFile : toConvert) {
-            totalItems += this.countItemsInConfig(configFile.config());
+            totalItems += this.countConvertibleItems(configFile.config(), templates);
         }
 
         BukkitProgressBar progress = this.createProgressBar(player, totalItems, "Converting Nexo items", "items", ConverterOption.ITEMS);
@@ -97,7 +101,7 @@ public class NexoConverter extends Converter {
         BlockStatesMapper.getInstance().clearMappingsForPlugin(this.pluginType);
 
         try {
-            this.processConfigs(toConvert, outputBase, progress);
+            this.processConfigs(toConvert, outputBase, progress, templates);
             toConvert.clear();
         } catch (Exception e) {
             Logger.error(Message.ERROR__CONVERTER__NEXO__ITEMS__CONVERSION_EXCEPTION, e);
@@ -111,10 +115,31 @@ public class NexoConverter extends Converter {
         return keys.size();
     }
 
-    private void processConfigs(Queue<ConfigFile> toConvert, File outputBase, BukkitProgressBar progress) {
+    private int countConvertibleItems(YamlConfiguration config, NexoItemTemplates templates) {
+        int count = 0;
+        for (String itemId : config.getKeys(false)) {
+            if (!templates.isTemplate(itemId)) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    private void processConfigs(Queue<ConfigFile> toConvert, File outputBase, BukkitProgressBar progress, NexoItemTemplates templates) {
         ItemConversionContext<NexoItemConverter> ctx = new ItemConversionContext<>(new ArrayList<>(toConvert),
                 (configFile, rawItemId, finalItemId, itemSection, convertedConfig) ->
-                        new NexoItemConverter(this, itemSection, finalItemId, convertedConfig)
+                        new NexoItemConverter(this, itemSection, finalItemId, convertedConfig),
+                null,
+                configFile -> {
+                    Set<String> itemIds = new LinkedHashSet<>(configFile.config().getKeys(false));
+                    itemIds.removeIf(templates::isTemplate);
+                    return itemIds;
+                },
+                (configFile, rawItemId) -> {
+                    ConfigurationSection itemSection = configFile.config().getConfigurationSection(rawItemId);
+                    return itemSection == null ? null : templates.resolve(rawItemId, itemSection);
+                },
+                (configFile, rawItemId) -> configFile.sourceFile().getName().replace(".yml", "") + ":" + rawItemId
         );
         ctx.scanWithDependencies();
         ctx.convertInOrder(progress, (rawItemId, converter) ->

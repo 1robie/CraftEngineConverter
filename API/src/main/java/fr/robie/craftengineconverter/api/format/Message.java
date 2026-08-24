@@ -126,6 +126,8 @@ public enum Message implements fr.robie.messageflow.model.Message {
     WARNING__CONVERTER__NEXO__CUSTOM_BLOCK__UNKNOWN_BEST_TOOL("warning.converter.nexo.custom-block.unknown-best-tool", "Unknown best_tool §e%tool%§c for custom block item §e%item%§c. Skipping best_tool conversion."),
     WARNING__CONVERTER__NEXO__RECIPE__NO_MAPPING_INGREDIENT("warning.converter.nexo.recipe.no-mapping-ingredient", "§cNo mapping found for ingredient §e%item%§c in recipe §e%recipe%§c."),
     WARNING__CONVERTER__NEXO__RECIPE__NO_MAPPING_RESULT("warning.converter.nexo.recipe.no-mapping-result", "§cNo mapping found for result item §e%item%§c in recipe §e%recipe%§c."),
+    WARNING__CONVERTER__NEXO__TEMPLATE__NOT_FOUND("warning.converter.nexo.template.not-found", "§eItem §6%item%§e references the template §6%template%§e, which no item file defines; it is ignored."),
+    WARNING__CONVERTER__NEXO__TEMPLATE__CIRCULAR("warning.converter.nexo.template.circular", "§eTemplate §6%template%§e is part of a cycle reached from §6%item%§e; the repeated reference is ignored."),
     WARNING__CONVERTER__NEXO__RECIPE__NO_MAPPING_INPUT("warning.converter.nexo.recipe.no-mapping-input", "§cNo mapping found for input item §e%item%§c in recipe §e%recipe%§c."),
     WARNING__CONVERTER__NEXO__RECIPE__NO_MAPPING_CONTAINER("warning.converter.nexo.recipe.no-mapping-container", "§cNo mapping found for container item §e%item%§c in recipe §e%recipe%§c."),
     WARNING__CONVERTER__NEXO__RECIPE__COULD_NOT_DETERMINE_RECIPE_TYPE("warning.converter.nexo.recipe.could-not-determine-recipe-type", "§cCould not determine recipe type for file §e%file%§c. Skipping file conversion."),
