@@ -18,8 +18,6 @@ import org.bukkit.event.Listener;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
 
 public class ItemsAdderFurnitureConverter extends FurnitureConverter implements Listener {
 
@@ -44,13 +42,7 @@ public class ItemsAdderFurnitureConverter extends FurnitureConverter implements 
         CustomFurniture.remove(bukkitEntity, false);
         this.placeFurniture(newName, location.add(0, -0.5, 0), entityNBT);
         event.setCancelled(true);
-
-        if (Configuration.get(Keys.ALLOW_BLOCK_CONVERSION_PROPAGATION) && Configuration.get(Keys.MAX_BLOCK_CONVERSION_PROPAGATION_DEPTH) > 1) {
-            Set<Location> processed = new HashSet<>();
-            processed.add(location);
-            ConversionCounter counter = new ConversionCounter(Configuration.get(Keys.MAX_BLOCK_CONVERSION_PROPAGATION_DEPTH) - 1);
-            this.executeFurnitureConversion(location, processed, counter);
-        }
+        this.propagateFrom(location);
     }
 
     @Override
@@ -70,17 +62,14 @@ public class ItemsAdderFurnitureConverter extends FurnitureConverter implements 
         return null;
     }
 
+    @Override
     @Nullable
     public Entity getFurnitureEntityAt(Location location) {
-        Collection<Entity> entities = location.getNearbyEntities(1, 1, 1);
-        for (Entity entity : entities) {
-            if (entity instanceof ItemFrame || entity instanceof ItemDisplay || entity instanceof ArmorStand) {
-                if (CustomFurniture.byAlreadySpawned(entity) != null) {
-                    return entity;
-                }
-            }
-        }
-        return null;
+        Collection<Entity> entities = location.getNearbyEntities(
+                FURNITURE_SEARCH_RADIUS, FURNITURE_SEARCH_RADIUS, FURNITURE_SEARCH_RADIUS);
+        return nearest(location, entities, entity ->
+                (entity instanceof ItemFrame || entity instanceof ItemDisplay || entity instanceof ArmorStand)
+                        && CustomFurniture.byAlreadySpawned(entity) != null);
     }
 
     @Override

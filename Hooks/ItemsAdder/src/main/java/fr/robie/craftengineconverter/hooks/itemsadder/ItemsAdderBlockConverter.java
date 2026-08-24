@@ -13,8 +13,6 @@ import org.bukkit.block.Block;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 
-import java.util.HashSet;
-import java.util.Set;
 
 public class ItemsAdderBlockConverter extends BlockConverter implements Listener {
     public ItemsAdderBlockConverter(CraftEngineConverterPlugin plugin) {
@@ -45,12 +43,7 @@ public class ItemsAdderBlockConverter extends BlockConverter implements Listener
 
         this.placeBlock(newName, location, oldBlockState);
         event.setCancelled(true);
-        if (Configuration.get(Keys.ALLOW_BLOCK_CONVERSION_PROPAGATION) && Configuration.get(Keys.MAX_BLOCK_CONVERSION_PROPAGATION_DEPTH) > 1) {
-            Set<Location> processed = new HashSet<>();
-            processed.add(location);
-            ConversionCounter counter = new ConversionCounter(Configuration.get(Keys.MAX_BLOCK_CONVERSION_PROPAGATION_DEPTH) - 1);
-            this.executeBlockConversion(block.getLocation(), processed, counter);
-        }
+        this.propagateFrom(location);
 
     }
 

@@ -15,9 +15,6 @@ import org.bukkit.entity.ItemDisplay;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
 
 public class NexoFurnitureConverter extends FurnitureConverter implements Listener {
 
@@ -42,24 +39,14 @@ public class NexoFurnitureConverter extends FurnitureConverter implements Listen
         NexoFurniture.remove(baseEntity);
         this.placeFurniture(newName, location.add(0, -0.5, 0), entityNBT);
         event.setCancelled(true);
-
-        if (Configuration.get(Keys.ALLOW_BLOCK_CONVERSION_PROPAGATION) && Configuration.get(Keys.MAX_BLOCK_CONVERSION_PROPAGATION_DEPTH) > 1) {
-            Set<Location> processed = new HashSet<>();
-            processed.add(location);
-            ConversionCounter counter = new ConversionCounter(Configuration.get(Keys.MAX_BLOCK_CONVERSION_PROPAGATION_DEPTH) - 1);
-            this.executeFurnitureConversion(location, processed, counter);
-        }
+        this.propagateFrom(location);
     }
 
     @Override
     public Entity getFurnitureEntityAt(Location location) {
-        Collection<ItemDisplay> nearbyEntitiesByType = location.getNearbyEntitiesByType(ItemDisplay.class, 1);
-        for (ItemDisplay entity : nearbyEntitiesByType) {
-            if (NexoFurniture.isFurniture(entity)) {
-                return entity;
-            }
-        }
-        return null;
+        return nearest(location,
+                location.getNearbyEntitiesByType(ItemDisplay.class, FURNITURE_SEARCH_RADIUS),
+                entity -> NexoFurniture.isFurniture((ItemDisplay) entity));
     }
 
     @Override

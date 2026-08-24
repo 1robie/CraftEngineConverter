@@ -75,8 +75,11 @@ public final class Keys {
     // Block conversion
     public static final Key<Boolean> ALLOW_BLOCK_CONVERSION_PROPAGATION =
             Key.bool(MAIN, "allow-block-conversion-propagation", true);
-    public static final Key<Integer> MAX_BLOCK_CONVERSION_PROPAGATION_DEPTH =
-            Key.integer(MAIN, "max-block-conversion-propagation-depth", 64);
+    public static final Key<Integer> MAX_BLOCK_CONVERSION_PROPAGATION_LIMIT =
+            Key.integer(MAIN, "max-block-conversion-propagation-limit", 64)
+                    .legacy("max-block-conversion-propagation-depth")
+                    .doc("How many blocks or furniture one interaction may convert on top of the one clicked.",
+                            "This is a total, not a distance: propagation spreads outwards until it runs out.");
 
     // Formatting
     public static final Key<Boolean> PACKET_EVENTS_FORMATTING = Key.bool(MAIN, "formatting.packet-events", true);

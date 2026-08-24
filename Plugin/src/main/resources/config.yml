@@ -120,7 +120,7 @@ tag:
     enabled: true
 
 allow-block-conversion-propagation: true # When enabled, if a block is converted, the surrounding blocks will also be checked for conversion
-max-block-conversion-propagation-depth: 64 # Maximum number of blocks to propagate conversion in one block interaction event
+max-block-conversion-propagation-limit: 64 # Maximum number of blocks to propagate conversion in one block interaction event
 
 # Available colors:
 # BLACK, DARK_BLUE, DARK_GREEN, DARK_AQUA, DARK_RED, DARK_PURPLE,

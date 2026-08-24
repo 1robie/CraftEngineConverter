@@ -8,6 +8,7 @@ import net.momirealms.craftengine.bukkit.api.CraftEngineBlocks;
 import net.momirealms.craftengine.core.util.Key;
 import org.bukkit.Location;
 
+import java.util.HashSet;
 import java.util.Set;
 
 public abstract class BlockConverter extends ObjectConverter {
@@ -15,7 +16,19 @@ public abstract class BlockConverter extends ObjectConverter {
         super(plugin, pluginType);
     }
 
-    protected void executeBlockConversion(Location blockLoc, Set<Location> processed, ConversionCounter counter) {
+    /** Converts whatever adjoins a block that was just converted, within the configured budget. */
+    protected void propagateFrom(Location origin) {
+        ConversionCounter counter = this.propagationCounter();
+        if (counter == null) {
+            return;
+        }
+
+        Set<BlockKey> processed = new HashSet<>();
+        processed.add(BlockKey.of(origin));
+        this.executeBlockConversion(origin, processed, counter);
+    }
+
+    protected void executeBlockConversion(Location blockLoc, Set<BlockKey> processed, ConversionCounter counter) {
         for (int[] offset : this.ADJACENT_OFFSETS) {
             if (counter.hasReachedLimit()) {
                 return;
@@ -23,7 +36,7 @@ public abstract class BlockConverter extends ObjectConverter {
 
             Location adjacentLoc = blockLoc.clone().add(offset[0], offset[1], offset[2]);
 
-            if (!processed.add(adjacentLoc)) {
+            if (!processed.add(BlockKey.of(adjacentLoc))) {
                 continue;
             }
 
