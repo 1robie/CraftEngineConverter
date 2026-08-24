@@ -1198,7 +1198,7 @@ public class IAItemsConverter extends ItemConverter {
         } catch (Exception ignored) {
         }
 
-        boolean isBig = furnitureSection.getBoolean("small", true);
+        boolean small = furnitureSection.getBoolean("small", false);
 
         Set<FurniturePlacement> placements = new HashSet<>();
         ConfigurationSection placeableSection = furnitureSection.getConfigurationSection("placeable_on");
@@ -1226,7 +1226,7 @@ public class IAItemsConverter extends ItemConverter {
         Billboard transformType = Billboard.FIXED;
         ItemDisplayType displayType = ItemDisplayType.NONE;
         FloatsUtils displayTranslation = new FloatsUtils(3, new float[]{0f, 0f, 0f});
-//        if (isBig) {
+//        if (!small) {
 //            displayTranslation.addValue(1, 1f);
 //        }
         FloatsUtils scale = new FloatsUtils(3, new float[]{1f, 1f, 1f});
@@ -1291,7 +1291,7 @@ public class IAItemsConverter extends ItemConverter {
                 if (scale.isUpdated()) {
                     armorStand.setScale(scale.getValue(0), scale.getValue(1), scale.getValue(2));
                 }
-                if (!isBig) {
+                if (small) {
                     armorStand.setSmall(true);
                 }
                 element = armorStand;
