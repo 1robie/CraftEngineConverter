@@ -44,7 +44,7 @@ public class BlockPredicateConfiguration implements ItemConfigurationSerializabl
             return;
         }
 
-        ConfigurationSection components = this.getOrCreateSection(itemSection, "components");
+        ConfigurationSection components = this.getComponentsSection(itemSection);
         ConfigurationSection predicateSection = this.getOrCreateSection(components, this.type.getComponentKey());
 
         List<Map<String, Object>> serialized = new ArrayList<>();

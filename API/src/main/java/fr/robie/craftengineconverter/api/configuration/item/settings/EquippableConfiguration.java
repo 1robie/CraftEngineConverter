@@ -71,7 +71,7 @@ public class EquippableConfiguration implements ItemConfigurationSerializable {
     public void serialize(@NotNull YamlConfiguration yamlConfiguration, @NotNull String path, @NotNull ConfigurationSection itemSection, @NotNull String itemId) {
         ConfigurationSection ceEquippableSection = this.assetId != null && !this.assetId.isBlank()
                 ? this.getOrCreateSection(this.getOrCreateSection(itemSection, "settings"), "equippable")
-                : this.getOrCreateSection(this.getOrCreateSection(itemSection, "data"), "equippable");
+                : this.getOrCreateSection(this.getDataSection(itemSection), "equippable");
 
         if (this.equipmentSlot != null) {
             ceEquippableSection.set("slot", this.equipmentSlot.name().toLowerCase(Locale.ROOT));

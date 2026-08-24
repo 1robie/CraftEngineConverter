@@ -20,7 +20,7 @@ public class TooltipStyleConfiguration implements ItemConfigurationSerializable 
     @Override
     public void serialize(@NotNull YamlConfiguration yamlConfiguration, @NotNull String path, @NotNull ConfigurationSection itemSection, @NotNull String itemId) {
         if (this.styleKey != null) {
-            this.getOrCreateSection(itemSection, "data").set("tooltip-style", this.styleKey.asString());
+            this.getDataSection(itemSection).set("tooltip-style", this.styleKey.asString());
         }
     }
 }

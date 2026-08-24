@@ -17,7 +17,7 @@ public class DamageTypeConfiguration implements ItemConfigurationSerializable {
         if (this.damageType.isEmpty()) {
             return;
         }
-        ConfigurationSection components = this.getOrCreateSection(itemSection, "components");
+        ConfigurationSection components = this.getComponentsSection(itemSection);
         components.set("minecraft:damage_type", this.damageType);
     }
 }

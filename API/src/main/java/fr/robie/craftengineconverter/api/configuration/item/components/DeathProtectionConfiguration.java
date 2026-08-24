@@ -19,7 +19,7 @@ public class DeathProtectionConfiguration extends AbstractEffectsConfiguration {
 
     @Override
     public void serialize(@NotNull YamlConfiguration yamlConfiguration, @NotNull String path, @NotNull ConfigurationSection itemSection, @NotNull String itemId) {
-        ConfigurationSection components = this.getOrCreateSection(itemSection, "components");
+        ConfigurationSection components = this.getComponentsSection(itemSection);
         ConfigurationSection deathProtectionSection = this.getOrCreateSection(components, "minecraft:death_protection");
 
         if (this.deathEffects == null || this.deathEffects.isEmpty()) {

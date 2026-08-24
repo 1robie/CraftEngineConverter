@@ -17,7 +17,7 @@ public class UnbreakableConfiguration implements ItemConfigurationSerializable {
         if (!this.unbreakable) {
             return;
         }
-        ConfigurationSection dataSection = this.getOrCreateSection(itemSection, "data");
+        ConfigurationSection dataSection = this.getDataSection(itemSection);
         dataSection.set("unbreakable", true);
     }
 }

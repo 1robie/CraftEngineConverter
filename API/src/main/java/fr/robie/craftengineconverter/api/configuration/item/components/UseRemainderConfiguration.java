@@ -20,7 +20,7 @@ public class UseRemainderConfiguration implements ItemConfigurationSerializable 
             return;
         }
 
-        ConfigurationSection components = this.getOrCreateSection(itemSection, "components");
+        ConfigurationSection components = this.getComponentsSection(itemSection);
         ConfigurationSection useRemainderSection = this.getOrCreateSection(components, "minecraft:use_remainder");
         useRemainderSection.set("item", this.remainderItemId);
         if (this.remainderCount > 1) {

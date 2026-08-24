@@ -17,7 +17,7 @@ public class MinimumAttackChargeConfiguration implements ItemConfigurationSerial
         if (this.minimumAttackCharge < 0 || this.minimumAttackCharge > 1) {
             return;
         }
-        ConfigurationSection components = this.getOrCreateSection(itemSection, "components");
+        ConfigurationSection components = this.getComponentsSection(itemSection);
         ConfigurationSection attackChargeComponent = this.getOrCreateSection(components, "minecraft:attack_charge");
         attackChargeComponent.set("minimum_attack_charge", this.minimumAttackCharge);
     }

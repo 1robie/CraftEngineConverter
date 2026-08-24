@@ -24,7 +24,7 @@ public class LoreConfiguration extends AbstractItemConfiguration {
         if (this.lore == null || this.lore.isEmpty()) {
             return;
         }
-        ConfigurationSection data = this.getOrCreateSection(itemSection, "data");
+        ConfigurationSection data = this.getDataSection(itemSection);
         data.set("lore", this.applyNoItalic(this.lore));
     }
 }

@@ -35,7 +35,7 @@ public class PlayerProfileConfiguration implements ItemConfigurationSerializable
 
     @Override
     public void serialize(@NotNull YamlConfiguration yamlConfiguration, @NotNull String path, @NotNull ConfigurationSection itemSection, @NotNull String itemId) {
-        ConfigurationSection components = this.getOrCreateSection(itemSection, "components");
+        ConfigurationSection components = this.getComponentsSection(itemSection);
         ConfigurationSection profileSection = this.getOrCreateSection(components, "minecraft:profile");
 
         if (this.name != null && !this.name.isBlank()) {

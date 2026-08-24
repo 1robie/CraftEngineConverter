@@ -33,7 +33,7 @@ public class EnchantmentConfiguration implements ItemConfigurationSerializable {
 
     @Override
     public void serialize(@NotNull YamlConfiguration yamlConfiguration, @NotNull String path, @NotNull ConfigurationSection itemSection, @NotNull String itemId) {
-        ConfigurationSection data = this.getOrCreateSection(itemSection, "data");
+        ConfigurationSection data = this.getDataSection(itemSection);
         ConfigurationSection enchantment = this.getOrCreateSection(data, "enchantment");
         if (this.merge) {
             enchantment.set("merge", true);

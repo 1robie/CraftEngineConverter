@@ -101,7 +101,7 @@ public class KineticWeaponConfiguration implements ItemConfigurationSerializable
 
     @Override
     public void serialize(@NotNull YamlConfiguration yamlConfiguration, @NotNull String path, @NotNull ConfigurationSection itemSection, @NotNull String itemId) {
-        ConfigurationSection components = this.getOrCreateSection(itemSection, "components");
+        ConfigurationSection components = this.getComponentsSection(itemSection);
         ConfigurationSection kineticSection = this.getOrCreateSection(components, "minecraft:kinetic_weapon");
 
         if (this.delayTicks > 0) {

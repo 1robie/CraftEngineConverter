@@ -16,7 +16,7 @@ public class WeaponConfiguration implements ItemConfigurationSerializable {
 
     @Override
     public void serialize(@NotNull YamlConfiguration yamlConfiguration, @NotNull String path, @NotNull ConfigurationSection itemSection, @NotNull String itemId) {
-        ConfigurationSection components = this.getOrCreateSection(itemSection, "components");
+        ConfigurationSection components = this.getComponentsSection(itemSection);
         ConfigurationSection weaponComponent = this.getOrCreateSection(components, "minecraft:weapon");
         if (this.itemDamagePerAttack != 1) {
             weaponComponent.set("item_damage_per_attack", this.itemDamagePerAttack);

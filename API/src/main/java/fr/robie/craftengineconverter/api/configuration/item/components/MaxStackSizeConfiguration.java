@@ -16,7 +16,7 @@ public class MaxStackSizeConfiguration implements ItemConfigurationSerializable,
 
     @Override
     public void serialize(@NotNull YamlConfiguration yamlConfiguration, @NotNull String path, @NotNull ConfigurationSection itemSection, @NotNull String itemId) {
-        this.getOrCreateSection(itemSection, "components").set("minecraft:max_stack_size", this.maxStackSize);
+        this.getComponentsSection(itemSection).set("minecraft:max_stack_size", this.maxStackSize);
     }
 
     @Override

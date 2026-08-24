@@ -33,7 +33,7 @@ public class ConsumableConfiguration extends AbstractEffectsConfiguration implem
 
     @Override
     public void serialize(@NotNull YamlConfiguration yamlConfiguration, @NotNull String path, @NotNull ConfigurationSection itemSection, @NotNull String itemId) {
-        ConfigurationSection components = this.getOrCreateSection(itemSection, "components");
+        ConfigurationSection components = this.getComponentsSection(itemSection);
         ConfigurationSection consumableSection = this.getOrCreateSection(components, "minecraft:consumable");
 
         if (!this.sound.equals("entity.generic.eat")) {

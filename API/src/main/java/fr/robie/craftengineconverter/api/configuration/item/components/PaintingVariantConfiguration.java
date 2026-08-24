@@ -17,7 +17,7 @@ public class PaintingVariantConfiguration implements ItemConfigurationSerializab
         if (this.variant.isEmpty()) {
             return;
         }
-        ConfigurationSection components = this.getOrCreateSection(itemSection, "components");
+        ConfigurationSection components = this.getComponentsSection(itemSection);
         components.set("minecraft:painting/variant", this.variant);
     }
 }

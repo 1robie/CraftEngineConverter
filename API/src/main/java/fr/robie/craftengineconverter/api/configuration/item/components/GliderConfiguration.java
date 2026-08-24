@@ -17,7 +17,7 @@ public class GliderConfiguration implements ItemConfigurationSerializable {
         if (!this.hasGlider) {
             return;
         }
-        ConfigurationSection components = this.getOrCreateSection(itemSection, "components");
+        ConfigurationSection components = this.getComponentsSection(itemSection);
         components.set("minecraft:glider", true);
     }
 }

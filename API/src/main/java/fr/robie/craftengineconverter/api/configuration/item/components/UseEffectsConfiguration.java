@@ -31,7 +31,7 @@ public class UseEffectsConfiguration implements ItemConfigurationSerializable, B
 
     @Override
     public void serialize(@NotNull YamlConfiguration yamlConfiguration, @NotNull String path, @NotNull ConfigurationSection itemSection, @NotNull String itemId) {
-        ConfigurationSection components = this.getOrCreateSection(itemSection, "components");
+        ConfigurationSection components = this.getComponentsSection(itemSection);
         ConfigurationSection useEffectsSection = this.getOrCreateSection(components, "minecraft:use_effects");
 
         if (this.canSprint) {

@@ -27,7 +27,7 @@ public class AttackRangeConfiguration implements ItemConfigurationSerializable, 
 
     @Override
     public void serialize(@NotNull YamlConfiguration yamlConfiguration, @NotNull String path, @NotNull ConfigurationSection itemSection, @NotNull String itemId) {
-        ConfigurationSection components = this.getOrCreateSection(itemSection, "components");
+        ConfigurationSection components = this.getComponentsSection(itemSection);
         ConfigurationSection attackRangeSection = this.getOrCreateSection(components, "minecraft:attack_range");
 
         if (this.minReach != 0.0) {

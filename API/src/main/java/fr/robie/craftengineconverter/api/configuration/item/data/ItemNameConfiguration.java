@@ -23,7 +23,7 @@ public class ItemNameConfiguration extends AbstractItemConfiguration {
         if (this.itemName == null || this.itemName.isEmpty()) {
             return;
         }
-        ConfigurationSection data = this.getOrCreateSection(itemSection, "data");
+        ConfigurationSection data = this.getDataSection(itemSection);
         data.set("item-name", this.applyNoItalic(this.itemName));
     }
 }

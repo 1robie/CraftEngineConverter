@@ -18,7 +18,7 @@ public class UseCooldownConfiguration implements ItemConfigurationSerializable, 
 
     @Override
     public void serialize(@NotNull YamlConfiguration yamlConfiguration, @NotNull String path, @NotNull ConfigurationSection itemSection, @NotNull String itemId) {
-        ConfigurationSection components = this.getOrCreateSection(itemSection, "components");
+        ConfigurationSection components = this.getComponentsSection(itemSection);
         ConfigurationSection useCooldownComponent = this.getOrCreateSection(components, "minecraft:use_cooldown");
         useCooldownComponent.set("seconds", this.seconds);
         if (this.cooldownGroup != null) {

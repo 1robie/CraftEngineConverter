@@ -19,7 +19,7 @@ public class TooltipDisplayConfiguration implements ItemConfigurationSerializabl
         if (this.hiddenComponents.isEmpty()) {
             return;
         }
-        ConfigurationSection components = this.getOrCreateSection(itemSection, "components");
+        ConfigurationSection components = this.getComponentsSection(itemSection);
         ConfigurationSection tooltipDisplayComponent = this.getOrCreateSection(components, "minecraft:tooltip_display");
         tooltipDisplayComponent.set("hidden_components", this.hiddenComponents);
     }

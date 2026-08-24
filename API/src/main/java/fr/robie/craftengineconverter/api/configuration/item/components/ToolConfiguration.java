@@ -27,7 +27,7 @@ public class ToolConfiguration implements ItemConfigurationSerializable, Bedrock
 
     @Override
     public void serialize(@NotNull YamlConfiguration yamlConfiguration, @NotNull String path, @NotNull ConfigurationSection itemSection, @NotNull String itemId) {
-        ConfigurationSection components = this.getOrCreateSection(itemSection, "components");
+        ConfigurationSection components = this.getComponentsSection(itemSection);
         ConfigurationSection toolComponent = this.getOrCreateSection(components, "minecraft:tool");
 
         if (this.defaultMiningSpeed != 1.0f) {

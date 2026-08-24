@@ -42,6 +42,6 @@ public class DyedColorConfiguration implements ItemConfigurationSerializable {
 
     @Override
     public void serialize(@NotNull YamlConfiguration yamlConfiguration, @NotNull String path, @NotNull ConfigurationSection itemSection, @NotNull String itemId) {
-        this.getOrCreateSection(itemSection, "data").set("dyed-color", String.format("%d,%d,%d", (this.rgb >> 16) & 0xFF, (this.rgb >> 8) & 0xFF, this.rgb & 0xFF));
+        this.getDataSection(itemSection).set("dyed-color", String.format("%d,%d,%d", (this.rgb >> 16) & 0xFF, (this.rgb >> 8) & 0xFF, this.rgb & 0xFF));
     }
 }
