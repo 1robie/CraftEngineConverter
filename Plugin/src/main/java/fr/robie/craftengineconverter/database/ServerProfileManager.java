@@ -5,96 +5,94 @@ import fr.robie.craftengineconverter.api.database.StorageManager;
 import fr.robie.craftengineconverter.api.history.BlockHistory;
 import fr.robie.craftengineconverter.api.history.EntityHistory;
 import fr.robie.craftengineconverter.api.profile.ServerProfile;
+import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jspecify.annotations.NonNull;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Manages an in-memory cache of non-reverted block conversions.
- * This cache improves performance by reducing database queries when checking if blocks are already converted.
+ * Remembers which blocks and entities are currently converted, so a chunk being scanned does not have to ask the
+ * database once per candidate block.
+ *
+ * <p>It holds positions, not records. The index answers one question - has this been converted? - and the record that
+ * goes with a position is only wanted when something is being restored, which is rare and can read it back from the
+ * database. Keeping the records resident instead cost around 375 bytes a block, most of it the block state string and
+ * a per-row copy of the world name, which put a world-sized conversion in the region of two gigabytes of heap. A
+ * packed position in a primitive set is ten.
  */
 public class ServerProfileManager implements ServerProfile {
     private final CraftEngineConverter plugin;
     private final StorageManager storageManager;
 
-    private final Map<String, BlockHistory> activeBlockCache = new ConcurrentHashMap<>();
-    private final Map<String, EntityHistory> activeEntityCache = new ConcurrentHashMap<>();
+    /**
+     * Positions are packed into a long the way Minecraft packs a BlockPos: 26 bits of x, 12 of y, 26 of z. That
+     * covers the whole of a 60 million block world and every height a world can have, and it means the index is a
+     * primitive array rather than a graph of boxed objects.
+     */
+    private static final int PACKED_X_BITS = 26;
+    private static final int PACKED_Z_BITS = 26;
+    private static final int PACKED_Y_BITS = 64 - PACKED_X_BITS - PACKED_Z_BITS;
+    private static final long PACKED_X_MASK = (1L << PACKED_X_BITS) - 1;
+    private static final long PACKED_Y_MASK = (1L << PACKED_Y_BITS) - 1;
+    private static final long PACKED_Z_MASK = (1L << PACKED_Z_BITS) - 1;
+
+    /**
+     * One set per world, each guarded by itself: LongOpenHashSet is not thread safe, and both chunk loading and
+     * interaction conversion touch it. Locking per world rather than globally keeps worlds from waiting on each
+     * other, and the critical sections are a single hash lookup.
+     */
+    private final Map<String, LongOpenHashSet> convertedBlocksByWorld = new ConcurrentHashMap<>();
+
+    /**
+     * Entity conversions are keyed by their serialised location. There are orders of magnitude fewer of them than
+     * blocks - one per piece of furniture - so they stay exact strings rather than being packed.
+     */
+    private final Set<String> convertedEntities = ConcurrentHashMap.newKeySet();
 
     public ServerProfileManager(CraftEngineConverter plugin) {
         this.plugin = plugin;
         this.storageManager = plugin.getStorageManager();
     }
 
+    static long pack(int blockX, int blockY, int blockZ) {
+        return ((blockX & PACKED_X_MASK) << (PACKED_Y_BITS + PACKED_Z_BITS))
+                | ((blockY & PACKED_Y_MASK) << PACKED_Z_BITS)
+                | (blockZ & PACKED_Z_MASK);
+    }
+
     /**
-     * Loads all non-reverted block histories from the database into memory cache.
+     * Reads back every conversion still in effect, one row at a time, keeping only its position.
      */
     @Override
     public void load() {
         if (!this.storageManager.isEnabled()) {
             return;
         }
-        List<BlockHistory> allBlockHistories = this.storageManager.getAllActiveConversions();
 
-        for (BlockHistory history : allBlockHistories) {
-            if (!history.isReverted()) {
-                String key = this.createCacheKey(
-                        history.getWorldName(),
-                        history.getChunkX(),
-                        history.getChunkZ(),
-                        history.getBlockX(),
-                        history.getBlockY(),
-                        history.getBlockZ()
-                );
-                this.activeBlockCache.put(key, history);
+        this.storageManager.forEachActiveBlockPosition((worldName, blockX, blockY, blockZ) -> {
+            LongOpenHashSet positions = this.positionsIn(worldName);
+            synchronized (positions) {
+                positions.add(pack(blockX, blockY, blockZ));
             }
-        }
-
-        List<EntityHistory> allActiveEntityConversions = this.storageManager.getAllActiveEntityConversions();
-        for (EntityHistory entityHistory : allActiveEntityConversions) {
-            if (!entityHistory.isReverted()) {
-                this.activeEntityCache.put(entityHistory.getLocationString(), entityHistory);
-            }
-        }
+        });
+        this.storageManager.forEachActiveEntityLocation(this.convertedEntities::add);
     }
 
-    /**
-     * Creates a cache key from block and chunk coordinates.
-     *
-     * @param worldName The world name
-     * @param chunkX    The chunk X coordinate
-     * @param chunkZ    The chunk Z coordinate
-     * @param blockX    The block X coordinate
-     * @param blockY    The block Y coordinate
-     * @param blockZ    The block Z coordinate
-     * @return The cache key string in format: world=name:chunkx:chunkz:blockx:blocky:blockz
-     */
-    @NotNull
-    private String createCacheKey(@NotNull String worldName, int chunkX, int chunkZ, int blockX, int blockY, int blockZ) {
-        return worldName + ":" + chunkX + ":" + chunkZ + ":" + blockX + ":" + blockY + ":" + blockZ;
+    private LongOpenHashSet positionsIn(@NotNull String worldName) {
+        return this.convertedBlocksByWorld.computeIfAbsent(worldName, world -> new LongOpenHashSet());
     }
 
-    /**
-     * Adds a new block conversion to the cache.
-     * Should be called after inserting into the database.
-     *
-     * @param blockHistory The block history to add to cache
-     */
     @Override
     public void addBlockHistory(@NotNull BlockHistory blockHistory) {
         if (!blockHistory.isReverted()) {
-            String key = this.createCacheKey(
-                    blockHistory.getWorldName(),
-                    blockHistory.getChunkX(),
-                    blockHistory.getChunkZ(),
-                    blockHistory.getBlockX(),
-                    blockHistory.getBlockY(),
-                    blockHistory.getBlockZ()
-            );
-            this.activeBlockCache.put(key, blockHistory);
+            LongOpenHashSet positions = this.positionsIn(blockHistory.getWorldName());
+            synchronized (positions) {
+                positions.add(pack(blockHistory.getBlockX(), blockHistory.getBlockY(), blockHistory.getBlockZ()));
+            }
         }
         this.storageManager.upsertBlockHistory(blockHistory);
     }
@@ -102,97 +100,76 @@ public class ServerProfileManager implements ServerProfile {
     @Override
     public void addEntityHistory(@NotNull EntityHistory entityHistory) {
         if (!entityHistory.isReverted()) {
-            this.activeEntityCache.put(entityHistory.getLocationString(), entityHistory);
+            this.convertedEntities.add(entityHistory.getLocationString());
         }
         this.storageManager.upsertEntityHistory(entityHistory);
     }
 
-    /**
-     * Checks if a block is already converted (and not reverted) using the cache.
-     * This is a fast O(1) operation.
-     *
-     * @param worldName The world name
-     * @param blockX    The block X coordinate
-     * @param blockY    The block Y coordinate
-     * @param blockZ    The block Z coordinate
-     * @return true if the block is converted and not reverted
-     */
     @Override
     public boolean isBlockConverted(@NotNull String worldName, int blockX, int blockY, int blockZ) {
-        int chunkX = blockX >> 4; // Equivalent to blockX / 16
-        int chunkZ = blockZ >> 4; // Equivalent to blockZ / 16
-        String key = this.createCacheKey(worldName, chunkX, chunkZ, blockX, blockY, blockZ);
-        return this.activeBlockCache.containsKey(key);
+        LongOpenHashSet positions = this.convertedBlocksByWorld.get(worldName);
+        if (positions == null) {
+            return false;
+        }
+        synchronized (positions) {
+            return positions.contains(pack(blockX, blockY, blockZ));
+        }
     }
 
     @Override
     public boolean isEntityConverted(@NotNull String locationString) {
-        return this.activeEntityCache.containsKey(locationString);
+        return this.convertedEntities.contains(locationString);
     }
 
-    /**
-     * Gets the current number of cached block conversions.
-     *
-     * @return The cache size
-     */
     @Override
     public int getActiveBlockCount() {
-        return this.activeBlockCache.size();
+        int total = 0;
+        for (LongOpenHashSet positions : this.convertedBlocksByWorld.values()) {
+            synchronized (positions) {
+                total += positions.size();
+            }
+        }
+        return total;
     }
 
-    /**
-     * Gets the current number of cached entity conversions.
-     *
-     * @return The entity cache size
-     */
     @Override
     public int getActiveEntityCount() {
-        return this.activeEntityCache.size();
+        return this.convertedEntities.size();
     }
 
-    /**
-     * Clears all entries from the cache.
-     */
     @Override
     public void clearBlockHistory() {
-        for (var blockHistory : this.activeBlockCache.values()) {
-            this.storageManager.markBlockAsReverted(blockHistory);
-        }
-        this.activeBlockCache.clear();
+        this.convertedBlocksByWorld.clear();
+        this.storageManager.markAllBlocksAsReverted();
     }
 
     @Override
     public void markBlockAsReverted(@NonNull BlockHistory history) {
-        String key = this.createCacheKey(
-                history.getWorldName(),
-                history.getChunkX(),
-                history.getChunkZ(),
-                history.getBlockX(),
-                history.getBlockY(),
-                history.getBlockZ()
-        );
-        this.activeBlockCache.remove(key);
+        LongOpenHashSet positions = this.convertedBlocksByWorld.get(history.getWorldName());
+        if (positions != null) {
+            synchronized (positions) {
+                positions.remove(pack(history.getBlockX(), history.getBlockY(), history.getBlockZ()));
+            }
+        }
         this.storageManager.markBlockAsReverted(history);
     }
 
     @Override
     public void markEntityAsReverted(@NotNull EntityHistory history) {
-        this.activeEntityCache.remove(history.getLocationString());
+        this.convertedEntities.remove(history.getLocationString());
         this.storageManager.markEntityAsReverted(history);
     }
 
     /**
-     * Gets all active (non-reverted) block conversions from the cache.
-     *
-     * @return Collection of all active BlockHistory records in the cache
+     * Reads the records back from the database, because the index does not keep them.
      */
     @Override
     public @NonNull Collection<BlockHistory> getAllActiveConversions() {
-        return this.activeBlockCache.values();
+        return this.storageManager.getAllActiveConversions();
     }
 
     @Override
     public @NotNull Collection<EntityHistory> getAllActiveEntityConversions() {
-        return this.activeEntityCache.values();
+        return this.storageManager.getAllActiveEntityConversions();
     }
 }

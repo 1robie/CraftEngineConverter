@@ -11,9 +11,19 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Optional;
 
-public interface StorageManager {
+public interface StorageManager extends ActiveConversionReader {
 
     void loadDatabase();
+
+    /**
+     * Marks every block conversion still in effect as reverted, in one statement.
+     * <p>
+     * The alternative is an update per row, which for a world-sized conversion is a million round trips.
+     */
+    void markAllBlocksAsReverted();
+
+    /** As {@link #markAllBlocksAsReverted()}, for entity conversions. */
+    void markAllEntitiesAsReverted();
 
     /**
      * Insert or update a block history record in persistent storage.

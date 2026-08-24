@@ -31,6 +31,8 @@ public class DataBaseManager implements StorageManager {
 
     private final Map<Class<?>, TypedCache<?>> caches = new ConcurrentHashMap<>();
 
+    /** Rows the driver keeps in flight while streaming; a cursor, not a buffer of the whole result. */
+    private static final int STREAM_FETCH_SIZE = 1_000;
     private static final int MAX_BATCH_SIZE = 250; // Max rows per INSERT
     private static final long SAVE_INTERVAL_TICKS = 1200L; // 1 minute; only a floor, overflow drains sooner
     /** Ceiling on one save cycle, so a large backlog cannot monopolise the connection in a single pass. */
@@ -243,6 +245,80 @@ public class DataBaseManager implements StorageManager {
                 schema.where("id", entityHistory.getId());
             }
         });
+    }
+
+    private static final String BLOCK_TABLE = "world_block_converter_historical";
+    private static final String ENTITY_TABLE = "world_entity_converter_historical";
+
+    /**
+     * Reads straight over the JDBC cursor rather than through the ORM.
+     * <p>
+     * Sarah's select builds a list of every matching row before returning, which for the startup index means holding
+     * millions of records at once purely to read four numbers out of each. Streaming keeps one row in flight.
+     */
+    @Override
+    public void forEachActiveBlockPosition(@NotNull BlockPositionConsumer consumer) {
+        if (!this.isEnabled) {
+            return;
+        }
+
+        this.stream("SELECT world_name, block_x, block_y, block_z FROM " + BLOCK_TABLE + " WHERE reverted = ?",
+                resultSet -> consumer.accept(resultSet.getString(1), resultSet.getInt(2), resultSet.getInt(3), resultSet.getInt(4)));
+    }
+
+    @Override
+    public void forEachActiveEntityLocation(@NotNull java.util.function.Consumer<String> consumer) {
+        if (!this.isEnabled) {
+            return;
+        }
+
+        this.stream("SELECT location FROM " + ENTITY_TABLE + " WHERE reverted = ?",
+                resultSet -> consumer.accept(resultSet.getString(1)));
+    }
+
+    @FunctionalInterface
+    private interface RowReader {
+
+        void read(java.sql.ResultSet resultSet) throws java.sql.SQLException;
+    }
+
+    private void stream(String sql, RowReader reader) {
+        try (java.sql.PreparedStatement statement = this.requestHelper.getConnection().getConnection()
+                .prepareStatement(sql, java.sql.ResultSet.TYPE_FORWARD_ONLY, java.sql.ResultSet.CONCUR_READ_ONLY)) {
+            statement.setBoolean(1, false);
+            statement.setFetchSize(STREAM_FETCH_SIZE);
+            try (java.sql.ResultSet resultSet = statement.executeQuery()) {
+                while (resultSet.next()) {
+                    reader.read(resultSet);
+                }
+            }
+        } catch (Exception e) {
+            fr.robie.messageflow.logger.Logger.error("Failed to read active conversions", e);
+        }
+    }
+
+    @Override
+    public void markAllBlocksAsReverted() {
+        this.execute("UPDATE " + BLOCK_TABLE + " SET reverted = ? WHERE reverted = ?");
+    }
+
+    @Override
+    public void markAllEntitiesAsReverted() {
+        this.execute("UPDATE " + ENTITY_TABLE + " SET reverted = ? WHERE reverted = ?");
+    }
+
+    private void execute(String sql) {
+        if (!this.isEnabled) {
+            return;
+        }
+
+        try (java.sql.PreparedStatement statement = this.requestHelper.getConnection().getConnection().prepareStatement(sql)) {
+            statement.setBoolean(1, true);
+            statement.setBoolean(2, false);
+            statement.executeUpdate();
+        } catch (Exception e) {
+            fr.robie.messageflow.logger.Logger.error("Failed to mark conversions as reverted", e);
+        }
     }
 
     /**
