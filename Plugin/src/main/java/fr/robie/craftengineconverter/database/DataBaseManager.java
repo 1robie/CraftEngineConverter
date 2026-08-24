@@ -298,6 +298,80 @@ public class DataBaseManager implements StorageManager {
     }
 
     @Override
+    public @NotNull List<BlockHistory> nextActiveBlockPage(long afterId, int limit) {
+        List<BlockHistory> page = new java.util.ArrayList<>(Math.min(limit, MAX_BATCH_SIZE));
+        this.page(BLOCK_TABLE, "id, world_name, chunk_x, chunk_z, block_x, block_y, block_z, original_block",
+                afterId, limit, resultSet -> page.add(new BlockHistory(
+                        resultSet.getLong(1), resultSet.getString(2),
+                        resultSet.getInt(3), resultSet.getInt(4),
+                        resultSet.getInt(5), resultSet.getInt(6), resultSet.getInt(7),
+                        resultSet.getString(8), false)));
+        return page;
+    }
+
+    @Override
+    public @NotNull List<EntityHistory> nextActiveEntityPage(long afterId, int limit) {
+        List<EntityHistory> page = new java.util.ArrayList<>(Math.min(limit, MAX_BATCH_SIZE));
+        this.page(ENTITY_TABLE, "id, location, nbt", afterId, limit,
+                resultSet -> page.add(new EntityHistory(
+                        resultSet.getLong(1), resultSet.getString(2), resultSet.getString(3), false)));
+        return page;
+    }
+
+    private void page(String table, String columns, long afterId, int limit, RowReader reader) {
+        if (!this.isEnabled) {
+            return;
+        }
+
+        String sql = "SELECT " + columns + " FROM " + table
+                + " WHERE reverted = ? AND id > ? ORDER BY id LIMIT " + Math.max(1, limit);
+        try (java.sql.PreparedStatement statement = this.requestHelper.getConnection().getConnection().prepareStatement(sql)) {
+            statement.setBoolean(1, false);
+            statement.setLong(2, afterId);
+            try (java.sql.ResultSet resultSet = statement.executeQuery()) {
+                while (resultSet.next()) {
+                    reader.read(resultSet);
+                }
+            }
+        } catch (Exception e) {
+            fr.robie.messageflow.logger.Logger.error("Failed to read a page of active conversions from " + table, e);
+        }
+    }
+
+    @Override
+    public void markBlocksAsReverted(@NotNull java.util.Collection<Long> ids) {
+        this.markPageAsReverted(BLOCK_TABLE, ids);
+    }
+
+    @Override
+    public void markEntitiesAsReverted(@NotNull java.util.Collection<Long> ids) {
+        this.markPageAsReverted(ENTITY_TABLE, ids);
+    }
+
+    /** One statement for a whole page, rather than the round trip per row this replaces. */
+    private void markPageAsReverted(String table, java.util.Collection<Long> ids) {
+        if (!this.isEnabled || ids.isEmpty()) {
+            return;
+        }
+
+        StringBuilder sql = new StringBuilder("UPDATE ").append(table).append(" SET reverted = ? WHERE id IN (");
+        sql.append("?,".repeat(ids.size()));
+        sql.setLength(sql.length() - 1);
+        sql.append(')');
+
+        try (java.sql.PreparedStatement statement = this.requestHelper.getConnection().getConnection().prepareStatement(sql.toString())) {
+            statement.setBoolean(1, true);
+            int index = 2;
+            for (Long id : ids) {
+                statement.setLong(index++, id);
+            }
+            statement.executeUpdate();
+        } catch (Exception e) {
+            fr.robie.messageflow.logger.Logger.error("Failed to mark a page of conversions as reverted in " + table, e);
+        }
+    }
+
+    @Override
     public void markAllBlocksAsReverted() {
         this.execute("UPDATE " + BLOCK_TABLE + " SET reverted = ? WHERE reverted = ?");
     }

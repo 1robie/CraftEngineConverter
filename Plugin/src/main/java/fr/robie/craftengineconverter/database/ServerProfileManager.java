@@ -9,7 +9,6 @@ import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jspecify.annotations.NonNull;
 
-import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -145,31 +144,30 @@ public class ServerProfileManager implements ServerProfile {
 
     @Override
     public void markBlockAsReverted(@NonNull BlockHistory history) {
-        LongOpenHashSet positions = this.convertedBlocksByWorld.get(history.getWorldName());
-        if (positions != null) {
-            synchronized (positions) {
-                positions.remove(pack(history.getBlockX(), history.getBlockY(), history.getBlockZ()));
-            }
-        }
+        this.forgetBlock(history);
         this.storageManager.markBlockAsReverted(history);
     }
 
     @Override
     public void markEntityAsReverted(@NotNull EntityHistory history) {
-        this.convertedEntities.remove(history.getLocationString());
+        this.forgetEntity(history);
         this.storageManager.markEntityAsReverted(history);
     }
 
-    /**
-     * Reads the records back from the database, because the index does not keep them.
-     */
     @Override
-    public @NonNull Collection<BlockHistory> getAllActiveConversions() {
-        return this.storageManager.getAllActiveConversions();
+    public void forgetBlock(@NotNull BlockHistory history) {
+        LongOpenHashSet positions = this.convertedBlocksByWorld.get(history.getWorldName());
+        if (positions == null) {
+            return;
+        }
+        synchronized (positions) {
+            positions.remove(pack(history.getBlockX(), history.getBlockY(), history.getBlockZ()));
+        }
     }
 
     @Override
-    public @NotNull Collection<EntityHistory> getAllActiveEntityConversions() {
-        return this.storageManager.getAllActiveEntityConversions();
+    public void forgetEntity(@NotNull EntityHistory history) {
+        this.convertedEntities.remove(history.getLocationString());
     }
+
 }

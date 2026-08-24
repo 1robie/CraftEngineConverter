@@ -26,6 +26,29 @@ public interface StorageManager extends ActiveConversionReader {
     void markAllEntitiesAsReverted();
 
     /**
+     * The next page of block conversions still in effect, ordered by id and starting after {@code afterId}.
+     * <p>
+     * Paging by id rather than by offset means the walk stays correct while it is marking rows reverted underneath
+     * itself, which an OFFSET would not: every page it had already passed would shift.
+     *
+     * @param afterId the id the previous page ended on, or 0 to start
+     * @param limit   how many rows to read
+     * @return the page, empty once there is nothing left
+     */
+    @NotNull
+    java.util.List<BlockHistory> nextActiveBlockPage(long afterId, int limit);
+
+    /** As {@link #nextActiveBlockPage}, for entity conversions. */
+    @NotNull
+    java.util.List<EntityHistory> nextActiveEntityPage(long afterId, int limit);
+
+    /** Marks the given block conversions reverted in one statement. */
+    void markBlocksAsReverted(@NotNull java.util.Collection<Long> ids);
+
+    /** Marks the given entity conversions reverted in one statement. */
+    void markEntitiesAsReverted(@NotNull java.util.Collection<Long> ids);
+
+    /**
      * Insert or update a block history record in persistent storage.
      * @param blockHistory Block history record (not null).
      */

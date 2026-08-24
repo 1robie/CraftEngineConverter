@@ -8,7 +8,6 @@ import fr.robie.craftengineconverter.api.history.BlockHistory;
 import fr.robie.craftengineconverter.api.history.EntityHistory;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
 
 public interface ServerProfile {
 
@@ -52,14 +51,14 @@ public interface ServerProfile {
     void markEntityAsReverted(@NotNull EntityHistory history);
 
     /**
-     * Gets all active (non-reverted) block conversions from the cache.
-     *
-     * @return Collection of all active BlockHistory records (never null, may be empty).
+     * Drops a block from the index without touching the database.
+     * <p>
+     * For callers that revert a whole page in one statement: {@link #markBlockAsReverted} would issue a second
+     * update for the same row.
      */
-    @NotNull
-    Collection<BlockHistory> getAllActiveConversions();
+    void forgetBlock(@NotNull BlockHistory history);
 
-    @NotNull
-    Collection<EntityHistory> getAllActiveEntityConversions();
+    /** As {@link #forgetBlock}, for an entity conversion. */
+    void forgetEntity(@NotNull EntityHistory history);
 
 }

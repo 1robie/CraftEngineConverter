@@ -31,6 +31,9 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class CraftEngineConverterCommandWorldConverterRestore extends SubCommand<CraftEngineConverter> {
+    /** Rows restored per scheduled tick. */
+    private static final int PAGE_SIZE = 50;
+
     private final MessageFormatter<CraftEngineConverterPlugin, ?> messageFormatter;
 
     public CraftEngineConverterCommandWorldConverterRestore(CraftEngineConverter plugin) {
@@ -105,25 +108,50 @@ public class CraftEngineConverterCommandWorldConverterRestore extends SubCommand
 
         this.messageFormatter.sendMessage(Message.COMMAND__WORLD_CONVERTER__RESTORE__ALL__START, sender, builder.build());
 
-        long startTime = System.currentTimeMillis();
-        AtomicInteger restoredBlockCount = new AtomicInteger(0);
-        AtomicInteger restoredEntityCount = new AtomicInteger(0);
-        AtomicInteger totalBlockCount = new AtomicInteger(0);
-        AtomicInteger totalEntityCount = new AtomicInteger(0);
+        Progress progress = new Progress(System.currentTimeMillis());
+        this.restoreBlockPage(sender, builder, progress, 0L);
 
-        // Restore blocks
-        List<BlockHistory> allHistory = new ArrayList<>(serverProfile.getAllActiveConversions());
+        return CommandResultType.SUCCESS;
+    }
 
-        final int BATCH_SIZE = 50;
+    /** Counters shared by the pages of one restore. */
+    private record Progress(long startTime, AtomicInteger restoredBlocks, AtomicInteger restoredEntities,
+                            AtomicInteger seenBlocks, AtomicInteger seenEntities) {
 
-        for (int i = 0; i < allHistory.size(); i += BATCH_SIZE) {
-            final int end = Math.min(i + BATCH_SIZE, allHistory.size());
-            final List<BlockHistory> batch = allHistory.subList(i, end);
-            final long tickDelay = i / BATCH_SIZE;
+        private Progress(long startTime) {
+            this(startTime, new AtomicInteger(), new AtomicInteger(), new AtomicInteger(), new AtomicInteger());
+        }
+    }
+
+    /**
+     * Restores one page of blocks and schedules the next.
+     * <p>
+     * The pages are read as the restore goes rather than up front. Reading them all first meant holding every record
+     * in memory at once - on a world-sized conversion, more than the index it replaced - and scheduling one task per
+     * fifty rows before any work began, which for a million blocks is twenty thousand tasks queued in advance.
+     */
+    private void restoreBlockPage(CommandSender sender, Placeholder.Builder builder, Progress progress, long afterId) {
+        StorageManager storage = this.plugin.getStorageManager();
+        ServerProfile serverProfile = this.plugin.getServerProfile();
+
+        // Read off the main thread: a page per tick against a remote database would otherwise stall the server for
+        // a round trip every tick, for as long as the restore runs.
+        this.plugin.getFoliaCompatibilityManager().runAsync(() -> {
+            List<BlockHistory> page = storage.nextActiveBlockPage(afterId, PAGE_SIZE);
+            if (page.isEmpty()) {
+                this.restoreEntityPage(sender, builder, progress, 0L);
+                return;
+            }
 
             this.plugin.getFoliaCompatibilityManager().runLater(() -> {
-                for (BlockHistory history : batch) {
-                    totalBlockCount.incrementAndGet();
+                List<Long> restoredIds = new ArrayList<>(page.size());
+                long lastId = afterId;
+
+                for (BlockHistory history : page) {
+                    progress.seenBlocks().incrementAndGet();
+                    if (history.getId() != null) {
+                        lastId = history.getId();
+                    }
 
                     World world = Bukkit.getWorld(history.getWorldName());
                     if (world == null) {
@@ -135,46 +163,56 @@ public class CraftEngineConverterCommandWorldConverterRestore extends SubCommand
                         chunk.load();
                     }
 
-                    Location location = new Location(
-                            world,
-                            history.getBlockX(),
-                            history.getBlockY(),
-                            history.getBlockZ()
-                    );
-
+                    Location location = new Location(world, history.getBlockX(), history.getBlockY(), history.getBlockZ());
                     try {
                         this.restoreBlock(location, history);
-                        serverProfile.markBlockAsReverted(history);
-                        restoredBlockCount.incrementAndGet();
+                        serverProfile.forgetBlock(history);
+                        if (history.getId() != null) {
+                            restoredIds.add(history.getId());
+                        }
+                        progress.restoredBlocks().incrementAndGet();
                     } catch (Exception e) {
                         Logger.error("Failed to restore block at " + location, e);
                     }
                 }
-            }, tickDelay);
-        }
 
-        List<EntityHistory> allEntityHistory = new ArrayList<>(serverProfile.getAllActiveEntityConversions());
+                // A page that restored nothing would otherwise be read for ever, since nothing was marked reverted.
+                long nextId = lastId > afterId ? lastId : afterId + PAGE_SIZE;
+                this.plugin.getFoliaCompatibilityManager().runAsync(() -> {
+                    storage.markBlocksAsReverted(restoredIds);
+                    this.restoreBlockPage(sender, builder, progress, nextId);
+                });
+            }, 1L);
+        });
+    }
 
-        for (int i = 0; i < allEntityHistory.size(); i += BATCH_SIZE) {
-            final int end = Math.min(i + BATCH_SIZE, allEntityHistory.size());
-            final List<EntityHistory> batch = allEntityHistory.subList(i, end);
-            final long tickDelay = (allHistory.size() / BATCH_SIZE) + (i / BATCH_SIZE);
+    private void restoreEntityPage(CommandSender sender, Placeholder.Builder builder, Progress progress, long afterId) {
+        StorageManager storage = this.plugin.getStorageManager();
+        ServerProfile serverProfile = this.plugin.getServerProfile();
+
+        this.plugin.getFoliaCompatibilityManager().runAsync(() -> {
+            List<EntityHistory> page = storage.nextActiveEntityPage(afterId, PAGE_SIZE);
+            if (page.isEmpty()) {
+                this.plugin.getFoliaCompatibilityManager().runNextTick(() -> this.reportComplete(sender, builder, progress));
+                return;
+            }
 
             this.plugin.getFoliaCompatibilityManager().runLater(() -> {
-                for (EntityHistory entityHistory : batch) {
-                    totalEntityCount.incrementAndGet();
+                List<Long> restoredIds = new ArrayList<>(page.size());
+                long lastId = afterId;
+
+                for (EntityHistory entityHistory : page) {
+                    progress.seenEntities().incrementAndGet();
+                    if (entityHistory.getId() != null) {
+                        lastId = entityHistory.getId();
+                    }
 
                     Location location = entityHistory.getLocation();
-                    if (location == null) {
+                    if (location == null || location.getWorld() == null) {
                         continue;
                     }
 
-                    World world = location.getWorld();
-                    if (world == null) {
-                        continue;
-                    }
-
-                    world.getNearbyEntities(location, 1, 1, 1).forEach(entity -> {
+                    location.getWorld().getNearbyEntities(location, 1, 1, 1).forEach(entity -> {
                         if (CraftEngineFurniture.isFurniture(entity)) {
                             CraftEngineFurniture.remove(entity);
                         }
@@ -184,31 +222,35 @@ public class CraftEngineConverterCommandWorldConverterRestore extends SubCommand
                         EntitySnapshot entitySnapshot = Bukkit.getEntityFactory().createEntitySnapshot(entityHistory.getNbt());
                         entitySnapshot.createEntity(location);
 
-                        serverProfile.markEntityAsReverted(entityHistory);
-                        restoredEntityCount.incrementAndGet();
+                        serverProfile.forgetEntity(entityHistory);
+                        if (entityHistory.getId() != null) {
+                            restoredIds.add(entityHistory.getId());
+                        }
+                        progress.restoredEntities().incrementAndGet();
                     } catch (Exception e) {
                         Logger.error("Failed to restore entity at " + location, e);
                     }
                 }
-            }, tickDelay);
-        }
 
-        long totalDelayTicks = (long) Math.ceil((double) (allHistory.size() + allEntityHistory.size()) / BATCH_SIZE);
+                long nextId = lastId > afterId ? lastId : afterId + PAGE_SIZE;
+                this.plugin.getFoliaCompatibilityManager().runAsync(() -> {
+                    storage.markEntitiesAsReverted(restoredIds);
+                    this.restoreEntityPage(sender, builder, progress, nextId);
+                });
+            }, 1L);
+        });
+    }
 
-        this.plugin.getFoliaCompatibilityManager().runLater(() -> {
+    private void reportComplete(CommandSender sender, Placeholder.Builder builder, Progress progress) {
+        long endTime = System.currentTimeMillis();
 
-            long endTime = System.currentTimeMillis();
-
-            builder.register("restored", String.valueOf(restoredBlockCount.get() + restoredEntityCount.get()))
-                    .register("restored_blocks", String.valueOf(restoredBlockCount.get()))
-                    .register("restored_entities", String.valueOf(restoredEntityCount.get()))
-                    .register("total", String.valueOf(totalBlockCount.get() + totalEntityCount.get()))
-                    .register("total_blocks", String.valueOf(totalBlockCount.get()))
-                    .register("total_entities", String.valueOf(totalEntityCount.get()))
-                    .register("time", TimerBuilder.formatTimeAuto(endTime - startTime));
-            this.messageFormatter.sendMessage(Message.COMMAND__WORLD_CONVERTER__RESTORE__ALL__COMPLETE, sender, builder.build());
-        }, totalDelayTicks + 1);
-
-        return CommandResultType.SUCCESS;
+        builder.register("restored", String.valueOf(progress.restoredBlocks().get() + progress.restoredEntities().get()))
+                .register("restored_blocks", String.valueOf(progress.restoredBlocks().get()))
+                .register("restored_entities", String.valueOf(progress.restoredEntities().get()))
+                .register("total", String.valueOf(progress.seenBlocks().get() + progress.seenEntities().get()))
+                .register("total_blocks", String.valueOf(progress.seenBlocks().get()))
+                .register("total_entities", String.valueOf(progress.seenEntities().get()))
+                .register("time", TimerBuilder.formatTimeAuto(endTime - progress.startTime()));
+        this.messageFormatter.sendMessage(Message.COMMAND__WORLD_CONVERTER__RESTORE__ALL__COMPLETE, sender, builder.build());
     }
 }
