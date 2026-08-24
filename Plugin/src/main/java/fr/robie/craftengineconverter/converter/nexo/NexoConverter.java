@@ -317,7 +317,7 @@ public class NexoConverter extends Converter {
         if (recipeFile.getName().equalsIgnoreCase("disabled_recipes.yml")) {
             List<String> disabledRecipes = config.getStringList("disabled_recipes");
 
-            if (!disabledRecipes.isEmpty()) {
+            if (!disabledRecipes.isEmpty() && !this.settings.dryRunEnabled()) {
                 YamlConfiguration convertedConfig = new YamlConfiguration();
                 ConfigurationSection disableRecipeSection = this.getOrCreateSection(this.getOrCreateSection(convertedConfig, "recipe"), "disable-vanilla-recipes");
                 disableRecipeSection.set("list", disabledRecipes);

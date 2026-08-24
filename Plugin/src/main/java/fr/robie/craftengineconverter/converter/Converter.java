@@ -65,7 +65,7 @@ public abstract class Converter extends ObjectUtils {
             case RECIPES -> this.convertRecipes(true, optionalPlayer);
             case PACKS -> this.convertPack(true, optionalPlayer);
         };
-        return conversionTask.thenRun(this.settings::restoreBackup);
+        return conversionTask.whenComplete((ignored, throwable) -> this.settings.restoreBackup());
     }
 
     public CompletableFuture<Void> convertAll(Optional<Player> player) {
