@@ -1965,10 +1965,33 @@ public class NexoItemConverter extends ItemConverter {
                     this.convertCustomBlockMechanic(nexoCustomBlockSection);
                 }
                 //TODO: convert energyblast mechanic
-                default -> {
-                }
+                default -> this.reportUnsupported("Mechanics." + mechanicsKey);
             }
         }
+    }
+
+    /** Every key this converter reads off the item itself; anything else is reported as left out. */
+    private static final Set<String> HANDLED_ITEM_KEYS = Set.of(
+            "material", "itemname", "lore", "color", "unbreakable", "excludeFromInventory", "ItemFlags",
+            "AttributeModifiers", "Enchantments", "Components", "Pack", "Mechanics",
+            // Consumed before conversion, by NexoItemTemplates.
+            "template", "templates", "injectId");
+
+    private static final Set<String> HANDLED_CUSTOM_BLOCK_KEYS = Set.of(
+            "type", "custom_variation", "log_strip", "directional", "block_sounds", "hardness",
+            "beacon_base_block", "is_falling", "sapling", "drop");
+
+    private static final Set<String> HANDLED_FURNITURE_KEYS = Set.of(
+            "modelengine_id", "better-model", "block_sounds", "rotatable", "restricted_rotation", "seats",
+            "properties", "drop", "limited_placing", "hitbox");
+
+    @Override
+    public void reportUnsupportedConfiguration() {
+        this.reportUnhandledKeys("", this.nexoItemSection, HANDLED_ITEM_KEYS);
+        this.reportUnhandledKeys("Mechanics.custom_block",
+                this.nexoItemSection.getConfigurationSection("Mechanics.custom_block"), HANDLED_CUSTOM_BLOCK_KEYS);
+        this.reportUnhandledKeys("Mechanics.furniture",
+                this.nexoItemSection.getConfigurationSection("Mechanics.furniture"), HANDLED_FURNITURE_KEYS);
     }
 
     private void convertCustomBlockMechanic(ConfigurationSection nexoCustomBlockSection) {

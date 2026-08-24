@@ -1183,12 +1183,25 @@ public class IAItemsConverter extends ItemConverter {
                             // machines fuel type not supported
                         }
                     }
-                    default -> {
-
-                    }
+                    default -> this.reportUnsupported("behaviours." + behaviourKey);
                 }
             }
         }
+    }
+
+    /** Every key this converter reads off the item itself; anything else is reported as left out. */
+    private static final Set<String> HANDLED_ITEM_KEYS = Set.of(
+            "name", "display_name", "lore", "resource", "graphics", "durability", "item_flags",
+            "attribute_modifiers", "enchants", "item_model", "max_stack_size", "glint", "drop", "tooltip_style",
+            "consumable", "jukebox_disc", "equipment", "specific_properties", "behaviours");
+
+    private static final Set<String> HANDLED_SPECIFIC_PROPERTIES = Set.of("armor", "block");
+
+    @Override
+    public void reportUnsupportedConfiguration() {
+        this.reportUnhandledKeys("", this.iaItemSection, HANDLED_ITEM_KEYS);
+        this.reportUnhandledKeys("specific_properties",
+                this.iaItemSection.getConfigurationSection("specific_properties"), HANDLED_SPECIFIC_PROPERTIES);
     }
 
     private void convertFurniture(ConfigurationSection furnitureSection, ConfigurationSection behavioursSection) {

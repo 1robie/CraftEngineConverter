@@ -167,6 +167,8 @@ public enum Message implements fr.robie.messageflow.model.Message {
     WARNING__FURNITURE__NON_NUMERIC_BARRIER_RANGE_BOUNDS("warning.furniture.non-numeric-barrier-range-bounds", "§cNon-numeric range bounds §e%range%§c in barrier entry §e%entry%§c."),
     WARNING__FURNITURE__NON_NUMERIC_BARRIER_VALUE("warning.furniture.non-numeric-barrier-value", "§cNon-numeric value §e%value%§c in barrier entry §e%entry%§c."),
 
+    WARNING__CONVERTER__UNSUPPORTED_SUMMARY_HEADER("warning.converter.unsupported-summary-header", "§eSome configuration has no CraftEngine equivalent and was left out:"),
+    WARNING__CONVERTER__UNSUPPORTED_SUMMARY_LINE("warning.converter.unsupported-summary-line", "§e  - §6%feature%§e on §6%count%§e item(s), e.g. §6%examples%"),
     WARNING__CONVERTER__DUPLICATE_ITEM_ID("warning.converter.duplicate-item-id", "§eTwo items resolve to the same id §6%item%§e (§6%first-file%§e and §6%second-file%§e); keeping the first one."),
     WARNING__CONVERTER__AMBIGUOUS_DEPENDENCY("warning.converter.ambiguous-dependency", "§eItem id §6%raw-item%§e is defined in more than one namespace (§6%first%§e, §6%second%§e); dependencies on it resolve to the first."),
     WARNING__CONVERTER__CIRCULAR_DEPENDENCY("warning.converter.circular-dependency", "§eCircular dependency detected, falling back to original order for unresolved items."),

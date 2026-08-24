@@ -99,9 +99,11 @@ public class NexoConverter extends Converter {
 
         PluginNameMapper.getInstance().clearMappingsForPlugin(this.pluginType);
         BlockStatesMapper.getInstance().clearMappingsForPlugin(this.pluginType);
+        this.unsupportedFeatures.clear();
 
         try {
             this.processConfigs(toConvert, outputBase, progress, templates);
+            this.logUnsupportedFeatures();
             toConvert.clear();
         } catch (Exception e) {
             Logger.error(Message.ERROR__CONVERTER__NEXO__ITEMS__CONVERSION_EXCEPTION, e);

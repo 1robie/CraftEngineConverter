@@ -96,9 +96,11 @@ public class IAConverter extends Converter {
 
         PluginNameMapper.getInstance().clearMappingsForPlugin(this.pluginType);
         BlockStatesMapper.getInstance().clearMappingsForPlugin(this.pluginType);
+        this.unsupportedFeatures.clear();
 
         try {
             this.processItemFiles(toConvert, outputFolder, progressBar);
+            this.logUnsupportedFeatures();
 
             for (CacheConversion conversion : this.conversions) {
                 Optional<FileCacheEntry<YamlConfiguration>> entryFile = FileCacheManager.getYamlCache()

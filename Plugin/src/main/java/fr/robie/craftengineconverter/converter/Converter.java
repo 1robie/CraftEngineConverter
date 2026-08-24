@@ -41,6 +41,7 @@ public abstract class Converter extends ObjectUtils {
     protected final String converterName;
     protected final ConverterSettings settings;
     protected final Map<String, List<PackMapping>> packMappings = new HashMap<>();
+    protected final UnsupportedFeatures unsupportedFeatures = new UnsupportedFeatures();
 
     public Converter(@NotNull CraftEngineConverter plugin, @NotNull String converterName, @NotNull Plugins pluginType) {
         this.plugin = plugin;
@@ -93,6 +94,30 @@ public abstract class Converter extends ObjectUtils {
     public abstract CompletableFuture<Void> convertRecipes(boolean async, Optional<Player> player);
 
     public abstract CompletableFuture<Void> convertPack(boolean async, Optional<Player> player);
+
+    /** Notes configuration this conversion cannot carry over; see {@link #logUnsupportedFeatures()}. */
+    public void reportUnsupported(@NotNull String feature, @NotNull String itemId) {
+        this.unsupportedFeatures.record(feature, itemId);
+    }
+
+    /**
+     * Prints everything {@link #reportUnsupported} collected as one digest. Called once a conversion finishes, so a
+     * mechanic shared by a thousand items is reported on a single line instead of drowning the console.
+     */
+    protected void logUnsupportedFeatures() {
+        if (this.unsupportedFeatures.isEmpty()) {
+            return;
+        }
+
+        this.log(Message.WARNING__CONVERTER__UNSUPPORTED_SUMMARY_HEADER, Logger.LogType.WARNING, Placeholder.empty());
+        for (UnsupportedFeatures.Summary summary : this.unsupportedFeatures.summaries()) {
+            this.log(Message.WARNING__CONVERTER__UNSUPPORTED_SUMMARY_LINE, Logger.LogType.WARNING, Placeholder.builder()
+                    .register("feature", summary.feature())
+                    .register("count", String.valueOf(summary.count()))
+                    .register("examples", summary.examples())
+                    .build());
+        }
+    }
 
     protected void log(@NotNull Message message, Logger.LogType logType, Placeholder placeholder) {
         this.processConverterLog(message, logType, placeholder);

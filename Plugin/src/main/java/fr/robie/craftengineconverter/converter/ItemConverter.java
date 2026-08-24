@@ -16,6 +16,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public abstract class ItemConverter extends ObjectUtils {
     private final Map<String, ItemConverter> resolvedDependencies = new HashMap<>();
@@ -95,6 +96,7 @@ public abstract class ItemConverter extends ObjectUtils {
         this.convertProfileComponent();
         this.convertItemTexture();
         this.convertOther();
+        this.reportUnsupportedConfiguration();
     }
 
     public void convertMaterial() {
@@ -245,6 +247,23 @@ public abstract class ItemConverter extends ObjectUtils {
     }
 
     public void convertOther() {
+    }
+
+    /**
+     * Runs last, once everything that could be converted has been. Implementations report the configuration they had
+     * to skip through {@link #reportUnsupported}, which the converter prints as one digest at the end.
+     */
+    public void reportUnsupportedConfiguration() {
+    }
+
+    /** Notes that this item configured something the conversion does not carry over. */
+    protected void reportUnsupported(@NotNull String feature) {
+        this.converter.reportUnsupported(feature, this.itemId);
+    }
+
+    /** Notes every key of {@code section} that this converter does not read, reported under {@code prefix}. */
+    protected void reportUnhandledKeys(@NotNull String prefix, @Nullable ConfigurationSection section, @NotNull Set<String> handledKeys) {
+        this.converter.unsupportedFeatures.recordUnhandledKeys(prefix, section, handledKeys, this.itemId);
     }
 
     protected boolean notEmptyOrNull(List<String> list, int index) {
