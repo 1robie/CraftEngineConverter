@@ -38,9 +38,11 @@ public class ItemsAdderFurnitureConverter extends FurnitureConverter implements 
             return;
         }
         Entity bukkitEntity = event.getBukkitEntity();
-        CustomFurniture.remove(bukkitEntity, false);
+        // Both have to be read before the entity goes away: the snapshot is what makes the conversion restorable.
         Location location = bukkitEntity.getLocation();
-        this.placeFurniture(newName, location.add(0, -0.5, 0), null);
+        String entityNBT = bukkitEntity.getAsString();
+        CustomFurniture.remove(bukkitEntity, false);
+        this.placeFurniture(newName, location.add(0, -0.5, 0), entityNBT);
         event.setCancelled(true);
 
         if (Configuration.get(Keys.ALLOW_BLOCK_CONVERSION_PROPAGATION) && Configuration.get(Keys.MAX_BLOCK_CONVERSION_PROPAGATION_DEPTH) > 1) {
@@ -62,7 +64,7 @@ public class ItemsAdderFurnitureConverter extends FurnitureConverter implements 
         if (furnitureEntity != null) {
             CustomFurniture customFurniture = CustomFurniture.byAlreadySpawned(furnitureEntity);
             if (customFurniture != null) {
-                return customFurniture.getNamespacedID();
+                return this.getNewName(customFurniture.getNamespacedID());
             }
         }
         return null;

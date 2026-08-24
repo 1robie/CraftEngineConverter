@@ -1,6 +1,8 @@
 package fr.robie.craftengineconverter.common.converter;
 
+import com.google.gson.Gson;
 import fr.robie.craftengineconverter.api.enums.Plugins;
+import fr.robie.craftengineconverter.api.history.EntityHistory;
 import fr.robie.craftengineconverter.common.CraftEngineConverterPlugin;
 import net.momirealms.craftengine.bukkit.api.CraftEngineFurniture;
 import net.momirealms.craftengine.core.util.Key;
@@ -32,7 +34,10 @@ public abstract class FurnitureConverter extends ObjectConverter {
             if (newName == null || !this.isRegistered(newName)) {
                 continue;
             }
-            String entityNBT = furnitureEntityAt.getAsString();
+            // isFurnitureAt can be true where no entity was found - Nexo answers it from the barrier blocks, and
+            // the probe happens half a block above adjacentLoc - so the furniture is still converted, just without
+            // the snapshot that would let it be restored.
+            String entityNBT = furnitureEntityAt == null ? null : furnitureEntityAt.getAsString();
             if (this.removeFurnitureAt(adjacentLoc)) {
                 this.placeFurniture(newName, adjacentLoc, entityNBT);
                 counter.increment();
@@ -56,6 +61,14 @@ public abstract class FurnitureConverter extends ObjectConverter {
 
     public void placeFurniture(String itemId, Location location, @Nullable String entityNBT) {
         this.plugin.getPlacementTracker().placeFurniture(itemId, location);
+        if (entityNBT == null) {
+            return;
+        }
+
+        // Callers place furniture half a block below the entity it replaces; history stores where the entity was.
+        Location entityLocation = location.clone().add(0, 0.5, 0);
+        this.serverProfile.addEntityHistory(
+                new EntityHistory(null, new Gson().toJson(entityLocation.serialize()), entityNBT, false));
     }
 
     public static boolean isRegisteredStatic(String itemId) {

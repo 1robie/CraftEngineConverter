@@ -7,7 +7,6 @@ import com.nexomc.nexo.utils.drops.Drop;
 import fr.robie.craftengineconverter.api.configuration.Configuration;
 import fr.robie.craftengineconverter.api.configuration.Keys;
 import fr.robie.craftengineconverter.api.enums.Plugins;
-import fr.robie.craftengineconverter.api.history.BlockHistory;
 import fr.robie.craftengineconverter.common.CraftEngineConverterPlugin;
 import fr.robie.craftengineconverter.common.converter.BlockConverter;
 import fr.robie.craftengineconverter.common.permission.Permission;
@@ -69,21 +68,6 @@ public class NexoBlockConverter extends BlockConverter implements Listener {
             return null;
         }
         return this.getNewName(mechanic.getItemID());
-    }
-
-    @Override
-    public void placeBlock(String itemId, Location location, String oldBlockState) {
-        BlockHistory blockHistory = new BlockHistory(null,
-                location.getWorld().getName(),
-                location.getBlockX() >> 4,
-                location.getBlockZ() >> 4,
-                location.getBlockX(),
-                location.getBlockY(),
-                location.getBlockZ(),
-                oldBlockState,
-                false);
-        super.placeBlock(itemId, location, oldBlockState);
-        this.serverProfile.addBlockHistory(blockHistory);
     }
 
     @Override

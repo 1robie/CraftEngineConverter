@@ -13,18 +13,31 @@ public class PluginNameMapper {
     private PluginNameMapper() {
     }
 
-    public boolean hasMapping(Plugins plugin, String oldName) {
+    public boolean hasMapping(Plugins plugin, @Nullable String oldName) {
+        if (oldName == null) {
+            return false;
+        }
         Map<String, String> pluginMappings = this.mappings.get(plugin.name());
         return pluginMappings != null && pluginMappings.containsKey(oldName);
     }
 
+    /**
+     * The name an old id converts to, or null if it has none. A null id answers null rather than throwing: ids read
+     * back out of a persistent data container are only as trustworthy as whatever wrote them.
+     */
     @Nullable
-    public String getNewName(Plugins plugin, String oldName) {
+    public String getNewName(Plugins plugin, @Nullable String oldName) {
+        if (oldName == null) {
+            return null;
+        }
         Map<String, String> pluginMappings = this.mappings.get(plugin.name());
         return pluginMappings != null ? pluginMappings.get(oldName) : null;
     }
 
-    public void storeMapping(Plugins plugin, String oldName, String newName) {
+    public void storeMapping(Plugins plugin, @Nullable String oldName, @Nullable String newName) {
+        if (oldName == null || newName == null) {
+            return;
+        }
         this.mappings.computeIfAbsent(plugin.name(), k -> new ConcurrentHashMap<>())
                 .put(oldName, newName);
     }

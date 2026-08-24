@@ -1,7 +1,9 @@
 package fr.robie.craftengineconverter.common.converter;
 
 import fr.robie.craftengineconverter.api.enums.Plugins;
+import fr.robie.craftengineconverter.api.history.BlockHistory;
 import fr.robie.craftengineconverter.common.CraftEngineConverterPlugin;
+import org.jetbrains.annotations.Nullable;
 import net.momirealms.craftengine.bukkit.api.CraftEngineBlocks;
 import net.momirealms.craftengine.core.util.Key;
 import org.bukkit.Location;
@@ -54,7 +56,20 @@ public abstract class BlockConverter extends ObjectConverter {
 
     public abstract boolean removeBlockAt(Location location);
 
-    public void placeBlock(String itemId, Location location, String oldBlockState) {
+    public void placeBlock(String itemId, Location location, @Nullable String oldBlockState) {
         this.plugin.getPlacementTracker().placeBlock(itemId, location);
+        if (oldBlockState == null) {
+            return;
+        }
+
+        this.serverProfile.addBlockHistory(new BlockHistory(null,
+                location.getWorld().getName(),
+                location.getBlockX() >> 4,
+                location.getBlockZ() >> 4,
+                location.getBlockX(),
+                location.getBlockY(),
+                location.getBlockZ(),
+                oldBlockState,
+                false));
     }
 }

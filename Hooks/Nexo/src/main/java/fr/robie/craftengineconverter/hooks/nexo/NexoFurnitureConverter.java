@@ -1,13 +1,11 @@
 package fr.robie.craftengineconverter.hooks.nexo;
 
-import com.google.gson.Gson;
 import com.nexomc.nexo.api.NexoFurniture;
 import com.nexomc.nexo.api.events.furniture.NexoFurnitureInteractEvent;
 import com.nexomc.nexo.mechanics.furniture.FurnitureMechanic;
 import fr.robie.craftengineconverter.api.configuration.Configuration;
 import fr.robie.craftengineconverter.api.configuration.Keys;
 import fr.robie.craftengineconverter.api.enums.Plugins;
-import fr.robie.craftengineconverter.api.history.EntityHistory;
 import fr.robie.craftengineconverter.common.CraftEngineConverterPlugin;
 import fr.robie.craftengineconverter.common.converter.FurnitureConverter;
 import fr.robie.craftengineconverter.common.permission.Permission;
@@ -16,7 +14,6 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.ItemDisplay;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -39,9 +36,10 @@ public class NexoFurnitureConverter extends FurnitureConverter implements Listen
             return;
         }
         ItemDisplay baseEntity = event.getBaseEntity();
+        // Both have to be read before the entity goes away.
+        Location location = baseEntity.getLocation();
         String entityNBT = baseEntity.getAsString();
         NexoFurniture.remove(baseEntity);
-        Location location = baseEntity.getLocation();
         this.placeFurniture(newName, location.add(0, -0.5, 0), entityNBT);
         event.setCancelled(true);
 
@@ -62,19 +60,6 @@ public class NexoFurnitureConverter extends FurnitureConverter implements Listen
             }
         }
         return null;
-    }
-
-    public void placeFurniture(String itemId, Location location, @Nullable String entityNBT) {
-        EntityHistory entityHistory = null;
-        if (entityNBT != null) {
-            Location duplicateLocation = location.clone().add(0, 0.5, 0);
-            String locationJson = new Gson().toJson(duplicateLocation.serialize());
-            entityHistory = new EntityHistory(null, locationJson, entityNBT, false);
-        }
-        this.plugin.getPlacementTracker().placeFurniture(itemId, location);
-        if (entityHistory != null) {
-            this.serverProfile.addEntityHistory(entityHistory);
-        }
     }
 
     @Override

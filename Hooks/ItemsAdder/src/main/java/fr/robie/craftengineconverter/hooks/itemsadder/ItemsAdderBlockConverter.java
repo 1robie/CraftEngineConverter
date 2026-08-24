@@ -36,12 +36,14 @@ public class ItemsAdderBlockConverter extends BlockConverter implements Listener
 
         Block block = event.getBlockClicked();
         Location location = block.getLocation();
+        // Read before the block is removed, so the conversion can be restored.
+        String oldBlockState = block.getBlockData().getAsString();
 
         if (!this.removeBlockAt(location)) {
             return;
         }
 
-        this.placeBlock(newName, location, null);
+        this.placeBlock(newName, location, oldBlockState);
         event.setCancelled(true);
         if (Configuration.get(Keys.ALLOW_BLOCK_CONVERSION_PROPAGATION) && Configuration.get(Keys.MAX_BLOCK_CONVERSION_PROPAGATION_DEPTH) > 1) {
             Set<Location> processed = new HashSet<>();

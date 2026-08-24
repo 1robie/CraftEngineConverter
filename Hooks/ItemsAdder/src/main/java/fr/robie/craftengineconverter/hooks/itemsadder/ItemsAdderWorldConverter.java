@@ -6,7 +6,9 @@ import fr.robie.craftengineconverter.api.enums.Plugins;
 import fr.robie.craftengineconverter.common.CraftEngineConverterPlugin;
 import fr.robie.craftengineconverter.common.CraftEnginePlacementTracker;
 import fr.robie.craftengineconverter.common.PluginNameMapper;
+import fr.robie.craftengineconverter.common.converter.FurnitureConverter;
 import fr.robie.craftengineconverter.common.converter.WorldConverter;
+import org.bukkit.Location;
 import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Entity;
 import org.bukkit.persistence.PersistentDataContainer;
@@ -28,18 +30,22 @@ public class ItemsAdderWorldConverter implements WorldConverter {
             PersistentDataContainer persistentDataContainer = entity.getPersistentDataContainer();
             for (NamespacedKey key : persistentDataContainer.getKeys()) {
                 if (key.asString().equalsIgnoreCase("itemsadder:placeable_entity_item")){
-                    String itemID = persistentDataContainer.get(key,  PersistentDataType.STRING);
+                    String itemID = persistentDataContainer.get(key, PersistentDataType.STRING);
                     String newName = this.nameMapper.getNewName(Plugins.ITEMS_ADDER, itemID);
-                    if (newName == null) {
+                    // Without the registration check the entity would be removed and nothing would replace it.
+                    if (newName == null || !FurnitureConverter.isRegisteredStatic(newName)) {
                         return false;
                     }
-                    this.placementTracker.placeFurniture(newName, entity.getLocation());
+                    Location location = entity.getLocation();
                     entity.remove();
+                    // CraftEngine furniture is placed half a block below the entity it stands in for, as everywhere else.
+                    this.placementTracker.placeFurniture(newName, location.add(0, -0.5, 0));
                     return true;
                 }
             }
         }
-        return false;    }
+        return false;
+    }
 
     @Override
     public @NotNull Plugins getPlugin() {
