@@ -17,18 +17,44 @@ import java.util.Map;
  */
 public class PotionContentsConfiguration implements ItemConfigurationSerializable {
     private final List<CustomEffect> customEffects = new ArrayList<>();
+    private @Nullable String potion;
+    private @Nullable Integer customColor;
 
     public PotionContentsConfiguration addEffect(@NotNull CustomEffect effect) {
         this.customEffects.add(effect);
         return this;
     }
 
-    public boolean hasEffects() {
-        return !this.customEffects.isEmpty();
+    /** The base potion this stack is brewed from, e.g. {@code minecraft:swiftness}. */
+    public PotionContentsConfiguration setPotion(@Nullable String potion) {
+        this.potion = potion;
+        return this;
+    }
+
+    public PotionContentsConfiguration setCustomColor(@Nullable Integer customColor) {
+        this.customColor = customColor;
+        return this;
+    }
+
+    public boolean hasContents() {
+        return !this.customEffects.isEmpty() || this.potion != null || this.customColor != null;
     }
 
     @Override
     public void serialize(@NotNull YamlConfiguration yamlConfiguration, @NotNull String path, @NotNull ConfigurationSection itemSection, @NotNull String itemId) {
+        if (!this.hasContents()) {
+            return;
+        }
+
+        ConfigurationSection components = this.getComponentsSection(itemSection);
+        ConfigurationSection potionContents = this.getOrCreateSection(components, "minecraft:potion_contents");
+
+        if (this.potion != null) {
+            potionContents.set("potion", this.potion);
+        }
+        if (this.customColor != null) {
+            potionContents.set("custom_color", this.customColor);
+        }
         if (this.customEffects.isEmpty()) {
             return;
         }
@@ -37,9 +63,7 @@ public class PotionContentsConfiguration implements ItemConfigurationSerializabl
         for (CustomEffect effect : this.customEffects) {
             effects.add(effect.serialize());
         }
-
-        ConfigurationSection components = this.getComponentsSection(itemSection);
-        this.getOrCreateSection(components, "minecraft:potion_contents").set("custom_effects", effects);
+        potionContents.set("custom_effects", effects);
     }
 
     /**

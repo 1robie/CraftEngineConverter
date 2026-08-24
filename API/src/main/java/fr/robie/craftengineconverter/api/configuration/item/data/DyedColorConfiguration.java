@@ -16,17 +16,22 @@ public class DyedColorConfiguration implements ItemConfigurationSerializable {
     }
 
     public static DyedColorConfiguration parse(Object color) throws Exception {
+        return new DyedColorConfiguration(parseRgb(color));
+    }
+
+    /** Accepts a dye name, {@code #rrggbb} or {@code r,g,b}, which is every spelling the source plugins allow. */
+    public static int parseRgb(Object color) throws Exception {
         String colorStr = color.toString().trim();
 
         try {
             DyeColor dyeColor = DyeColor.valueOf(colorStr.toUpperCase(Locale.ROOT));
-            return new DyedColorConfiguration(dyeColor.getColor().asRGB());
+            return dyeColor.getColor().asRGB();
         } catch (IllegalArgumentException ignored) {
         }
 
         String hex = colorStr.startsWith("#") ? colorStr.substring(1) : colorStr;
         if (hex.matches("[0-9a-fA-F]{6}")) {
-            return new DyedColorConfiguration(Integer.parseInt(hex, 16));
+            return Integer.parseInt(hex, 16);
         }
 
         String[] parts = colorStr.split(",");
@@ -36,8 +41,7 @@ public class DyedColorConfiguration implements ItemConfigurationSerializable {
         int r = Integer.parseInt(parts[0].trim());
         int g = Integer.parseInt(parts[1].trim());
         int b = Integer.parseInt(parts[2].trim());
-        int rgb = ((r & 0xFF) << 16) | ((g & 0xFF) << 8) | (b & 0xFF);
-        return new DyedColorConfiguration(rgb);
+        return ((r & 0xFF) << 16) | ((g & 0xFF) << 8) | (b & 0xFF);
     }
 
     @Override

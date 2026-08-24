@@ -61,6 +61,7 @@ import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.Registry;
 import org.bukkit.attribute.Attribute;
+import org.bukkit.potion.PotionType;
 import org.bukkit.block.BlockFace;
 import fr.robie.yamllibrary.file.YamlConfiguration;
 import org.bukkit.inventory.ItemFlag;
@@ -118,13 +119,107 @@ public class IAItemsConverter extends ItemConverter {
 
     @Override
     public void convertDyedColor() {
+        // Leather horse armour carries its tint under its own property rather than under graphics.
         Object color = this.iaItemSection.get("graphics.color");
+        if (this.isNull(color)) {
+            color = this.iaItemSection.get("specific_properties.leather_horse_armor.color");
+        }
         if (this.isNotNull(color)) {
             try {
                 this.craftEngineItemsConfiguration.addItemConfiguration(DyedColorConfiguration.parse(color));
-            } catch (Exception ignored) {
+            } catch (Exception e) {
+                Logger.debug("[IAItemsConverter] Invalid colour '" + color + "' for item " + this.itemId);
             }
         }
+    }
+
+    @Override
+    public void convertPotionEffects() {
+        ConfigurationSection potionSection = this.iaItemSection.getConfigurationSection("specific_properties.potion");
+        if (this.isNull(potionSection)) {
+            return;
+        }
+
+        PotionContentsConfiguration potionContents = new PotionContentsConfiguration();
+
+        String type = potionSection.getString("type");
+        if (this.isValidString(type)) {
+            potionContents.setPotion(this.potionTypeKey(type));
+        }
+
+        String color = potionSection.getString("color");
+        if (this.isValidString(color)) {
+            try {
+                potionContents.setCustomColor(DyedColorConfiguration.parseRgb(color));
+            } catch (Exception e) {
+                Logger.debug("[IAItemsConverter] Invalid potion colour '" + color + "' for item " + this.itemId);
+            }
+        }
+
+        // ItemsAdder keys the effects by an arbitrary label rather than listing them.
+        ConfigurationSection effectsSection = potionSection.getConfigurationSection("effects");
+        if (this.isNotNull(effectsSection)) {
+            for (String label : effectsSection.getKeys(false)) {
+                ConfigurationSection effectSection = effectsSection.getConfigurationSection(label);
+                if (this.isNull(effectSection)) {
+                    continue;
+                }
+                String effectType = effectSection.getString("type");
+                if (!this.isValidString(effectType)) {
+                    continue;
+                }
+
+                potionContents.addEffect(new PotionContentsConfiguration.CustomEffect(
+                        this.namespaced(effectType.toLowerCase(Locale.ROOT)),
+                        effectSection.getInt("duration", 0),
+                        effectSection.getInt("amplifier", 0),
+                        effectSection.getBoolean("ambient", false),
+                        effectSection.getBoolean("particles", true),
+                        effectSection.getBoolean("icon", true)
+                ));
+            }
+        }
+
+        if (potionContents.hasContents()) {
+            this.craftEngineItemsConfiguration.addItemConfiguration(potionContents);
+        }
+    }
+
+    /**
+     * Bukkit's PotionType names do not all match the vanilla registry - SPEED is {@code minecraft:swiftness} - so the
+     * enum's own key is authoritative, with the raw name as a fallback if it is not a PotionType at all.
+     */
+    private String potionTypeKey(String type) {
+        try {
+            return PotionType.valueOf(type.toUpperCase(Locale.ROOT)).getKey().toString();
+        } catch (Exception e) {
+            return this.namespaced(type.toLowerCase(Locale.ROOT), "minecraft");
+        }
+    }
+
+    @Override
+    public void convertWrittenBookContent() {
+        ConfigurationSection bookSection = this.iaItemSection.getConfigurationSection("specific_properties.book");
+        if (this.isNull(bookSection)) {
+            return;
+        }
+
+        // ItemsAdder titles the book with the item's display name.
+        String title = this.iaItemSection.getString("name", this.iaItemSection.getString("display_name"));
+        String author = bookSection.getString("author");
+        int generation = this.bookGeneration(bookSection.getString("generation", "TATTERED"));
+
+        this.craftEngineItemsConfiguration.addItemConfiguration(
+                new WrittenBookContentConfiguration(title, author, generation, bookSection.getStringList("pages")));
+    }
+
+    private int bookGeneration(String generation) {
+        return switch (generation.toUpperCase(Locale.ROOT)) {
+            case "ORIGINAL" -> WrittenBookContentConfiguration.GENERATION_ORIGINAL;
+            case "COPY_OF_ORIGINAL" -> WrittenBookContentConfiguration.GENERATION_COPY_OF_ORIGINAL;
+            case "COPY_OF_COPY" -> WrittenBookContentConfiguration.GENERATION_COPY_OF_COPY;
+            default -> WrittenBookContentConfiguration.GENERATION_TATTERED;
+        };
     }
 
     @Override
@@ -1195,7 +1290,8 @@ public class IAItemsConverter extends ItemConverter {
             "attribute_modifiers", "enchants", "item_model", "max_stack_size", "glint", "drop", "tooltip_style",
             "consumable", "jukebox_disc", "equipment", "specific_properties", "behaviours");
 
-    private static final Set<String> HANDLED_SPECIFIC_PROPERTIES = Set.of("armor", "block");
+    private static final Set<String> HANDLED_SPECIFIC_PROPERTIES = Set.of(
+            "armor", "block", "potion", "book", "leather_horse_armor");
 
     @Override
     public void reportUnsupportedConfiguration() {

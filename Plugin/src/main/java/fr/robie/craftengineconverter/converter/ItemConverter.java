@@ -97,6 +97,7 @@ public abstract class ItemConverter extends ObjectUtils {
         this.convertProfileComponent();
         this.convertTrim();
         this.convertPotionEffects();
+        this.convertWrittenBookContent();
         this.convertItemTexture();
         this.convertOther();
         this.reportUnsupportedConfiguration();
@@ -250,6 +251,9 @@ public abstract class ItemConverter extends ObjectUtils {
     }
 
     public void convertPotionEffects() {
+    }
+
+    public void convertWrittenBookContent() {
     }
 
     public void convertItemTexture() {

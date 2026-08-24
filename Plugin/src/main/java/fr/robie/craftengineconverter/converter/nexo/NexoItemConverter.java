@@ -188,7 +188,7 @@ public class NexoItemConverter extends ItemConverter {
             ));
         }
 
-        if (potionContents.hasEffects()) {
+        if (potionContents.hasContents()) {
             this.craftEngineItemsConfiguration.addItemConfiguration(potionContents);
         }
     }

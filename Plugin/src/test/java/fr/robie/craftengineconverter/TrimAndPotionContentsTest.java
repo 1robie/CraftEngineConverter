@@ -3,6 +3,7 @@ package fr.robie.craftengineconverter;
 import fr.robie.craftengineconverter.api.configuration.CraftEngineItemsConfiguration;
 import fr.robie.craftengineconverter.api.configuration.item.components.PotionContentsConfiguration;
 import fr.robie.craftengineconverter.api.configuration.item.data.TrimConfiguration;
+import fr.robie.craftengineconverter.api.configuration.item.data.WrittenBookContentConfiguration;
 import fr.robie.yamllibrary.ConfigurationSection;
 import fr.robie.yamllibrary.file.YamlConfiguration;
 import org.bukkit.Material;
@@ -95,10 +96,55 @@ class TrimAndPotionContentsTest {
     }
 
     @Test
+    void carriesTheBasePotionAndItsTint() {
+        CraftEngineItemsConfiguration configuration = configuration();
+        configuration.addItemConfiguration(new PotionContentsConfiguration()
+                .setPotion("minecraft:swiftness")
+                .setCustomColor(0xFF0000));
+
+        ConfigurationSection item = serialize(configuration);
+
+        assertEquals("minecraft:swiftness", item.getString("data.components.minecraft:potion_contents.potion"));
+        assertEquals(0xFF0000, item.getInt("data.components.minecraft:potion_contents.custom_color"));
+        // A base potion on its own is a complete component; there is nothing to list under custom_effects.
+        assertFalse(item.contains("data.components.minecraft:potion_contents.custom_effects"));
+    }
+
+    @Test
+    void writesBookContentOnDataWithVanillaGenerationNumbers() {
+        CraftEngineItemsConfiguration configuration = configuration();
+        configuration.addItemConfiguration(new WrittenBookContentConfiguration(
+                "Field Notes", "A. Cartographer",
+                WrittenBookContentConfiguration.GENERATION_COPY_OF_ORIGINAL,
+                List.of("page one", "page two")));
+
+        ConfigurationSection item = serialize(configuration);
+
+        assertEquals("Field Notes", item.getString("data.written_book_content.title"));
+        assertEquals("A. Cartographer", item.getString("data.written_book_content.author"));
+        assertEquals(1, item.getInt("data.written_book_content.generation"));
+        assertEquals(List.of("page one", "page two"), item.getStringList("data.written_book_content.pages"));
+    }
+
+    @Test
+    void leavesOutBookFieldsThatWereNotConfigured() {
+        CraftEngineItemsConfiguration configuration = configuration();
+        configuration.addItemConfiguration(new WrittenBookContentConfiguration(
+                null, "  ", WrittenBookContentConfiguration.GENERATION_ORIGINAL, List.of()));
+
+        ConfigurationSection item = serialize(configuration);
+
+        assertFalse(item.contains("data.written_book_content.title"));
+        assertFalse(item.contains("data.written_book_content.author"), "a blank author is not an author");
+        assertFalse(item.contains("data.written_book_content.generation"), "0 is the processor's own default");
+        assertFalse(item.contains("data.written_book_content.pages"));
+    }
+
+    @Test
     void writesNothingWhenThereAreNoEffects() {
         CraftEngineItemsConfiguration configuration = configuration();
         PotionContentsConfiguration potionContents = new PotionContentsConfiguration();
-        assertFalse(potionContents.hasEffects());
+        assertFalse(potionContents.hasContents());
         configuration.addItemConfiguration(potionContents);
 
         ConfigurationSection item = serialize(configuration);
