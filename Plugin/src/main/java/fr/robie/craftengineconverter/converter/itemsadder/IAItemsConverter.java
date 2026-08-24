@@ -417,31 +417,34 @@ public class IAItemsConverter extends ItemConverter {
     }
 
     private EquipmentSlot resolveEquipmentSlot(ConfigurationSection equipmentSection) {
-        EquipmentSlot fromItemId = this.getEquipmentSlotFromSuffix(this.itemId.toLowerCase(Locale.ROOT), false);
+        String slot = equipmentSection.getString("slot");
+        if (this.isValidString(slot)) {
+            EquipmentSlot configuredSlot = this.parseEquipmentSlot(slot);
+            if (configuredSlot != null) {
+                return configuredSlot;
+            }
+        }
+
+        EquipmentSlot fromItemId = this.getEquipmentSlotFromSuffix(this.itemId);
         if (fromItemId != null) {
             return fromItemId;
         }
 
-        String slot = equipmentSection.getString("slot");
-        if (this.isValidString(slot)) {
-            return null;
-        }
-
-        return this.getEquipmentSlotFromSuffix(this.craftEngineItemsConfiguration.getMaterial().name(), true);
+        return this.getEquipmentSlotFromSuffix(this.craftEngineItemsConfiguration.getMaterial().name());
     }
 
-    private EquipmentSlot getEquipmentSlotFromSuffix(String name, boolean uppercase) {
-        String upString = uppercase ? name.toUpperCase(Locale.ROOT) : name;
-        if (upString.endsWith(uppercase ? "_HELMET" : "_helmet") || upString.endsWith("_SKULL") || upString.endsWith("_HAT")) {
+    private EquipmentSlot getEquipmentSlotFromSuffix(String name) {
+        String upperName = name.toUpperCase(Locale.ROOT);
+        if (upperName.endsWith("_HELMET") || upperName.endsWith("_SKULL") || upperName.endsWith("_HAT")) {
             return EquipmentSlot.HEAD;
         }
-        if (upString.endsWith(uppercase ? "_CHESTPLATE" : "_chestplate") || upString.endsWith("_ELYTRA")) {
+        if (upperName.endsWith("_CHESTPLATE") || upperName.endsWith("_ELYTRA")) {
             return EquipmentSlot.CHEST;
         }
-        if (upString.endsWith(uppercase ? "_LEGGINGS" : "_leggings")) {
+        if (upperName.endsWith("_LEGGINGS")) {
             return EquipmentSlot.LEGS;
         }
-        if (upString.endsWith(uppercase ? "_BOOTS" : "_boots")) {
+        if (upperName.endsWith("_BOOTS")) {
             return EquipmentSlot.FEET;
         }
         return null;
