@@ -998,11 +998,11 @@ public class IAItemsConverter extends ItemConverter {
     private void handle2DModels(ConfigurationSection texturesSection) {
         Set<String> keys = texturesSection.getKeys(false);
 
-        if (IAModelsKeys.BOW.containsAny(keys) && keys.size() == IAModelsKeys.BOW.getKeysCount()) {
+        if (IAModelsKeys.BOW.matches(keys)) {
             this.handleBow2D(texturesSection);
-        } else if (IAModelsKeys.FISHING_ROD.containsAny(keys) && keys.size() == IAModelsKeys.FISHING_ROD.getKeysCount()) {
+        } else if (IAModelsKeys.FISHING_ROD.matches(keys)) {
             this.handleFishingRod2D(texturesSection);
-        } else if (IAModelsKeys.CROSSBOW.containsAny(keys) && keys.size() == IAModelsKeys.CROSSBOW.getKeysCount()) {
+        } else if (IAModelsKeys.CROSSBOW.matches(keys)) {
             this.handleCrossbow2D(texturesSection);
         }
     }
@@ -1010,19 +1010,19 @@ public class IAItemsConverter extends ItemConverter {
     private void handle3DModels(ConfigurationSection modelsSection) {
         Set<String> keys = modelsSection.getKeys(false);
 
-        if (IAModelsKeys.BOW.containsAny(keys) && keys.size() == IAModelsKeys.BOW.getKeysCount()) {
+        if (IAModelsKeys.BOW.matches(keys)) {
             this.handleBow3D(this.namespaced(modelsSection.getString("normal"), this.namespace),
                     this.namespaced(modelsSection.getString("pulling_0"), this.namespace),
                     this.namespaced(modelsSection.getString("pulling_1"), this.namespace),
                     this.namespaced(modelsSection.getString("pulling_2"), this.namespace)
             );
-        } else if (IAModelsKeys.FISHING_ROD.containsAny(keys) && keys.size() == IAModelsKeys.FISHING_ROD.getKeysCount()) {
+        } else if (IAModelsKeys.FISHING_ROD.matches(keys)) {
             this.handleFishingRod3D(this.namespaced(modelsSection.getString("normal"), this.namespace), this.namespaced(modelsSection.getString("cast"), this.namespace));
-        } else if (IAModelsKeys.CROSSBOW.containsAny(keys) && keys.size() == IAModelsKeys.CROSSBOW.getKeysCount()) {
+        } else if (IAModelsKeys.CROSSBOW.matches(keys)) {
             this.handleCrossbow3D(modelsSection);
-        } else if (IAModelsKeys.TRIDENT.containsAny(keys) && keys.size() == IAModelsKeys.TRIDENT.getKeysCount()) {
+        } else if (IAModelsKeys.TRIDENT.matches(keys)) {
             this.handleTrident3D(modelsSection);
-        } else if (IAModelsKeys.SHIELD.containsAny(keys) && keys.size() == IAModelsKeys.SHIELD.getKeysCount()) {
+        } else if (IAModelsKeys.SHIELD.matches(keys)) {
             this.handleShield3D(this.namespaced(modelsSection.getString("normal"), this.namespace),
                     this.namespaced(modelsSection.getString("blocking"), this.namespace)
             );
