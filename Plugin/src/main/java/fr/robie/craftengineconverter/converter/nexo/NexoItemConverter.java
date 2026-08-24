@@ -136,6 +136,76 @@ public class NexoItemConverter extends ItemConverter {
     }
 
     @Override
+    public void convertCustomName() {
+        // Nexo sets both: `itemname` is the item_name component, `customname` the display name written onto the stack.
+        String customName = this.nexoItemSection.getString("customname");
+        if (this.isValidString(customName)) {
+            this.craftEngineItemsConfiguration.addItemConfiguration(new CustomNameConfiguration(customName));
+        }
+    }
+
+    @Override
+    public void convertTrim() {
+        String material = this.nexoItemSection.getString("trim_material");
+        String pattern = this.nexoItemSection.getString("trim_pattern");
+        // CraftEngine's trim processor needs both halves; half a trim is not a trim.
+        if (!this.isValidString(material) || !this.isValidString(pattern)) {
+            if (this.isValidString(material) || this.isValidString(pattern)) {
+                this.reportUnsupported(this.isValidString(material) ? "trim_pattern (missing)" : "trim_material (missing)");
+            }
+            return;
+        }
+        this.craftEngineItemsConfiguration.addItemConfiguration(
+                new TrimConfiguration(this.namespaced(material), this.namespaced(pattern)));
+    }
+
+    @Override
+    public void convertPotionEffects() {
+        List<Map<?, ?>> effects = this.nexoItemSection.getMapList("PotionEffects");
+        if (effects.isEmpty()) {
+            return;
+        }
+
+        PotionContentsConfiguration potionContents = new PotionContentsConfiguration();
+        for (Map<?, ?> effect : effects) {
+            // Nexo reads the type from `type` and hands the rest of the map to Bukkit's PotionEffect, which spells
+            // its own key `effect`; accept either.
+            String type = this.stringOrNull(effect.get("type"));
+            if (!this.isValidString(type)) {
+                type = this.stringOrNull(effect.get("effect"));
+            }
+            if (!this.isValidString(type)) {
+                continue;
+            }
+
+            potionContents.addEffect(new PotionContentsConfiguration.CustomEffect(
+                    this.namespaced(type.toLowerCase(Locale.ROOT)),
+                    this.intOrDefault(effect.get("duration"), 0),
+                    this.intOrDefault(effect.get("amplifier"), 0),
+                    this.booleanOrNull(effect.get("ambient")),
+                    this.booleanOrNull(effect.get("has-particles")),
+                    this.booleanOrNull(effect.get("has-icon"))
+            ));
+        }
+
+        if (potionContents.hasEffects()) {
+            this.craftEngineItemsConfiguration.addItemConfiguration(potionContents);
+        }
+    }
+
+    private @Nullable String stringOrNull(@Nullable Object value) {
+        return value instanceof String string ? string : null;
+    }
+
+    private int intOrDefault(@Nullable Object value, int fallback) {
+        return value instanceof Number number ? number.intValue() : fallback;
+    }
+
+    private @Nullable Boolean booleanOrNull(@Nullable Object value) {
+        return value instanceof Boolean bool ? bool : null;
+    }
+
+    @Override
     public void convertLore() {
         List<String> lore = this.nexoItemSection.getStringList("lore");
         if (!lore.isEmpty()) {
@@ -1974,8 +2044,9 @@ public class NexoItemConverter extends ItemConverter {
 
     /** Every key this converter reads off the item itself; anything else is reported as left out. */
     private static final Set<String> HANDLED_ITEM_KEYS = Set.of(
-            "material", "itemname", "lore", "color", "unbreakable", "excludeFromInventory", "ItemFlags",
+            "material", "itemname", "customname", "lore", "color", "unbreakable", "excludeFromInventory", "ItemFlags",
             "AttributeModifiers", "Enchantments", "Components", "Pack", "Mechanics",
+            "trim_material", "trim_pattern", "PotionEffects",
             // Consumed before conversion, by NexoItemTemplates.
             "template", "templates", "injectId");
 

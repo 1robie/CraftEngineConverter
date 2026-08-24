@@ -48,6 +48,7 @@ public abstract class ItemConverter extends ObjectUtils {
     public void convertItem() {
         this.convertMaterial();
         this.convertItemName();
+        this.convertCustomName();
         this.convertLore();
         this.convertDyedColor();
         this.convertUnbreakable();
@@ -94,6 +95,8 @@ public abstract class ItemConverter extends ObjectUtils {
         this.convertDamageTypeComponent();
         this.convertMinimumAttackChargeComponent();
         this.convertProfileComponent();
+        this.convertTrim();
+        this.convertPotionEffects();
         this.convertItemTexture();
         this.convertOther();
         this.reportUnsupportedConfiguration();
@@ -103,6 +106,9 @@ public abstract class ItemConverter extends ObjectUtils {
     }
 
     public void convertItemName() {
+    }
+
+    public void convertCustomName() {
     }
 
     public void convertLore() {
@@ -238,6 +244,12 @@ public abstract class ItemConverter extends ObjectUtils {
     }
 
     public void convertProfileComponent() {
+    }
+
+    public void convertTrim() {
+    }
+
+    public void convertPotionEffects() {
     }
 
     public void convertItemTexture() {
