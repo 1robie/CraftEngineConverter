@@ -488,6 +488,10 @@ public abstract class Converter extends ObjectUtils {
         // the first item that claimed them.
         private final Map<String, String> idByRawId = new HashMap<>();
         private final Map<String, String> rawIdById = new HashMap<>();
+        // getDependencies() re-reads the item's configuration section on every call, so it is asked exactly once per
+        // item and the answer - plus its inverse - is kept here.
+        private final Map<String, List<String>> dependenciesById = new HashMap<>();
+        private final Map<String, List<T>> dependantsByRawDepId = new HashMap<>();
 
         private final Map<ConfigFile, YamlConfiguration> convertedConfigByFile = new LinkedHashMap<>();
         private final Map<ConfigFile, ConfigurationSection> itemsSectionByFile = new LinkedHashMap<>();
@@ -527,8 +531,8 @@ public abstract class Converter extends ObjectUtils {
             boolean pendingDependenciesFound = true;
             while (pendingDependenciesFound) {
                 pendingDependenciesFound = false;
-                for (T converter : new ArrayList<>(this.convertersById.values())) {
-                    for (String depRawId : converter.getDependencies()) {
+                for (List<String> dependencies : new ArrayList<>(this.dependenciesById.values())) {
+                    for (String depRawId : dependencies) {
                         if (!this.idByRawId.containsKey(depRawId) && this.scanFileContaining(depRawId)) {
                             pendingDependenciesFound = true;
                         }
@@ -576,9 +580,16 @@ public abstract class Converter extends ObjectUtils {
                     if (converter == null) {
                         continue;
                     }
+
+                    List<String> dependencies = converter.getDependencies();
+
                     this.convertersById.put(finalItemId, converter);
                     this.fileById.put(finalItemId, configFile);
                     this.rawIdById.put(finalItemId, rawItemId);
+                    this.dependenciesById.put(finalItemId, dependencies);
+                    for (String depRawId : dependencies) {
+                        this.dependantsByRawDepId.computeIfAbsent(depRawId, k -> new ArrayList<>()).add(converter);
+                    }
 
                     String claimedBy = this.idByRawId.putIfAbsent(rawItemId, finalItemId);
                     if (claimedBy != null) {
@@ -620,10 +631,10 @@ public abstract class Converter extends ObjectUtils {
                 pendingDepsCountById.put(itemId, 0);
                 dependantsById.put(itemId, new ArrayList<>());
             }
-            for (Map.Entry<String, T> entry : this.convertersById.entrySet()) {
-                for (String depId : this.resolveDependencies(entry.getValue())) {
-                    dependantsById.get(depId).add(entry.getKey());
-                    pendingDepsCountById.merge(entry.getKey(), 1, Integer::sum);
+            for (String itemId : this.convertersById.keySet()) {
+                for (String depId : this.resolveDependencies(itemId)) {
+                    dependantsById.get(depId).add(itemId);
+                    pendingDepsCountById.merge(itemId, 1, Integer::sum);
                 }
             }
             Queue<String> resolvedQueue = new LinkedList<>();
@@ -656,9 +667,9 @@ public abstract class Converter extends ObjectUtils {
          * Translates a converter's declared dependencies - which are raw, unqualified ids - into the final ids this
          * context is keyed by, dropping the ones that no scanned file provides.
          */
-        private List<String> resolveDependencies(T converter) {
+        private List<String> resolveDependencies(String itemId) {
             List<String> resolved = new ArrayList<>();
-            for (String depRawId : converter.getDependencies()) {
+            for (String depRawId : this.dependenciesById.getOrDefault(itemId, Collections.emptyList())) {
                 String depId = this.idByRawId.get(depRawId);
                 if (depId != null && this.convertersById.containsKey(depId)) {
                     resolved.add(depId);
@@ -734,10 +745,8 @@ public abstract class Converter extends ObjectUtils {
 
 
         public void injectResolvedDependency(String rawItemId, T resolvedConverter) {
-            for (T converter : this.convertersById.values()) {
-                if (converter.getDependencies().contains(rawItemId)) {
-                    converter.addResolvedDependency(rawItemId, resolvedConverter);
-                }
+            for (T converter : this.dependantsByRawDepId.getOrDefault(rawItemId, Collections.emptyList())) {
+                converter.addResolvedDependency(rawItemId, resolvedConverter);
             }
         }
 
