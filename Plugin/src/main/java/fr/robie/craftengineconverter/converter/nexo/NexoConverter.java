@@ -310,7 +310,7 @@ public class NexoConverter extends Converter {
         }
     }
 
-    private void processRecipeConfigFile(ConfigFile configFile, File outputFolder, RecipeType recipeType, BukkitProgressBar progress) {
+    private void processRecipeConfigFile(ConfigFile configFile, File outputFolder, @Nullable RecipeType recipeType, BukkitProgressBar progress) {
         File recipeFile = configFile.sourceFile();
         YamlConfiguration config = configFile.config();
 
@@ -333,6 +333,13 @@ public class NexoConverter extends Converter {
         }
 
         Set<String> keys = config.getKeys(false);
+
+        if (recipeType == null) {
+            this.logDebug(Message.WARNING__CONVERTER__NEXO__RECIPE__COULD_NOT_DETERMINE_RECIPE_TYPE, Logger.LogType.WARNING, Placeholder.of("file", recipeFile.getAbsolutePath()));
+            keys.forEach(key -> progress.increment());
+            return;
+        }
+
         YamlConfiguration convertedConfig = new YamlConfiguration();
         ConfigurationSection recipesSection = convertedConfig.createSection("recipes");
         int convertedCount = 0;
@@ -665,7 +672,7 @@ public class NexoConverter extends Converter {
                 Optional<FileCacheEntry<YamlConfiguration>> entry = FileCacheManager.getYamlCache().getEntryFile(file.toPath());
                 if (entry.isPresent()) {
                     RecipeType recipeType = this.determineRecipeType(file, baseDir);
-                    if (recipeType != null || file.getName().equalsIgnoreCase("disabled_recipes.yml") || file.getName().equalsIgnoreCase("smithing.yml")) {
+                    if (recipeType != null || file.getName().equalsIgnoreCase("disabled_recipes.yml")) {
                         ConfigFile configFile = new ConfigFile(file, baseDir, entry.get().getData());
                         toConvert.computeIfAbsent(recipeType, k -> new ArrayList<>()).add(configFile);
                     } else {
@@ -678,22 +685,33 @@ public class NexoConverter extends Converter {
         }
     }
 
-    private RecipeType determineRecipeType(File file, File baseDir) {
+    private @Nullable RecipeType determineRecipeType(File file, File baseDir) {
         String relativePath = baseDir.toURI().relativize(file.getParentFile().toURI()).getPath();
 
         String[] pathParts = relativePath.split("/");
-        if (pathParts.length == 0) {
+        if (pathParts.length > 0) {
+            RecipeType fromDirectory = this.parseRecipeType(pathParts[0]);
+            if (fromDirectory != null) {
+                return fromDirectory;
+            }
+        }
+
+        // Nexo also accepts a flat layout where the file itself names the type, e.g. recipes/smithing.yml
+        String fileName = file.getName();
+        return this.parseRecipeType(fileName.substring(0, fileName.length() - ".yml".length()));
+    }
+
+    private @Nullable RecipeType parseRecipeType(String name) {
+        if (!this.isValidString(name)) {
             return null;
         }
 
-        String recipeTypeName = pathParts[0].toUpperCase(Locale.ROOT);
-
-        if (recipeTypeName.equalsIgnoreCase("SMITHING")) {
+        if (name.equalsIgnoreCase("SMITHING")) {
             return RecipeType.SMITHING_TRANSFORM;
         }
 
         try {
-            return RecipeType.valueOf(recipeTypeName);
+            return RecipeType.valueOf(name.toUpperCase(Locale.ROOT));
         } catch (IllegalArgumentException e) {
             return null;
         }
