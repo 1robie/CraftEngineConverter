@@ -16,4 +16,5 @@ dependencies {
     compileOnly(libs.reflections)
     compileOnly(libs.message.flow)
     compileOnly(libs.yamllibrary)
+    compileOnly(libs.yamllibrary.core)
 }

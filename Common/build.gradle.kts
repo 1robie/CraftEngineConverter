@@ -11,6 +11,7 @@ dependencies {
     compileOnly(libs.craftengine.bukkit)
     compileOnly(libs.message.flow)
     compileOnly(libs.yamllibrary)
+    compileOnly(libs.yamllibrary.core)
 
     testImplementation(platform(libs.junit.bom))
     testImplementation(libs.junit.jupiter)

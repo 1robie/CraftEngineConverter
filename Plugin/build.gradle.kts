@@ -31,6 +31,7 @@ dependencies {
     implementation(libs.bstats.bukkit)
     implementation(libs.bstats.base)
     implementation(libs.yamllibrary)
+    implementation(libs.yamllibrary.core)
     implementation(libs.paper.dispatch)
 
     compileOnly(libs.craftengine.core)
@@ -83,7 +84,8 @@ tasks.named<ShadowJar>("shadowJar") {
         include(dependency("org.bstats:bstats-base"))
         include(dependency("fr.maxlego08.sarah:sarah"))
         include(dependency("com.github.1robie.MessageFlow:message-flow"))
-        include(dependency("fr.robie:yamllibrary"))
+        include(dependency("com.github.1robie.YamlLibrary:yamllibrary-core"))
+        include(dependency("com.github.1robie.YamlLibrary:yamllibrary-paper"))
         include(dependency("com.github.1robie.paper-dispatch:paper-dispatch"))
     }
 

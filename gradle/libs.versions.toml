@@ -19,9 +19,9 @@ craftengine = "26.5-SNAPSHOT"
 adventure = "4.26.1"
 bstats = "3.2.1"
 folialib = "0.5.1"
-itemsadder = "4.0.10"
+itemsadder = "4.0.17"
 junit = "6.0.3"
-messageflow = "main-SNAPSHOT"
+messageflow = "1.1.2"
 nexo = "1.20.1"
 packetevents = "2.11.2"
 paperdispatch = "1.0.2"
@@ -29,7 +29,7 @@ placeholderapi = "2.12.2"
 reflections = "0.10.2"
 sarah = "1.23"
 snakeyaml = "2.6"
-yamllibrary = "1.0-SNAPSHOT"
+yamllibrary = "-SNAPSHOT"
 
 # Build plugins
 paperweight = "2.0.0-beta.21"
@@ -51,11 +51,12 @@ folialib = { module = "com.tcoded:FoliaLib", version.ref = "folialib" }
 message-flow = { module = "com.github.1robie.MessageFlow:message-flow", version.ref = "messageflow" }
 paper-dispatch = { module = "com.github.1robie.paper-dispatch:paper-dispatch", version.ref = "paperdispatch" }
 sarah = { module = "fr.maxlego08.sarah:sarah", version.ref = "sarah" }
-yamllibrary = { module = "fr.robie:yamllibrary", version.ref = "yamllibrary" }
+yamllibrary = { module = "com.github.1robie.YamlLibrary:yamllibrary-paper", version.ref = "yamllibrary" }
+yamllibrary-core = { module = "com.github.1robie.YamlLibrary:yamllibrary-core", version.ref = "yamllibrary" }
 
 # --- Provided by the server / by CraftEngine at runtime ----------------------
 adventure-api = { module = "net.kyori:adventure-api", version.ref = "adventure" }
-itemsadder = { module = "dev.lone:api-itemsadder", version.ref = "itemsadder" }
+itemsadder = { group = "beer.devs", name = "itemsadder-api", version.ref = "itemsadder" }
 nexo = { module = "com.nexomc:nexo", version.ref = "nexo" }
 packetevents-spigot = { module = "com.github.retrooper:packetevents-spigot", version.ref = "packetevents" }
 placeholderapi = { module = "me.clip:placeholderapi", version.ref = "placeholderapi" }
