@@ -93,6 +93,8 @@ tasks.named<ShadowJar>("shadowJar") {
     relocate("org.bstats", "fr.robie.craftengineconverter.lib.bstats")
     relocate("fr.maxlego08.sarah", "fr.robie.craftengineconverter.lib.sarah")
     relocate("fr.robie.messageflow", "fr.robie.craftengineconverter.lib.messageflow")
+    relocate("fr.robie.paperdispatch", "fr.robie.craftengineconverter.lib.paperdispatch")
+    relocate("fr.robie.yamllibrary", "fr.robie.craftengineconverter.lib.yamllibrary")
 
     duplicatesStrategy = DuplicatesStrategy.INCLUDE
     mergeServiceFiles()
