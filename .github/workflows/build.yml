@@ -30,7 +30,7 @@ jobs:
         run: ./gradlew build --console=plain
 
       - name: Upload plugin jar
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: CraftEngineConverter
           path: Plugin/build/libs/CraftEngineConverter-*.jar
