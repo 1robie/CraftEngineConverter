@@ -1,0 +1,38 @@
+name: Release source
+
+# master only takes releases (docs/BRANCHING_PLAN.md): a pull request into it must be opened by the
+# repository owner, from develop or a hotfix/* branch of this repository. Everyone else targets
+# develop. The master ruleset requires this check; a ruleset cannot restrict the author or the source
+# branch on its own.
+on:
+  pull_request:
+    branches: [master]
+    types: [opened, reopened, synchronize, edited]
+
+permissions: {}
+
+jobs:
+  release-source:
+    name: Release source
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check the source branch
+        env:
+          HEAD_REF: ${{ github.head_ref }}
+          HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
+          AUTHOR: ${{ github.event.pull_request.user.login }}
+          OWNER: ${{ github.repository_owner }}
+        run: |
+          if [ "$AUTHOR" != "$OWNER" ]; then
+            echo "::error::Only $OWNER opens pull requests into master (releases). Target develop instead."
+            exit 1
+          fi
+          if [ "$HEAD_REPO" != "$GITHUB_REPOSITORY" ]; then
+            echo "::error::A pull request into master must come from this repository, not $HEAD_REPO."
+            exit 1
+          fi
+          case "$HEAD_REF" in
+            develop|hotfix/*) echo "Source branch $HEAD_REF is allowed." ;;
+            *) echo "::error::A pull request into master must come from develop or hotfix/*, not $HEAD_REF. Target develop instead."
+               exit 1 ;;
+          esac
