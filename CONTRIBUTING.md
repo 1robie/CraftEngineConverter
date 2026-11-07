@@ -29,7 +29,7 @@ By participating in this project, you agree to:
 
 Before you begin, ensure you have the following installed:
 - **Java Development Kit (JDK) 21** or higher
-- **Apache Maven 3.6+**
+- No build tool to install: the Gradle wrapper (`./gradlew`) downloads Gradle, and a matching JDK if needed
 - **Git**
 - **IntelliJ IDEA** (recommended) or another Java IDE
 
@@ -50,44 +50,45 @@ Before you begin, ensure you have the following installed:
 
 ### Building the Project
 
-1. Build the entire project:
+1. Build the entire project (compiles, runs the tests, produces
+   `Plugin/build/libs/CraftEngineConverter-<version>.jar`):
    ```bash
-   mvn clean install
+   ./gradlew build
    ```
 
-2. Build without running tests (faster):
+2. Build only the plugin jar (faster):
    ```bash
-   mvn clean install -DskipTests
+   ./gradlew :Plugin:shadowJar
    ```
 
-3. Build a specific module:
+3. Start a development server with the plugin installed:
    ```bash
-   cd Plugin
-   mvn clean package
+   ./gradlew runServer
    ```
+
+[DEVELOPMENT.md](DEVELOPMENT.md) has the full list, debugging and HotSwap.
 
 ### Running Tests
 
 Run all tests:
 ```bash
-mvn test
+./gradlew test
 ```
 
 Run tests for a specific module:
 ```bash
-cd Common
-mvn test
+./gradlew :Common:test
 ```
 
 Run a specific test class:
 ```bash
-mvn test -Dtest=SnakeUtilsTest
+./gradlew test --tests '*SnakeUtilsTest'
 ```
 
 ### IDE Setup (IntelliJ IDEA)
 
 1. Open the project in IntelliJ IDEA
-2. The IDE should automatically detect the Maven project and import it
+2. The IDE should automatically detect the Gradle project and import it
 3. Ensure the Project SDK is set to Java 21:
    - `File > Project Structure > Project > SDK`
 4. Enable annotation processing if not already enabled:
@@ -95,7 +96,7 @@ mvn test -Dtest=SnakeUtilsTest
 
 ## Project Structure
 
-The project follows a multi-module Maven structure:
+The project follows a multi-module Gradle structure:
 
 ```
 CraftEngineConverter/
@@ -263,17 +264,27 @@ void testConvertItemWithValidInput() {
 
 ## Submitting Changes
 
+### Branches
+
+- **`develop`** is where the work happens, and the default branch. Branch from it and target it with your pull
+  request. Every push to `develop` publishes a dev build as the
+  [`dev` pre-release](https://github.com/1robie/CraftEngineConverter/releases/tag/dev).
+  Put `[skip dev]` in a commit message to skip that build.
+- **`master`** only takes releases: a pull request from `develop` (or a `hotfix/*` branch), opened by the maintainer
+  and merged with a merge commit, then tagged. It is protected; a pull request into it from anywhere else fails the
+  `Release source` check.
+
 ### Pull Request Process
 
 1. **Update your branch**:
    ```bash
    git fetch upstream
-   git rebase upstream/main
+   git rebase upstream/develop
    ```
 
 2. **Ensure all tests pass**:
    ```bash
-   mvn clean test
+   ./gradlew build
    ```
 
 3. **Push to your fork**:
@@ -295,7 +306,7 @@ void testConvertItemWithValidInput() {
 ### Pull Request Checklist
 
 - [ ] Code follows project coding standards
-- [ ] All tests pass (`mvn test`)
+- [ ] All tests pass (`./gradlew build`)
 - [ ] New tests added for new functionality
 - [ ] Documentation updated (README, Javadoc, etc.)
 - [ ] No compiler warnings introduced
