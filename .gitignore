@@ -135,3 +135,6 @@ reflection/
 concepts/
 MCBE-Vanilla-RP/
 Minecraft-default-assets-latest/
+
+# Local documentation, never committed
+docs/
