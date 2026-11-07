@@ -14,7 +14,7 @@ paper = "1.21.11-R0.1-SNAPSHOT"
 # Plain Minecraft version, used by the `runServer` development server.
 minecraft = "1.21.11"
 
-craftengine = "26.5-SNAPSHOT"
+craftengine = "26.10"
 
 adventure = "5.2.0"
 bstats = "3.2.1"

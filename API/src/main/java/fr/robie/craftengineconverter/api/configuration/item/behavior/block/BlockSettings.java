@@ -3,7 +3,7 @@ package fr.robie.craftengineconverter.api.configuration.item.behavior.block;
 import fr.robie.craftengineconverter.api.common.TrackableSettings;
 import fr.robie.yamllibrary.ConfigurationSection;
 import net.momirealms.craftengine.core.block.setting.PushReaction;
-import net.momirealms.craftengine.core.util.Instrument;
+import org.bukkit.Instrument;
 import net.momirealms.craftengine.core.util.Tristate;
 import org.jetbrains.annotations.NotNull;
 

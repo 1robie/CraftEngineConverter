@@ -3,6 +3,7 @@ package fr.robie.craftengineconverter.api.configuration.item.settings;
 import fr.robie.craftengineconverter.api.configuration.item.ItemConfigurationSerializable;
 import fr.robie.yamllibrary.ConfigurationSection;
 import fr.robie.yamllibrary.file.YamlConfiguration;
+import net.momirealms.craftengine.core.item.ItemSelector;
 import net.momirealms.craftengine.core.item.setting.value.AnvilRepairItem;
 import org.jetbrains.annotations.NotNull;
 
@@ -24,19 +25,33 @@ public class AnvilRepairItemConfiguration implements ItemConfigurationSerializab
         List<Map<String, Object>> repairItemsList = new ArrayList<>();
         for (AnvilRepairItem repairItem : this.repairItems) {
             Map<String, Object> repairItemMap = new HashMap<>();
-            if (repairItem.targets().size() == 1) {
-                repairItemMap.put("target", repairItem.targets().getFirst());
+            List<String> targets = new ArrayList<>();
+            for (ItemSelector selector : repairItem.targets()) {
+                targets.add(selectorId(selector));
+            }
+            if (targets.size() == 1) {
+                repairItemMap.put("target", targets.getFirst());
             } else {
-                repairItemMap.put("target", repairItem.targets());
+                repairItemMap.put("target", targets);
             }
-            if (repairItem.amount() > 0) {
-                repairItemMap.put("amount", repairItem.amount());
+            if (repairItem.amount().getDouble() > 0) {
+                repairItemMap.put("amount", repairItem.amount().getInt());
             }
-            if (repairItem.percent() > 0) {
-                repairItemMap.put("percent", repairItem.percent());
+            if (repairItem.percent().getDouble() > 0) {
+                repairItemMap.put("percent", repairItem.percent().getDouble());
             }
             repairItemsList.add(repairItemMap);
         }
         settings.set("anvil-repair-item", repairItemsList);
+    }
+
+    private static String selectorId(ItemSelector selector) {
+        if (selector instanceof ItemSelector.Tag tag) {
+            return "#" + tag.tag();
+        }
+        if (selector instanceof ItemSelector.Item item) {
+            return item.id().toString();
+        }
+        return selector.toString();
     }
 }

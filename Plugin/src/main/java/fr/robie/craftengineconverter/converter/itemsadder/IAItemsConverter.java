@@ -53,7 +53,7 @@ import fr.robie.craftengineconverter.converter.ItemConverter;
 import fr.robie.messageflow.formatter.Placeholder;
 import fr.robie.messageflow.logger.Logger;
 import fr.robie.yamllibrary.ConfigurationSection;
-import net.momirealms.craftengine.core.attribute.AttributeModifier;
+import net.momirealms.craftengine.core.attribute.vanilla.VanillaAttributeModifier;
 import net.momirealms.craftengine.core.entity.EquipmentSlot;
 import net.momirealms.craftengine.core.entity.display.Billboard;
 import org.bukkit.DyeColor;
@@ -264,9 +264,9 @@ public class IAItemsConverter extends ItemConverter {
                     continue;
                 }
 
-                net.momirealms.craftengine.core.attribute.AttributeModifier.Slot slot;
+                net.momirealms.craftengine.core.attribute.vanilla.VanillaAttributeModifier.Slot slot;
                 try {
-                    slot = net.momirealms.craftengine.core.attribute.AttributeModifier.Slot.valueOf(equipmentSlot.toUpperCase(Locale.ROOT));
+                    slot = net.momirealms.craftengine.core.attribute.vanilla.VanillaAttributeModifier.Slot.valueOf(equipmentSlot.toUpperCase(Locale.ROOT));
                 } catch (Exception e) {
                     Logger.debug("[IAItemsConverter] Invalid equipment slot " + equipmentSlot + " for attribute modifiers for item " + this.itemId);
                     continue;
@@ -286,16 +286,16 @@ public class IAItemsConverter extends ItemConverter {
 
                         double value = attributeSection.getDouble("value", 0.0);
                         String operationStr = attributeSection.getString("operation", "add_value").toUpperCase(Locale.ROOT);
-                        net.momirealms.craftengine.core.attribute.AttributeModifier.Operation operation;
+                        net.momirealms.craftengine.core.attribute.vanilla.VanillaAttributeModifier.Operation operation;
                         try {
                             if (operationStr.equalsIgnoreCase("multiply_base")) {
-                                operation = AttributeModifier.Operation.ADD_MULTIPLIED_BASE;
+                                operation = VanillaAttributeModifier.Operation.ADD_MULTIPLIED_BASE;
                             } else {
-                                operation = AttributeModifier.Operation.valueOf(operationStr);
+                                operation = VanillaAttributeModifier.Operation.valueOf(operationStr);
                             }
                         } catch (Exception e) {
                             Logger.debug("[IAItemsConverter] Invalid operation " + operationStr + " for attribute " + attributeKey + " for item " + this.itemId + ", defaulting to ADD_VALUE");
-                            operation = net.momirealms.craftengine.core.attribute.AttributeModifier.Operation.ADD_VALUE;
+                            operation = net.momirealms.craftengine.core.attribute.vanilla.VanillaAttributeModifier.Operation.ADD_VALUE;
                         }
                         attributeModifiers.add(new fr.robie.craftengineconverter.api.configuration.item.data.AttributeModifier(attribute.name(), slot, null, value, operation, null));
                     } else {
@@ -305,7 +305,7 @@ public class IAItemsConverter extends ItemConverter {
                         }
 
                         double amount = slotSection.getDouble(attributeKey);
-                        attributeModifiers.add(new fr.robie.craftengineconverter.api.configuration.item.data.AttributeModifier(attribute.name(), slot, null, amount, net.momirealms.craftengine.core.attribute.AttributeModifier.Operation.ADD_VALUE, null));
+                        attributeModifiers.add(new fr.robie.craftengineconverter.api.configuration.item.data.AttributeModifier(attribute.name(), slot, null, amount, net.momirealms.craftengine.core.attribute.vanilla.VanillaAttributeModifier.Operation.ADD_VALUE, null));
                     }
                 }
             }
@@ -555,22 +555,22 @@ public class IAItemsConverter extends ItemConverter {
             return;
         }
 
-        net.momirealms.craftengine.core.attribute.AttributeModifier.Slot attributeSlot = this.toAttributeSlot(equipmentSlot);
+        net.momirealms.craftengine.core.attribute.vanilla.VanillaAttributeModifier.Slot attributeSlot = this.toAttributeSlot(equipmentSlot);
         if (attributeSlot == null) {
             return;
         }
 
         double armor = slotAttributeModifiers.getDouble("armor", 0.0);
-        fr.robie.craftengineconverter.api.configuration.item.data.AttributeModifier modifier = new fr.robie.craftengineconverter.api.configuration.item.data.AttributeModifier("minecraft:armor", attributeSlot, null, armor, net.momirealms.craftengine.core.attribute.AttributeModifier.Operation.ADD_VALUE, null);
+        fr.robie.craftengineconverter.api.configuration.item.data.AttributeModifier modifier = new fr.robie.craftengineconverter.api.configuration.item.data.AttributeModifier("minecraft:armor", attributeSlot, null, armor, net.momirealms.craftengine.core.attribute.vanilla.VanillaAttributeModifier.Operation.ADD_VALUE, null);
         this.craftEngineItemsConfiguration.addItemConfiguration(new AttributeModifiersConfiguration(List.of(modifier)));
     }
 
-    private net.momirealms.craftengine.core.attribute.AttributeModifier.Slot toAttributeSlot(EquipmentSlot equipmentSlot) {
+    private net.momirealms.craftengine.core.attribute.vanilla.VanillaAttributeModifier.Slot toAttributeSlot(EquipmentSlot equipmentSlot) {
         return switch (equipmentSlot) {
-            case HEAD -> net.momirealms.craftengine.core.attribute.AttributeModifier.Slot.HEAD;
-            case CHEST -> net.momirealms.craftengine.core.attribute.AttributeModifier.Slot.CHEST;
-            case LEGS -> net.momirealms.craftengine.core.attribute.AttributeModifier.Slot.LEGS;
-            case FEET -> net.momirealms.craftengine.core.attribute.AttributeModifier.Slot.FEET;
+            case HEAD -> net.momirealms.craftengine.core.attribute.vanilla.VanillaAttributeModifier.Slot.HEAD;
+            case CHEST -> net.momirealms.craftengine.core.attribute.vanilla.VanillaAttributeModifier.Slot.CHEST;
+            case LEGS -> net.momirealms.craftengine.core.attribute.vanilla.VanillaAttributeModifier.Slot.LEGS;
+            case FEET -> net.momirealms.craftengine.core.attribute.vanilla.VanillaAttributeModifier.Slot.FEET;
             default -> null;
         };
     }

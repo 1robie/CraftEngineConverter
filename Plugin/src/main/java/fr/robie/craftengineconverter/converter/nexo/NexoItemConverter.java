@@ -69,6 +69,7 @@ import fr.robie.yamllibrary.file.YamlConfiguration;
 import net.momirealms.craftengine.core.entity.EquipmentSlot;
 import net.momirealms.craftengine.core.entity.display.Billboard;
 import net.momirealms.craftengine.core.item.setting.value.AnvilRepairItem;
+import net.momirealms.craftengine.core.plugin.context.number.ConstantNumberProvider;
 import net.momirealms.craftengine.core.util.Direction;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
@@ -276,17 +277,17 @@ public class NexoItemConverter extends ItemConverter {
             }
 
             Object rawOperation = attributeModifier.get("operation");
-            net.momirealms.craftengine.core.attribute.AttributeModifier.Operation operation;
+            net.momirealms.craftengine.core.attribute.vanilla.VanillaAttributeModifier.Operation operation;
             if (rawOperation instanceof String strOperation) {
                 try {
-                    operation = net.momirealms.craftengine.core.attribute.AttributeModifier.Operation.valueOf(strOperation.toUpperCase(Locale.ROOT));
+                    operation = net.momirealms.craftengine.core.attribute.vanilla.VanillaAttributeModifier.Operation.valueOf(strOperation.toUpperCase(Locale.ROOT));
                 } catch (Exception e) {
                     if (strOperation.equalsIgnoreCase("ADD_NUMBER")) {
-                        operation = net.momirealms.craftengine.core.attribute.AttributeModifier.Operation.ADD_VALUE;
+                        operation = net.momirealms.craftengine.core.attribute.vanilla.VanillaAttributeModifier.Operation.ADD_VALUE;
                     } else if (strOperation.equalsIgnoreCase("ADD_SCALAR")) {
-                        operation = net.momirealms.craftengine.core.attribute.AttributeModifier.Operation.ADD_MULTIPLIED_BASE;
+                        operation = net.momirealms.craftengine.core.attribute.vanilla.VanillaAttributeModifier.Operation.ADD_MULTIPLIED_BASE;
                     } else if (strOperation.equalsIgnoreCase("MULTIPLY_SCALAR_1")) {
-                        operation = net.momirealms.craftengine.core.attribute.AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL;
+                        operation = net.momirealms.craftengine.core.attribute.vanilla.VanillaAttributeModifier.Operation.ADD_MULTIPLIED_TOTAL;
                     } else {
                         continue;
                     }
@@ -294,11 +295,11 @@ public class NexoItemConverter extends ItemConverter {
             } else if (rawOperation instanceof Integer intOperation) {
                 try {
                     operation = switch (intOperation) {
-                        case 0 -> net.momirealms.craftengine.core.attribute.AttributeModifier.Operation.ADD_VALUE;
+                        case 0 -> net.momirealms.craftengine.core.attribute.vanilla.VanillaAttributeModifier.Operation.ADD_VALUE;
                         case 1 ->
-                                net.momirealms.craftengine.core.attribute.AttributeModifier.Operation.ADD_MULTIPLIED_BASE;
+                                net.momirealms.craftengine.core.attribute.vanilla.VanillaAttributeModifier.Operation.ADD_MULTIPLIED_BASE;
                         case 2 ->
-                                net.momirealms.craftengine.core.attribute.AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL;
+                                net.momirealms.craftengine.core.attribute.vanilla.VanillaAttributeModifier.Operation.ADD_MULTIPLIED_TOTAL;
                         default -> throw new IllegalArgumentException("Invalid operation id: " + intOperation);
                     };
                 } catch (Exception e) {
@@ -308,13 +309,13 @@ public class NexoItemConverter extends ItemConverter {
                 continue;
             }
 
-            net.momirealms.craftengine.core.attribute.AttributeModifier.Slot attributeSlot = null;
+            net.momirealms.craftengine.core.attribute.vanilla.VanillaAttributeModifier.Slot attributeSlot = null;
             Object rawSlot = attributeModifier.get("slot");
             if (!(rawSlot instanceof String strSlot)) {
                 continue;
             }
             try {
-                attributeSlot = net.momirealms.craftengine.core.attribute.AttributeModifier.Slot.valueOf(strSlot.toUpperCase(Locale.ROOT));
+                attributeSlot = net.momirealms.craftengine.core.attribute.vanilla.VanillaAttributeModifier.Slot.valueOf(strSlot.toUpperCase(Locale.ROOT));
             } catch (Exception ignored) {
             }
             if (attributeSlot == null) {
@@ -326,9 +327,9 @@ public class NexoItemConverter extends ItemConverter {
                 Object typeObj = displayMap.get("type");
                 Object textObj = displayMap.get("text");
                 if (typeObj instanceof String typeStr && textObj instanceof String textStr) {
-                    net.momirealms.craftengine.core.attribute.AttributeModifier.Display.Type displayType;
+                    net.momirealms.craftengine.core.attribute.vanilla.VanillaAttributeModifier.Display.Type displayType;
                     try {
-                        displayType = net.momirealms.craftengine.core.attribute.AttributeModifier.Display.Type.valueOf(typeStr.toUpperCase(Locale.ROOT));
+                        displayType = net.momirealms.craftengine.core.attribute.vanilla.VanillaAttributeModifier.Display.Type.valueOf(typeStr.toUpperCase(Locale.ROOT));
                     } catch (Exception e) {
                         continue;
                     }
@@ -747,11 +748,11 @@ public class NexoItemConverter extends ItemConverter {
         List<AnvilRepairItem> anvilRepairItems = new ArrayList<>();
         Object singleRepairItem = componentsSection.get("anvil_repairable.repairable");
         if (singleRepairItem instanceof String singleRepairItemStr && this.isValidString(singleRepairItemStr)) {
-            anvilRepairItems.add(new AnvilRepairItem(List.of(singleRepairItemStr), 1, 1.0));
+            anvilRepairItems.add(new AnvilRepairItem(List.of(singleRepairItemStr), ConstantNumberProvider.constant(1), ConstantNumberProvider.constant(1.0)));
         } else if (singleRepairItem instanceof List<?> singleRepairItemList) {
             for (Object item : singleRepairItemList) {
                 if (item instanceof String itemStr && this.isValidString(itemStr)) {
-                    anvilRepairItems.add(new AnvilRepairItem(List.of(itemStr), 1, 1.0));
+                    anvilRepairItems.add(new AnvilRepairItem(List.of(itemStr), ConstantNumberProvider.constant(1), ConstantNumberProvider.constant(1.0)));
                 }
             }
         }
