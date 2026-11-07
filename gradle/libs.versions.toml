@@ -32,7 +32,7 @@ snakeyaml = "2.7"
 yamllibrary = "-SNAPSHOT"
 
 # Build plugins
-paperweight = "2.0.0-beta.21"
+paperweight = "2.0.0-beta.24"
 runPaper = "3.1.0"
 shadow = "9.6.1"
 
