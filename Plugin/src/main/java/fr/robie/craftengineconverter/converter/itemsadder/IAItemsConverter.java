@@ -12,6 +12,7 @@ import fr.robie.craftengineconverter.api.configuration.item.behavior.block.state
 import fr.robie.craftengineconverter.api.configuration.item.behavior.block.states.defaults.HorizontalFacingBlockState;
 import fr.robie.craftengineconverter.api.configuration.item.behavior.block.states.defaults.PillarBlockState;
 import fr.robie.craftengineconverter.api.configuration.item.behavior.furniture.FurnitureConfiguration;
+import fr.robie.craftengineconverter.api.configuration.item.behavior.furniture.FurnitureSettings;
 import fr.robie.craftengineconverter.api.configuration.item.behavior.furniture.FurniturePlacement;
 import fr.robie.craftengineconverter.api.configuration.item.behavior.furniture.ItemElement;
 import fr.robie.craftengineconverter.api.configuration.item.behavior.furniture.Placement;
@@ -1268,6 +1269,11 @@ public class IAItemsConverter extends ItemConverter {
                             this.convertFurniture(furnitureSection, behavioursSection);
                         }
                     }
+                    case "furniture_sit" -> {
+                        // sit_height is read by convertFurniture; anything else under it is not converted.
+                        ConfigurationSection sitSection = behavioursSection.getConfigurationSection("furniture_sit");
+                        this.reportUnhandledKeys("behaviours.furniture_sit", sitSection, Set.of("sit_height"));
+                    }
                     case "fuel" -> {
                         ConfigurationSection fuelSection = behavioursSection.getConfigurationSection("fuel");
                         if (this.isNotNull(fuelSection)) {
@@ -1289,6 +1295,10 @@ public class IAItemsConverter extends ItemConverter {
             "name", "display_name", "lore", "resource", "graphics", "durability", "item_flags",
             "attribute_modifiers", "enchants", "item_model", "max_stack_size", "glint", "drop", "tooltip_style",
             "consumable", "jukebox_disc", "equipment", "specific_properties", "behaviours");
+
+    /** Keys under behaviours.furniture that convertFurniture reads; the rest are reported as left out. */
+    private static final Set<String> HANDLED_FURNITURE_KEYS = Set.of(
+            "entity", "small", "placeable_on", "display_transformation", "light_level", "hitbox", "sound");
 
     private static final Set<String> HANDLED_SPECIFIC_PROPERTIES = Set.of(
             "armor", "block", "potion", "book", "leather_horse_armor");
@@ -1331,6 +1341,17 @@ public class IAItemsConverter extends ItemConverter {
         }
 
         FurnitureConfiguration furnitureConfiguration = new FurnitureConfiguration();
+
+        // Keys under behaviours.furniture that are not converted are reported, not silently dropped.
+        this.reportUnhandledKeys("behaviours.furniture", furnitureSection, HANDLED_FURNITURE_KEYS);
+
+        // --- Sounds ---
+        ConfigurationSection furnitureSoundSection = furnitureSection.getConfigurationSection("sound");
+        if (this.isNotNull(furnitureSoundSection)) {
+            FurnitureSettings furnitureSettings = furnitureConfiguration.getOrCreateSettings(this.itemId);
+            furnitureSettings.setPlaceSound(furnitureSoundSection.getString("place.name"));
+            furnitureSettings.setBreakSound(furnitureSoundSection.getString("break.name"));
+        }
 
         // --- Display properties ---
         Billboard transformType = Billboard.FIXED;
