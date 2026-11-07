@@ -1,13 +1,12 @@
 package fr.robie.craftengineconverter.api.configuration.item.components;
 
 import com.google.gson.JsonObject;
-import fr.robie.craftengineconverter.api.configuration.bedrock.mapping.item.component.BedrockComponent;
 import fr.robie.craftengineconverter.api.configuration.item.ItemConfigurationSerializable;
 import fr.robie.yamllibrary.ConfigurationSection;
 import fr.robie.yamllibrary.file.YamlConfiguration;
 import org.jetbrains.annotations.NotNull;
 
-public class EnchantmentGlintOverrideConfiguration implements ItemConfigurationSerializable, BedrockComponent {
+public class EnchantmentGlintOverrideConfiguration implements ItemConfigurationSerializable {
     private final boolean enchantGlintOverride;
 
     public EnchantmentGlintOverrideConfiguration(boolean enchantGlintOverride) {
@@ -19,8 +18,4 @@ public class EnchantmentGlintOverrideConfiguration implements ItemConfigurationS
         this.getComponentsSection(itemSection).set("minecraft:enchantment_glint_override", this.enchantGlintOverride);
     }
 
-    @Override
-    public void applyTo(@NotNull JsonObject componentObject) {
-        componentObject.addProperty("minecraft:enchantment_glint_override", this.enchantGlintOverride);
-    }
 }

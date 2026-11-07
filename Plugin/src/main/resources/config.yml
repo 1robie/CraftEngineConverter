@@ -1,6 +1,5 @@
 # General settings. Anything belonging to one converter lives in that converter's own file beside this one:
 #
-#   bedrock.yml           the Bedrock converter
 #   nexo.yml              Nexo integration
 #   itemsadder.yml        ItemsAdder integration
 #   world-converter.yml   converting blocks as chunks are explored
@@ -9,6 +8,14 @@ enable-debug: false
 
 # Language settings (available languages: EN, FR)
 language: "EN"
+
+# Item conversion settings, shared by every item converter (ItemsAdder, Nexo).
+# Hide the italic that items get by default.
+disable-default-italic: true
+# How armor is converted: COMPONENT (the item's own model), TRIM (the armor trim texture) or BOTH.
+armor-converter-type: COMPONENT
+# Material for items that don't name one; "auto" lets the converter choose.
+default-material: "auto"
 
 # Each block has a usage limit for a block-state. This setting controls how those limits are enforced when multiple plugins are installed:
 #  - "plugin": Each plugin gets its own separate limit. Different plugins can use the same block-states independently without affecting each other.

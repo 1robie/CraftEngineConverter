@@ -1,13 +1,12 @@
 package fr.robie.craftengineconverter.api.configuration.item.components;
 
 import com.google.gson.JsonObject;
-import fr.robie.craftengineconverter.api.configuration.bedrock.mapping.item.component.BedrockComponent;
 import fr.robie.craftengineconverter.api.configuration.item.ItemConfigurationSerializable;
 import fr.robie.yamllibrary.ConfigurationSection;
 import fr.robie.yamllibrary.file.YamlConfiguration;
 import org.jetbrains.annotations.NotNull;
 
-public class UseCooldownConfiguration implements ItemConfigurationSerializable, BedrockComponent {
+public class UseCooldownConfiguration implements ItemConfigurationSerializable {
     private final float seconds;
     private final String cooldownGroup;
 
@@ -26,13 +25,4 @@ public class UseCooldownConfiguration implements ItemConfigurationSerializable, 
         }
     }
 
-    @Override
-    public void applyTo(@NotNull JsonObject componentObject) {
-        JsonObject useCooldownComponent = new JsonObject();
-        useCooldownComponent.addProperty("seconds", this.seconds);
-        if (this.cooldownGroup != null) {
-            useCooldownComponent.addProperty("cooldown_group", this.cooldownGroup);
-        }
-        componentObject.add("minecraft:use_cooldown", useCooldownComponent);
-    }
 }

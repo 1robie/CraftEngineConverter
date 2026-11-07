@@ -1,13 +1,12 @@
 package fr.robie.craftengineconverter.api.configuration.item.components;
 
 import com.google.gson.JsonObject;
-import fr.robie.craftengineconverter.api.configuration.bedrock.mapping.item.component.BedrockComponent;
 import fr.robie.craftengineconverter.api.configuration.item.ItemConfigurationSerializable;
 import fr.robie.yamllibrary.ConfigurationSection;
 import fr.robie.yamllibrary.file.YamlConfiguration;
 import org.jetbrains.annotations.NotNull;
 
-public class PiercingWeaponConfiguration implements ItemConfigurationSerializable, BedrockComponent {
+public class PiercingWeaponConfiguration implements ItemConfigurationSerializable {
 
     private final boolean dealsKnockback;
     private final boolean dismounts;
@@ -43,24 +42,4 @@ public class PiercingWeaponConfiguration implements ItemConfigurationSerializabl
         }
     }
 
-    @Override
-    public void applyTo(@NotNull JsonObject componentObject) {
-        JsonObject piercingComponent = new JsonObject();
-        if (!this.dealsKnockback) {
-            piercingComponent.addProperty("deals_knockback", false);
-        }
-
-        if (this.dismounts) {
-            piercingComponent.addProperty("dismounts", true);
-        }
-
-        if (this.sound != null && !this.sound.isBlank()) {
-            piercingComponent.addProperty("sound", this.sound);
-        }
-
-        if (this.hitSound != null && !this.hitSound.isBlank()) {
-            piercingComponent.addProperty("hit_sound", this.hitSound);
-        }
-        componentObject.add("minecraft:piercing_weapon", piercingComponent);
-    }
 }

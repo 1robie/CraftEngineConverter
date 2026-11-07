@@ -1,13 +1,12 @@
 package fr.robie.craftengineconverter.api.configuration.item.components;
 
 import com.google.gson.JsonObject;
-import fr.robie.craftengineconverter.api.configuration.bedrock.mapping.item.component.BedrockComponent;
 import fr.robie.craftengineconverter.api.configuration.item.ItemConfigurationSerializable;
 import fr.robie.yamllibrary.ConfigurationSection;
 import fr.robie.yamllibrary.file.YamlConfiguration;
 import org.jetbrains.annotations.NotNull;
 
-public class EnchantableConfiguration implements ItemConfigurationSerializable, BedrockComponent {
+public class EnchantableConfiguration implements ItemConfigurationSerializable {
     private final int enchantability;
 
     public EnchantableConfiguration(int enchantability) {
@@ -21,10 +20,4 @@ public class EnchantableConfiguration implements ItemConfigurationSerializable, 
         enchantableComponent.set("value", this.enchantability);
     }
 
-    @Override
-    public void applyTo(@NotNull JsonObject componentObject) {
-        JsonObject enchantableComponent = new JsonObject();
-        enchantableComponent.addProperty("value", this.enchantability);
-        componentObject.add("minecraft:enchantable", enchantableComponent);
-    }
 }

@@ -1,23 +1,17 @@
 package fr.robie.craftengineconverter.api.configuration.item.components;
 
 import com.google.gson.JsonObject;
-import fr.robie.craftengineconverter.api.configuration.bedrock.mapping.item.component.BedrockComponent;
 import fr.robie.craftengineconverter.api.configuration.item.ItemConfigurationSerializable;
 import fr.robie.yamllibrary.ConfigurationSection;
 import fr.robie.yamllibrary.file.YamlConfiguration;
 import org.jetbrains.annotations.NotNull;
 
-public class MaxDamageComponent implements ItemConfigurationSerializable, BedrockComponent {
+public class MaxDamageComponent implements ItemConfigurationSerializable {
     private final int maxDamage;
 
     public MaxDamageComponent(int maxDamage) {
         assert maxDamage >= 0 : "Max damage must be non-negative";
         this.maxDamage = maxDamage;
-    }
-
-    @Override
-    public void applyTo(@NotNull JsonObject componentObject) {
-        componentObject.addProperty("minecraft:max_damage", this.maxDamage);
     }
 
     @Override

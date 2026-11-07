@@ -1,13 +1,12 @@
 package fr.robie.craftengineconverter.api.configuration.item.components;
 
 import com.google.gson.JsonObject;
-import fr.robie.craftengineconverter.api.configuration.bedrock.mapping.item.component.BedrockComponent;
 import fr.robie.craftengineconverter.api.configuration.item.ItemConfigurationSerializable;
 import fr.robie.yamllibrary.ConfigurationSection;
 import fr.robie.yamllibrary.file.YamlConfiguration;
 import org.jetbrains.annotations.NotNull;
 
-public class UseEffectsConfiguration implements ItemConfigurationSerializable, BedrockComponent {
+public class UseEffectsConfiguration implements ItemConfigurationSerializable {
 
     private final boolean canSprint;
     private final double speedMultiplier;
@@ -20,7 +19,7 @@ public class UseEffectsConfiguration implements ItemConfigurationSerializable, B
     }
 
     /**
-     * To use for bedrock items, as they don't have the can_sprint property is not present in bedrock.
+     * Not every client has the can_sprint property, so this is kept off by default.
      *
      * @param speedMultiplier
      * @param interactVibrations
@@ -47,18 +46,4 @@ public class UseEffectsConfiguration implements ItemConfigurationSerializable, B
         }
     }
 
-    @Override
-    public void applyTo(@NotNull JsonObject componentObject) {
-        JsonObject useEffectsComponent = new JsonObject();
-
-        if (this.speedMultiplier != 0.2) {
-            useEffectsComponent.addProperty("speed_multiplier", Math.max(0.0, Math.min(1.0, this.speedMultiplier)));
-        }
-
-        if (!this.interactVibrations) {
-            useEffectsComponent.addProperty("interact_vibrations", false);
-        }
-
-        componentObject.add("minecraft:use_effects", useEffectsComponent);
-    }
 }

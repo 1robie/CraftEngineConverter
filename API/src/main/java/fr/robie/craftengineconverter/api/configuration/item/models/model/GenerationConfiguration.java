@@ -1,6 +1,5 @@
 package fr.robie.craftengineconverter.api.configuration.item.models.model;
 
-import fr.robie.craftengineconverter.api.configuration.bedrock.texture.TextureData;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,16 +35,5 @@ public class GenerationConfiguration {
             map.put("textures", this.textures);
         }
         return map;
-    }
-
-    public TextureData toTextureData(@NotNull String bedrockIdentifier) {
-        TextureData textureData = new TextureData(bedrockIdentifier);
-        for (String texture : this.textures.values()) {
-            if (texture.contains(":")) {
-                texture = texture.substring(texture.indexOf(':') + 1);
-            }
-            textureData.addTexture("textures/"+texture);
-        }
-        return textureData;
     }
 }

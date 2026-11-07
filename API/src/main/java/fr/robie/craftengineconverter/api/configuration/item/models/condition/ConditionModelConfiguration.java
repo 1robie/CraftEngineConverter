@@ -1,7 +1,5 @@
 package fr.robie.craftengineconverter.api.configuration.item.models.condition;
 
-import fr.robie.craftengineconverter.api.configuration.bedrock.mapping.item.predicate.BedrockPredicate;
-import fr.robie.craftengineconverter.api.configuration.bedrock.mapping.item.predicate.condition.*;
 import fr.robie.craftengineconverter.api.configuration.item.models.ModelConfiguration;
 import fr.robie.craftengineconverter.api.utils.ConfigurationSerializationUtils;
 import fr.robie.yamllibrary.ConfigurationSection;
@@ -51,37 +49,6 @@ public class ConditionModelConfiguration implements ModelConfiguration {
         if (this.onFalse != null) {
             section.set("on-false", ConfigurationSerializationUtils.toMap(this.onFalse));
         }
-    }
-
-    public BedrockPredicate getOnTruePredicate() {
-        return this.toBedrockPredicate(this.onTrue, true);
-    }
-
-    public BedrockPredicate getOnFalsePredicate() {
-        return this.toBedrockPredicate(this.onFalse, false);
-    }
-
-    private BedrockPredicate toBedrockPredicate(ModelConfiguration condition, boolean value) {
-        if (condition == null) {
-            return null;
-        }
-        String propertyName = this.property.contains(":") ? this.property.split(":")[1] : this.property;
-        if (propertyName.equalsIgnoreCase("broken")) {
-            return new BrokenPredicate(value);
-        }
-        if (propertyName.equalsIgnoreCase("damaged")) {
-            return new DamagedPredicate(value);
-        }
-        if (propertyName.equalsIgnoreCase("fishing_rod/cast")) {
-            return new FishingRodCastPredicate(value);
-        }
-        if (propertyName.equalsIgnoreCase("custom_model_data") && this instanceof CustomModelDataConditionConfiguration customModelDataConditionConfiguration) {
-            return new CustomModelDataPredicate(customModelDataConditionConfiguration.getIndex(), value);
-        }
-        if (propertyName.equalsIgnoreCase("has_component") && this instanceof HasComponentConditionConfiguration hasComponentConditionConfiguration) {
-            return new HasComponentPredicate(hasComponentConditionConfiguration.getComponent(), value);
-        }
-        return null;
     }
 
     public boolean isConditionSupported() {

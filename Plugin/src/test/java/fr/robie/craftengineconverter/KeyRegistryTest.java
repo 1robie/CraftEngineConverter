@@ -27,7 +27,7 @@ class KeyRegistryTest {
     void theRegistryFillsWithoutBeingPrimedFirst() {
         List<Key<?>> all = Key.all();
         assertFalse(all.isEmpty(), "asking for the keys must load their declarations");
-        assertTrue(all.size() >= 43, "expected the whole settings table, got " + all.size());
+        assertTrue(all.size() >= 33, "expected the whole settings table, got " + all.size());
     }
 
     @Test

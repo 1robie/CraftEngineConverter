@@ -1,14 +1,13 @@
 package fr.robie.craftengineconverter.api.configuration.item.components;
 
 import com.google.gson.JsonObject;
-import fr.robie.craftengineconverter.api.configuration.bedrock.mapping.item.component.BedrockComponent;
 import fr.robie.craftengineconverter.api.configuration.item.ItemConfigurationSerializable;
 import fr.robie.yamllibrary.ConfigurationSection;
 import fr.robie.yamllibrary.file.YamlConfiguration;
 import org.jetbrains.annotations.NotNull;
 import java.util.Locale;
 
-public class SwingAnimationConfiguration implements ItemConfigurationSerializable, BedrockComponent {
+public class SwingAnimationConfiguration implements ItemConfigurationSerializable {
 
 
     private final AnimationType type;
@@ -20,23 +19,12 @@ public class SwingAnimationConfiguration implements ItemConfigurationSerializabl
     }
 
     /**
-     * Animation is hardcoded for bedrock, so only duration is configurable
+     * Animation is hardcoded by the client, so only duration is configurable
      *
      * @param duration Duration of the swing animation in ticks
      */
     public SwingAnimationConfiguration(int duration) {
         this(null, duration);
-    }
-
-    @Override
-    public void applyTo(@NotNull JsonObject componentObject) {
-        JsonObject swingAnimationComponent = new JsonObject();
-
-        if (this.duration != 6) {
-            swingAnimationComponent.addProperty("duration", this.duration);
-        }
-
-        componentObject.add("minecraft:swing_animation", swingAnimationComponent);
     }
 
     public enum AnimationType {

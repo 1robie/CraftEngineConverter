@@ -8,16 +8,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 
 public class ModelConfigurationRegistry {
     private static final Map<String, ModelConfigurationLoader<?>> LOADERS = new HashMap<>();
-    /**
-     * Types with no Bedrock equivalent that are still worth naming, so a skip reads as a known limitation rather
-     * than as a typo. {@code special} has left this set: it now resolves to its {@code base} model — see
-     * {@code SpecialModelConfigurationLoader}.
-     */
-    private static final Set<String> BEDROCK_UNREPRESENTABLE_TYPES = Set.of();
 
     private static String stripNamespace(String type) {
         int colon = type.indexOf(':');
@@ -43,11 +36,7 @@ public class ModelConfigurationRegistry {
             loader = LOADERS.get(stripNamespace(type));
         }
         if (loader == null) {
-            if (BEDROCK_UNREPRESENTABLE_TYPES.contains(stripNamespace(type))) {
-                Logger.debug("Model type '" + type + "' has no Bedrock equivalent, using a plain definition");
-            } else {
-                Logger.warn("Unknown model type '" + type + "', skipping.");
-            }
+            Logger.warn("Unknown model type '" + type + "', skipping.");
             return null;
         }
         return loader.load(section);

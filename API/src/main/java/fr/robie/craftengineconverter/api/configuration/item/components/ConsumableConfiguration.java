@@ -1,7 +1,6 @@
 package fr.robie.craftengineconverter.api.configuration.item.components;
 
 import com.google.gson.JsonObject;
-import fr.robie.craftengineconverter.api.configuration.bedrock.mapping.item.component.BedrockComponent;
 import fr.robie.craftengineconverter.api.configuration.item.AbstractEffectsConfiguration;
 import fr.robie.craftengineconverter.api.enums.item.component.ConsumableAnimation;
 import fr.robie.craftengineconverter.api.utils.item.component.ConsumeEffect;
@@ -11,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class ConsumableConfiguration extends AbstractEffectsConfiguration implements BedrockComponent {
+public class ConsumableConfiguration extends AbstractEffectsConfiguration {
 
     private final String sound;
     private final boolean hasConsumeParticles;
@@ -54,15 +53,4 @@ public class ConsumableConfiguration extends AbstractEffectsConfiguration implem
         }
     }
 
-    @Override
-    public void applyTo(@NotNull JsonObject componentObject) {
-        JsonObject consumableObject = new JsonObject();
-        if (this.animation != ConsumableAnimation.EAT) {
-            consumableObject.addProperty("animation", this.animation.toKey());
-        }
-        if (this.onConsumeEffects != null && !this.onConsumeEffects.isEmpty()) {
-            consumableObject.add("on_consume_effects", this.serializeEffectsToJsonArray(this.onConsumeEffects));
-        }
-        componentObject.add("minecraft:consumable", consumableObject);
-    }
 }

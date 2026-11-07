@@ -27,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
  * recovers everything: an author who wants a custom shield replaces the renderer with real geometry anyway, and
  * a pack that leaves the vanilla base in place gets an extruded sprite in the right position rather than a hole.
  * <p>
- * The renderer itself is not reproducible on Bedrock under any circumstances, which is what the warning says.
+ * The renderer itself is not reproducible under any circumstances, which is what the warning says.
  */
 @AutoModelConfigurationLoader({"special", "minecraft:special"})
 public class SpecialModelConfigurationLoader implements ModelConfigurationLoader<ModelConfiguration> {
@@ -43,7 +43,7 @@ public class SpecialModelConfigurationLoader implements ModelConfigurationLoader
         ConfigurationSection renderer = section.getConfigurationSection("model");
         String rendererType = renderer == null ? "unknown" : renderer.getString("type", "unknown");
         Logger.debug("Using '" + base + "' in place of the '" + rendererType + "' special renderer,"
-                + " which Bedrock has no equivalent for");
+                + " which has no equivalent.");
 
         return new SimpleModelConfiguration(base);
     }

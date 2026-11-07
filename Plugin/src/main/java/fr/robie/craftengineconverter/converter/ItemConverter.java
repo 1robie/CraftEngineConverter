@@ -39,7 +39,7 @@ public abstract class ItemConverter extends ObjectUtils {
         // FIXME: default-material resolves to either a Material or the string "auto", and this needs a Material.
         // The untyped accessor hid that with an unchecked cast, so an "auto" here has always been a
         // ClassCastException waiting to happen; typing the key only made it visible. Kept as-is so this refactor
-        // changes no behaviour - resolving "auto" properly (as DefaultMaterialResolver does for Bedrock) is its own
+        // changes no behaviour - resolving "auto" properly (as DefaultMaterialResolver does) is its own
         // change.
         this.craftEngineItemsConfiguration = new CraftEngineItemsConfiguration(
                 itemId, (Material) Configuration.get(Keys.DEFAULT_MATERIAL));

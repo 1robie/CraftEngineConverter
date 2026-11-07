@@ -1,13 +1,12 @@
 package fr.robie.craftengineconverter.api.configuration.item.components;
 
 import com.google.gson.JsonObject;
-import fr.robie.craftengineconverter.api.configuration.bedrock.mapping.item.component.BedrockComponent;
 import fr.robie.craftengineconverter.api.configuration.item.ItemConfigurationSerializable;
 import fr.robie.yamllibrary.ConfigurationSection;
 import fr.robie.yamllibrary.file.YamlConfiguration;
 import org.jetbrains.annotations.NotNull;
 
-public class MaxStackSizeConfiguration implements ItemConfigurationSerializable, BedrockComponent {
+public class MaxStackSizeConfiguration implements ItemConfigurationSerializable {
     private final int maxStackSize;
 
     public MaxStackSizeConfiguration(int maxStackSize) {
@@ -19,8 +18,4 @@ public class MaxStackSizeConfiguration implements ItemConfigurationSerializable,
         this.getComponentsSection(itemSection).set("minecraft:max_stack_size", this.maxStackSize);
     }
 
-    @Override
-    public void applyTo(@NotNull JsonObject componentObject) {
-        componentObject.addProperty("minecraft:max_stack_size", this.maxStackSize);
-    }
 }

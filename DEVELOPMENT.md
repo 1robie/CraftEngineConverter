@@ -24,9 +24,7 @@ CraftEngineConverter/
 | --- | --- |
 | `./gradlew build` | Compiles everything, runs the tests, produces `Plugin/build/libs/CraftEngineConverter-<version>.jar` |
 | `./gradlew :Plugin:shadowJar` | Just the shaded plugin jar |
-| `./gradlew runServer` | Downloads Paper, creates `run/`, installs the plugin and the sample pack, starts the server |
-| `./gradlew installDevPack` | Just the sample pack + a dev `config.yml`, into `run/plugins/CraftEngineConverter/` |
-| `./gradlew devConvert` | Runs a conversion against that folder with **no server** (see caveat below) |
+| `./gradlew runServer` | Downloads Paper, creates `run/`, installs the plugin, starts the server |
 | `./gradlew test` | Tests only |
 | `./gradlew build -PdevBuild` | Same as the old `-P dev-build` Maven profile: appends `-Dev` to the jar version |
 | `./gradlew build -PdevSuffix=-RC1` | Arbitrary version suffix |
@@ -43,44 +41,7 @@ CraftEngineConverter/
    a plugins directory and there is no stale-jar problem.
 4. `-Ddisable.watchdog=true` is set for you, so sitting on a breakpoint does not kill the server.
 
-### The sample pack
-
-`runServer` depends on `installDevPack`, which lays out what `BedrockConverter` expects under the plugin's data
-folder — every path it uses is derived from that folder:
-
-```
-run/plugins/CraftEngineConverter/
-├─ config.yml                 written once; never overwritten, so tuning survives
-├─ bedrock/items/             CraftEngine's configuration trees (the YAML)
-├─ bedrock/pack/assets/       the Java resource pack input
-└─ bedrock-converted/Geyser-Spigot/    output, wiped and rewritten each run
-```
-
-The pack goes in as `bedrock/pack/assets`, not as the extracted `resource_pack_unprotected/` folder:
-`convertPackDirectory` only descends into a child directory literally named `assets`, or into a zip. Dropping the
-extracted folder in produces a conversion with **no assets at all** and no error.
-
-The dev `config.yml` sets two things that are easy to get wrong:
-
-- `vanilla-assets.path` → `Minecraft-default-assets-latest/` in the repo root, if present. Without it a missing
-  vanilla parent can only be rebuilt from its *name*, which recovers a cube and the common poses but not real UVs,
-  face rotations or display transforms. It is the difference between an anvil and a flat billboard.
-- `default-material: "auto"`. The shipped default is `PAPER`, which being a real material wins outright over
-  CraftEngine's own `item.default-material` and changes every materialless item's id and creative category.
-
-Then, in game: `/cec bedrock`, and read `run/plugins/CraftEngineConverter/bedrock-converted/`.
-
-### `devConvert`, and what it cannot tell you
-
-`./gradlew devConvert` runs the same conversion headless, in about 1.5 s, writing into the same folder. It is the
-fast loop for mapper and geometry work.
-
-It is **partial for items**: there is no Bukkit material registry and no CraftEngine, and the item pipeline needs
-both. On the sample pack it emits 23 item geometries and no rendered icons, where a real server emits far more.
-Blocks, blockstates, textures, fonts, sounds and the geometry conversion itself are all exercised normally. For
-anything item-shaped, `/cec bedrock` is the authoritative run.
-
-`-PconvertDir=<path>` points it at a different data folder.
+### Manual steps, once
 
 Two things are still manual, once:
 
@@ -242,14 +203,10 @@ For that same code the *fastest* loop is often no server at all. The suite is pu
 second:
 
 ```bash
-./gradlew :Plugin:test --tests '*TransformTest*' --tests '*AttachablePoseTest*'
+./gradlew :Plugin:test --tests '*KeyRegistryTest*'
 ```
 
-The four tests that used to run a whole conversion are gone; `devConvert` and `/cec bedrock` replaced them. They
-were ~9 s of a ~10 s suite, and their output was ordering-dependent — they shared a JVM with the rest of the suite
-and only saw a complete conversion because another test had already initialised `Configuration`. The one check
-worth keeping, that every `item_texture.json` shortname resolves to a real PNG, now runs at the end of *every*
-conversion and logs what is missing.
+The suite runs the same way: one test class at a time is the fastest feedback loop.
 
 ## Migration notes (Maven → Gradle)
 
