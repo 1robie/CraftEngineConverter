@@ -1318,7 +1318,8 @@ public class IAItemsConverter extends ItemConverter {
             if (placeableSection.getBoolean("ceiling", true)) {
                 placements.add(FurniturePlacement.CEILING);
             }
-            if (placeableSection.getBoolean("wall", true)) {
+            // ItemsAdder's key is "walls"; "wall" is kept as a fallback for hand-written configs.
+            if (placeableSection.getBoolean("walls", placeableSection.getBoolean("wall", true))) {
                 placements.add(FurniturePlacement.WALL);
             }
         } else {
